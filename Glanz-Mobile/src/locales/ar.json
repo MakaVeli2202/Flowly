@@ -1,0 +1,264 @@
+{
+  "home": {
+    "eyebrow":         "تفصيل سيارات احترافي",
+    "greeting":        "مرحباً، {{name}}!",
+    "greetingFallback":"هناك",
+    "greetingSub":     "سيارتك تستحق أفضل رعاية.",
+    "heroBadge":       "تفصيل احترافي",
+    "heroSub":         "خدمات تنظيف وتفصيل متخصصة تصل إلى بابك.",
+    "bookNow":         "احجز الآن",
+    "address": {
+      "home":        "عنوان المنزل",
+      "work":        "عنوان العمل",
+      "other":       "عنوان آخر",
+      "none":        "لا يوجد عنوان",
+      "placeholder": "اضغط لإضافة عنوانك"
+    },
+    "features": {
+      "title":           "لماذا نحن؟",
+      "premiumProducts": "منتجات فاخرة",
+      "onTimeService":   "خدمة في الوقت المحدد",
+      "fullyInsured":    "مؤمّن بالكامل",
+      "rated5Stars":     "تقييم 5 نجوم"
+    },
+    "packages": {
+      "title":        "الباقات المميزة",
+      "seeAll":       "عرض الكل",
+      "loadError":    "فشل تحميل الباقات. اسحب للتحديث.",
+      "minutes":      "{{count}} دقيقة",
+      "showLess":     "عرض أقل",
+      "moreServices": "+{{count}} خدمات إضافية",
+      "bookPackage":  "احجز هذه الباقة"
+    },
+    "quickActions": {
+      "title":      "الإجراءات السريعة",
+      "myBookings": "حجوزاتي",
+      "profile":    "الملف الشخصي",
+      "packages":   "الباقات"
+    }
+  },
+  "common": {
+    "cancel":    "إلغاء",
+    "close":     "إغلاق",
+    "error":     "خطأ",
+    "ok":        "حسناً",
+    "applying":  "جارٍ التطبيق...",
+    "claiming":  "جارٍ المطالبة...",
+    "notifying": "جارٍ الإشعار...",
+    "sending":   "جارٍ الإرسال...",
+    "starting":  "جارٍ البدء...",
+    "finishing": "جارٍ الإنهاء..."
+  },
+  "status": {
+    "Pending":    "قيد الانتظار",
+    "Confirmed":  "مؤكد",
+    "InProgress": "قيد التنفيذ",
+    "Completed":  "مكتمل",
+    "Cancelled":  "ملغى",
+    "Paused":     "متوقف مؤقتاً",
+    "All":        "الكل"
+  },
+  "errors": {
+    "sessionExpired":  "انتهت الجلسة. يرجى تسجيل الدخول مرة أخرى.",
+    "forbidden":       "لا يُسمح لحسابك بتحميل هذه الحجوزات.",
+    "loadBookings":    "فشل تحميل الحجوزات.",
+    "updateStatus":    "فشل تحديث حالة الحجز.",
+    "claimBooking":    "فشل المطالبة بالمهمة.",
+    "startJob":        "فشل بدء المهمة.",
+    "markArrived":     "فشل إشعار العميل بالوصول.",
+    "markLate":        "فشل إشعار العميل بالتأخير.",
+    "resumeJob":       "فشل إشعار استئناف العمل.",
+    "finishJob":       "فشل إنهاء المهمة.",
+    "updateChecklist": "فشل تحديث عنصر قائمة التحقق.",
+    "applyServices":   "فشل تطبيق الخدمات المختارة.",
+    "loadServices":    "فشل تحميل الخدمات المتاحة."
+  },
+  "alerts": {
+    "addressUnavailable": {
+      "title":   "العنوان غير متاح",
+      "message": "لا يوجد عنوان خدمة محفوظ لهذا الحجز بعد."
+    },
+    "mapsError": {
+      "title":   "تعذر فتح الخرائط",
+      "message": "تعذر فتح خرائط Google على هذا الجهاز."
+    },
+    "claimSuccess": {
+      "title":   "نجاح",
+      "message": "تمت المطالبة بالمهمة بنجاح!"
+    },
+    "cannotClaim": {
+      "title": "لا يمكن المطالبة بهذه المهمة"
+    },
+    "invalidDelay": {
+      "title":   "مدة تأخير غير صالحة",
+      "message": "يجب أن تكون دقائق التأخير بين 5 و120."
+    },
+    "reasonRequired": {
+      "title":   "السبب مطلوب",
+      "message": "يرجى إدخال سبب مختصر قبل إشعار العميل."
+    },
+    "conflictClaim": {
+      "title":   "لا يمكن المطالبة بهذه المهمة",
+      "message": "لست متاحاً في هذا الوقت. تتداخل هذه المهمة مع {{bookingNumber}} ({{timeSlot}})."
+    },
+    "upcomingJob": {
+      "title":   "مهمة قادمة",
+      "message": "{{customerName}} — {{vehicle}}\n\nتبدأ المهمة خلال {{minutes}} دقيقة\nالوقت: {{time}}"
+    }
+  },
+  "worker": {
+    "header": {
+      "eyebrowDetail":  "تفاصيل المهمة",
+      "eyebrowQueue":   "قائمة انتظار العمال",
+      "titleDetail":    "تفاصيل المهمة",
+      "titleQueue":     "عمل اليوم",
+      "subtitleDetail": "تفاصيل كاملة، الموقع، خطوات العمل، مؤقت مباشر.",
+      "subtitleQueue":  "قائمة انتظار العمل النشطة.",
+      "role":           "مفصّل",
+      "profileBtn":     "الملف الشخصي"
+    },
+    "stats": {
+      "jobsToday": "مهام اليوم",
+      "active":    "نشط",
+      "completed": "مكتمل",
+      "packages":  "الباقات",
+      "amount":    "المبلغ",
+      "duration":  "المدة"
+    },
+    "list": {
+      "activeJobs":     "المهام النشطة",
+      "availableClaim": "متاح للمطالبة",
+      "availableBadge": "متاح",
+      "estimatedMin":   "~{{minutes}} دقيقة تقريباً",
+      "claimBtn":       "المطالبة بهذه المهمة",
+      "noJobs":         "لا توجد مهام لهذا اليوم."
+    },
+    "detail": {
+      "backBtn":           "العودة إلى النظرة العامة",
+      "estDuration":       "المدة التقديرية: ~{{minutes}} دقيقة",
+      "salesKitBtn":       "حقيبة المبيعات",
+      "timerElapsed":      "الوقت المنقضي",
+      "timerTotal":        "المدة الإجمالية",
+      "timerIdle":         "جاهز للبدء",
+      "callCustomer":      "الاتصال بالعميل",
+      "dispatch":          "المرسل",
+      "claimJob":          "المطالبة بالمهمة",
+      "iAmHere":           "أنا هنا",
+      "runningLate":       "تأخير",
+      "arrivalSentTitle":  "تم إرسال تنبيه الوصول",
+      "arrivalSentTime":   "آخر إرسال في {{time}}",
+      "cooldownRemaining": "وقت الانتظار: {{countdown}} متبقٍ",
+      "cooldownDone":      "انتهى وقت الانتظار — يمكن الإشعار مجدداً.",
+      "delaySentTitle":    "تم إرسال إشعار التأخير",
+      "delaySentTime":     "أُرسل في {{time}}",
+      "startJob":          "بدء المهمة",
+      "finish":            "إنهاء",
+      "resume":            "استئناف",
+      "pause":             "إيقاف مؤقت",
+      "locationLabel":     "الموقع",
+      "noAddress":         "لا يوجد عنوان محفوظ. استخدم هاتف العميل للتأكيد.",
+      "serviceAddress":    "الخدمة",
+      "openMaps":          "فتح في الخرائط",
+      "otherWorker":       "هذه المهمة مخصصة لعامل آخر."
+    },
+    "checklist": {
+      "title":        "خطوات العمل",
+      "subtitle":     "أكمل كل مهمة بالترتيب",
+      "startHint":    "ابدأ المهمة لتفعيل عناصر قائمة التحقق",
+      "empty":        "لا توجد عناصر في قائمة التحقق",
+      "timeLabel":    "الوقت",
+      "startedLabel": "بدأ",
+      "finishedLabel":"انتهى"
+    },
+    "modals": {
+      "completion": {
+        "eyebrow":      "تمت المهمة",
+        "title":        "تمت المهمة",
+        "body":         "اكتمل التفصيل لـ {{name}} وتم إشعار العميل.",
+        "durationLabel":"المدة",
+        "statusLabel":  "الحالة",
+        "statusValue":  "تم تحديث العميل",
+        "backBtn":      "العودة إلى المهام"
+      },
+      "late": {
+        "eyebrow":           "إشعار التأخير",
+        "title":             "تأخير",
+        "body":              "أخبر العميل بمدة تأخيرك والسبب.",
+        "minutesLabel":      "دقائق التأخير",
+        "reasonLabel":       "السبب",
+        "reasonPlaceholder": "تأخير مروري",
+        "sendBtn":           "إرسال الإشعار"
+      },
+      "finish": {
+        "eyebrow":    "تأكيد الإجراء",
+        "title":      "إنهاء المهمة؟",
+        "body":       "سيؤدي هذا إلى تمييز المهمة كمكتملة وإشعار العميل والمشرف.",
+        "confirmBtn": "نعم، إنهاء"
+      },
+      "pause": {
+        "eyebrow":           "إيقاف المهمة مؤقتاً",
+        "title":             "سبب الإيقاف المؤقت",
+        "body":              "سيتم إشعار المشرف والعميل.",
+        "reasonLabel":       "السبب",
+        "reasonPlaceholder": "استراحة صلاة، طارئ، إلخ.",
+        "pauseBtn":          "إيقاف المهمة مؤقتاً"
+      },
+      "salesKit": {
+        "eyebrow":         "خدمات إضافية",
+        "title":           "حقيبة المبيعات",
+        "subtitle":        "أضف خدمات إضافية غير مشمولة في الباقة المحجوزة.",
+        "defaultJob":      "المهمة الحالية",
+        "defaultCustomer": "العميل",
+        "itemsLabel":      "العناصر",
+        "totalLabel":      "الإجمالي",
+        "estTimeLabel":    "الوقت التقديري",
+        "allIncluded":     "جميع الخدمات مشمولة بالفعل في هذا الحجز.",
+        "defaultDesc":     "خدمة تفصيل احترافية.",
+        "addDuration":     "+~{{minutes}} دقيقة",
+        "confirmBtn":      "تأكيد الاختيار ({{count}})"
+      }
+    }
+  },
+  "admin": {
+    "dispatch": {
+      "eyebrow":       "الإرسال",
+      "title":         "لوحة الإرسال",
+      "statsJobs":     "المهام",
+      "statsLive":     "مباشر",
+      "statsUpcoming": "القادمة",
+      "statsDone":     "منجز",
+      "statsEarned":   "المكتسب",
+      "unassigned":    "غير مخصص ({{count}})",
+      "noJobs":        "لا توجد مهام اليوم."
+    },
+    "pipeline": {
+      "eyebrow":           "خط الأعمال",
+      "title":             "جميع المهام",
+      "bookingCount_one":  "حجز واحد",
+      "bookingCount_other":"{{count}} حجوزات",
+      "filters": {
+        "today":    "اليوم",
+        "week":     "7 أيام",
+        "upcoming": "القادمة",
+        "all":      "الكل"
+      },
+      "noJobs": "لا توجد مهام تطابق هذا الفلتر."
+    },
+    "detail": {
+      "cancellationRequest": "طلب الإلغاء",
+      "rescheduleRequest":   "طلب إعادة الجدولة",
+      "noReason":            "لم يُذكر سبب",
+      "noNote":              "لا توجد ملاحظة",
+      "prefers":             "يُفضّل: {{date}}",
+      "packages":            "الباقات",
+      "total":               "الإجمالي",
+      "estTime":             "الوقت التقديري",
+      "payment":             "الدفع",
+      "paid":                "مدفوع",
+      "unpaid":              "غير مدفوع",
+      "changeStatus":        "تغيير الحالة",
+      "callCustomer":        "الاتصال بالعميل",
+      "maps":                "الخرائط"
+    }
+  }
+}

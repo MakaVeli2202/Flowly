@@ -1,0 +1,6 @@
+@Glanz.API_HostAddress = http://localhost:5289
+
+GET {{Glanz.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

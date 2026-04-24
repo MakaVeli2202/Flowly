@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+
+# Keep auth, account, and admin pages out of the index
+Disallow: /login
+Disallow: /register
+Disallow: /booking
+Disallow: /booking-confirmation/
+Disallow: /my-bookings
+Disallow: /profile
+Disallow: /admin/
+
+Sitemap: https://glanz.qa/sitemap.xml

@@ -1,0 +1,757 @@
+/* index.css — complete */
+
+/* ─────────────────────────────────────────────────────────
+   1. FONTS & TAILWIND
+   ───────────────────────────────────────────────────────── */
+/* Fonts loaded via <link> in index.html — not @import (faster, less CLS) */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─────────────────────────────────────────────────────────
+   2. CSS RESET
+   ───────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* ─────────────────────────────────────────────────────────
+   3. DESIGN TOKENS
+   ───────────────────────────────────────────────────────── */
+:root {
+  --surface-bg:     #0d1117;
+  --surface-bg-alt: #111927;
+  --text-color:     #e8e9ec;
+  --heading-color:  #ffffff;
+  --muted-color:    rgba(176, 184, 195, 0.9);
+  --border-color:       rgba(255, 255, 255, 0.11);
+  --border-strong:      rgba(255, 255, 255, 0.20);
+  --nav-bg:         rgba(13, 17, 23, 0.78);
+  --card-bg:        rgba(255, 255, 255, 0.05);
+  --card-border:    rgba(255, 255, 255, 0.11);
+  --cta-soft-bg:       rgba(255, 255, 255, 0.07);
+  --cta-soft-hover-bg: rgba(255, 255, 255, 0.13);
+  --primary-rgb:        200, 169, 107;
+  --primary-bg:         rgba(200, 169, 107, 0.08);
+  --primary-bg2:        rgba(200, 169, 107, 0.14);
+  --primary-border:     rgba(200, 169, 107, 0.25);
+  --shadow-heavy: 0 18px 45px rgba(0, 0, 0, 0.35);
+  --booking-highlight-strong: rgba(59,  130, 246, 0.28);
+  --booking-highlight-soft:   rgba(56,  189, 248, 0.18);
+  --cursor-x: -9999px;
+  --cursor-y: -9999px;
+}
+:root[data-theme='light'] {
+  --surface-bg:     #f3f5f8;
+  --surface-bg-alt: #e8edf4;
+  --text-color:     #1c2430;
+  --heading-color:  #0b1320;
+  --muted-color:    rgba(26, 37, 50, 0.72);
+  --border-color:       rgba(14, 23, 34, 0.12);
+  --border-strong:      rgba(14, 23, 34, 0.22);
+  --nav-bg:         rgba(244, 248, 255, 0.82);
+  --card-bg:        rgba(255, 255, 255, 0.70);
+  --card-border:    rgba(12,  22,  36,  0.10);
+  --cta-soft-bg:       rgba(20, 28, 40, 0.06);
+  --cta-soft-hover-bg: rgba(20, 28, 40, 0.11);
+  --primary-bg:         rgba(200, 169, 107, 0.10);
+  --primary-bg2:        rgba(200, 169, 107, 0.18);
+  --primary-border:     rgba(200, 169, 107, 0.30);
+  --shadow-heavy:   0 15px 36px rgba(25, 46, 76, 0.16);
+  --booking-highlight-strong: rgba(37,  99,  235, 0.20);
+  --booking-highlight-soft:   rgba(147, 197, 253, 0.22);
+}
+
+/* ─────────────────────────────────────────────────────────
+   4. BASE STYLES
+   ───────────────────────────────────────────────────────── */
+body {
+  font-family: 'Manrope', 'Segoe UI', sans-serif;
+  background:
+    radial-gradient(circle at 10% 15%, rgba(200, 169, 107, 0.28), transparent 38%),
+    radial-gradient(circle at 85%  8%, rgba(14, 165, 160, 0.22),  transparent 34%),
+    radial-gradient(circle at 50% 55%, rgba(200, 169, 107, 0.10), transparent 40%),
+    radial-gradient(circle at 20% 80%, rgba(14, 165, 160, 0.12),  transparent 32%),
+    linear-gradient(160deg, var(--surface-bg) 0%, var(--surface-bg-alt) 52%, var(--surface-bg) 100%);
+  background-attachment: fixed;
+  color:      var(--text-color);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background 0.35s ease, color 0.25s ease;
+}
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+#root { min-height: 100vh; }
+
+/* ─────────────────────────────────────────────────────────
+   5. COMPONENT CLASSES
+   ───────────────────────────────────────────────────────── */
+@layer components {
+  .glass-card {
+    @apply rounded-2xl backdrop-blur-md;
+    border:     1px solid var(--card-border);
+    background: var(--card-bg);
+    box-shadow: var(--shadow-heavy);
+  }
+  .premium-heading {
+    font-family:    'Cormorant Garamond', Georgia, serif;
+    letter-spacing: 0.01em;
+  }
+  .premium-btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 font-semibold transition duration-300;
+    position:   relative;
+    overflow:   hidden;
+    background: linear-gradient(135deg, #c8a96b 0%, #a88442 100%);
+    color:      #101823;
+    box-shadow: 0 12px 35px rgba(200, 169, 107, 0.28);
+  }
+  .premium-btn::after {
+    content:        '';
+    position:       absolute;
+    inset:          0;
+    background:     linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.32) 50%, transparent 70%);
+    transform:      translateX(-130%) skewX(-15deg);
+    transition:     transform 0.55s ease;
+    pointer-events: none;
+  }
+  .premium-btn:hover {
+    transform:  translateY(-3px) scale(1.03);
+    box-shadow: 0 22px 52px rgba(200, 169, 107, 0.52), 0 0 0 1px rgba(200, 169, 107, 0.38);
+  }
+  .premium-btn:hover::after  { transform: translateX(130%) skewX(-15deg); }
+  .premium-btn:active        { transform: translateY(-1px) scale(0.985); transition-duration: 0.08s; }
+
+  .secondary-cta {
+    @apply inline-flex items-center gap-2 px-8 py-4 rounded-xl transition text-lg font-semibold;
+    position:   relative;
+    overflow:   hidden;
+    border:     1px solid var(--border-color);
+    background: var(--cta-soft-bg);
+    color:      var(--heading-color);
+  }
+  .secondary-cta::after {
+    content:        '';
+    position:       absolute;
+    inset:          0;
+    background:     linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.10) 50%, transparent 70%);
+    transform:      translateX(-130%) skewX(-15deg);
+    transition:     transform 0.55s ease;
+    pointer-events: none;
+  }
+  .secondary-cta:hover {
+    background:   var(--cta-soft-hover-bg);
+    transform:    translateY(-3px);
+    border-color: rgba(200, 169, 107, 0.50);
+    box-shadow:   0 14px 36px rgba(200, 169, 107, 0.16);
+  }
+  .secondary-cta:hover::after { transform: translateX(130%) skewX(-15deg); }
+  .secondary-cta:active       { transform: translateY(-1px); transition-duration: 0.08s; }
+
+  .app-shell  { color: var(--text-color); }
+  .themed-nav {
+    @apply border-b backdrop-blur-xl;
+    border-color: var(--border-color);
+    background:   var(--nav-bg);
+  }
+  .nav-brand      { color: var(--heading-color); }
+  .nav-link       { color: var(--muted-color); transition: color 0.2s ease; }
+  .nav-link:hover { color: #c8a96b; }
+  .nav-user       { color: var(--muted-color); }
+
+  .hero-modern { border-color: color-mix(in srgb, #c8a96b 24%, var(--card-border)); }
+  .hero-title  { color: var(--heading-color); }
+
+  .stat-card {
+    @apply glass-card p-6 text-center flex flex-col items-center justify-center;
+    position:   relative;
+    overflow:   hidden;
+    min-height: 110px;
+    contain:    layout style;
+  }
+  .stat-card::before {
+    content:        '';
+    position:       absolute;
+    inset:          0;
+    background:     linear-gradient(135deg, rgba(200,169,107,0.07) 0%, rgba(14,165,160,0.05) 100%);
+    pointer-events: none;
+  }
+  .stat-card::after {
+    content:        '';
+    position:       absolute;
+    top: 0; left: 15%; right: 15%;
+    height:         1.5px;
+    background:     linear-gradient(90deg, transparent, rgba(200,169,107,0.75), rgba(14,165,160,0.60), transparent);
+    pointer-events: none;
+  }
+  .stat-number {
+    font-family:          'Cormorant Garamond', Georgia, serif;
+    font-size:            2.75rem;
+    font-weight:          700;
+    line-height:          1;
+    color:                var(--heading-color);
+    letter-spacing:      -0.01em;
+    display:              block;
+    font-variant-numeric: tabular-nums;
+    min-width:            5ch;
+  }
+  .stat-label {
+    font-size:      0.78rem;
+    font-weight:    600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color:          var(--muted-color);
+    margin-top:     0.35rem;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────
+   6. THEME OVERRIDES
+   ───────────────────────────────────────────────────────── */
+[data-theme='dark']  .app-shell :is(.bg-white, .bg-gray-50, .bg-gray-100)
+  { background-color: rgba(255,255,255,0.05) !important; color: var(--text-color); }
+[data-theme='light'] .app-shell :is(.bg-white, .bg-gray-50, .bg-gray-100)
+  { background-color: rgba(255,255,255,0.82) !important; color: var(--text-color); }
+[data-theme='dark']  .app-shell :is(.text-gray-900, .text-gray-800, .text-gray-700) { color: var(--heading-color) !important; }
+[data-theme='dark']  .app-shell :is(.text-gray-600, .text-gray-500, .text-gray-400) { color: var(--muted-color)   !important; }
+[data-theme='light'] .app-shell :is(.text-gray-900, .text-gray-800, .text-gray-700) { color: var(--heading-color) !important; }
+[data-theme='light'] .app-shell :is(.text-gray-600, .text-gray-500, .text-gray-400) { color: var(--muted-color)   !important; }
+[data-theme='dark']  .app-shell :is(.border-gray-300, .border-gray-200, .border-gray-100, .border-b, .border-t)
+  { border-color: var(--border-color) !important; }
+[data-theme='light'] .app-shell :is(.border-gray-300, .border-gray-200, .border-gray-100, .border-b, .border-t)
+  { border-color: var(--border-color) !important; }
+[data-theme='dark']  .app-shell :is(input, textarea)
+  { color: var(--text-color); background-color: color-mix(in srgb, var(--cta-soft-bg) 75%, transparent); border-color: var(--border-color); }
+[data-theme='light'] .app-shell :is(input, textarea)
+  { color: var(--text-color); background-color: rgba(255,255,255,0.92); border-color: var(--border-color); }
+.app-shell :is(input, textarea, select)::placeholder { color: var(--muted-color); }
+.app-shell select,
+.app-shell select option,
+.app-shell select optgroup { background-color: #ffffff !important; color: #000000 !important; }
+.app-shell select:focus    { background-color: #ffffff !important; color: #000000 !important; }
+[data-theme='dark']  .app-shell :is(tr:hover, .hover\:bg-gray-50:hover, .hover\:bg-gray-100:hover, .hover\:bg-gray-200:hover)
+  { background-color: rgba(255,255,255,0.08) !important; }
+[data-theme='light'] .app-shell :is(tr:hover, .hover\:bg-gray-50:hover, .hover\:bg-gray-100:hover, .hover\:bg-gray-200:hover)
+  { background-color: rgba(11,19,32,0.06) !important; }
+
+/* ─────────────────────────────────────────────────────────
+   7. NOTIFICATIONS
+   ───────────────────────────────────────────────────────── */
+.notifications-dropdown,
+.notifications-panel                           { background: color-mix(in srgb, var(--surface-bg-alt) 92%, white 8%); }
+[data-theme='light'] .notifications-dropdown,
+[data-theme='light'] .notifications-panel      { background: rgba(255,255,255,0.96); }
+[data-theme='dark']  .notification-item.notification-item-read
+  { background: rgba(15,23,42,0.82) !important; border-color: var(--border-color) !important; }
+[data-theme='dark']  .notification-item.notification-item-unread
+  { background: rgba(30,58,138,0.35) !important; border-color: rgba(96,165,250,0.55) !important; }
+[data-theme='dark']  .notification-item-title   { color: var(--heading-color) !important; }
+[data-theme='dark']  .notification-item-message { color: var(--text-color)    !important; }
+[data-theme='dark']  .notification-item-time    { color: var(--muted-color)   !important; }
+
+/* ─────────────────────────────────────────────────────────
+   8. BOOKING DETAIL WINDOW
+   ───────────────────────────────────────────────────────── */
+.booking-details-overlay { background-color: rgba(0,0,0,0.86) !important; }
+[data-theme='light'] .booking-details-window { background-color: #ffffff !important; }
+[data-theme='dark']  .booking-details-window
+  { background-color: rgba(15,23,42,1) !important; border: 1px solid var(--border-color); }
+[data-theme='dark'] .booking-finance-card
+  { background: linear-gradient(135deg, rgba(15,23,42,0.94), rgba(30,41,59,0.92)) !important; border-color: rgba(96,165,250,0.35) !important; }
+[data-theme='dark'] .booking-finance-label         { color: var(--muted-color) !important; }
+[data-theme='dark'] .booking-finance-value-revenue { color: #93c5fd            !important; }
+[data-theme='dark'] .booking-finance-value-profit  { color: #86efac            !important; }
+[data-theme='dark'] .booking-finance-value-cost    { color: #fda4af            !important; }
+[data-theme='dark'] .completion-time-card   { background: rgba(6,78,59,0.28)   !important; border-color: rgba(52,211,153,0.45) !important; }
+[data-theme='dark'] .completion-time-title  { color: #bbf7d0 !important; }
+[data-theme='dark'] .completion-time-value  { color: #86efac !important; }
+[data-theme='dark'] .completion-time-meta   { color: #a7f3d0 !important; }
+[data-theme='dark'] .booking-checklist-title                                  { color: var(--heading-color) !important; }
+[data-theme='dark'] .booking-checklist-item                                   { background-color: rgba(30,41,59,0.78) !important; border-color: var(--border-color) !important; }
+[data-theme='dark'] .booking-checklist-item-completed                         { background-color: rgba(6,78,59,0.26)  !important; border-color: rgba(74,222,128,0.45) !important; }
+[data-theme='dark'] .booking-checklist-label                                  { color: var(--text-color)   !important; }
+[data-theme='dark'] .booking-checklist-item-completed .booking-checklist-label { color: #86efac             !important; }
+[data-theme='dark'] .booking-checklist-completed-meta                         { color: #a7f3d0              !important; }
+[data-theme='dark'] .booking-checklist-empty                                  { color: var(--muted-color)  !important; }
+[data-theme='dark']  .booking-details-close-btn
+  { background-color: rgba(30,41,59,1) !important; color: var(--heading-color) !important; border: 1px solid var(--border-color); }
+[data-theme='dark']  .booking-details-close-btn:hover { background-color: rgba(51,65,85,1) !important; }
+[data-theme='light'] .booking-details-close-btn
+  { background-color: #e2e8f0 !important; color: #0f172a !important; border: 1px solid rgba(15,23,42,0.20); }
+[data-theme='light'] .booking-details-close-btn:hover { background-color: #cbd5e1 !important; }
+
+/* ─────────────────────────────────────────────────────────
+   9. ADMIN TABLE BOOKING HIGHLIGHT
+   ───────────────────────────────────────────────────────── */
+@keyframes highlight-pulse {
+  0%, 100% { background-color: var(--booking-highlight-strong); }
+  50%       { background-color: var(--booking-highlight-soft);  }
+}
+@keyframes highlight-fade {
+  from { background-color: var(--booking-highlight-soft); }
+  to   { background-color: transparent; }
+}
+.highlight-flash    { animation: highlight-pulse 0.6s ease-in-out !important; }
+.highlight-fade-out { animation: highlight-fade  0.5s ease-out forwards !important; }
+
+/* ─────────────────────────────────────────────────────────
+   10. ANIMATIONS
+   ───────────────────────────────────────────────────────── */
+@keyframes heroEnter {
+  from { opacity: 0; transform: translateY(22px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+.hero-animate   { animation: heroEnter 0.72s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.hero-animate-1 { animation-delay: 0.08s; }
+.hero-animate-2 { animation-delay: 0.22s; }
+.hero-animate-3 { animation-delay: 0.38s; }
+.hero-animate-4 { animation-delay: 0.52s; }
+
+.reveal-up    { opacity: 0; transform: translateY(36px);  transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1), transform 0.65s cubic-bezier(0.16, 1, 0.3, 1); }
+.reveal-fade  { opacity: 0;                               transition: opacity 0.70s ease; }
+.reveal-left  { opacity: 0; transform: translateX(-36px); transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1), transform 0.65s cubic-bezier(0.16, 1, 0.3, 1); }
+.reveal-right { opacity: 0; transform: translateX(36px);  transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1), transform 0.65s cubic-bezier(0.16, 1, 0.3, 1); }
+.reveal-up.visible, .reveal-fade.visible, .reveal-left.visible, .reveal-right.visible
+  { opacity: 1; transform: translate(0, 0); }
+.reveal-delay-1 { transition-delay: 0.08s; }
+.reveal-delay-2 { transition-delay: 0.18s; }
+.reveal-delay-3 { transition-delay: 0.30s; }
+.reveal-delay-4 { transition-delay: 0.44s; }
+
+.lift { transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease; }
+.lift:hover { transform: translateY(-6px); box-shadow: 0 28px 60px rgba(0,0,0,0.32), 0 0 0 1px rgba(200,169,107,0.10); }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+.animate-fadeIn { animation: fadeIn 0.3s ease-out; }
+
+@keyframes wordUp {
+  from { transform: translateY(108%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+.word-clip        { display: inline-block; overflow: hidden; vertical-align: bottom; line-height: 1.15; }
+.word-clip > span { display: inline-block; animation: wordUp 0.75s cubic-bezier(0.16, 1, 0.3, 1) both; line-height: inherit; }
+
+/* ─────────────────────────────────────────────────────────
+   11. LUXURY FX LAYER
+   ───────────────────────────────────────────────────────── */
+.cursor-spotlight {
+  pointer-events: none;
+  position:       fixed;
+  inset:          0;
+  z-index:        9996;
+  background:     radial-gradient(650px circle at var(--cursor-x) var(--cursor-y), rgba(200,169,107,0.07), transparent 55%);
+}
+@media (hover: none) { .cursor-spotlight { display: none; } }
+
+@keyframes grainShift {
+  0%   { transform: translate(0,    0);   }
+  16%  { transform: translate(-3px, 4px); }
+  33%  { transform: translate(4px, -2px); }
+  50%  { transform: translate(-4px, 3px); }
+  66%  { transform: translate(3px,  5px); }
+  83%  { transform: translate(-2px,-4px); }
+  100% { transform: translate(0,    0);   }
+}
+.noise-grain {
+  pointer-events: none;
+  position:       fixed;
+  top: -150px; left: -150px;
+  width:    calc(100% + 300px);
+  height:   calc(100% + 300px);
+  z-index:  9995;
+  opacity:  0.028;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+  animation:       grainShift 0.7s steps(1) infinite;
+}
+
+@keyframes shiftGrad {
+  0%   { background-position:   0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position:   0% 50%; }
+}
+.scroll-progress-bar {
+  pointer-events:   none;
+  position:         fixed;
+  top: 0; left: 0;
+  height:           2px;
+  z-index:          10000;
+  transform-origin: left center;
+  background:       linear-gradient(90deg, #c8a96b 0%, #f0d080 45%, #0ea5a0 100%);
+  background-size:  200% 100%;
+  animation:        shiftGrad 2.5s ease infinite;
+  box-shadow:       0 0 10px rgba(200,169,107,0.55), 0 0 3px rgba(200,169,107,0.90);
+}
+
+@keyframes floatA { 0%, 100% { transform: translateY(0px);   } 50% { transform: translateY(-20px); } }
+@keyframes floatB { 0%, 100% { transform: translateY(0px);   } 50% { transform: translateY( 16px); } }
+.float-a { animation: floatA  8s ease-in-out infinite; }
+.float-b { animation: floatB 10s ease-in-out infinite; }
+
+@keyframes orbPulse {
+  0%,100% { transform: scale(1)    translateY(0px);   opacity: 0.22; }
+  40%     { transform: scale(1.10) translateY(-18px); opacity: 0.35; }
+  70%     { transform: scale(0.92) translateY( 12px); opacity: 0.18; }
+}
+.bg-orb-1 { animation: orbPulse 11s ease-in-out infinite; }
+.bg-orb-2 { animation: orbPulse 15s ease-in-out infinite reverse; }
+
+@keyframes shimmerMove {
+  from { background-position: -200% center; }
+  to   { background-position:  200% center; }
+}
+.shimmer-divider {
+  height:     1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(200,169,107,0.12) 15%, rgba(200,169,107,0.65) 50%, rgba(200,169,107,0.12) 85%, transparent 100%);
+  background-size: 200% 100%;
+  animation:  shimmerMove 4s linear infinite;
+  max-width:  640px;
+  margin:     0 auto;
+}
+
+.marquee-outer {
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, black 10%, black 90%, transparent);
+          mask-image: linear-gradient(90deg, transparent, black 10%, black 90%, transparent);
+}
+@keyframes marqueeScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.marquee-inner {
+  display:     flex;
+  width:       max-content;
+  animation:   marqueeScroll 42s linear infinite;
+  will-change: transform;
+  transform:   translateZ(0);
+}
+.marquee-outer:hover .marquee-inner { animation-play-state: paused; }
+
+/* ─────────────────────────────────────────────────────────
+   12. FEATURE CARDS — full size always, hover = glow only
+   ───────────────────────────────────────────────────────── */
+.feature-card {
+  position:     relative;
+  overflow:     hidden;
+  contain:      layout style;
+  border-color: transparent;
+  transition:   box-shadow 0.4s ease, border-color 0.4s ease;
+}
+.feature-card::after {
+  content:        '';
+  position:       absolute;
+  inset:          0;
+  border-radius:  inherit;
+  background:     radial-gradient(300px circle at var(--card-x, 50%) var(--card-y, 50%), rgba(200,169,107,0.13), transparent 65%);
+  opacity:        0;
+  transition:     opacity 0.4s ease;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+.feature-card:hover::after {
+  opacity: 1;
+}
+.feature-card:hover {
+  box-shadow:   0 0 0 1px rgba(200,169,107,0.28), 0 24px 56px rgba(0,0,0,0.38), 0 0 40px rgba(200,169,107,0.12);
+  border-color: rgba(200,169,107,0.22) !important;
+}
+
+/* ─────────────────────────────────────────────────────────
+   13. TILT CARD (used elsewhere in app)
+   ───────────────────────────────────────────────────────── */
+.tilt-card { transform-style: preserve-3d; transition: transform 0.12s ease-out, box-shadow 0.3s ease; }
+
+/* ─────────────────────────────────────────────────────────
+   14. FLOATING CTA BUTTON
+   ───────────────────────────────────────────────────────── */
+.floating-cta-btn {
+  position:      fixed;
+  bottom:        1.75rem;
+  right:         1.5rem;
+  z-index:       400;
+  display:       flex;
+  align-items:   center;
+  gap:           0.5rem;
+  padding:       0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  opacity:       0;
+  visibility:    hidden;
+  transform:     translateY(20px);
+  transition:    opacity 0.3s ease-out, visibility 0.3s ease-out, transform 0.3s ease-out;
+  box-shadow:    0 8px 36px rgba(200,169,107,0.50), 0 2px 10px rgba(0,0,0,0.25);
+}
+.floating-cta-btn.visible {
+  opacity:    1;
+  visibility: visible;
+  transform:  translateY(0);
+}
+@media (max-width: 768px) {
+  .floating-cta-btn { bottom: 1rem; right: 1rem; padding: 0.625rem 1rem; font-size: 0.875rem; }
+}
+
+/* ─────────────────────────────────────────────────────────
+   15. REVIEWS CAROUSEL
+   ───────────────────────────────────────────────────────── */
+.reviews-carousel              { scroll-behavior: smooth; -webkit-user-select: none; user-select: none; }
+.reviews-carousel.dragging     { scroll-behavior: auto; }
+
+/* ─────────────────────────────────────────────────────────
+   16. CTA GLOW
+   ───────────────────────────────────────────────────────── */
+.cta-prism-glow {
+  animation:     cta-rainbow-glow 5s ease-in-out infinite;
+  border-radius: inherit;
+  contain:       layout style;
+}
+.cta-prism-glow > .glass-card {
+  border: none;
+}
+
+/* ─────────────────────────────────────────────────────────
+   17. PRISM FX
+   ───────────────────────────────────────────────────────── */
+@keyframes holo-sweep {
+  0%   { background-position:   0% 50%; }
+  100% { background-position: 300% 50%; }
+}
+@keyframes scan-down {
+  0%   { transform: translateY(0);        opacity: 0; }
+  8%   {                                  opacity: 1; }
+  92%  {                                  opacity: 1; }
+  100% { transform: translateY(100vh);    opacity: 0; }
+}
+@keyframes prism-ray-sweep {
+  0%   { transform: translateX(-130%) skewX(-15deg); opacity: 0; }
+  10%  {                                              opacity: 1; }
+  90%  {                                              opacity: 1; }
+  100% { transform: translateX(460%)  skewX(-15deg); opacity: 0; }
+}
+@keyframes spectrum-float {
+  0%,100% { transform: translate(0,0)        rotate(0deg);   opacity: 0.28; }
+  33%      { transform: translate(18px,-24px) rotate(120deg); opacity: 0.55; }
+  66%      { transform: translate(-12px,12px) rotate(240deg); opacity: 0.38; }
+}
+@keyframes cta-rainbow-glow {
+  0%,100% { box-shadow: 0 0 0 1.5px rgba(255,80,80,0.5),  0 0 28px rgba(255,165,0,0.2),  0 0 55px rgba(0,255,100,0.15),  0 0 90px rgba(0,100,255,0.1);  }
+  25%     { box-shadow: 0 0 0 1.5px rgba(255,210,0,0.5),  0 0 28px rgba(0,255,150,0.2),  0 0 55px rgba(0,150,255,0.15),  0 0 90px rgba(200,0,255,0.1); }
+  50%     { box-shadow: 0 0 0 1.5px rgba(0,200,255,0.5),  0 0 28px rgba(160,0,255,0.2),  0 0 55px rgba(255,0,100,0.15),  0 0 90px rgba(255,220,0,0.1); }
+  75%     { box-shadow: 0 0 0 1.5px rgba(0,255,120,0.5),  0 0 28px rgba(255,0,100,0.2),  0 0 55px rgba(255,210,0,0.15),  0 0 90px rgba(0,255,150,0.1); }
+}
+@keyframes prism-card-glow {
+  0%,100% { box-shadow: 0 0 0 1px rgba(255,100,80,0.4),  0 0 20px rgba(255,165,0,0.16),  0 0 44px rgba(0,255,100,0.12); }
+  33%     { box-shadow: 0 0 0 1px rgba(0,160,255,0.4),   0 0 20px rgba(160,0,255,0.16),  0 0 44px rgba(255,0,100,0.12); }
+  66%     { box-shadow: 0 0 0 1px rgba(0,255,150,0.4),   0 0 20px rgba(255,255,0,0.16),  0 0 44px rgba(0,100,255,0.12); }
+}
+
+.prism-cursor-blob {
+  position:       fixed;
+  top:            0;
+  left:           0;
+  pointer-events: none;
+  z-index:        9999;
+  border-radius:  50%;
+  filter:         blur(85px);
+  mix-blend-mode: screen;
+  will-change:    transform;
+  transform:      translate(-9999px, -9999px);
+  background: conic-gradient(from var(--blob-hue, 0deg),
+    rgba(255, 0,   80,  0.23), rgba(255, 160, 0,   0.21),
+    rgba(255, 255, 0,   0.18), rgba(0,   255, 100, 0.21),
+    rgba(0,   160, 255, 0.23), rgba(160, 0,   255, 0.21),
+    rgba(255, 0,   80,  0.23));
+}
+
+.hero-scan-line {
+  position:       absolute;
+  left:           0; right: 0; top: 0;
+  height:         1.5px;
+  z-index:        20;
+  pointer-events: none;
+  will-change:    transform, opacity;
+  animation:      scan-down 7s ease-in-out infinite;
+  background:     linear-gradient(90deg,
+    transparent              0%,  rgba(255,55,55,0.9)   12%,
+    rgba(255,155,0,0.95)    25%,  rgba(255,255,0,0.95)  37%,
+    rgba(0,255,115,0.9)     50%,  rgba(0,175,255,0.9)   62%,
+    rgba(175,0,255,0.85)    75%,  transparent           100%);
+  filter: blur(0.6px);
+}
+
+.prism-ray {
+  position:       absolute;
+  top:            -30%;
+  height:         160%;
+  pointer-events: none;
+  transform:      skewX(-18deg);
+  will-change:    transform, opacity;
+  background:     linear-gradient(90deg,
+    transparent              0%,  rgba(255,55,55,0.055)  15%,
+    rgba(255,200,0,0.08)    30%,  rgba(0,255,145,0.07)   50%,
+    rgba(0,145,255,0.07)    70%,  rgba(195,0,255,0.05)   85%,
+    transparent             100%);
+}
+
+.prism-glass { position: relative; overflow: hidden; transition: box-shadow 0.45s ease; }
+.prism-glass::after {
+  content:        '';
+  position:       absolute;
+  inset:          0;
+  border-radius:  inherit;
+  pointer-events: none;
+  background:     radial-gradient(
+    circle at var(--px, 50%) var(--py, 50%),
+    rgba(255,200,80,0.20) 0%, rgba(80,255,160,0.14) 25%,
+    rgba(40,130,255,0.14) 50%, rgba(200,40,255,0.10) 70%, transparent 86%);
+  opacity:        0;
+  transition:     opacity 0.3s;
+  mix-blend-mode: screen;
+}
+.prism-glass:hover::after { opacity: 1; }
+.prism-glass:hover        { animation: prism-card-glow 4s ease-in-out infinite; }
+
+.area-chip-glow { position: relative; overflow: hidden; transition: transform 0.25s ease, box-shadow 0.3s ease; }
+.area-chip-glow::before {
+  content:        '';
+  position:       absolute;
+  inset:          0;
+  border-radius:  inherit;
+  pointer-events: none;
+  background:     linear-gradient(135deg,
+    rgba(255,0,100,0) 0%, rgba(255,165,0,0) 33%,
+    rgba(0,255,100,0) 66%, rgba(0,150,255,0) 100%);
+  opacity:    0;
+  transition: opacity 0.35s, background 0.45s;
+}
+.area-chip-glow:hover {
+  transform:    translateY(-3px) scale(1.07);
+  border-color: rgba(255,255,255,0.38) !important;
+  box-shadow:
+    0 0 20px rgba(255,100,0,0.32), 0 0 38px rgba(0,255,150,0.22),
+    0 0 58px rgba(0,100,255,0.18), inset 0 0 20px rgba(255,220,0,0.09);
+}
+.area-chip-glow:hover::before {
+  background: linear-gradient(135deg,
+    rgba(255,0,100,0.15) 0%, rgba(255,165,0,0.15) 33%,
+    rgba(0,255,100,0.15) 66%, rgba(0,150,255,0.15) 100%);
+  opacity: 1;
+}
+
+.feature-prism-fx {
+  position:       absolute;
+  inset:          0;
+  border-radius:  inherit;
+  pointer-events: none;
+  opacity:        0;
+  transition:     opacity 0.3s;
+  mix-blend-mode: screen;
+  background:     radial-gradient(
+    ellipse at var(--card-x, 50%) var(--card-y, 50%),
+    rgba(255,220,80,0.24) 0%, rgba(80,255,180,0.17) 25%,
+    rgba(60,150,255,0.17) 50%, rgba(200,60,255,0.13) 70%, transparent 86%);
+}
+
+.stat-holo { position: relative; overflow: hidden; }
+.stat-holo::before {
+  content:        '';
+  position:       absolute;
+  inset:          0;
+  border-radius:  inherit;
+  pointer-events: none;
+  background:     linear-gradient(125deg,
+    rgba(255,0,100,0.11) 0%, rgba(255,165,0,0.11) 20%,
+    rgba(255,255,0,0.11) 40%, rgba(0,255,100,0.11) 60%,
+    rgba(0,150,255,0.11) 80%, rgba(150,0,255,0.11) 100%);
+  background-size: 300% 300%;
+  animation:       holo-sweep 8s ease infinite;
+  mix-blend-mode:  screen;
+  opacity:         0;
+  transition:      opacity 0.4s;
+}
+.stat-holo:hover::before { opacity: 1; }
+
+/* spectrum-line: translateX only — compositor thread, zero paint cost */
+.spectrum-line { position: relative; height: 1.5px; overflow: hidden; opacity: 0.50; }
+.spectrum-line::after {
+  content:     '';
+  position:    absolute;
+  top: 0; left: 0;
+  width:       200%;
+  height:      100%;
+  background:  linear-gradient(90deg,
+    transparent 0%,
+    rgba(255,0,100,0.85) 6%, rgba(255,165,0,0.90) 12%, rgba(255,255,0,0.90) 18%,
+    rgba(0,255,100,0.90) 24%, rgba(0,150,255,0.90) 30%, rgba(150,0,255,0.85) 36%,
+    transparent 42%, transparent 50%,
+    rgba(255,0,100,0.85) 56%, rgba(255,165,0,0.90) 62%, rgba(255,255,0,0.90) 68%,
+    rgba(0,255,100,0.90) 74%, rgba(0,150,255,0.90) 80%, rgba(150,0,255,0.85) 86%,
+    transparent 92%);
+  will-change: transform;
+  animation:   spectrum-slide 5s linear infinite;
+  transform:   translateZ(0);
+}
+@keyframes spectrum-slide {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+@keyframes statGlow {
+  0%,100% { text-shadow: none; color: var(--heading-color); }
+  45%     { text-shadow: 0 0 20px rgba(200,169,107,0.80), 0 0 44px rgba(200,169,107,0.35); color: #f0d07a; }
+}
+.stat-glow .stat-number { animation: statGlow 2.6s ease-in-out infinite; }
+
+@keyframes borderGradShift {
+  0%   { background-position:   0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position:   0% 50%; }
+}
+.grad-border-wrap {
+  padding:       1.5px;
+  border-radius: 1.3rem;
+  background:    linear-gradient(135deg, #c8a96b 0%, #f0d080 20%, #0ea5a0 50%, #c8a96b 80%, #f0d080 100%);
+  background-size: 300% 300%;
+  animation:     borderGradShift 6s ease infinite;
+}
+.grad-border-wrap > * { border-radius: calc(1.3rem - 1.5px) !important; }
+
+.tier-accent-gold     { background: linear-gradient(90deg, #c8a96b, #f0d080, #c8a96b); background-size: 200% 100%; animation: shiftGrad 4.0s ease infinite; }
+.tier-accent-platinum { background: linear-gradient(90deg, #8b9dc3, #b8c8e8, #8b9dc3); background-size: 200% 100%; animation: shiftGrad 5.0s ease infinite; }
+.tier-accent-standard { background: linear-gradient(90deg, #0ea5a0, #4dd8d4, #0ea5a0); background-size: 200% 100%; animation: shiftGrad 4.5s ease infinite; }
+.tier-accent-premium  { background: linear-gradient(90deg, #7c3aed, #a78bfa, #7c3aed); background-size: 200% 100%; animation: shiftGrad 4.0s ease infinite; }
+
+/* ─────────────────────────────────────────────────────────
+   18. VIDEO BACKGROUND OVERRIDES
+   ───────────────────────────────────────────────────────── */
+body.has-video-bg .glass-card {
+  background:              rgba(8, 12, 18, 0.45) !important;
+  backdrop-filter:         blur(18px) saturate(1.4) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.4) !important;
+}
+body.has-video-bg .hero-modern {
+  background:              rgba(8, 12, 18, 0.25) !important;
+  backdrop-filter:         blur(4px) !important;
+  -webkit-backdrop-filter: blur(4px) !important;
+  min-height:              85vh !important;
+}
+body.has-video-bg .stat-card,
+body.has-video-bg .feature-card { background: rgba(8, 12, 18, 0.55) !important; }
+.marquee-strip { height: 44px; overflow: hidden; }
+
+/* ─────────────────────────────────────────────────────────
+   19. REDUCED MOTION — always last
+   ───────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .reveal-up, .reveal-fade, .reveal-left, .reveal-right,
+  .hero-animate, .cursor-spotlight, .noise-grain, .scroll-progress-bar,
+  .marquee-inner, .bg-orb-1, .bg-orb-2, .shimmer-divider,
+  .stat-glow .stat-number, .grad-border-wrap, .float-a, .float-b,
+  .hero-scan-line, .prism-ray, .spectrum-line::after {
+    animation: none !important; opacity: 1 !important;
+    transform: none !important; transition: none !important;
+  }
+  .floating-cta-btn { transform: none !important; opacity: 1 !important; }
+  .word-clip > span  { animation: none !important; opacity: 1 !important; transform: none !important; }
+}

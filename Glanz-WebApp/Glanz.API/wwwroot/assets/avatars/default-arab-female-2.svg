@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Arab female avatar 2 – coral hijab">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FBE8DC"/>
+      <stop offset="1" stop-color="#F5D5C0"/>
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" fill="url(#bg)"/>
+  <!-- Coral clothing body -->
+  <path d="M26 256 Q48 162 128 155 Q208 162 230 256Z" fill="#E07040"/>
+  <!-- Coral hijab outer -->
+  <ellipse cx="128" cy="104" rx="76" ry="83" fill="#E07040"/>
+  <!-- Hijab under-chin shadow -->
+  <path d="M68 132 Q128 170 188 132 Q192 182 128 186 Q64 182 68 132Z" fill="#C05828"/>
+  <!-- Hijab highlight -->
+  <ellipse cx="115" cy="48" rx="28" ry="14" fill="#F08858" opacity="0.55"/>
+  <!-- Face (medium warm skin) -->
+  <ellipse cx="128" cy="94" rx="48" ry="53" fill="#C89070"/>
+  <!-- Eyebrows -->
+  <path d="M97 75 C106 69 117 70 124 75" stroke="#2A1005" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M132 75 C139 70 150 69 159 75" stroke="#2A1005" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <!-- Eyes -->
+  <ellipse cx="111" cy="87" rx="9" ry="10" fill="#2C1000"/>
+  <ellipse cx="145" cy="87" rx="9" ry="10" fill="#2C1000"/>
+  <circle cx="114" cy="84.5" r="3" fill="white" opacity="0.5"/>
+  <circle cx="148" cy="84.5" r="3" fill="white" opacity="0.5"/>
+  <!-- Nose -->
+  <path d="M122 103 Q128 115 134 103" stroke="#9E6848" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+  <!-- Mouth -->
+  <path d="M113 119 Q128 130 143 119" stroke="#7A4828" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+</svg>

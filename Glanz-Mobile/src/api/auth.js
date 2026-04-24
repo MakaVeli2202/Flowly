@@ -1,0 +1,19 @@
+import apiClient from './axios';
+
+export const authAPI = {
+  register: async (data) => (await apiClient.post('/Auth/register', data)).data,
+  registerWorker: async (data) => (await apiClient.post('/Auth/register-worker', data)).data,
+  login: async (data) => (await apiClient.post('/Auth/login', data)).data,
+  getCurrentUser: async () => (await apiClient.get('/Auth/me')).data,
+  updateProfile: async (data) => (await apiClient.put('/Auth/me', data)).data,
+  uploadProfileImage: async (formData) => (await apiClient.post('/Auth/me/profile-image', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })).data,
+  changePassword: async (data) => (await apiClient.post('/Auth/change-password', data)).data,
+  updateWorkerSchedule: async (workerId, data) => (await apiClient.put(`/Auth/workers/${workerId}/schedule`, data)).data,
+  getWorkers: async () => (await apiClient.get('/Auth/workers')).data,
+  updateWorkerStatus: async (workerId, isActive) => (await apiClient.put(`/Auth/workers/${workerId}/status`, { isActive })).data,
+  registerPushToken: async (token) => (await apiClient.put('/Auth/push-token', { token })).data,
+  clearPushToken: async () => (await apiClient.delete('/Auth/push-token')).data,
+  getCustomers: async () => (await apiClient.get('/Auth/customers')).data,
+};

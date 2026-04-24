@@ -1,0 +1,264 @@
+{
+  "home": {
+    "eyebrow":         "PREMIUM FAHRZEUGPFLEGE",
+    "greeting":        "Hallo, {{name}}!",
+    "greetingFallback":"dort",
+    "greetingSub":     "Dein Fahrzeug verdient die beste Pflege.",
+    "heroBadge":       "PROFESSIONELLE AUFBEREITUNG",
+    "heroSub":         "Expertenreinigung und Aufbereitung direkt zu dir nach Hause.",
+    "bookNow":         "Jetzt buchen",
+    "address": {
+      "home":        "HEIMADRESSE",
+      "work":        "ARBEITSADRESSE",
+      "other":       "ANDERE ADRESSE",
+      "none":        "KEINE ADRESSE",
+      "placeholder": "Tippe, um deine Adresse hinzuzufügen"
+    },
+    "features": {
+      "title":           "Warum wir?",
+      "premiumProducts": "Premiumprodukte",
+      "onTimeService":   "Pünktlicher Service",
+      "fullyInsured":    "Vollversichert",
+      "rated5Stars":     "5-Sterne-Bewertung"
+    },
+    "packages": {
+      "title":        "Empfohlene Pakete",
+      "seeAll":       "Alle anzeigen",
+      "loadError":    "Pakete konnten nicht geladen werden. Zum Aktualisieren ziehen.",
+      "minutes":      "{{count}} Min.",
+      "showLess":     "Weniger anzeigen",
+      "moreServices": "+{{count}} weitere Leistungen",
+      "bookPackage":  "Paket buchen"
+    },
+    "quickActions": {
+      "title":      "Schnellzugriff",
+      "myBookings": "Meine Buchungen",
+      "profile":    "Profil",
+      "packages":   "Pakete"
+    }
+  },
+  "common": {
+    "cancel":    "Abbrechen",
+    "close":     "Schließen",
+    "error":     "Fehler",
+    "ok":        "OK",
+    "applying":  "Wird angewendet…",
+    "claiming":  "Wird übernommen…",
+    "notifying": "Wird benachrichtigt…",
+    "sending":   "Wird gesendet…",
+    "starting":  "Wird gestartet…",
+    "finishing": "Wird abgeschlossen…"
+  },
+  "status": {
+    "Pending":    "Ausstehend",
+    "Confirmed":  "Bestätigt",
+    "InProgress": "In Bearbeitung",
+    "Completed":  "Abgeschlossen",
+    "Cancelled":  "Storniert",
+    "Paused":     "Pausiert",
+    "All":        "Alle"
+  },
+  "errors": {
+    "sessionExpired":  "Sitzung abgelaufen. Bitte erneut anmelden.",
+    "forbidden":       "Dein Konto ist nicht berechtigt, diese Buchungen zu laden.",
+    "loadBookings":    "Buchungen konnten nicht geladen werden.",
+    "updateStatus":    "Status konnte nicht aktualisiert werden.",
+    "claimBooking":    "Auftrag konnte nicht übernommen werden.",
+    "startJob":        "Auftrag konnte nicht gestartet werden.",
+    "markArrived":     "Kunde konnte nicht über Ankunft informiert werden.",
+    "markLate":        "Kunde konnte nicht über Verspätung informiert werden.",
+    "resumeJob":       "Fortsetzung konnte nicht gemeldet werden.",
+    "finishJob":       "Auftrag konnte nicht abgeschlossen werden.",
+    "updateChecklist": "Checklisten-Eintrag konnte nicht aktualisiert werden.",
+    "applyServices":   "Ausgewählte Leistungen konnten nicht angewendet werden.",
+    "loadServices":    "Verfügbare Leistungen konnten nicht geladen werden."
+  },
+  "alerts": {
+    "addressUnavailable": {
+      "title":   "Adresse nicht verfügbar",
+      "message": "Für diese Buchung wurde noch keine Serviceadresse gespeichert."
+    },
+    "mapsError": {
+      "title":   "Karten nicht verfügbar",
+      "message": "Google Maps konnte auf diesem Gerät nicht geöffnet werden."
+    },
+    "claimSuccess": {
+      "title":   "Erfolgreich",
+      "message": "Auftrag erfolgreich übernommen!"
+    },
+    "cannotClaim": {
+      "title": "Auftrag kann nicht übernommen werden"
+    },
+    "invalidDelay": {
+      "title":   "Ungültige Verspätungsangabe",
+      "message": "Die Verspätungsminuten müssen zwischen 5 und 120 liegen."
+    },
+    "reasonRequired": {
+      "title":   "Grund erforderlich",
+      "message": "Bitte vor der Benachrichtigung des Kunden einen kurzen Grund angeben."
+    },
+    "conflictClaim": {
+      "title":   "Auftrag kann nicht übernommen werden",
+      "message": "Du bist zu dieser Zeit nicht verfügbar. Dieser Auftrag überschneidet sich mit {{bookingNumber}} ({{timeSlot}})."
+    },
+    "upcomingJob": {
+      "title":   "Bevorstehender Auftrag",
+      "message": "{{customerName}} — {{vehicle}}\n\nAuftrag beginnt in {{minutes}} Min.\nZeit: {{time}}"
+    }
+  },
+  "worker": {
+    "header": {
+      "eyebrowDetail":  "AUFTRAGSDETAILS",
+      "eyebrowQueue":   "ARBEITSWARTESCHLANGE",
+      "titleDetail":    "Auftragsdetails",
+      "titleQueue":     "Heutige Aufgaben",
+      "subtitleDetail": "Vollständige Details, Standort, Arbeitsschritte, Live-Timer.",
+      "subtitleQueue":  "Deine aktive Arbeitswarteschlange.",
+      "role":           "Aufbereiter",
+      "profileBtn":     "Profil"
+    },
+    "stats": {
+      "jobsToday": "Aufträge heute",
+      "active":    "Aktiv",
+      "completed": "Abgeschlossen",
+      "packages":  "Pakete",
+      "amount":    "Betrag",
+      "duration":  "Dauer"
+    },
+    "list": {
+      "activeJobs":     "Aktive Aufträge",
+      "availableClaim": "Verfügbar zur Übernahme",
+      "availableBadge": "Verfügbar",
+      "estimatedMin":   "~{{minutes}} Min. geschätzt",
+      "claimBtn":       "Auftrag übernehmen",
+      "noJobs":         "Keine Aufträge für heute."
+    },
+    "detail": {
+      "backBtn":           "Zurück zur Übersicht",
+      "estDuration":       "Geschätzte Dauer: ~{{minutes}} Min.",
+      "salesKitBtn":       "Verkaufskit",
+      "timerElapsed":      "Vergangene Zeit",
+      "timerTotal":        "Gesamtdauer",
+      "timerIdle":         "Bereit zum Starten",
+      "callCustomer":      "Kunde anrufen",
+      "dispatch":          "Disposition",
+      "claimJob":          "Auftrag beanspruchen",
+      "iAmHere":           "Ich bin da",
+      "runningLate":       "Verspätung",
+      "arrivalSentTitle":  "Ankunftsmeldung gesendet",
+      "arrivalSentTime":   "Zuletzt gesendet um {{time}}",
+      "cooldownRemaining": "Wartezeit: {{countdown}} verbleibend",
+      "cooldownDone":      "Wartezeit beendet — erneute Benachrichtigung möglich.",
+      "delaySentTitle":    "Verspätungsmeldung gesendet",
+      "delaySentTime":     "Gesendet um {{time}}",
+      "startJob":          "Auftrag starten",
+      "finish":            "Abschließen",
+      "resume":            "Fortsetzen",
+      "pause":             "Pausieren",
+      "locationLabel":     "Standort",
+      "noAddress":         "Keine Adresse gespeichert. Bitte telefonisch mit dem Kunden bestätigen.",
+      "serviceAddress":    "Service",
+      "openMaps":          "In Karten öffnen",
+      "otherWorker":       "Dieser Auftrag ist einem anderen Mitarbeiter zugewiesen."
+    },
+    "checklist": {
+      "title":        "Arbeitsschritte",
+      "subtitle":     "Aufgaben der Reihe nach erledigen",
+      "startHint":    "Auftrag starten, um die Checkliste freizuschalten",
+      "empty":        "Keine Checklisten-Einträge",
+      "timeLabel":    "Zeit",
+      "startedLabel": "Gestartet",
+      "finishedLabel":"Abgeschlossen"
+    },
+    "modals": {
+      "completion": {
+        "eyebrow":      "Auftrag abgeschlossen",
+        "title":        "Auftrag abgeschlossen",
+        "body":         "Die Aufbereitung für {{name}} ist abgeschlossen und der Kunde wurde benachrichtigt.",
+        "durationLabel":"Dauer",
+        "statusLabel":  "Status",
+        "statusValue":  "Kunde informiert",
+        "backBtn":      "Zurück zu Aufträgen"
+      },
+      "late": {
+        "eyebrow":           "Verspätung melden",
+        "title":             "Verspätung",
+        "body":              "Teile dem Kunden mit, wie lange du dich verspätest und warum.",
+        "minutesLabel":      "Verspätungsminuten",
+        "reasonLabel":       "Grund",
+        "reasonPlaceholder": "Verkehrsverzögerung",
+        "sendBtn":           "Meldung senden"
+      },
+      "finish": {
+        "eyebrow":    "Aktion bestätigen",
+        "title":      "Auftrag abschließen?",
+        "body":       "Der Auftrag wird als abgeschlossen markiert und Kunde sowie Admin werden benachrichtigt.",
+        "confirmBtn": "Ja, abschließen"
+      },
+      "pause": {
+        "eyebrow":           "Auftrag pausieren",
+        "title":             "Pausengrund",
+        "body":              "Admin und Kunde werden benachrichtigt.",
+        "reasonLabel":       "Grund",
+        "reasonPlaceholder": "Gebetspause, Notfall usw.",
+        "pauseBtn":          "Auftrag pausieren"
+      },
+      "salesKit": {
+        "eyebrow":         "Zusatzleistungen",
+        "title":           "Verkaufskit",
+        "subtitle":        "Extras hinzufügen, die nicht im gebuchten Paket enthalten sind.",
+        "defaultJob":      "Aktueller Auftrag",
+        "defaultCustomer": "Kunde",
+        "itemsLabel":      "Artikel",
+        "totalLabel":      "Gesamt",
+        "estTimeLabel":    "Gesch. Zeit",
+        "allIncluded":     "Alle Leistungen sind bereits in dieser Buchung enthalten.",
+        "defaultDesc":     "Professioneller Aufbereitungsservice.",
+        "addDuration":     "+~{{minutes}} Min.",
+        "confirmBtn":      "Auswahl bestätigen ({{count}})"
+      }
+    }
+  },
+  "admin": {
+    "dispatch": {
+      "eyebrow":       "DISPOSITION",
+      "title":         "Dispositionstafel",
+      "statsJobs":     "Aufträge",
+      "statsLive":     "Live",
+      "statsUpcoming": "Bevorstehend",
+      "statsDone":     "Erledigt",
+      "statsEarned":   "Verdient",
+      "unassigned":    "Nicht zugewiesen ({{count}})",
+      "noJobs":        "Keine Aufträge heute."
+    },
+    "pipeline": {
+      "eyebrow":           "PIPELINE",
+      "title":             "Alle Aufträge",
+      "bookingCount_one":  "{{count}} Buchung",
+      "bookingCount_other":"{{count}} Buchungen",
+      "filters": {
+        "today":    "Heute",
+        "week":     "7 Tage",
+        "upcoming": "Bevorstehend",
+        "all":      "Alle"
+      },
+      "noJobs": "Keine Aufträge entsprechen diesem Filter."
+    },
+    "detail": {
+      "cancellationRequest": "Stornierungsanfrage",
+      "rescheduleRequest":   "Umbuchungsanfrage",
+      "noReason":            "Kein Grund angegeben",
+      "noNote":              "Keine Notiz",
+      "prefers":             "Bevorzugt: {{date}}",
+      "packages":            "Pakete",
+      "total":               "Gesamt",
+      "estTime":             "Gesch. Zeit",
+      "payment":             "Zahlung",
+      "paid":                "Bezahlt",
+      "unpaid":              "Nicht bezahlt",
+      "changeStatus":        "Status ändern",
+      "callCustomer":        "Kunde anrufen",
+      "maps":                "Karte"
+    }
+  }
+}

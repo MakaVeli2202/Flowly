@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Expat male avatar 1 – casual blue shirt">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#E0EEF8"/>
+      <stop offset="1" stop-color="#C8DEF0"/>
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" fill="url(#bg)"/>
+  <!-- Blue casual shirt (body) -->
+  <path d="M28 256 Q52 168 128 160 Q204 168 228 256Z" fill="#3A7BD5"/>
+  <!-- Shirt collar -->
+  <path d="M108 160 L118 172 L128 176 L138 172 L148 160 Q136 165 128 166 Q120 165 108 160Z" fill="#2D68BE"/>
+  <!-- Dark hair (back, behind face) -->
+  <ellipse cx="128" cy="62" rx="55" ry="35" fill="#1A1010"/>
+  <!-- Hair sides -->
+  <rect x="72" y="68" width="16" height="40" rx="8" fill="#1A1010"/>
+  <rect x="168" y="68" width="16" height="40" rx="8" fill="#1A1010"/>
+  <!-- Neck -->
+  <rect x="113" y="143" width="30" height="20" rx="5" fill="#8A5E3C"/>
+  <!-- Face (medium-dark South Asian skin) -->
+  <ellipse cx="128" cy="96" rx="48" ry="53" fill="#9A6840"/>
+  <!-- Hair cap (over face top) -->
+  <ellipse cx="128" cy="54" rx="50" ry="22" fill="#1A1010"/>
+  <!-- Eyebrows -->
+  <path d="M100 79 C107 74 116 75 123 79" stroke="#1A0500" stroke-width="3.2" fill="none" stroke-linecap="round"/>
+  <path d="M133 79 C140 75 149 74 156 79" stroke="#1A0500" stroke-width="3.2" fill="none" stroke-linecap="round"/>
+  <!-- Eyes -->
+  <ellipse cx="112" cy="90" rx="8" ry="9" fill="#1C0C00"/>
+  <ellipse cx="144" cy="90" rx="8" ry="9" fill="#1C0C00"/>
+  <circle cx="114.5" cy="87.5" r="2.8" fill="white" opacity="0.55"/>
+  <circle cx="146.5" cy="87.5" r="2.8" fill="white" opacity="0.55"/>
+  <!-- Nose -->
+  <path d="M122 105 Q128 117 134 105" stroke="#7A4C20" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <!-- Mouth -->
+  <path d="M112 121 Q128 132 144 121" stroke="#5A3010" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+</svg>

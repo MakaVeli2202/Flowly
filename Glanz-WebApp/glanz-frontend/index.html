@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    
+    <!-- Preconnect so font CSS + woff2 files arrive before first paint -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <!-- DNS prefetch fallback -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+
+    <!-- Fonts loaded via <link> (not CSS @import) so the browser can
+         parallelize the request with other assets — reduces font-swap CLS -->
+    <link rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap"
+      media="all" />
+
+    <link rel="icon" type="image/png" href="/Glanz-Logo.png" sizes="192x192" />
+    <link rel="apple-touch-icon" href="/Glanz-Logo.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#c8a96b" />
+    <meta name="description" content="Professional mobile car detailing services in Qatar. Exterior, interior, ceramic coating and more — we come to you." />
+    <meta property="og:type"       content="website" />
+    <meta property="og:site_name"  content="Glanz" />
+    <meta property="og:image"      content="/Glanz-Logo.png" />
+    <meta property="og:locale"     content="en_QA" />
+    <!-- Preconnect for Stripe (used on booking page) -->
+    <link rel="preconnect" href="https://js.stripe.com" />
+    <title>Glanz — Professional Car Detailing in Qatar</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

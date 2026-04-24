@@ -1,0 +1,354 @@
+import React, { useMemo, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Clock, ArrowRight, Sparkles, Award, Shield, Star, Check, ChevronDown } from 'lucide-react';
+import { formatQAR } from '../../utils/currency';
+import { getSiteContent } from '../../config/siteContent';
+import { useAuth } from '../../context/AuthContext';
+import { usePackages } from '../../context/PackagesContext';
+import SEO from '../../components/shared/SEO';
+import { Skeleton, CardSkeleton } from '../../components/shared/Skeleton';
+import { EmptyState } from '../../components/shared/EmptyState';
+
+const tierConfig = {
+  Standard: {
+    Icon: Sparkles,
+    accentClass: 'tier-accent-standard',
+    badgeClass: 'bg-secondary/15 text-secondary border-secondary/30',
+  },
+  Gold: {
+    Icon: Award,
+    accentClass: 'tier-accent-gold',
+    badgeClass: 'bg-primary/15 text-primary border-primary/30',
+  },
+  Platinum: {
+    Icon: Shield,
+    accentClass: 'tier-accent-platinum',
+    badgeClass: 'bg-blue-400/15 text-blue-300 border-blue-400/30',
+  },
+  Premium: {
+    Icon: Star,
+    accentClass: 'tier-accent-premium',
+    badgeClass: 'bg-purple-400/15 text-purple-300 border-purple-400/30',
+  },
+};
+
+/* ── Service expandable component ──────────────────────────── */
+function ServicesList({ services = [], maxVisible = 4, isExpanded, onToggle }) {
+  if (!services || services.length === 0) {
+    return (
+      <div className="mb-6 flex-1">
+        <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--muted-color)] mb-3 font-semibold">
+          Services Included
+        </p>
+        <p className="text-sm text-[var(--muted-color)]">No services listed</p>
+      </div>
+    );
+  }
+
+  const hasMore = services.length > maxVisible;
+  const visibleServices = isExpanded ? services : services.slice(0, maxVisible);
+
+  return (
+    <div className="mb-6 flex-1">
+      <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--muted-color)] mb-3 font-semibold">
+        Services Included
+      </p>
+      <div className="space-y-1.5 max-h-[500px] overflow-hidden transition-all duration-300">
+        {visibleServices.map((service, i) => (
+          <li
+            key={i}
+            className="flex items-start gap-2 text-sm text-[var(--text-color)]"
+          >
+            <Check size={14} className="text-secondary mt-0.5 flex-shrink-0" />
+            <span>{service?.serviceName || service?.name || 'Service'}</span>
+          </li>
+        ))}
+      </div>
+      {hasMore && (
+        <button
+          onClick={onToggle}
+          className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary/80 transition-colors"
+        >
+          <ChevronDown
+            size={14}
+            className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}
+          />
+          {isExpanded ? 'Show Less' : `+ ${services.length - maxVisible} More`}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function Packages() {
+  const { packagesPageContent } = getSiteContent();
+  const { isAdmin } = useAuth();
+  const { packages = [], packagesLoading: loading, packagesError: error, fetchPackages } = usePackages();
+  const navigate = useNavigate();
+
+  const [selectedTier, setSelectedTier] = useState('All');
+  const [expandedPackageId, setExpandedPackageId] = useState(null);
+
+  useEffect(() => {
+    fetchPackages();
+  }, [fetchPackages]);
+
+  // Get unique tiers from packages
+  const tiers = useMemo(() => {
+    const uniqueTiers = [...new Set(packages.map(p => p.tier).filter(Boolean))];
+    return ['All', ...uniqueTiers];
+  }, [packages]);
+
+  // Filter packages - MEMOIZED with dependencies
+  const filteredPackages = useMemo(() => {
+    if (!packages || packages.length === 0) return [];
+
+    if (selectedTier === 'All') {
+      return packages;
+    }
+
+    return packages.filter(p => p.tier === selectedTier);
+  }, [packages, selectedTier]);
+
+  const handleBookNow = (pkg) => {
+    navigate('/booking', { state: { selectedPackage: pkg } });
+  };
+
+  const togglePackageExpand = (pkgId) => {
+    setExpandedPackageId(expandedPackageId === pkgId ? null : pkgId);
+  };
+
+  if (loading) {
+    return (
+      <div className="text-[var(--text-color)]" style={{ background: 'radial-gradient(circle at 10% 15%, rgba(200,169,107,0.12), transparent 34%), radial-gradient(circle at 85% 8%, rgba(14,165,160,0.10), transparent 30%), linear-gradient(160deg, var(--surface-bg) 0%, var(--surface-bg-alt) 52%, var(--surface-bg) 100%)' }}>
+        <section className="pt-14 pb-10 md:pt-20 md:pb-14">
+          <div className="container mx-auto px-4">
+            <div className="glass-card prism-glass p-10 md:p-16 text-center">
+              <Skeleton variant="text" className="w-64 h-10 mx-auto mb-4" />
+              <Skeleton variant="text" className="w-96 h-6 mx-auto mb-2" />
+              <Skeleton variant="text" className="w-72 h-5 mx-auto" />
+            </div>
+          </div>
+        </section>
+        <section className="pb-10">
+          <div className="container mx-auto px-4">
+            <div className="flex justify-center gap-2 mb-8">
+              {['All', 'Standard', 'Gold', 'Platinum', 'Premium'].map(tier => (
+                <Skeleton key={tier} variant="button" className="w-24 h-10" />
+              ))}
+            </div>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1,2,3,4,5,6].map(i => (
+                <CardSkeleton key={i} />
+              ))}
+            </div>
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen" style={{ background: 'var(--surface-bg)' }}>
+        <EmptyState
+          icon="alert"
+          title="Failed to load packages"
+          description={error}
+          actionLabel="Try Again"
+          onAction={() => fetchPackages(true)}
+        />
+      </div>
+    );
+  }
+
+  if (!packages || packages.length === 0) {
+    return (
+      <div className="min-h-screen" style={{ background: 'var(--surface-bg)' }}>
+        <EmptyState
+          icon="package"
+          title="No packages available"
+          description="Check back soon for our detailing packages."
+        />
+      </div>
+    );
+  }
+
+  const PAGE_BG = [
+    'radial-gradient(circle at 10% 15%, rgba(200,169,107,0.12), transparent 34%)',
+    'radial-gradient(circle at 85% 8%,  rgba(14,165,160,0.10),  transparent 30%)',
+    'linear-gradient(160deg, var(--surface-bg) 0%, var(--surface-bg-alt) 52%, var(--surface-bg) 100%)',
+  ].join(', ');
+
+  const TIER_ACCENT = {
+    Standard: 'linear-gradient(90deg, transparent, #0ea5a0, transparent)',
+    Gold:     'linear-gradient(90deg, transparent, #c8a96b, transparent)',
+    Platinum: 'linear-gradient(90deg, transparent, #93c5fd, transparent)',
+    Premium:  'linear-gradient(90deg, transparent, #c084fc, transparent)',
+  };
+
+  return (
+    <div className="text-[var(--text-color)]" style={{ background: PAGE_BG }}>
+      <SEO
+        title="Detailing Packages & Pricing"
+        description="Browse Glanz's car detailing packages for every budget — from express washes to full ceramic coating. Transparent pricing, mobile service across Qatar."
+      />
+
+      {/* ── Hero ── */}
+      <section className="pt-14 pb-10 md:pt-20 md:pb-14">
+        <div className="container mx-auto px-4">
+          <div className="glass-card prism-glass p-10 md:p-16 text-center relative overflow-hidden"
+            onMouseMove={(e) => {
+              const r = e.currentTarget.getBoundingClientRect();
+              e.currentTarget.style.setProperty('--px', `${((e.clientX - r.left) / r.width * 100).toFixed(1)}%`);
+              e.currentTarget.style.setProperty('--py', `${((e.clientY - r.top) / r.height * 100).toFixed(1)}%`);
+            }}>
+            {/* Top accent */}
+            <div className="absolute top-0 left-[10%] right-[10%] h-[1.5px]"
+              style={{ background: 'linear-gradient(90deg,transparent,#c8a96b 30%,#0ea5a0 70%,transparent)' }} />
+            {/* Prism rays */}
+            <div className="prism-ray" style={{ left: '8%',  width: '18%', animation: 'prism-ray-sweep 16s ease-in-out 0s infinite' }} />
+            <div className="prism-ray" style={{ left: '65%', width: '12%', animation: 'prism-ray-sweep 11s ease-in-out 5s infinite' }} />
+            {/* Ambient orbs */}
+            <div className="absolute -top-20 -left-20 w-72 h-72 rounded-full blur-3xl pointer-events-none"
+              style={{ background: 'rgba(200,169,107,0.12)' }} />
+            <div className="absolute -bottom-20 -right-20 w-64 h-64 rounded-full blur-3xl pointer-events-none"
+              style={{ background: 'rgba(14,165,160,0.10)' }} />
+            <div className="relative z-10">
+              {/* Eyebrow badge */}
+              <div className="flex items-center justify-center gap-3 mb-5">
+                <span className="h-px w-10" style={{ background: 'linear-gradient(90deg, transparent, #c8a96b)' }} />
+                <p className="uppercase tracking-[0.28em] text-primary text-[0.68rem] font-bold whitespace-nowrap">Premium Auto Care</p>
+                <span className="h-px w-10" style={{ background: 'linear-gradient(90deg, #c8a96b, transparent)' }} />
+              </div>
+              <h1 className="premium-heading text-5xl md:text-6xl font-bold mb-5 text-[var(--heading-color)]">
+                {packagesPageContent.title}
+              </h1>
+              <p className="text-lg md:text-xl text-[var(--muted-color)] max-w-xl mx-auto leading-relaxed">
+                {packagesPageContent.subtitle}
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Spectrum divider */}
+      <div className="py-1"><div className="container mx-auto px-4"><div className="spectrum-line" /></div></div>
+
+      {/* ── Tier filters ── */}
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex flex-wrap justify-center gap-3">
+          {tiers.map(tier => (
+            <button
+              key={tier}
+              onClick={() => { setSelectedTier(tier); setExpandedPackageId(null); }}
+              className={`px-6 py-2.5 rounded-full font-semibold text-sm transition-all duration-200 border ${
+                selectedTier === tier
+                  ? 'bg-primary text-[#101823] border-primary shadow-lg shadow-primary/30 scale-105'
+                  : 'border-[var(--border-color)] bg-[var(--cta-soft-bg)] text-[var(--text-color)] hover:border-primary/50 hover:bg-[var(--cta-soft-hover-bg)]'
+              }`}
+            >
+              {tier}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Package cards ── */}
+      <section className="pb-20">
+        <div className="container mx-auto px-4">
+          {filteredPackages.length === 0 ? (
+            <div className="glass-card text-center py-20 relative overflow-hidden">
+              <div className="prism-ray" style={{ left: '30%', width: '40%', animation: 'prism-ray-sweep 12s ease-in-out infinite' }} />
+              <p className="text-[var(--muted-color)] text-lg relative z-10">
+                {packages.length === 0 ? 'No packages available' : `No packages found for ${selectedTier} tier`}
+              </p>
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {filteredPackages.map((pkg, index) => {
+                const config = tierConfig[pkg.tier] || tierConfig.Standard;
+                const TierIcon = config.Icon;
+                const isExpanded = expandedPackageId === pkg.id;
+                const accentGrad = TIER_ACCENT[pkg.tier] || TIER_ACCENT.Standard;
+
+                return (
+                  <div
+                    key={pkg.id}
+                    className={`glass-card prism-glass overflow-hidden flex flex-col group transition-all duration-300 ${
+                      isExpanded ? 'ring-1 ring-primary/50' : ''
+                    }`}
+                    onMouseMove={(e) => {
+                      const r = e.currentTarget.getBoundingClientRect();
+                      e.currentTarget.style.setProperty('--px', `${((e.clientX - r.left) / r.width * 100).toFixed(1)}%`);
+                      e.currentTarget.style.setProperty('--py', `${((e.clientY - r.top) / r.height * 100).toFixed(1)}%`);
+                    }}
+                  >
+                    {/* Top accent line (tier-specific gradient) */}
+                    <div className="h-[2px] flex-shrink-0" style={{ background: accentGrad }} />
+                    {/* Prism ray */}
+                    <div className="prism-ray" style={{ left: '15%', width: '30%', animation: `prism-ray-sweep ${13 + index * 3}s ease-in-out ${index * 2}s infinite` }} />
+
+                    {/* Image */}
+                    <div className="relative h-48 overflow-hidden">
+                      <img
+                        src={pkg.imageUrl || 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=400'}
+                        alt={pkg.name}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/20 to-transparent" />
+                      <div className={`absolute top-3 right-3 ${config.badgeClass} border px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 backdrop-blur-sm`}>
+                        <TierIcon size={12} />
+                        {pkg.tier}
+                      </div>
+                      {/* Card number watermark */}
+                      <span className="absolute bottom-3 left-4 font-black text-white/10 pointer-events-none select-none"
+                        style={{ fontSize: '3.5rem', lineHeight: 1 }}>
+                        {String(index + 1).padStart(2, '0')}
+                      </span>
+                    </div>
+
+                    {/* Content */}
+                    <div className="p-6 flex flex-col flex-1 relative z-10">
+                      <h3 className="premium-heading text-xl font-bold mb-2 text-[var(--heading-color)]">{pkg.name}</h3>
+                      <p className="text-[var(--muted-color)] text-sm mb-5 leading-relaxed line-clamp-2">{pkg.description}</p>
+
+                      {/* Duration + Price */}
+                      <div className="flex items-center justify-between mb-5 pb-5 border-b border-[var(--border-color)]">
+                        <div className="flex items-center gap-1.5 text-[var(--muted-color)] text-sm">
+                          <Clock size={14} />
+                          <span>{pkg.estimatedDurationMinutes} min</span>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[0.6rem] uppercase tracking-[0.18em] text-[var(--muted-color)] font-semibold mb-0.5">Starting at</p>
+                          <span className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                            {formatQAR(pkg.price)}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Services list */}
+                      <ServicesList
+                        services={pkg.services || []}
+                        maxVisible={4}
+                        isExpanded={isExpanded}
+                        onToggle={() => togglePackageExpand(pkg.id)}
+                      />
+
+                      <button onClick={() => handleBookNow(pkg)} className="premium-btn w-full mt-auto">
+                        {isAdmin ? 'Create Customer Booking' : 'Book Now'}
+                        <ArrowRight size={17} />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+export default Packages;

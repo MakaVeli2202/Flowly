@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Gulf male avatar 3 – kufiya with agal and beard">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#F5E6D0"/>
+      <stop offset="1" stop-color="#EAD4B0"/>
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" fill="url(#bg)"/>
+  <!-- White thobe (body) -->
+  <path d="M28 256 Q52 168 128 160 Q204 168 228 256Z" fill="#FAFAFA"/>
+  <path d="M112 158 L118 172 L128 176 L138 172 L144 158 Q136 162 128 163 Q120 162 112 158Z" fill="#F0F0F0"/>
+  <!-- Kufiya cloth -->
+  <path d="M56 92 C52 48 84 24 128 24 C172 24 204 48 200 92 L198 182 C186 200 70 200 58 182Z" fill="#FAFAFA"/>
+  <path d="M70 95 Q128 88 186 95" stroke="#E5E5E5" stroke-width="1.5" fill="none"/>
+  <!-- Neck -->
+  <rect x="113" y="143" width="30" height="20" rx="5" fill="#9A6838"/>
+  <!-- Face (darker olive skin) -->
+  <ellipse cx="128" cy="96" rx="48" ry="53" fill="#A87040"/>
+  <!-- Agal ring -->
+  <ellipse cx="128" cy="58" rx="43" ry="13" fill="none" stroke="#181818" stroke-width="11"/>
+  <!-- Kufiya top -->
+  <path d="M85 55 C92 34 164 34 171 55 C156 48 100 48 85 55Z" fill="#F8F8F8"/>
+  <!-- Eyebrows (thicker) -->
+  <path d="M99 79 C107 73 118 74 124 79" stroke="#1A0800" stroke-width="3.8" fill="none" stroke-linecap="round"/>
+  <path d="M132 79 C138 74 149 73 157 79" stroke="#1A0800" stroke-width="3.8" fill="none" stroke-linecap="round"/>
+  <!-- Eyes -->
+  <ellipse cx="112" cy="90" rx="8" ry="9" fill="#1C0800"/>
+  <ellipse cx="144" cy="90" rx="8" ry="9" fill="#1C0800"/>
+  <circle cx="114.5" cy="87.5" r="2.8" fill="white" opacity="0.55"/>
+  <circle cx="146.5" cy="87.5" r="2.8" fill="white" opacity="0.55"/>
+  <!-- Nose -->
+  <path d="M122 105 Q128 117 134 105" stroke="#8A5020" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <!-- Mouth -->
+  <path d="M112 121 Q128 132 144 121" stroke="#6A3810" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+  <!-- Full beard -->
+  <path d="M78 112 Q128 152 178 112 Q175 155 128 162 Q81 155 78 112Z" fill="#7A4C20" opacity="0.55"/>
+  <!-- Mustache -->
+  <path d="M112 118 Q128 125 144 118 Q136 121 128 122 Q120 121 112 118Z" fill="#5A3010" opacity="0.5"/>
+</svg>

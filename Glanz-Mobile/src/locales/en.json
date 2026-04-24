@@ -1,0 +1,264 @@
+{
+  "home": {
+    "eyebrow":         "PREMIUM CAR DETAILING",
+    "greeting":        "Hello, {{name}}!",
+    "greetingFallback":"there",
+    "greetingSub":     "Your vehicle deserves the best care.",
+    "heroBadge":       "PROFESSIONAL DETAILING",
+    "heroSub":         "Expert cleaning and detailing services delivered to your door.",
+    "bookNow":         "Book Now",
+    "address": {
+      "home":        "HOME ADDRESS",
+      "work":        "WORK ADDRESS",
+      "other":       "OTHER ADDRESS",
+      "none":        "NO ADDRESS SET",
+      "placeholder": "Tap to add your address"
+    },
+    "features": {
+      "title":           "Why Choose Us",
+      "premiumProducts": "Premium Products",
+      "onTimeService":   "On-Time Service",
+      "fullyInsured":    "Fully Insured",
+      "rated5Stars":     "Rated 5 Stars"
+    },
+    "packages": {
+      "title":        "Featured Packages",
+      "seeAll":       "See All",
+      "loadError":    "Failed to load packages. Pull to refresh.",
+      "minutes":      "{{count}} min",
+      "showLess":     "Show less",
+      "moreServices": "+{{count}} more services",
+      "bookPackage":  "Book This Package"
+    },
+    "quickActions": {
+      "title":      "Quick Actions",
+      "myBookings": "My Bookings",
+      "profile":    "Profile",
+      "packages":   "Packages"
+    }
+  },
+  "common": {
+    "cancel":    "Cancel",
+    "close":     "Close",
+    "error":     "Error",
+    "ok":        "OK",
+    "applying":  "Applying…",
+    "claiming":  "Claiming…",
+    "notifying": "Notifying…",
+    "sending":   "Sending…",
+    "starting":  "Starting…",
+    "finishing": "Finishing…"
+  },
+  "status": {
+    "Pending":    "Pending",
+    "Confirmed":  "Confirmed",
+    "InProgress": "In Progress",
+    "Completed":  "Completed",
+    "Cancelled":  "Cancelled",
+    "Paused":     "Paused",
+    "All":        "All"
+  },
+  "errors": {
+    "sessionExpired":  "Session expired. Please log in again.",
+    "forbidden":       "Your account is not allowed to load these bookings.",
+    "loadBookings":    "Failed to load bookings.",
+    "updateStatus":    "Failed to update booking status.",
+    "claimBooking":    "Failed to claim booking.",
+    "startJob":        "Failed to start job.",
+    "markArrived":     "Failed to notify customer about arrival.",
+    "markLate":        "Failed to notify customer about delay.",
+    "resumeJob":       "Failed to notify resume event.",
+    "finishJob":       "Failed to finish job.",
+    "updateChecklist": "Failed to update checklist item.",
+    "applyServices":   "Failed to apply selected services.",
+    "loadServices":    "Failed to load available services."
+  },
+  "alerts": {
+    "addressUnavailable": {
+      "title":   "Address unavailable",
+      "message": "This booking does not have a saved service address yet."
+    },
+    "mapsError": {
+      "title":   "Unable to open maps",
+      "message": "Google Maps could not be opened on this device."
+    },
+    "claimSuccess": {
+      "title":   "Success",
+      "message": "Job claimed successfully!"
+    },
+    "cannotClaim": {
+      "title": "Cannot Claim Job"
+    },
+    "invalidDelay": {
+      "title":   "Invalid Delay",
+      "message": "Delay minutes must be between 5 and 120."
+    },
+    "reasonRequired": {
+      "title":   "Reason Required",
+      "message": "Please enter a short reason before notifying the customer."
+    },
+    "conflictClaim": {
+      "title":   "Cannot claim this job",
+      "message": "You are not free at that time. This job overlaps with {{bookingNumber}} ({{timeSlot}})."
+    },
+    "upcomingJob": {
+      "title":   "Upcoming Job",
+      "message": "{{customerName}} — {{vehicle}}\n\nJob starts in {{minutes}} min\nTime: {{time}}"
+    }
+  },
+  "worker": {
+    "header": {
+      "eyebrowDetail":  "JOB DETAIL",
+      "eyebrowQueue":   "WORKER QUEUE",
+      "titleDetail":    "Job Detail",
+      "titleQueue":     "Today's Work",
+      "subtitleDetail": "Full details, location, work steps, live timer.",
+      "subtitleQueue":  "Your active worker queue.",
+      "role":           "Detailer",
+      "profileBtn":     "Profile"
+    },
+    "stats": {
+      "jobsToday": "Jobs Today",
+      "active":    "Active",
+      "completed": "Completed",
+      "packages":  "Packages",
+      "amount":    "Amount",
+      "duration":  "Duration"
+    },
+    "list": {
+      "activeJobs":     "Active Jobs",
+      "availableClaim": "Available to Claim",
+      "availableBadge": "Available",
+      "estimatedMin":   "~{{minutes}} min estimated",
+      "claimBtn":       "Claim This Job",
+      "noJobs":         "No jobs for today."
+    },
+    "detail": {
+      "backBtn":           "Back to Overview",
+      "estDuration":       "Est. duration: ~{{minutes}} min",
+      "salesKitBtn":       "Sales Kit",
+      "timerElapsed":      "Elapsed Time",
+      "timerTotal":        "Total Duration",
+      "timerIdle":         "Ready to Start",
+      "callCustomer":      "Call Customer",
+      "dispatch":          "Dispatch",
+      "claimJob":          "Claim Job",
+      "iAmHere":           "I Am Here",
+      "runningLate":       "Running Late",
+      "arrivalSentTitle":  "Arrival alert sent",
+      "arrivalSentTime":   "Last sent at {{time}}",
+      "cooldownRemaining": "Cooldown: {{countdown}} remaining",
+      "cooldownDone":      "Cooldown finished — can notify again.",
+      "delaySentTitle":    "Delay notice sent",
+      "delaySentTime":     "Sent at {{time}}",
+      "startJob":          "Start Job",
+      "finish":            "Finish",
+      "resume":            "Resume",
+      "pause":             "Pause",
+      "locationLabel":     "Location",
+      "noAddress":         "No address saved. Use customer phone to confirm.",
+      "serviceAddress":    "Service",
+      "openMaps":          "Open in Maps",
+      "otherWorker":       "This job is assigned to another worker."
+    },
+    "checklist": {
+      "title":       "Work Steps",
+      "subtitle":    "Complete each task in order",
+      "startHint":   "Start the job to enable checklist items",
+      "empty":       "No checklist items",
+      "timeLabel":   "Time",
+      "startedLabel":"Started",
+      "finishedLabel":"Finished"
+    },
+    "modals": {
+      "completion": {
+        "eyebrow":     "Job Finished",
+        "title":       "Job Finished",
+        "body":        "Detailing for {{name}} is complete and the customer has been notified.",
+        "durationLabel":"Duration",
+        "statusLabel": "Status",
+        "statusValue": "Customer Updated",
+        "backBtn":     "Back to Jobs"
+      },
+      "late": {
+        "eyebrow":           "Notify Delay",
+        "title":             "Running Late",
+        "body":              "Tell the customer how late you are and why.",
+        "minutesLabel":      "Delay Minutes",
+        "reasonLabel":       "Reason",
+        "reasonPlaceholder": "Traffic delay",
+        "sendBtn":           "Send Notice"
+      },
+      "finish": {
+        "eyebrow":     "Confirm Action",
+        "title":       "Finish Job?",
+        "body":        "This will mark the job as completed and notify the customer and admin.",
+        "confirmBtn":  "Yes, Finish"
+      },
+      "pause": {
+        "eyebrow":           "Pause Job",
+        "title":             "Reason for Pause",
+        "body":              "Both admin and customer will be notified.",
+        "reasonLabel":       "Reason",
+        "reasonPlaceholder": "Prayer break, emergency, etc.",
+        "pauseBtn":          "Pause Job"
+      },
+      "salesKit": {
+        "eyebrow":          "Service Add-Ons",
+        "title":            "Sales Kit",
+        "subtitle":         "Add extras not already in the booked package.",
+        "defaultJob":       "Current Job",
+        "defaultCustomer":  "Customer",
+        "itemsLabel":       "Items",
+        "totalLabel":       "Total",
+        "estTimeLabel":     "Est. Time",
+        "allIncluded":      "All services are already included in this booking.",
+        "defaultDesc":      "Professional detailing service.",
+        "addDuration":      "+~{{minutes}} min",
+        "confirmBtn":       "Confirm Selection ({{count}})"
+      }
+    }
+  },
+  "admin": {
+    "dispatch": {
+      "eyebrow":       "DISPATCH",
+      "title":         "Dispatch Board",
+      "statsJobs":     "Jobs",
+      "statsLive":     "Live",
+      "statsUpcoming": "Upcoming",
+      "statsDone":     "Done",
+      "statsEarned":   "Earned",
+      "unassigned":    "Unassigned ({{count}})",
+      "noJobs":        "No jobs today."
+    },
+    "pipeline": {
+      "eyebrow":          "PIPELINE",
+      "title":            "All Jobs",
+      "bookingCount_one": "{{count}} booking",
+      "bookingCount_other":"{{count}} bookings",
+      "filters": {
+        "today":    "Today",
+        "week":     "7 Days",
+        "upcoming": "Upcoming",
+        "all":      "All"
+      },
+      "noJobs": "No jobs match this filter."
+    },
+    "detail": {
+      "cancellationRequest": "Cancellation Request",
+      "rescheduleRequest":   "Reschedule Request",
+      "noReason":            "No reason given",
+      "noNote":              "No note",
+      "prefers":             "Prefers: {{date}}",
+      "packages":            "Packages",
+      "total":               "Total",
+      "estTime":             "Est. Time",
+      "payment":             "Payment",
+      "paid":                "Paid",
+      "unpaid":              "Unpaid",
+      "changeStatus":        "Change Status",
+      "callCustomer":        "Call Customer",
+      "maps":                "Maps"
+    }
+  }
+}

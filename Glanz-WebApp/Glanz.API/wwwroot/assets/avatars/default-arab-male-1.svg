@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Arab male avatar 1 – dark wavy hair">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#EEEEEE"/>
+      <stop offset="1" stop-color="#E0E0E0"/>
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" fill="url(#bg)"/>
+  <!-- Navy shirt (body) -->
+  <path d="M28 256 Q52 168 128 160 Q204 168 228 256Z" fill="#3A4878"/>
+  <!-- Shirt collar V -->
+  <path d="M108 160 L118 172 L128 176 L138 172 L148 160 Q136 165 128 166 Q120 165 108 160Z" fill="#2D3A62"/>
+  <!-- Dark wavy hair (behind) -->
+  <ellipse cx="128" cy="62" rx="55" ry="38" fill="#1E1010"/>
+  <!-- Wavy hair texture lines -->
+  <path d="M82 50 Q96 42 110 50 Q124 42 138 50 Q152 42 166 50" stroke="#301818" stroke-width="3" fill="none" opacity="0.45"/>
+  <!-- Hair sides -->
+  <rect x="72" y="68" width="16" height="42" rx="8" fill="#1E1010"/>
+  <rect x="168" y="68" width="16" height="42" rx="8" fill="#1E1010"/>
+  <!-- Neck -->
+  <rect x="113" y="143" width="30" height="20" rx="5" fill="#BA8855"/>
+  <!-- Face (olive skin) -->
+  <ellipse cx="128" cy="96" rx="48" ry="53" fill="#C89860"/>
+  <!-- Hair cap (over face top) -->
+  <ellipse cx="128" cy="55" rx="50" ry="24" fill="#1E1010"/>
+  <!-- Eyebrows (defined) -->
+  <path d="M100 79 C107 74 116 75 123 79" stroke="#1A0800" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+  <path d="M133 79 C140 75 149 74 156 79" stroke="#1A0800" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+  <!-- Eyes -->
+  <ellipse cx="112" cy="90" rx="8" ry="9" fill="#1C0800"/>
+  <ellipse cx="144" cy="90" rx="8" ry="9" fill="#1C0800"/>
+  <circle cx="114.5" cy="87.5" r="2.8" fill="white" opacity="0.55"/>
+  <circle cx="146.5" cy="87.5" r="2.8" fill="white" opacity="0.55"/>
+  <!-- Nose -->
+  <path d="M122 105 Q128 117 134 105" stroke="#9E7040" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <!-- Mouth -->
+  <path d="M112 121 Q128 132 144 121" stroke="#7A4820" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+  <!-- Light stubble shadow -->
+  <path d="M82 110 Q128 140 174 110 Q170 140 128 148 Q86 140 82 110Z" fill="#8A5C28" opacity="0.18"/>
+</svg>

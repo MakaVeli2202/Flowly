@@ -1,0 +1,12 @@
+/*
+ * App.css — intentionally empty.
+ *
+ * All global styles, design tokens, component classes, and animations
+ * are defined in src/index.css which is imported once in main.jsx.
+ *
+ * The Vite starter template styles (.counter, .hero, #center, etc.)
+ * that shipped here have been removed — they were never used.
+ *
+ * The booking highlight animations (.highlight-flash, .highlight-fade-out)
+ * that were here are now consolidated in index.css  §9 "Admin Table Highlight".
+ */

@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Gulf male avatar 1 – kufiya with agal">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#F8EDD9"/>
+      <stop offset="1" stop-color="#EDD8B8"/>
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" fill="url(#bg)"/>
+  <!-- White thobe (body) -->
+  <path d="M28 256 Q52 168 128 160 Q204 168 228 256Z" fill="#FAFAFA"/>
+  <!-- Thobe collar -->
+  <path d="M112 158 L118 172 L128 176 L138 172 L144 158 Q136 162 128 163 Q120 162 112 158Z" fill="#F0F0F0"/>
+  <!-- Kufiya white cloth (behind face) -->
+  <path d="M56 92 C52 48 84 24 128 24 C172 24 204 48 200 92 L198 182 C186 200 70 200 58 182Z" fill="#FAFAFA"/>
+  <!-- Kufiya fold lines -->
+  <path d="M70 95 Q128 88 186 95" stroke="#E5E5E5" stroke-width="1.5" fill="none"/>
+  <!-- Neck -->
+  <rect x="113" y="143" width="30" height="20" rx="5" fill="#C4956A"/>
+  <!-- Face -->
+  <ellipse cx="128" cy="96" rx="48" ry="53" fill="#C4956A"/>
+  <!-- Agal (black ring on top of kufiya) -->
+  <ellipse cx="128" cy="58" rx="43" ry="13" fill="none" stroke="#181818" stroke-width="11"/>
+  <!-- Kufiya top cloth above agal -->
+  <path d="M85 55 C92 34 164 34 171 55 C156 48 100 48 85 55Z" fill="#F8F8F8"/>
+  <!-- Eyebrows -->
+  <path d="M100 79 C107 74 116 75 123 79" stroke="#2A1505" stroke-width="3.2" fill="none" stroke-linecap="round"/>
+  <path d="M133 79 C140 75 149 74 156 79" stroke="#2A1505" stroke-width="3.2" fill="none" stroke-linecap="round"/>
+  <!-- Eyes -->
+  <ellipse cx="112" cy="90" rx="8" ry="9" fill="#2C1500"/>
+  <ellipse cx="144" cy="90" rx="8" ry="9" fill="#2C1500"/>
+  <circle cx="114.5" cy="87.5" r="2.8" fill="white" opacity="0.55"/>
+  <circle cx="146.5" cy="87.5" r="2.8" fill="white" opacity="0.55"/>
+  <!-- Nose -->
+  <path d="M122 105 Q128 117 134 105" stroke="#9E7040" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <!-- Mouth -->
+  <path d="M112 121 Q128 132 144 121" stroke="#7A4A28" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+  <!-- Subtle beard shadow -->
+  <path d="M80 116 Q128 148 176 116 Q170 148 128 154 Q86 148 80 116Z" fill="#A87040" opacity="0.22"/>
+</svg>

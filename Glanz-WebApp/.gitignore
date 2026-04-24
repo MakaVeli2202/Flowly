@@ -1,0 +1,39 @@
+# .NET build artifacts
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+# Database files
+*.db
+*.db-shm
+*.db-wal
+*.db.bak
+
+# Rider/JetBrains
+.idea/
+
+# User secrets
+appsettings.*.local.json
+
+# Node
+node_modules/
+dist/
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Vite
+.vite/
+
+# Test output
+**/bin/validation-tests/
+**/bin/validation-api-run/
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini

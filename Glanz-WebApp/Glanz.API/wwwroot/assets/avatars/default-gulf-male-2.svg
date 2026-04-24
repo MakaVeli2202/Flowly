@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Gulf male avatar 2 – kufiya without agal">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#E8F0FB"/>
+      <stop offset="1" stop-color="#D2E3F8"/>
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" fill="url(#bg)"/>
+  <!-- White thobe (body) -->
+  <path d="M28 256 Q52 168 128 160 Q204 168 228 256Z" fill="#FAFAFA"/>
+  <path d="M112 158 L118 172 L128 176 L138 172 L144 158 Q136 162 128 163 Q120 162 112 158Z" fill="#F0F0F0"/>
+  <!-- Kufiya without agal (draped freely) -->
+  <path d="M58 90 C54 46 84 24 128 24 C172 24 202 46 198 90 L196 185 C182 202 74 202 60 185Z" fill="#F8F8F8"/>
+  <!-- Kufiya drape fold lines -->
+  <path d="M60 90 C64 120 66 160 72 185" stroke="#E0E0E0" stroke-width="1.5" fill="none"/>
+  <path d="M196 90 C192 120 190 160 184 185" stroke="#E0E0E0" stroke-width="1.5" fill="none"/>
+  <!-- Rounded top (no agal) -->
+  <ellipse cx="128" cy="38" rx="42" ry="22" fill="#FAFAFA"/>
+  <!-- Neck -->
+  <rect x="113" y="143" width="30" height="20" rx="5" fill="#D4AA7A"/>
+  <!-- Face (lighter tan skin) -->
+  <ellipse cx="128" cy="96" rx="48" ry="53" fill="#D4AA7A"/>
+  <!-- Eyebrows -->
+  <path d="M100 79 C107 74 116 75 123 79" stroke="#2A1505" stroke-width="3.2" fill="none" stroke-linecap="round"/>
+  <path d="M133 79 C140 75 149 74 156 79" stroke="#2A1505" stroke-width="3.2" fill="none" stroke-linecap="round"/>
+  <!-- Eyes -->
+  <ellipse cx="112" cy="90" rx="8" ry="9" fill="#2C1500"/>
+  <ellipse cx="144" cy="90" rx="8" ry="9" fill="#2C1500"/>
+  <circle cx="114.5" cy="87.5" r="2.8" fill="white" opacity="0.55"/>
+  <circle cx="146.5" cy="87.5" r="2.8" fill="white" opacity="0.55"/>
+  <!-- Nose -->
+  <path d="M122 105 Q128 117 134 105" stroke="#A88040" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <!-- Mouth -->
+  <path d="M112 121 Q128 132 144 121" stroke="#8A5A30" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+</svg>
