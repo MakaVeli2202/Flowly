@@ -20,6 +20,8 @@ export default function AdminSystemSettingsScreen() {
   const [error,     setError]     = useState('');
   const [success,   setSuccess]   = useState('');
   const [bufferMin, setBufferMin] = useState('30');
+  const [travelBuffer, setTravelBuffer] = useState('30');
+  const [reminderBefore, setReminderBefore] = useState('5');
 
   // ── Load current settings ──────────────────────────────────────────────────
   useEffect(() => {
@@ -29,6 +31,12 @@ export default function AdminSystemSettingsScreen() {
         const data = await settingsAPI.getSystemSettings();
         if (data?.defaultBufferMinutes != null) {
           setBufferMin(String(data.defaultBufferMinutes));
+        }
+        if (data?.workerTravelBufferMinutes != null) {
+          setTravelBuffer(String(data.workerTravelBufferMinutes));
+        }
+        if (data?.workerReminderBeforeTravelMinutes != null) {
+          setReminderBefore(String(data.workerReminderBeforeTravelMinutes));
         }
       } catch {
         setError('Failed to load system settings.');
@@ -41,14 +49,27 @@ export default function AdminSystemSettingsScreen() {
 
   // ── Save ───────────────────────────────────────────────────────────────────
   const handleSave = async () => {
-    const parsed = Number(bufferMin);
-    if (!Number.isFinite(parsed) || parsed < 0 || parsed > 240) {
-      setError('Buffer must be between 0 and 240 minutes.'); return;
+    const buffer = Number(bufferMin);
+    const travel = Number(travelBuffer);
+    const reminder = Number(reminderBefore);
+
+    if (!Number.isFinite(buffer) || buffer < 0 || buffer > 240) {
+      setError('Booking buffer must be between 0 and 240 minutes.'); return;
+    }
+    if (!Number.isFinite(travel) || travel < 0 || travel > 120) {
+      setError('Travel buffer must be between 0 and 120 minutes.'); return;
+    }
+    if (!Number.isFinite(reminder) || reminder < 1 || reminder > 30) {
+      setError('Reminder must be between 1 and 30 minutes.'); return;
     }
     try {
       setSaving(true); setError(''); setSuccess('');
-      await settingsAPI.updateSystemSettings({ defaultBufferMinutes: parsed });
-      setSuccess('Settings saved. Buffer is now ' + parsed + ' min.');
+      await settingsAPI.updateSystemSettings({
+        defaultBufferMinutes: buffer,
+        workerTravelBufferMinutes: travel,
+        workerReminderBeforeTravelMinutes: reminder,
+      });
+      setSuccess(`Saved: Buffer ${buffer}m, Travel ${travel}m, Reminder ${reminder}m before leaving.`);
     } catch (err) {
       setError(err?.response?.data?.message || 'Failed to save settings.');
     } finally {
@@ -155,6 +176,80 @@ export default function AdminSystemSettingsScreen() {
           <Text style={[s.ruleText, { marginTop: 6 }]}>
             A slot is shown to customers if ANY worker satisfies all three conditions.
           </Text>
+        </View>
+      </View>
+
+      {/* ── Worker Travel Buffer ────────────────────────────────────────── */}
+      <View style={s.card}>
+        <View style={s.sectionRow}>
+          <Ionicons name="car-outline" size={16} color={theme.colors.primary} />
+          <Text style={s.sectionTitle}>Worker Travel Buffer</Text>
+        </View>
+        <Text style={s.description}>
+          Time allocated for a worker to travel between job locations. Used to calculate
+          when the detailer should leave for their next appointment.
+        </Text>
+        <Text style={s.fieldLabel}>Travel Buffer Minutes</Text>
+        <TextInput
+          style={s.input}
+          value={travelBuffer}
+          keyboardType="number-pad"
+          placeholder="e.g. 30"
+          placeholderTextColor={theme.colors.textMuted}
+          onChangeText={(v) => {
+            const clean = v.replace(/[^0-9]/g, '');
+            setTravelBuffer(clean);
+            setError(''); setSuccess('');
+          }}
+        />
+        <Text style={s.fieldLabel}>Quick Presets</Text>
+        <View style={s.presetRow}>
+          {[15, 30, 45, 60].map((min) => (
+            <TouchableOpacity
+              key={min}
+              style={[s.preset, travelBuffer === String(min) && s.presetActive]}
+              onPress={() => { setTravelBuffer(String(min)); setError(''); setSuccess(''); }}
+            >
+              <Text style={[s.presetText, travelBuffer === String(min) && s.presetTextActive]}>{min}m</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+
+      {/* ── Worker Reminder Settings ────────────────────────────────────── */}
+      <View style={s.card}>
+        <View style={s.sectionRow}>
+          <Ionicons name="alarm-outline" size={16} color={theme.colors.primary} />
+          <Text style={s.sectionTitle}>Worker Departure Reminder</Text>
+        </View>
+        <Text style={s.description}>
+          Alert detailers this many minutes before they need to leave for their next job.
+          Example: 5 min means alert at (job time - travel buffer - 5 min).
+        </Text>
+        <Text style={s.fieldLabel}>Remind Before Leaving (minutes)</Text>
+        <TextInput
+          style={s.input}
+          value={reminderBefore}
+          keyboardType="number-pad"
+          placeholder="e.g. 5"
+          placeholderTextColor={theme.colors.textMuted}
+          onChangeText={(v) => {
+            const clean = v.replace(/[^0-9]/g, '');
+            setReminderBefore(clean);
+            setError(''); setSuccess('');
+          }}
+        />
+        <Text style={s.fieldLabel}>Quick Presets</Text>
+        <View style={s.presetRow}>
+          {[3, 5, 10, 15].map((min) => (
+            <TouchableOpacity
+              key={min}
+              style={[s.preset, reminderBefore === String(min) && s.presetActive]}
+              onPress={() => { setReminderBefore(String(min)); setError(''); setSuccess(''); }}
+            >
+              <Text style={[s.presetText, reminderBefore === String(min) && s.presetTextActive]}>{min}m</Text>
+            </TouchableOpacity>
+          ))}
         </View>
       </View>
 

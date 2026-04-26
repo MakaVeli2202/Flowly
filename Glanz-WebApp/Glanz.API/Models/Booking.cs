@@ -119,6 +119,7 @@ namespace Glanz.API.Models
         // Work tracking for analytics
         public DateTime? WorkStartedAt { get; set; }
         public DateTime? WorkerArrivedAt { get; set; }
+        public DateTime? WorkerOnMyWayAt { get; set; }
         public DateTime? WorkerRunningLateAt { get; set; }
         public DateTime? WorkCompletedAt { get; set; }
         public int? WorkDurationSeconds { get; set; }
@@ -141,7 +142,7 @@ namespace Glanz.API.Models
         public User? User { get; set; }
 
         [ForeignKey("AssignedWorkerId")]
-        public User? AssignedWorker { get; set; }
+        public Staff? AssignedWorker { get; set; }
 
         public ICollection<BookingItem> BookingItems { get; set; } = new List<BookingItem>();
         public ICollection<BookingChecklistItem> ChecklistItems { get; set; } = new List<BookingChecklistItem>();

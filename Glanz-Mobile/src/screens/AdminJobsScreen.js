@@ -12,6 +12,7 @@ import { bookingsAPI } from '../api/bookings';
 import { authAPI } from '../api/auth';
 import { servicesAPI } from '../api/services';
 import { useAuth } from '../context/AuthContext';
+import { useSettings } from '../context/SettingsContext';
 import { formatQAR } from '../utils/currency';
 import { canTransition } from '../utils/bookingStateMachine';
 import { theme } from '../theme/theme';
@@ -183,10 +184,12 @@ export default function AdminJobsScreen({ route, navigation }) {
   const roleMode   = route?.params?.roleMode || 'admin';
   const isWorkerView = roleMode === 'worker';
   const { user, logout } = useAuth();
+  const settings = useSettings();
   const headerHeight = useHeaderHeight(); // ← used to push content below transparent nav
 
   // ── State ─────────────────────────────────────────────────────────────────
   const [bookings,                  setBookings]                  = useState([]);
+  const workerBookings = isWorkerView ? bookings : [];
   const [loading,                   setLoading]                   = useState(true);
   const [refreshing,                setRefreshing]                = useState(false);
   const [updatingId,                setUpdatingId]                = useState(null);
@@ -225,6 +228,52 @@ export default function AdminJobsScreen({ route, navigation }) {
   const [loadingWorkers,            setLoadingWorkers]            = useState(false);
   const [assigningWorkerId,         setAssigningWorkerId]         = useState(null);
   const [requestActionLoading,      setRequestActionLoading]      = useState(null); // 'approve-cancel' | 'reject-cancel' | 'approve-reschedule' | 'reject-reschedule'
+  const [reminderDismissed,      setReminderDismissed]      = useState({}); // dismissed booking IDs
+
+  // Check if worker is currently on a job OR has already left (notified "On My Way")
+  const hasActiveJob = useMemo(() => {
+    if (!isWorkerView) return false;
+    return workerBookings.some((b) => {
+      if (b.status === 'InProgress') return true;
+      if ((b.status === 'Pending' || b.status === 'Confirmed') && b.workerOnMyWayAt) return true;
+      return false;
+    });
+  }, [isWorkerView, workerBookings]);
+
+  const nextUpcomingJob = useMemo(() => {
+    if (!isWorkerView) return null;
+    const now = new Date();
+    const todayKey = toLocalDateKey(now);
+    return workerBookings
+      .filter((b) => {
+        if (b.status === 'Completed' || b.status === 'Cancelled') return false;
+        if (reminderDismissed[b.id]) return false;
+        const dateKey = extractDateKey(b.scheduledDate);
+        if (!dateKey) return false;
+        return dateKey >= todayKey;
+      })
+      .sort((a, b) => getBookingSortValue(a) - getBookingSortValue(b))[0] || null;
+  }, [workerBookings, isWorkerView, reminderDismissed]);
+
+  const minutesUntilNextJob = useMemo(() => {
+    if (!nextUpcomingJob) return null;
+    const now = new Date();
+    const slotStart = getTimeSlotStartMinutes(nextUpcomingJob.timeSlot);
+    if (slotStart === Number.POSITIVE_INFINITY) return null;
+    const travelBuffer = settings?.workerTravelBufferMinutes || 30;
+    const schedDate = new Date(nextUpcomingJob.scheduledDate);
+    schedDate.setHours(Math.floor(slotStart / 60), slotStart % 60, 0, 0);
+    const departureTime = schedDate.getTime() - (travelBuffer * 60000);
+    const diffMs = departureTime - now.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    return diffMins >= 0 ? diffMins : null;
+  }, [nextUpcomingJob, settings?.workerTravelBufferMinutes]);
+
+  const reminderMinutes = useMemo(() => {
+    return settings?.workerReminderBeforeTravelMinutes || 5;
+  }, [settings?.workerReminderBeforeTravelMinutes]);
+
+  const showReminder = isWorkerView && nextUpcomingJob && !hasActiveJob && minutesUntilNextJob !== null && minutesUntilNextJob <= reminderMinutes && minutesUntilNextJob >= 0;
 
   const inFlightActionsRef = useRef(new Set());
   const beginAction = (key) => {
@@ -712,6 +761,17 @@ export default function AdminJobsScreen({ route, navigation }) {
       await bookingsAPI.markArrived(bookingId);
       await loadBookings();
     } catch (err) { setError(err?.response?.data?.message || 'Failed to notify customer about arrival.'); }
+    finally { setUpdatingId(null); endAction(key); }
+  };
+
+  const markOnMyWay = async (bookingId) => {
+    const key = `onmyway-${bookingId}`;
+    if (!beginAction(key)) return;
+    try {
+      setUpdatingId(bookingId);
+      await bookingsAPI.markOnMyWay(bookingId);
+      await loadBookings();
+    } catch (err) { setError(err?.response?.data?.message || 'Failed to notify customer.'); }
     finally { setUpdatingId(null); endAction(key); }
   };
 
@@ -1289,16 +1349,17 @@ export default function AdminJobsScreen({ route, navigation }) {
       );
     };
 
-    const DetailView = () => {
+const DetailView = () => {
       const booking = selectedWorkerBooking;
       if (!booking) return null;
       const isMyJob                = isOwnedByCurrentWorker(booking);
       const hasArrived             = Boolean(booking.workerArrivedAt);
+      const hasOnMyWay              = Boolean(booking.workerOnMyWayAt);
       const hasMarkedLate          = Boolean(booking.workerRunningLateAt);
       const hasStartedJob          = Boolean(booking.workStartedAt) || booking.status === 'InProgress' || booking.status === 'Completed';
       const arrivalCooldown        = getArrivalCooldownRemainingMs(booking.workerArrivedAt);
-      const canSendArrivalOrDelay  = isMyJob && booking.status !== 'Cancelled' && booking.status !== 'Completed' && !hasStartedJob;
-      const canMarkArrived         = canSendArrivalOrDelay && arrivalCooldown === 0;
+      const canSendArrivalOrDelay  = isMyJob && !hasStartedJob && booking.status !== 'Cancelled' && booking.status !== 'Completed';
+      const canMarkArrived         = canSendArrivalOrDelay && hasOnMyWay && !hasArrived;
       const canMarkRunningLate     = canSendArrivalOrDelay && !hasArrived && !hasMarkedLate;
       const canStartJob            = booking.status === 'Pending' || booking.status === 'Confirmed';
       const completedDuration      = formatWorkDuration(booking.workDurationSeconds);
@@ -1374,6 +1435,12 @@ export default function AdminJobsScreen({ route, navigation }) {
           )}
           {isMyJob && booking.status !== 'Cancelled' && booking.status !== 'Completed' && (
             <>
+              {!hasOnMyWay && (
+                <TouchableOpacity style={[w.actionBtn, w.actionBtnBlue, updatingId === booking.id && s.btnDisabled]} onPress={() => markOnMyWay(booking.id)} disabled={updatingId === booking.id}>
+                  <Ionicons name="car-outline" size={15} color="#fff" />
+                  <Text style={w.actionBtnText}>{updatingId === booking.id ? 'Notifying…' : 'On My Way'}</Text>
+                </TouchableOpacity>
+              )}
               <TouchableOpacity style={[w.actionBtn, w.actionBtnTeal, (!canMarkArrived || updatingId === booking.id) && s.btnDisabled]} onPress={() => markArrived(booking.id)} disabled={updatingId === booking.id || !canMarkArrived}>
                 <Ionicons name="location-outline" size={15} color="#fff" />
                 <Text style={w.actionBtnText}>{updatingId === booking.id ? 'Notifying…' : 'I Am Here'}</Text>
@@ -1383,6 +1450,12 @@ export default function AdminJobsScreen({ route, navigation }) {
                 <Text style={w.actionBtnText}>{updatingId === booking.id ? 'Notifying…' : 'Running Late'}</Text>
               </TouchableOpacity>
             </>
+          )}
+          {hasOnMyWay && (
+            <View style={[w.noticeCard, { borderColor: '#3B82F6' }]}>
+              <Text style={w.noticeTitle}>On my way</Text>
+              <Text style={w.noticeText}>Notified at {new Date(booking.workerOnMyWayAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
+            </View>
           )}
           {hasArrived && (
             <View style={w.noticeCard}>
@@ -1515,6 +1588,51 @@ export default function AdminJobsScreen({ route, navigation }) {
         overScrollMode="never"
       >
         {PhotoCaptureModal}{CompletionModal}{LateModal}{FinishModal}{PauseModal}{SalesKitModal}
+        {showReminder && (
+          <Modal transparent animationType="fade" visible onRequestClose={() => setReminderDismissed((p) => ({ ...p, [nextUpcomingJob.id]: true }))}>
+            <View style={m.backdrop}>
+              <View style={m.card}>
+                <View style={m.successRing}>
+                  <Ionicons name="alarm-outline" size={28} color="#0E165F" />
+                </View>
+                <Text style={m.eyebrow}>Time to Leave</Text>
+                <Text style={m.title}>Leave in {minutesUntilNextJob} min</Text>
+                <Text style={m.body}>
+                  {nextUpcomingJob.customerName} · {nextUpcomingJob.vehicleMake} {nextUpcomingJob.vehicleModel}{'\n'}
+                  {nextUpcomingJob.customerAddress || nextUpcomingJob.addressType}
+                </Text>
+                <View style={m.statsRow}>
+                  <View style={m.statCard}>
+                    <Text style={m.statLabel}>Job at</Text>
+                    <Text style={m.statValue}>{String(nextUpcomingJob.timeSlot || '').split('-')[0].trim()}</Text>
+                  </View>
+                  <View style={m.statCard}>
+                    <Text style={m.statLabel}>Travel</Text>
+                    <Text style={m.statValue}>{settings?.workerTravelBufferMinutes || 30} min</Text>
+                  </View>
+                </View>
+                <TouchableOpacity style={[m.primaryBtn, { backgroundColor: '#15803d' }]} onPress={() => {
+                  setReminderDismissed((p) => ({ ...p, [nextUpcomingJob.id]: true }));
+                  Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(nextUpcomingJob.customerAddress || nextUpcomingJob.addressType || '')}`);
+                }}>
+                  <Ionicons name="navigate-outline" size={16} color="#fff" style={{ marginRight: 6 }} />
+                  <Text style={m.primaryBtnText}>Open in Maps</Text>
+                </TouchableOpacity>
+                <View style={m.btnRow}>
+                  <TouchableOpacity style={m.cancelBtn} onPress={() => setReminderDismissed((p) => ({ ...p, [nextUpcomingJob.id]: true }))}>
+                    <Text style={m.cancelBtnText}>Dismiss</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[m.primaryBtn, { flex: 1, marginTop: 0, backgroundColor: '#0ea5e9' }]} onPress={() => {
+                    setReminderDismissed((p) => ({ ...p, [nextUpcomingJob.id]: true }));
+                    setSelectedWorkerBookingId(nextUpcomingJob.id);
+                  }}>
+                    <Text style={m.primaryBtnText}>View Job</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </Modal>
+        )}
         <View style={w.header}>
           <View style={{ flex: 1 }}>
             <Text style={s.heading}>{selectedWorkerBooking ? 'Job Detail' : "Today's Work"}</Text>

@@ -41,7 +41,7 @@ export const bookingsAPI = {
   ).data),
   create: async (data) => withRetry(async () => (await apiClient.post('/Bookings', data)).data),
   getMyBookings: async () => (await apiClient.get('/Bookings')).data,
-  getWorkerBookings: async () => (await apiClient.get('/Bookings/worker')).data,
+  getWorkerBookings: async () => (await apiClient.get('/Bookings/Employee')).data,
   getAll: async () => (await apiClient.get('/Bookings/all')).data,
   seedDemoWorkload: async () => (await apiClient.post('/Bookings/seed-demo-workload')).data,
   getByBookingNumber: async (bookingNumber) => (await apiClient.get(`/Bookings/${bookingNumber}`)).data,
@@ -72,6 +72,7 @@ export const bookingsAPI = {
   ).data),
   claim: async (id) => withRetry(async () => (await apiClient.post(`/Bookings/${id}/claim`)).data),
   markArrived: async (id) => withRetry(async () => (await apiClient.post(`/Bookings/${id}/arrived`)).data),
+  markOnMyWay: async (id) => withRetry(async () => (await apiClient.post(`/Bookings/${id}/on-my-way`)).data),
   markRunningLate: async (id, delayMinutes, reason) => withRetry(async () => (
     await apiClient.post(`/Bookings/${id}/running-late`, { delayMinutes, reason })
   ).data),

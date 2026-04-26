@@ -15,6 +15,7 @@ namespace Glanz.API.Services
         Task NotifyLowStockAsync(Product product);
         Task NotifyJobStartedAsync(Booking booking);
         Task NotifyWorkerArrivedAsync(Booking booking);
+        Task NotifyWorkerOnMyWayAsync(Booking booking);
         Task NotifyWorkerRunningLateAsync(Booking booking, int delayMinutes, string reason);
         Task NotifyJobCompletedAsync(Booking booking);
         Task NotifyOfferAssignedAsync(int userId, Offer offer, string personalCode);
@@ -156,6 +157,18 @@ namespace Glanz.API.Services
                 customerMessage);
         }
 
+        public Task NotifyWorkerOnMyWayAsync(Booking booking)
+        {
+            var adminMessage = $"{GetWorkerName(booking.AssignedWorkerId)} is on the way to {booking.CustomerName}'s location.";
+            var customerMessage = "Your detailer is heading your way! Track their arrival in real-time.";
+            return NotifyAdminsAndCustomerAsync(
+                NotificationType.WorkerOnMyWay,
+                adminMessage,
+                booking.Id,
+                booking.UserId,
+                customerMessage);
+        }
+
         public Task NotifyWorkerRunningLateAsync(Booking booking, int delayMinutes, string reason)
         {
             var safeDelayMinutes = Math.Clamp(delayMinutes, 5, 120);
@@ -213,7 +226,7 @@ namespace Glanz.API.Services
                 return "Unknown";
             }
 
-            var worker = _context.Users.Where(u => u.Id == workerId).Select(u => $"{u.FirstName} {u.LastName}").FirstOrDefault();
+            var worker = _context.Staff.Where(s => s.Id == workerId).Select(s => $"{s.FirstName} {s.LastName}").FirstOrDefault();
             return worker ?? "Unknown";
         }
 

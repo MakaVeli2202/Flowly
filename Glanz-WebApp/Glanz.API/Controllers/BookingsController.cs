@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Glanz.API.Data;
@@ -17,7 +17,7 @@ namespace Glanz.API.Controllers
     public class BookingsController : ControllerBase
     {
         private static readonly TimeSpan WorkerArrivalNotificationCooldown = TimeSpan.FromMinutes(5);
-        private const int DefaultWorkerTravelBufferMinutes = 30; // fallback only — runtime value read from SystemSettings
+        private const int DefaultWorkerTravelBufferMinutes = 30; // fallback only â€” runtime value read from SystemSettings
         private static TimeZoneInfo BusinessTimeZone = ResolveBusinessTimeZone(null);
 
         private readonly AppDbContext _context;
@@ -254,7 +254,7 @@ namespace Glanz.API.Controllers
             {
                 try { return TimeZoneInfo.FindSystemTimeZoneById(tzId); } catch { }
             }
-            // Fallback: Arab Standard Time (Qatar, UTC+3) — kept for backward compat.
+            // Fallback: Arab Standard Time (Qatar, UTC+3) â€” kept for backward compat.
             try { return TimeZoneInfo.FindSystemTimeZoneById("Arab Standard Time"); } catch { }
             return TimeZoneInfo.Utc;
         }
@@ -308,7 +308,7 @@ namespace Glanz.API.Controllers
         /// Returns (shiftStart, shiftEnd) for a worker on a specific day,
         /// using per-day overrides from DaySchedulesJson if present.
         /// </summary>
-        private static (string ShiftStart, string ShiftEnd) GetWorkerShiftForDay(User worker, DayOfWeek dayOfWeek)
+        private static (string ShiftStart, string ShiftEnd) GetWorkerShiftForDay(Staff worker, DayOfWeek dayOfWeek)
         {
             if (!string.IsNullOrWhiteSpace(worker.DaySchedulesJson))
             {
@@ -329,7 +329,7 @@ namespace Glanz.API.Controllers
         }
 
         // Check if a booking time slot falls within a worker's shift.
-        // workerTravelBuffer is subtracted from the effective shift start — the worker needs
+        // workerTravelBuffer is subtracted from the effective shift start â€” the worker needs
         // this time to travel/prep before the first job. If the shift starts early enough
         // that shiftStart + buffer <= businessOpen, the business-hours floor (enforced by
         // BuildCandidateStartSlots) already satisfies the constraint at no cost to the customer.
@@ -435,7 +435,7 @@ namespace Glanz.API.Controllers
 
         private static int ResolveBookingDurationMinutes(Booking booking)
         {
-            // 1. Range-format TimeSlots (e.g. "10:00-11:00") are authoritative —
+            // 1. Range-format TimeSlots (e.g. "10:00-11:00") are authoritative â€”
             //    the range IS the scheduled window regardless of the package estimate.
             if (TryParseTimeSlot(booking.TimeSlot, out var rangeStart, out var rangeEnd))
             {
@@ -667,14 +667,14 @@ namespace Glanz.API.Controllers
             return HasBookingTimeOverlap(existingBookings, startSlot, totalDurationMinutes);
         }
 
-        private async Task<User?> FindAutoAssignableWorkerAsync(DateTime scheduledDate, string startSlot, int totalDurationMinutes,
+        private async Task<Staff?> FindAutoAssignableWorkerAsync(DateTime scheduledDate, string startSlot, int totalDurationMinutes,
             int workerTravelBuffer = DefaultWorkerTravelBufferMinutes)
         {
             var bookingDate = NormalizeUtcDate(scheduledDate);
             var bookingDay = bookingDate.DayOfWeek;
 
-            var workers = await _context.Users
-                .Where(u => u.IsActive && u.Role != null && u.Role.ToLower() == "worker")
+            var workers = await _context.Staff
+                .Where(s => s.IsActive)
                 .ToListAsync();
 
             var eligibleWorkers = workers
@@ -747,9 +747,9 @@ namespace Glanz.API.Controllers
             var bookingDate = NormalizeUtcDate(scheduledDate);
             var dayOfWeek = bookingDate.DayOfWeek;
 
-            var workers = await _context.Users
+            var workers = await _context.Staff
                 .AsNoTracking()
-                .Where(u => u.IsActive && u.Role != null && u.Role.ToLower() == "worker")
+                .Where(s => s.IsActive)
                 .ToListAsync();
 
             var eligibleWorkers = workers
@@ -927,9 +927,9 @@ namespace Glanz.API.Controllers
             int workerTravelBuffer = DefaultWorkerTravelBufferMinutes)
         {
             var dayName = targetDateUtc.DayOfWeek.ToString();
-            var workers = await _context.Users
+            var workers = await _context.Staff
                 .AsNoTracking()
-                .Where(u => u.IsActive && u.Role != null && u.Role.ToLower() == "worker")
+                .Where(s => s.IsActive)
                 .ToListAsync();
 
             var availableWorkers = workers
@@ -1474,11 +1474,11 @@ namespace Glanz.API.Controllers
                 }
 
                 var minimumJobDurationMinutes = await GetMinimumJobDurationMinutesAsync();
-                var workers = await _context.Users
+                var workers = await _context.Staff
                     .AsNoTracking()
-                    .Where(u => u.IsActive && u.Role != null && u.Role.ToLower() == "worker")
-                    .OrderBy(u => u.FirstName)
-                    .ThenBy(u => u.LastName)
+                    .Where(s => s.IsActive)
+                    .OrderBy(s => s.FirstName)
+                    .ThenBy(s => s.LastName)
                     .ToListAsync();
 
                 var workerIds = workers.Select(w => w.Id).ToList();
@@ -1606,10 +1606,10 @@ namespace Glanz.API.Controllers
                 var dayEnd = targetDate.AddDays(1);
                 var dayOfWeek = targetDate.DayOfWeek;
 
-                var workers = await _context.Users
+                var workers = await _context.Staff
                     .AsNoTracking()
-                    .Where(u => u.IsActive && u.Role != null && u.Role.ToLower() == "worker")
-                    .OrderBy(u => u.FirstName).ThenBy(u => u.LastName)
+                    .Where(s => s.IsActive)
+                    .OrderBy(s => s.FirstName).ThenBy(s => s.LastName)
                     .ToListAsync();
 
                 var workerIds = workers.Select(w => w.Id).ToList();
@@ -1641,7 +1641,7 @@ namespace Glanz.API.Controllers
                         TryParseSlotStart(b.TimeSlot, out var slotStartTs);
                         var packagesSummary = string.Join(", ", b.BookingItems
                             .Where(bi => bi.Package != null)
-                            .Select(bi => bi.Quantity > 1 ? $"{bi.Package!.Name} ×{bi.Quantity}" : bi.Package!.Name));
+                            .Select(bi => bi.Quantity > 1 ? $"{bi.Package!.Name} Ã—{bi.Quantity}" : bi.Package!.Name));
                         return new DayBookingSlotDto
                         {
                             BookingId = b.Id,
@@ -1776,7 +1776,7 @@ namespace Glanz.API.Controllers
                 var dayOfWeek         = targetLocalDate.DayOfWeek;
                 var dayName           = dayOfWeek.ToString();
 
-                // 4. Check if business is open that day (end <= start → closed).
+                // 4. Check if business is open that day (end <= start â†’ closed).
                 var (dayBoundsStart, dayBoundsEnd) = GetDayBounds(dayName);
                 if (!TimeSpan.TryParse(dayBoundsStart, out var boundsStartTs) ||
                     !TimeSpan.TryParse(dayBoundsEnd,   out var boundsEndTs)   ||
@@ -1786,16 +1786,16 @@ namespace Glanz.API.Controllers
                 }
 
                 // 5. Load active workers working on that day.
-                var workers = await _context.Users
+                var workers = await _context.Staff
                     .AsNoTracking()
-                    .Where(u => u.IsActive && u.Role != null && u.Role.ToLower() == "worker")
+                    .Where(s => s.IsActive)
                     .ToListAsync();
 
                 var availableWorkers = workers
                     .Where(w => WorkerWorksOnDay(w.WorkingDays, dayOfWeek))
                     .ToList();
 
-                // 6. If none → return empty.
+                // 6. If none â†’ return empty.
                 if (availableWorkers.Count == 0)
                     return Ok(new List<string>());
 
@@ -1838,7 +1838,7 @@ namespace Glanz.API.Controllers
                 var isSameDay = targetLocalDate == nowLocal.Date;
 
                 // WorkerCanTakeSlot: returns true if the given worker is free to take the slot.
-                bool WorkerCanTakeSlot(User worker, string startSlot)
+                bool WorkerCanTakeSlot(Staff worker, string startSlot)
                 {
                     if (!TryParseSlotStart(startSlot, out var slotStartTime))
                         return false;
@@ -1897,7 +1897,7 @@ namespace Glanz.API.Controllers
                             continue;
                     }
 
-                    // 13. Slot passed all checks — add it.
+                    // 13. Slot passed all checks â€” add it.
                     validStartSlots.Add(startSlot);
                 }
 
@@ -1933,7 +1933,7 @@ namespace Glanz.API.Controllers
             });
         }
 
-        // ── POST /api/Bookings/quote ──────────────────────────────────────────────
+        // â”€â”€ POST /api/Bookings/quote â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         // Returns a server-authoritative price breakdown for the current selection
         // (packages + vehicle type + subscription + offer code) WITHOUT creating a booking.
         // Mobile calls this whenever pricing inputs change so the displayed total is always
@@ -1979,7 +1979,7 @@ namespace Glanz.API.Controllers
                 if (offerError != null)
                     return BadRequest(new { message = offerError });
 
-                // ── Single pricing authority ──────────────────────────────────────
+                // â”€â”€ Single pricing authority â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 var pricing = await _pricingService.CalculateAsync(
                     items,
                     dto.VehicleType,
@@ -2035,7 +2035,7 @@ namespace Glanz.API.Controllers
                     return BadRequest(new { message = "One or more packages not found" });
                 }
 
-                // Duration comes from package definition only — Quantity scales price/cost, not time.
+                // Duration comes from package definition only â€” Quantity scales price/cost, not time.
                 var totalDurationMinutes = dto.Packages
                     .Sum(item => packages[item.PackageId].EstimatedDurationMinutes);
 
@@ -2053,7 +2053,7 @@ namespace Glanz.API.Controllers
 
                 var autoAssignEnabled = await IsAutoAssignEnabledAsync();
                 var workerTravelBufferPI = await GetWorkerTravelBufferMinutesAsync();
-                User? autoAssignableWorker = null;
+                Staff? autoAssignableWorker = null;
                 if (autoAssignEnabled)
                 {
                     autoAssignableWorker = await FindAutoAssignableWorkerAsync(scheduledDate, dto.TimeSlot, totalDurationMinutes, workerTravelBufferPI);
@@ -2096,7 +2096,7 @@ namespace Glanz.API.Controllers
                     await _context.SaveChangesAsync();
                 }
 
-                // ── Pricing via PricingService (single source of truth) ──────────────
+                // â”€â”€ Pricing via PricingService (single source of truth) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 // Cost calculation (for margin tracking) still happens locally
                 decimal totalCost = 0;
                 foreach (var item in dto.Packages)
@@ -2180,7 +2180,7 @@ namespace Glanz.API.Controllers
         {
             try
             {
-                // ── Idempotency check ────────────────────────────────────────────────────
+                // â”€â”€ Idempotency check â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 // If the client sent a key and a booking already exists with that key, return
                 // the original booking instead of creating a duplicate. This handles the case
                 // where the network fails mid-request and the app retries.
@@ -2201,12 +2201,12 @@ namespace Glanz.API.Controllers
 
                     if (existingByKey != null)
                     {
-                        // Idempotent replay — return the original booking
+                        // Idempotent replay â€” return the original booking
                         var existingDuration = ResolveBookingDurationMinutes(existingByKey);
                         return Ok(MapBookingToDto(existingByKey, existingDuration));
                     }
                 }
-                // ────────────────────────────────────────────────────────────────────────
+                // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
                 var bookingUser = await ResolveBookingUserByEmailAsync(dto.CustomerEmail);
                 var userId = bookingUser?.Id;
@@ -2232,7 +2232,7 @@ namespace Glanz.API.Controllers
                     return BadRequest(new { message = "One or more packages not found" });
                 }
 
-                // Duration comes from package definition only — Quantity scales price/cost, not time.
+                // Duration comes from package definition only â€” Quantity scales price/cost, not time.
                 var totalDurationMinutes = dto.Packages
                     .Sum(item => packages[item.PackageId].EstimatedDurationMinutes);
 
@@ -2248,7 +2248,7 @@ namespace Glanz.API.Controllers
                 }
 
 
-                // ── Slot reservation conflict check (Phase 3) ────────────────────────────
+                // â”€â”€ Slot reservation conflict check (Phase 3) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 var slotReservationEnabled = await IsFeatureFlagEnabledAsync("slotReservation");
                 if (slotReservationEnabled)
                 {
@@ -2266,11 +2266,11 @@ namespace Glanz.API.Controllers
                         });
                     }
                 }
-                // ─────────────────────────────────────────────────────────────────────────
+                // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
                 var autoAssignEnabled = await IsAutoAssignEnabledAsync();
                 var workerTravelBufferCB = await GetWorkerTravelBufferMinutesAsync();
-                User? autoAssignedWorker = null;
+                Staff? autoAssignedWorker = null;
                 if (autoAssignEnabled)
                 {
                     autoAssignedWorker = await FindAutoAssignableWorkerAsync(scheduledDate, dto.TimeSlot, totalDurationMinutes, workerTravelBufferCB);
@@ -2313,8 +2313,8 @@ namespace Glanz.API.Controllers
                     await _context.SaveChangesAsync();
                 }
 
-                // ── Pricing via PricingService (single source of truth) ──────────────
-                // Backend ALWAYS recalculates price — never trusts any client value.
+                // â”€â”€ Pricing via PricingService (single source of truth) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                // Backend ALWAYS recalculates price â€” never trusts any client value.
                 var checklistItems = BuildChecklistItems(dto.Packages, packages);
 
                 decimal totalCost = 0;
@@ -2361,7 +2361,7 @@ namespace Glanz.API.Controllers
                 var finalAmount    = pricing.FinalAmount;
                 var discountAmount = pricing.TotalDiscountAmount;
 
-                // ── Stripe amount safety gate ────────────────────────────────────────
+                // â”€â”€ Stripe amount safety gate â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 // If a PaymentIntent was created (payments feature ON), verify its amount
                 // matches the server-calculated final price. Rejects manipulated amounts.
                 if (!string.IsNullOrWhiteSpace(dto.StripePaymentIntentId))
@@ -2740,8 +2740,8 @@ namespace Glanz.API.Controllers
             }
         }
 
-        [Authorize(Roles = "Worker")]
-        [HttpGet("worker")]
+        [Authorize(Roles = "Employee")]
+        [HttpGet("Employee")]
         public async Task<ActionResult<IEnumerable<BookingDto>>> GetWorkerBookings()
         {
             try
@@ -2837,7 +2837,7 @@ namespace Glanz.API.Controllers
             }
         }
 
-        [Authorize(Roles = "Worker")]
+        [Authorize(Roles = "Employee")]
         [HttpPost("{id}/claim")]
         public async Task<ActionResult> ClaimBooking(int id)
         {
@@ -2849,8 +2849,8 @@ namespace Glanz.API.Controllers
                     return Unauthorized();
                 }
 
-                var worker = await _context.Users
-                    .FirstOrDefaultAsync(u => u.Id == workerId.Value && u.Role == "Worker" && u.IsActive);
+                var worker = await _context.Staff
+                    .FirstOrDefaultAsync(s => s.Id == workerId.Value && s.IsActive);
 
                 if (worker == null)
                 {
@@ -2968,7 +2968,7 @@ namespace Glanz.API.Controllers
             }
         }
 
-        [Authorize(Roles = "Admin,Worker")]
+        [Authorize(Roles = "Admin,Employee")]
         [HttpGet("all")]
         public async Task<ActionResult<IEnumerable<BookingDto>>> GetAllBookings()
         {
@@ -2983,7 +2983,7 @@ namespace Glanz.API.Controllers
                     .Include(b => b.AssignedWorker)
                     .OrderByDescending(b => b.CreatedAt);
 
-                if (User.IsInRole("Worker"))
+                if (User.IsInRole("Employee"))
                 {
                     var userId = GetUserId();
                     if (!userId.HasValue)
@@ -3063,7 +3063,7 @@ namespace Glanz.API.Controllers
             }
         }
 
-        [Authorize(Roles = "Admin,Worker")]
+        [Authorize(Roles = "Admin,Employee")]
         [HttpPut("{bookingId}/checklist/{checklistItemId}")]
         public async Task<ActionResult<BookingChecklistItemDto>> UpdateChecklistItem(int bookingId, int checklistItemId, [FromBody] UpdateChecklistItemDto dto)
         {
@@ -3078,7 +3078,7 @@ namespace Glanz.API.Controllers
                     return NotFound(new { message = "Booking not found" });
                 }
 
-                if (User.IsInRole("Worker"))
+                if (User.IsInRole("Employee"))
                 {
                     var workerId = GetUserId();
                     if (!workerId.HasValue)
@@ -3120,7 +3120,7 @@ namespace Glanz.API.Controllers
             }
         }
 
-        [Authorize(Roles = "Admin,Worker")]
+        [Authorize(Roles = "Admin,Employee")]
         [HttpPut("{id}/status")]
         public async Task<ActionResult> UpdateBookingStatus(int id, UpdateBookingStatusDto dto)
         {
@@ -3140,7 +3140,7 @@ namespace Glanz.API.Controllers
                     return NotFound(new { message = "Booking not found" });
                 }
 
-                if (User.IsInRole("Worker"))
+                if (User.IsInRole("Employee"))
                 {
                     var workerId = GetUserId();
                     if (!workerId.HasValue)
@@ -3237,12 +3237,10 @@ namespace Glanz.API.Controllers
                     return Ok(new { message = "Worker unassigned successfully" });
                 }
 
-                var worker = await _context.Users
-                    .FirstOrDefaultAsync(u =>
-                        u.Id == dto.WorkerId.Value
-                        && u.IsActive
-                        && u.Role != null
-                        && u.Role.ToLower() == "worker");
+                var worker = await _context.Staff
+                    .FirstOrDefaultAsync(s =>
+                        s.Id == dto.WorkerId.Value
+                        && s.IsActive);
 
                 if (worker == null)
                 {
@@ -3325,11 +3323,10 @@ namespace Glanz.API.Controllers
                 var effectiveTimeSlot = !string.IsNullOrEmpty(timeSlot) ? timeSlot : booking.TimeSlot;
                 var workerTravelBufferAW = await GetWorkerTravelBufferMinutesAsync();
 
-                var workers = await _context.Users
+                var workers = await _context.Staff
                     .AsNoTracking()
-                    .Where(u => u.Role != null && u.Role.ToLower() == "worker")
-                    .OrderBy(u => u.FirstName)
-                    .ThenBy(u => u.LastName)
+                    .OrderBy(s => s.FirstName)
+                    .ThenBy(s => s.LastName)
                     .ToListAsync();
 
                 var workerIds = workers.Select(w => w.Id).ToList();
@@ -3560,7 +3557,7 @@ namespace Glanz.API.Controllers
             }
         }
 
-        // ─── Admin: Cancel + Stripe void/refund ──────────────────────────────────
+        // â”€â”€â”€ Admin: Cancel + Stripe void/refund â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         [Authorize(Roles = "Admin")]
         [HttpPost("{id}/admin-cancel-refund")]
         public async Task<ActionResult<AdminCancelRefundResultDto>> AdminCancelAndRefund(int id, [FromBody] AdminCancelRefundDto dto)
@@ -3578,7 +3575,7 @@ namespace Glanz.API.Controllers
                 if (booking.Status == BookingStatus.Completed)
                     return BadRequest(new { message = "Cannot cancel a completed booking." });
 
-                // Idempotent — already cancelled
+                // Idempotent â€” already cancelled
                 if (booking.Status == BookingStatus.Cancelled)
                 {
                     return Ok(new AdminCancelRefundResultDto
@@ -3660,8 +3657,8 @@ namespace Glanz.API.Controllers
 
                 string message = stripeAction switch
                 {
-                    "Voided"   => "Booking cancelled — Stripe pre-authorization voided (no charge).",
-                    "Refunded" => $"Booking cancelled — QAR {refundedAmount:N2} refunded via Stripe.",
+                    "Voided"   => "Booking cancelled â€” Stripe pre-authorization voided (no charge).",
+                    "Refunded" => $"Booking cancelled â€” QAR {refundedAmount:N2} refunded via Stripe.",
                     _          => "Booking cancelled. No Stripe payment was on file.",
                 };
 
@@ -3687,7 +3684,7 @@ namespace Glanz.API.Controllers
             }
         }
 
-        [Authorize(Roles = "Worker")]
+        [Authorize(Roles = "Employee")]
         [HttpPost("{id}/start")]
         public async Task<ActionResult> StartJob(int id)
         {
@@ -3743,7 +3740,69 @@ namespace Glanz.API.Controllers
             }
         }
 
-        [Authorize(Roles = "Worker")]
+        [Authorize(Roles = "Employee")]
+        [HttpPost("{id}/on-my-way")]
+        public async Task<ActionResult> MarkOnMyWay(int id)
+        {
+            try
+            {
+                var userId = GetUserId();
+                if (!userId.HasValue)
+                {
+                    return Unauthorized(new { message = "User ID not found" });
+                }
+
+                var booking = await _context.Bookings.FindAsync(id);
+
+                if (booking == null)
+                {
+                    return NotFound(new { message = "Booking not found" });
+                }
+
+                if (booking.AssignedWorkerId != userId)
+                {
+                    return Forbid();
+                }
+
+                if (booking.Status == BookingStatus.Cancelled || booking.Status == BookingStatus.Completed)
+                {
+                    return BadRequest(new { message = "On My Way updates are not available for this job." });
+                }
+
+                if (booking.WorkStartedAt.HasValue || booking.Status == BookingStatus.InProgress)
+                {
+                    return BadRequest(new { message = "On My Way updates are not available after the job has started." });
+                }
+
+                var now = DateTime.UtcNow;
+                booking.WorkerOnMyWayAt = now;
+                booking.UpdatedAt = DateTime.UtcNow;
+
+                await _context.SaveChangesAsync();
+
+                try
+                {
+                    await _adminNotificationService.NotifyWorkerOnMyWayAsync(booking);
+                }
+                catch (Exception notifyEx)
+                {
+                    Console.WriteLine($"Warning: On My Way notification failed for booking {booking.Id}: {notifyEx.Message}");
+                }
+
+                return Ok(new
+                {
+                    message = "On My Way marked successfully",
+                    workerOnMyWayAt = booking.WorkerOnMyWayAt
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error marking On My Way: {ex.Message}");
+                return StatusCode(500, new { message = "Failed to mark On My Way" });
+            }
+        }
+
+        [Authorize(Roles = "Employee")]
         [HttpPost("{id}/arrived")]
         public async Task<ActionResult> MarkArrived(int id)
         {
@@ -3823,7 +3882,7 @@ namespace Glanz.API.Controllers
             }
         }
 
-        [Authorize(Roles = "Worker")]
+        [Authorize(Roles = "Employee")]
         [HttpPost("{id}/running-late")]
         public async Task<ActionResult> MarkRunningLate(int id, [FromBody] MarkRunningLateDto? dto)
         {
@@ -3881,7 +3940,7 @@ namespace Glanz.API.Controllers
             }
         }
 
-        [Authorize(Roles = "Worker")]
+        [Authorize(Roles = "Employee")]
         [HttpPost("{id}/finish")]
         public async Task<ActionResult> FinishJob(int id)
         {
@@ -3997,7 +4056,7 @@ namespace Glanz.API.Controllers
             }
         }
 
-            [Authorize(Roles = "Worker")]
+            [Authorize(Roles = "Employee")]
         [HttpPost("{id}/pause")]
         public async Task<ActionResult> PauseJob(int id, [FromBody] PauseJobDto dto)
         {
@@ -4037,7 +4096,7 @@ namespace Glanz.API.Controllers
             }
         }
 
-        [Authorize(Roles = "Worker")]
+        [Authorize(Roles = "Employee")]
         [HttpPost("{id}/resume")]
         public async Task<ActionResult> ResumeJob(int id)
         {
@@ -4076,7 +4135,7 @@ namespace Glanz.API.Controllers
             }
         }
 
-        [Authorize(Roles = "Worker")]
+        [Authorize(Roles = "Employee")]
         [HttpPost("{id}/add-package")]
         public async Task<ActionResult<BookingDto>> AddPackagesToBooking(int id, [FromBody] AddBookingPackageDto dto)
         {
@@ -4267,7 +4326,7 @@ namespace Glanz.API.Controllers
             }
         }
 
-        [Authorize(Roles = "Worker")]
+        [Authorize(Roles = "Employee")]
         [HttpPost("{id}/add-service")]
         public async Task<ActionResult<BookingDto>> AddServicesToBooking(int id, [FromBody] AddBookingServiceDto dto)
         {
@@ -4536,14 +4595,14 @@ namespace Glanz.API.Controllers
             }
         }
 
-        // ─── Worker Absence + Auto-Reassign ────────────────────────────────────────
+        // â”€â”€â”€ Worker Absence + Auto-Reassign â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         [Authorize(Roles = "Admin")]
         [HttpPost("worker-absence")]
         public async Task<ActionResult<WorkerAbsenceResultDto>> MarkWorkerAbsent([FromBody] WorkerAbsenceDto dto)
         {
             try
             {
-                var worker = await _context.Users.FirstOrDefaultAsync(u => u.Id == dto.WorkerId && u.Role == "Worker");
+                var worker = await _context.Staff.FirstOrDefaultAsync(s => s.Id == dto.WorkerId);
                 if (worker == null) return NotFound(new { message = "Worker not found" });
 
                 var fromUtc = DateTime.SpecifyKind(dto.FromDate.Date, DateTimeKind.Utc);
@@ -4614,7 +4673,7 @@ namespace Glanz.API.Controllers
             }
         }
 
-        // ─── Customer Change Requests ───────────────────────────────────────────────
+        // â”€â”€â”€ Customer Change Requests â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         [Authorize]
         [HttpPost("{id}/request-cancellation")]
         public async Task<ActionResult> RequestCancellation(int id, [FromBody] RequestCancellationDto dto)
@@ -4682,7 +4741,7 @@ namespace Glanz.API.Controllers
             }
         }
 
-        // ─── Reject Cancellation Request ─────────────────────────────────────────────
+        // â”€â”€â”€ Reject Cancellation Request â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         [Authorize(Roles = "Admin")]
         [HttpPost("{id}/reject-cancellation-request")]
         public async Task<ActionResult> RejectCancellationRequest(int id)
@@ -4714,7 +4773,7 @@ namespace Glanz.API.Controllers
             }
         }
 
-        // ─── Reject Reschedule Request ────────────────────────────────────────────────
+        // â”€â”€â”€ Reject Reschedule Request â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         [Authorize(Roles = "Admin")]
         [HttpPost("{id}/reject-reschedule-request")]
         public async Task<ActionResult> RejectRescheduleRequest(int id)
@@ -4747,7 +4806,7 @@ namespace Glanz.API.Controllers
             }
         }
 
-        // ─── Cancellation Fee Calculation ────────────────────────────────────────────
+        // â”€â”€â”€ Cancellation Fee Calculation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         [Authorize]
         [HttpGet("{id}/cancellation-fee")]
         public async Task<ActionResult<CancellationFeeInfoDto>> GetCancellationFee(int id)
@@ -4811,7 +4870,7 @@ namespace Glanz.API.Controllers
             };
         }
 
-        // ─── Admin: Full Booking Edit ─────────────────────────────────────────────────
+        // â”€â”€â”€ Admin: Full Booking Edit â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         [Authorize]
         [HttpPut("{id}/admin-edit")]
         public async Task<ActionResult<BookingDto>> AdminEditBooking(int id, [FromBody] AdminEditBookingDto dto)
@@ -4837,7 +4896,7 @@ namespace Glanz.API.Controllers
 
                 var workerTravelBufferEdit = await GetWorkerTravelBufferMinutesAsync();
 
-                // ── Date / time change ──────────────────────────────────────
+                // â”€â”€ Date / time change â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 bool dateChanged = false;
                 if (dto.ScheduledDate.HasValue || dto.TimeSlot != null)
                 {
@@ -4873,7 +4932,7 @@ namespace Glanz.API.Controllers
                     booking.TimeSlot = newSlot;
                 }
 
-                // ── Packages ─────────────────────────────────────────────────
+                // â”€â”€ Packages â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 if (dto.Packages != null && dto.Packages.Count > 0)
                 {
                     // Load all referenced packages (with cost data)
@@ -4907,7 +4966,7 @@ namespace Glanz.API.Controllers
                             message = $"The current time slot cannot fit the new package selection ({newDuration} min). " +
                                       (altSlots.Count > 0
                                           ? $"Available slots on the same day: {string.Join(", ", altSlots)}."
-                                          : "No available slots on the same day — please choose a different date."),
+                                          : "No available slots on the same day â€” please choose a different date."),
                             availableSlots = altSlots,
                             newDurationMinutes = newDuration
                         });
@@ -4947,18 +5006,18 @@ namespace Glanz.API.Controllers
                     booking.EstimatedProfit  = newTotal - newCost;
                 }
 
-                // ── Vehicle ──────────────────────────────────────────────────
+                // â”€â”€ Vehicle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 if (dto.VehicleMake    != null) booking.VehicleMake  = dto.VehicleMake;
                 if (dto.VehicleModel   != null) booking.VehicleModel = dto.VehicleModel;
                 if (dto.VehicleYear    != null) booking.VehicleYear  = dto.VehicleYear;
                 if (dto.VehicleType.HasValue)   booking.VehicleType  = dto.VehicleType.Value;
 
-                // ── Address ──────────────────────────────────────────────────
+                // â”€â”€ Address â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 if (dto.CustomerAddress != null) booking.CustomerAddress = dto.CustomerAddress;
                 if (dto.HouseNumber     != null) booking.HouseNumber     = dto.HouseNumber;
                 if (dto.AddressType     != null) booking.AddressType     = dto.AddressType;
 
-                // ── Misc ─────────────────────────────────────────────────────
+                // â”€â”€ Misc â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 if (dto.SpecialInstructions != null) booking.SpecialInstructions = dto.SpecialInstructions;
 
                 // Clear reschedule request since admin has now handled it
@@ -4985,7 +5044,7 @@ namespace Glanz.API.Controllers
             }
         }
 
-        // ─── Customer: Self-Service Booking Edit ─────────────────────────────────────
+        // â”€â”€â”€ Customer: Self-Service Booking Edit â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         [Authorize]
         [HttpPut("{id}/customer-edit")]
         public async Task<ActionResult<BookingDto>> CustomerEditBooking(int id, [FromBody] CustomerEditBookingDto dto)
@@ -5014,7 +5073,7 @@ namespace Glanz.API.Controllers
 
                 var workerTravelBufferCE = await GetWorkerTravelBufferMinutesAsync();
 
-                // ── Date / time change ──────────────────────────────────────
+                // â”€â”€ Date / time change â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 bool dateChanged = false;
                 if (dto.ScheduledDate.HasValue || dto.TimeSlot != null)
                 {
@@ -5051,7 +5110,7 @@ namespace Glanz.API.Controllers
                     booking.TimeSlot = newSlot;
                 }
 
-                // ── Packages ─────────────────────────────────────────────────
+                // â”€â”€ Packages â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 if (dto.Packages != null && dto.Packages.Count > 0)
                 {
                     var packageIds = dto.Packages.Select(p => p.PackageId).Distinct().ToList();
@@ -5116,18 +5175,18 @@ namespace Glanz.API.Controllers
                     booking.EstimatedProfit  = newTotal - newCost;
                 }
 
-                // ── Vehicle ──────────────────────────────────────────────────
+                // â”€â”€ Vehicle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 if (dto.VehicleMake  != null) booking.VehicleMake  = dto.VehicleMake;
                 if (dto.VehicleModel != null) booking.VehicleModel = dto.VehicleModel;
                 if (dto.VehicleYear  != null) booking.VehicleYear  = dto.VehicleYear;
                 if (dto.VehicleType.HasValue)  booking.VehicleType  = dto.VehicleType.Value;
 
-                // ── Address ──────────────────────────────────────────────────
+                // â”€â”€ Address â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 if (dto.CustomerAddress != null) booking.CustomerAddress = dto.CustomerAddress;
                 if (dto.HouseNumber     != null) booking.HouseNumber     = dto.HouseNumber;
                 if (dto.AddressType     != null) booking.AddressType     = dto.AddressType;
 
-                // ── Misc ─────────────────────────────────────────────────────
+                // â”€â”€ Misc â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 if (dto.SpecialInstructions != null) booking.SpecialInstructions = dto.SpecialInstructions;
 
                 // Clear any pending reschedule request since customer is self-rescheduling
@@ -5157,9 +5216,9 @@ namespace Glanz.API.Controllers
             var dayOfWeek = date.DayOfWeek;
 
             // Get all active workers that work on this day
-            var workers = await _context.Users
+            var workers = await _context.Staff
                 .AsNoTracking()
-                .Where(u => u.IsActive && u.Role != null && u.Role.ToLower() == "worker")
+                .Where(s => s.IsActive)
                 .ToListAsync();
 
             var availableWorkers = workers.Where(w => WorkerWorksOnDay(w.WorkingDays, dayOfWeek)).ToList();
@@ -5206,9 +5265,9 @@ namespace Glanz.API.Controllers
             int workerTravelBuffer = DefaultWorkerTravelBufferMinutes)
         {
             var dayOfWeek = date.DayOfWeek;
-            var workers = await _context.Users
+            var workers = await _context.Staff
                 .AsNoTracking()
-                .Where(u => u.IsActive && u.Role != null && u.Role.ToLower() == "worker")
+                .Where(s => s.IsActive)
                 .ToListAsync();
 
             var availableWorkers = workers.Where(w => WorkerWorksOnDay(w.WorkingDays, dayOfWeek)).ToList();
@@ -5305,9 +5364,9 @@ namespace Glanz.API.Controllers
             };
         }
 
-        // ── Before/After Photos ─────────────────────────────────────────────────
+        // â”€â”€ Before/After Photos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-        [Authorize(Roles = "Worker,Admin")]
+        [Authorize(Roles = "Employee,Admin")]
         [HttpPost("{id}/photos")]
         [Consumes("multipart/form-data")]
         public async Task<IActionResult> UploadBookingPhoto(int id, [FromForm] UploadBookingPhotoDto dto)
@@ -5395,3 +5454,4 @@ namespace Glanz.API.Controllers
         }
     }
 }
+

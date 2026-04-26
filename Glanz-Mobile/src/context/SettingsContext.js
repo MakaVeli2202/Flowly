@@ -20,6 +20,7 @@ export const DEFAULT_SETTINGS = {
   vehicleMultipliers:        { Motorcycle: 0.8, Sedan: 1.0, SUV: 1.25, Pickup: 1.5 },
   defaultBufferMinutes:      90,
   workerTravelBufferMinutes: 30,
+  workerReminderBeforeTravelMinutes: 5,
 };
 
 const SettingsContext = createContext(DEFAULT_SETTINGS);
@@ -51,6 +52,10 @@ export function SettingsProvider({ children }) {
           workerTravelBufferMinutes: Number.isFinite(data.booking?.workerTravelBufferMinutes)
             ? data.booking.workerTravelBufferMinutes
             : prev.workerTravelBufferMinutes,
+
+          workerReminderBeforeTravelMinutes: Number.isFinite(data.booking?.workerReminderBeforeTravelMinutes)
+            ? data.booking.workerReminderBeforeTravelMinutes
+            : prev.workerReminderBeforeTravelMinutes,
         }));
       })
       .catch(() => {

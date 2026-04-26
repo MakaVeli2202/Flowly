@@ -13,14 +13,15 @@ namespace Glanz.API.Models
         LowStock = 5,
         JobStarted = 6,
         WorkerArrived = 7,
+        WorkerOnMyWay = 16,
         WorkerRunningLate = 8,
         JobCompleted = 9,
         JobPaused = 10,
         SpecialOffer = 11,
         LoyaltyReward = 12,
-        JobResumed = 13,
-        ServiceAdded = 14,
-        PayrollDue = 15
+        JobResumed = 17,
+        ServiceAdded = 18,
+        PayrollDue = 19
     }
 
     public class Notification

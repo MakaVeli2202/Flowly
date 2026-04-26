@@ -217,7 +217,7 @@ function PasswordField({ label, value, onChange, placeholder, visible, setVisibl
 export default function ProfileScreen() {
   const { i18n } = useTranslation();
   const { user, updateProfile, uploadProfileImage, changePassword, logout } = useAuth();
-  const isWorker = user?.role === 'Worker';
+  const isWorker = user?.role === 'Employee';
   const TABS = [
     { id: 'profile',  label: 'Profile',  icon: 'person-outline'     },
     { id: 'security', label: 'Security', icon: 'lock-closed-outline' },
@@ -449,7 +449,7 @@ export default function ProfileScreen() {
             size={11}
             color={theme.colors.primary}
           />
-          <Text style={s.roleText}>{isWorker ? 'Worker' : 'Customer'}</Text>
+          <Text style={s.roleText}>{isWorker ? 'Employee' : 'Customer'}</Text>
         </View>
         <Text style={s.heroEmail}>{user?.email || ''}</Text>
         {/* SpectrumLine replaces the flat borderBottomColor on hero */}

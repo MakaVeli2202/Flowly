@@ -150,7 +150,7 @@ export function AuthProvider({ children }) {
     loading,
     isAuthenticated: !!token,
     isAdmin: user?.role === 'Admin',
-    isWorker: user?.role === 'Worker',
+    isWorker: user?.role === 'Employee',
     // Add shift fields for worker
     workingDays: user?.workingDays || 'Saturday,Sunday,Monday,Tuesday,Wednesday,Thursday',
     shiftStart: user?.shiftStart || '08:00',

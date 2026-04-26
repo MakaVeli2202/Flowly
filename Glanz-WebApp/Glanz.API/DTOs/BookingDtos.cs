@@ -131,6 +131,7 @@ namespace Glanz.API.DTOs
         public int? AssignedWorkerId { get; set; }
         public string? AssignedWorkerName { get; set; }
         public DateTime? WorkerArrivedAt { get; set; }
+        public DateTime? WorkerOnMyWayAt { get; set; }
         public DateTime? WorkerRunningLateAt { get; set; }
         public DateTime? WorkStartedAt { get; set; }
         public DateTime? WorkCompletedAt { get; set; }
