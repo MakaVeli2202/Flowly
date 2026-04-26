@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import React, { useEffect, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Image,
-  ActivityIndicator, RefreshControl, Dimensions,
+  ActivityIndicator, RefreshControl, Dimensions, TouchableOpacity,
 } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -13,6 +13,7 @@ import { usePackages } from '../context/PackagesContext';
 import { useScrollHeader } from '../hooks/useScrollHeader';
 import { formatQAR } from '../utils/currency';
 import { theme } from '../theme/theme';
+import { reviewsAPI } from '../api/reviews';
 import PressableScale from '../components/PressableScale';
 
 /* ── Constants ───────────────────────────────────────────── */
@@ -109,12 +110,23 @@ export default function HomeScreen({ navigation }) {
 
   const [refreshing,        setRefreshing]        = useState(false);
   const [expandedPackageId, setExpandedPackageId] = useState(null);
+  const [reviews, setReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
 
-  useEffect(() => { fetchPackages(); }, []);
+  useEffect(() => { fetchPackages(); fetchReviews(); }, []);
+
+  const fetchReviews = async () => {
+    try {
+      setReviewsLoading(true);
+      const data = await reviewsAPI.getPublic();
+      setReviews(Array.isArray(data) ? data.slice(0, 5) : []);
+    } catch { setReviews([]); }
+    finally { setReviewsLoading(false); }
+  };
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await fetchPackages();
+    await Promise.all([fetchPackages(), fetchReviews()]);
     setRefreshing(false);
   };
 
@@ -245,6 +257,47 @@ export default function HomeScreen({ navigation }) {
           </Animated.View>
         ))}
       </ScrollView>
+
+      {/* ── Reviews ──────────────────────────────────────── */}
+      <View style={s.sectionHeader}>
+        <View style={s.sectionTitleGroup}>
+          <LinearGradient colors={['transparent', G(0.80)]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={s.sectionAccentBar} />
+          <Text style={s.sectionTitle}>What Our Clients Say</Text>
+        </View>
+        <Text style={s.sectionAction}>Based on {reviews.length}+ reviews</Text>
+      </View>
+      {reviewsLoading ? (
+        <View style={s.loader}><ActivityIndicator color={theme.colors.primary} size="small" /></View>
+      ) : reviews.length === 0 ? (
+        <View style={s.emptyCard}>
+          <Text style={s.emptyText}>No reviews yet</Text>
+        </View>
+      ) : (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.reviewsScroll}>
+          <View style={s.reviewsRow}>
+            {reviews.map((review) => (
+              <View key={review.id} style={s.reviewCard}>
+                <PrismLeftBar />
+                <View style={s.reviewHeader}>
+                  <View style={s.reviewAvatar}>
+                    <Text style={s.reviewAvatarText}>{review.fallbackInitials || review.author?.[0]}</Text>
+                  </View>
+                  <View style={s.reviewInfo}>
+                    <Text style={s.reviewAuthor}>{review.author}</Text>
+                    <Text style={s.reviewDate}>{review.date}</Text>
+                  </View>
+                </View>
+                <View style={s.reviewStars}>
+                  {[...Array(review.rating || 5)].map((_, i) => (
+                    <Ionicons key={i} name="star" size={12} color="#FBBF24" />
+                  ))}
+                </View>
+                <Text style={s.reviewText} numberOfLines={3}>{review.text}</Text>
+              </View>
+            ))}
+          </View>
+        </ScrollView>
+      )}
 
       {/* ── Featured Packages ───────────────────────────── */}
       <SectionHeader
@@ -565,4 +618,25 @@ const s = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   quickLabel: { color: theme.colors.text, fontSize: 12, fontWeight: '700', textAlign: 'center' },
+  /* Reviews */
+  reviewsScroll: { marginBottom: 16 },
+  reviewsRow: { paddingRight: PADDING, gap: 12 },
+  reviewCard: {
+    width: 240, borderWidth: 1, borderColor: theme.colors.border,
+    borderRadius: 16, backgroundColor: 'rgba(19,27,37,0.70)',
+    padding: 14, overflow: 'hidden',
+  },
+  reviewHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 },
+  reviewAvatar: {
+    width: 36, height: 36, borderRadius: 18,
+    backgroundColor: G(0.20), alignItems: 'center', justifyContent: 'center',
+  },
+  reviewAvatarText: { color: theme.colors.primary, fontWeight: '800', fontSize: 12 },
+  reviewInfo: { flex: 1 },
+  reviewAuthor: { color: theme.colors.text, fontSize: 13, fontWeight: '700' },
+  reviewDate: { color: theme.colors.textMuted, fontSize: 10 },
+  reviewStars: { flexDirection: 'row', gap: 2, marginBottom: 6 },
+  reviewText: { color: theme.colors.textMuted, fontSize: 12, lineHeight: 17 },
+  emptyCard: { padding: 24, borderWidth: 1, borderColor: theme.colors.border, borderRadius: 16, alignItems: 'center' },
+  emptyText: { color: theme.colors.textMuted, fontSize: 13 },
 });
