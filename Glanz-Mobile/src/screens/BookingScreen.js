@@ -373,15 +373,7 @@ export default function BookingScreen({ navigation, route }) {
       try {
         setSlotsLoading(true);
         const slots = await bookingsAPI.getAvailableSlots(form.scheduledDate, totalDuration || undefined);
-        const todayKey = toDateKey(new Date());
-        const filtered = form.scheduledDate === todayKey
-          ? (slots || []).filter((slot) => {
-              const [h, m] = String(slot).split('-')[0].trim().split(':').map(Number);
-              if (!Number.isFinite(h) || !Number.isFinite(m)) return true;
-              const slotTime = new Date(); slotTime.setHours(h, m, 0, 0);
-              return (slotTime - new Date()) >= settings.defaultBufferMinutes * 60 * 1000;
-            })
-          : (slots || []);
+        const filtered = slots || [];
         setAvailableSlots(filtered);
         setForm((prev) => ({ ...prev, timeSlot: filtered.includes(prev.timeSlot) ? prev.timeSlot : '' }));
       } catch {
@@ -393,7 +385,7 @@ export default function BookingScreen({ navigation, route }) {
     fetchSlots();
   // Re-fetch when date, total job duration, or buffer setting changes.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form.scheduledDate, totalDuration, settings.defaultBufferMinutes]);
+  }, [form.scheduledDate, totalDuration]);
 
   const selectPackage = (packageId) => setSelectedPackages([{ packageId, quantity: 1 }]);
 

@@ -31,31 +31,48 @@ export function AuthProvider({ children }) {
     const init = async () => {
       try {
         const savedToken = await AsyncStorage.getItem('token');
-        const savedUser = await AsyncStorage.getItem('user');
-        if (savedToken) {
-          setToken(savedToken);
+        const savedUser  = await AsyncStorage.getItem('user');
 
-          try {
-            const freshUser = await authAPI.getCurrentUser();
-            await AsyncStorage.setItem('user', JSON.stringify(freshUser));
-            setUser(freshUser);
-          } catch (err) {
-            const status = err?.response?.status;
-            if (status === 401 || status === 403) {
-              // Token is invalid — clear storage and force re-login
-              await AsyncStorage.multiRemove(['token', 'user']);
+        if (!savedToken) return;
+
+        setToken(savedToken);
+
+        try {
+          const freshUser = await authAPI.getCurrentUser();
+          await AsyncStorage.setItem('user', JSON.stringify(freshUser));
+          setUser(freshUser);
+        } catch (err) {
+          const status = err?.response?.status;
+          if (status === 401 || status === 403) {
+            // Access token expired — try silent refresh before giving up
+            try {
+              const storedRefresh = await AsyncStorage.getItem('refreshToken');
+              if (!storedRefresh) throw new Error('no refresh token');
+              const res = await authAPI.refresh(storedRefresh);
+              await AsyncStorage.setItem('token', res.token);
+              if (res.refreshToken) {
+                await AsyncStorage.setItem('refreshToken', res.refreshToken);
+              }
+              setToken(res.token);
+              // Re-fetch user with the new token
+              const freshUser = await authAPI.getCurrentUser();
+              await AsyncStorage.setItem('user', JSON.stringify(freshUser));
+              setUser(freshUser);
+            } catch {
+              // Refresh also failed — clear everything and force login
+              await AsyncStorage.multiRemove(['token', 'refreshToken', 'user']);
               setToken(null);
               setUser(null);
-            } else if (savedUser) {
-              // Network/server error — use stale user for offline access
-              setUser(JSON.parse(savedUser));
+              return;
             }
+          } else if (savedUser) {
+            // Network/server error — use stale user for offline access
+            setUser(JSON.parse(savedUser));
           }
-          // Register push token every cold start (token can rotate)
-          syncPushToken();
-          // Restore real-time connection on cold start
-          startNotificationConnection().catch(() => {});
         }
+
+        syncPushToken();
+        startNotificationConnection().catch(() => {});
       } finally {
         setLoading(false);
       }
@@ -66,18 +83,19 @@ export function AuthProvider({ children }) {
   const login = async (email, password) => {
     const res = await authAPI.login({ email, password });
     await AsyncStorage.setItem('token', res.token);
+    if (res.refreshToken) await AsyncStorage.setItem('refreshToken', res.refreshToken);
     await AsyncStorage.setItem('user', JSON.stringify(res.user));
     setToken(res.token);
     setUser(res.user);
     syncPushToken();
-    // Start real-time connection now that token is persisted
-    startNotificationConnection().catch(() => { /* non-critical — polling covers offline */ });
+    startNotificationConnection().catch(() => {});
     return res;
   };
 
   const register = async (data) => {
     const res = await authAPI.register(data);
     await AsyncStorage.setItem('token', res.token);
+    if (res.refreshToken) await AsyncStorage.setItem('refreshToken', res.refreshToken);
     await AsyncStorage.setItem('user', JSON.stringify(res.user));
     setToken(res.token);
     setUser(res.user);
@@ -113,7 +131,8 @@ export function AuthProvider({ children }) {
     setUnauthorizedHandler(null); // prevent 401 loop during cleanup
     await stopNotificationConnection();
     try { await authAPI.clearPushToken(); } catch { /* non-critical */ }
-    await AsyncStorage.multiRemove(['token', 'user']);
+    try { await authAPI.logout(); } catch { /* best-effort server-side revoke */ }
+    await AsyncStorage.multiRemove(['token', 'refreshToken', 'user']);
     setToken(null);
     setUser(null);
   };

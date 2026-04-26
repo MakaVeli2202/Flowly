@@ -52,7 +52,7 @@ namespace Glanz.API.Migrations
                     b.HasIndex("Date", "TimeSlot")
                         .IsUnique();
 
-                    b.ToTable("Availabilities", (string)null);
+                    b.ToTable("Availabilities");
                 });
 
             modelBuilder.Entity("Glanz.API.Models.Booking", b =>
@@ -215,7 +215,7 @@ namespace Glanz.API.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Bookings", (string)null);
+                    b.ToTable("Bookings");
                 });
 
             modelBuilder.Entity("Glanz.API.Models.BookingChecklistItem", b =>
@@ -247,7 +247,7 @@ namespace Glanz.API.Migrations
 
                     b.HasIndex("BookingId");
 
-                    b.ToTable("BookingChecklistItems", (string)null);
+                    b.ToTable("BookingChecklistItems");
                 });
 
             modelBuilder.Entity("Glanz.API.Models.BookingItem", b =>
@@ -284,7 +284,7 @@ namespace Glanz.API.Migrations
 
                     b.HasIndex("PackageId");
 
-                    b.ToTable("BookingItems", (string)null);
+                    b.ToTable("BookingItems");
                 });
 
             modelBuilder.Entity("Glanz.API.Models.BookingPhoto", b =>
@@ -322,7 +322,146 @@ namespace Glanz.API.Migrations
 
                     b.HasIndex("UploadedByWorkerId");
 
-                    b.ToTable("BookingPhotos", (string)null);
+                    b.ToTable("BookingPhotos");
+                });
+
+            modelBuilder.Entity("Glanz.API.Models.JobApplication", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("CoverLetter")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DateOfBirth")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<bool>("EmailSent")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Experience")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime?>("InterviewDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("JobPositionId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("LastEmailSentAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("NationalId")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Position")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("RejectionReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("ResumeUrl")
+                        .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Email");
+
+                    b.HasIndex("JobPositionId");
+
+                    b.ToTable("JobApplications");
+                });
+
+            modelBuilder.Entity("Glanz.API.Models.JobPosition", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Department")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<bool>("IsOpen")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Location")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("Rank")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Type")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IsOpen", "Rank");
+
+                    b.ToTable("JobPositions");
                 });
 
             modelBuilder.Entity("Glanz.API.Models.Notification", b =>
@@ -364,7 +503,7 @@ namespace Glanz.API.Migrations
 
                     b.HasIndex("UserId", "IsRead");
 
-                    b.ToTable("Notifications", (string)null);
+                    b.ToTable("Notifications");
                 });
 
             modelBuilder.Entity("Glanz.API.Models.Offer", b =>
@@ -431,7 +570,7 @@ namespace Glanz.API.Migrations
                     b.HasIndex("Code")
                         .IsUnique();
 
-                    b.ToTable("Offers", (string)null);
+                    b.ToTable("Offers");
                 });
 
             modelBuilder.Entity("Glanz.API.Models.Package", b =>
@@ -480,7 +619,7 @@ namespace Glanz.API.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("Packages", (string)null);
+                    b.ToTable("Packages");
                 });
 
             modelBuilder.Entity("Glanz.API.Models.PackageService", b =>
@@ -503,7 +642,7 @@ namespace Glanz.API.Migrations
 
                     b.HasIndex("ServiceId");
 
-                    b.ToTable("PackageServices", (string)null);
+                    b.ToTable("PackageServices");
                 });
 
             modelBuilder.Entity("Glanz.API.Models.Product", b =>
@@ -550,7 +689,7 @@ namespace Glanz.API.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Products", (string)null);
+                    b.ToTable("Products");
                 });
 
             modelBuilder.Entity("Glanz.API.Models.Service", b =>
@@ -583,7 +722,7 @@ namespace Glanz.API.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Services", (string)null);
+                    b.ToTable("Services");
                 });
 
             modelBuilder.Entity("Glanz.API.Models.ServiceProduct", b =>
@@ -610,7 +749,7 @@ namespace Glanz.API.Migrations
 
                     b.HasIndex("ServiceId");
 
-                    b.ToTable("ServiceProducts", (string)null);
+                    b.ToTable("ServiceProducts");
                 });
 
             modelBuilder.Entity("Glanz.API.Models.ServiceSubscription", b =>
@@ -671,7 +810,7 @@ namespace Glanz.API.Migrations
 
                     b.HasIndex("UserId", "IsActive");
 
-                    b.ToTable("ServiceSubscriptions", (string)null);
+                    b.ToTable("ServiceSubscriptions");
                 });
 
             modelBuilder.Entity("Glanz.API.Models.SlotReservation", b =>
@@ -710,7 +849,7 @@ namespace Glanz.API.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("SlotReservations", (string)null);
+                    b.ToTable("SlotReservations");
                 });
 
             modelBuilder.Entity("Glanz.API.Models.SubscriptionBooking", b =>
@@ -786,7 +925,7 @@ namespace Glanz.API.Migrations
 
                     b.HasIndex("UserId", "Status");
 
-                    b.ToTable("SubscriptionBookings", (string)null);
+                    b.ToTable("SubscriptionBookings");
                 });
 
             modelBuilder.Entity("Glanz.API.Models.SubscriptionPlan", b =>
@@ -835,7 +974,7 @@ namespace Glanz.API.Migrations
 
                     b.HasIndex("VehicleType", "IsActive", "DisplayOrder");
 
-                    b.ToTable("SubscriptionPlans", (string)null);
+                    b.ToTable("SubscriptionPlans");
                 });
 
             modelBuilder.Entity("Glanz.API.Models.SubscriptionPlanBenefit", b =>
@@ -861,7 +1000,7 @@ namespace Glanz.API.Migrations
 
                     b.HasIndex("PlanId");
 
-                    b.ToTable("SubscriptionPlanBenefits", (string)null);
+                    b.ToTable("SubscriptionPlanBenefits");
                 });
 
             modelBuilder.Entity("Glanz.API.Models.SubscriptionPlanFeature", b =>
@@ -887,7 +1026,7 @@ namespace Glanz.API.Migrations
 
                     b.HasIndex("PlanId");
 
-                    b.ToTable("SubscriptionPlanFeatures", (string)null);
+                    b.ToTable("SubscriptionPlanFeatures");
                 });
 
             modelBuilder.Entity("Glanz.API.Models.SubscriptionPlanPackage", b =>
@@ -913,7 +1052,7 @@ namespace Glanz.API.Migrations
 
                     b.HasIndex("PlanId", "DisplayOrder");
 
-                    b.ToTable("SubscriptionPlanPackages", (string)null);
+                    b.ToTable("SubscriptionPlanPackages");
                 });
 
             modelBuilder.Entity("Glanz.API.Models.SystemSetting", b =>
@@ -932,7 +1071,7 @@ namespace Glanz.API.Migrations
 
                     b.HasKey("Key");
 
-                    b.ToTable("SystemSettings", (string)null);
+                    b.ToTable("SystemSettings");
                 });
 
             modelBuilder.Entity("Glanz.API.Models.User", b =>
@@ -1019,6 +1158,13 @@ namespace Glanz.API.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
+                    b.Property<string>("RefreshToken")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime?>("RefreshTokenExpiry")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("Role")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -1059,7 +1205,7 @@ namespace Glanz.API.Migrations
                         .IsUnique()
                         .HasFilter("\"Phone\" IS NOT NULL AND \"Phone\" <> ''");
 
-                    b.ToTable("Users", (string)null);
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("Glanz.API.Models.UserOffer", b =>
@@ -1109,7 +1255,7 @@ namespace Glanz.API.Migrations
                     b.HasIndex("UserId", "OfferId", "EarnedAtCompletedBookingsCount")
                         .IsUnique();
 
-                    b.ToTable("UserOffers", (string)null);
+                    b.ToTable("UserOffers");
                 });
 
             modelBuilder.Entity("Glanz.API.Models.UserSubscription", b =>
@@ -1147,7 +1293,7 @@ namespace Glanz.API.Migrations
 
                     b.HasIndex("UserId", "Status");
 
-                    b.ToTable("UserSubscriptions", (string)null);
+                    b.ToTable("UserSubscriptions");
                 });
 
             modelBuilder.Entity("Glanz.API.Models.Vehicle", b =>
@@ -1202,7 +1348,46 @@ namespace Glanz.API.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Vehicles", (string)null);
+                    b.ToTable("Vehicles");
+                });
+
+            modelBuilder.Entity("Glanz.API.Models.WorkerLocation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BookingId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<double>("Latitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("Longitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("Status")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("WorkerId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BookingId");
+
+                    b.HasIndex("WorkerId");
+
+                    b.ToTable("WorkerLocations");
                 });
 
             modelBuilder.Entity("Glanz.API.Models.Booking", b =>
@@ -1266,6 +1451,16 @@ namespace Glanz.API.Migrations
                     b.Navigation("Booking");
 
                     b.Navigation("UploadedByWorker");
+                });
+
+            modelBuilder.Entity("Glanz.API.Models.JobApplication", b =>
+                {
+                    b.HasOne("Glanz.API.Models.JobPosition", "JobPosition")
+                        .WithMany("Applications")
+                        .HasForeignKey("JobPositionId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("JobPosition");
                 });
 
             modelBuilder.Entity("Glanz.API.Models.Notification", b =>
@@ -1469,11 +1664,35 @@ namespace Glanz.API.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Glanz.API.Models.WorkerLocation", b =>
+                {
+                    b.HasOne("Glanz.API.Models.Booking", "Booking")
+                        .WithMany()
+                        .HasForeignKey("BookingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Glanz.API.Models.User", "Worker")
+                        .WithMany()
+                        .HasForeignKey("WorkerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Booking");
+
+                    b.Navigation("Worker");
+                });
+
             modelBuilder.Entity("Glanz.API.Models.Booking", b =>
                 {
                     b.Navigation("BookingItems");
 
                     b.Navigation("ChecklistItems");
+                });
+
+            modelBuilder.Entity("Glanz.API.Models.JobPosition", b =>
+                {
+                    b.Navigation("Applications");
                 });
 
             modelBuilder.Entity("Glanz.API.Models.Offer", b =>

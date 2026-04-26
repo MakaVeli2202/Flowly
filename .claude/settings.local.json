@@ -43,7 +43,26 @@
       "Bash(cmd /c \"tasklist /FI \\\\\"PID eq 3040\\\\\" 2>&1\")",
       "Bash(cmd /c \"tasklist /FI \\\\\"IMAGENAME eq Glanz.API.exe\\\\\" 2>&1\")",
       "Bash(PGPASSWORD='Passme123!' psql -h localhost -p 5432 -U postgres -d \" ef\" -c 'ALTER TABLE \"Users\" ADD COLUMN IF NOT EXISTS \"Iban\" VARCHAR\\(34\\);')",
-      "Bash(PGPASSWORD='Passme123!' psql -h localhost -p 5432 -U postgres -d \" ef\" -c \"INSERT INTO \\\\\"__EFMigrationsHistory\\\\\" \\(\\\\\"MigrationId\\\\\", \\\\\"ProductVersion\\\\\"\\) VALUES \\('20260425200000_AddWorkerIban', '10.0.0'\\) ON CONFLICT DO NOTHING;\")"
+      "Bash(PGPASSWORD='Passme123!' psql -h localhost -p 5432 -U postgres -d \" ef\" -c \"INSERT INTO \\\\\"__EFMigrationsHistory\\\\\" \\(\\\\\"MigrationId\\\\\", \\\\\"ProductVersion\\\\\"\\) VALUES \\('20260425200000_AddWorkerIban', '10.0.0'\\) ON CONFLICT DO NOTHING;\")",
+      "Bash(npm run *)",
+      "Bash(xargs grep *)",
+      "Bash(xargs -I {} sh -c 'echo \"=== {} ===\" && grep \"^[[:space:]]*public class\" {}')",
+      "Bash(awk '{print $2}')",
+      "Bash(xargs -I{} sh -c 'jq -r \"select\\(.type==\\\\\"assistant\\\\\"\\) | .message.content[]? | select\\(.type==\\\\\"tool_use\\\\\" and .name==\\\\\"Bash\\\\\"\\) | .input.command\" \"{}\" 2>/dev/null')",
+      "Bash(grep -v \"^$\")",
+      "Bash(awk '{print $1, $2}')",
+      "Bash(awk '{print $1}')",
+      "Bash(psql -U postgres -d glanz_db -c \"SELECT EXISTS \\(SELECT FROM information_schema.tables WHERE table_name = '__EFMigrationsHistory'\\);\")",
+      "PowerShell(& \"C:\\\\Program Files\\\\PostgreSQL\\\\17\\\\bin\\\\psql.exe\" -U postgres -d glanz_db -c \"SELECT EXISTS \\(SELECT FROM information_schema.tables WHERE table_name = '__EFMigrationsHistory'\\);\" 2>&1)",
+      "Bash(dotnet run *)",
+      "Bash(curl -s \"http://localhost:5289/api/Bookings/available-slots?date=2026-04-26&durationMinutes=60\")",
+      "Bash(kill %1)",
+      "Bash(curl -s \"http://localhost:5289/api/Bookings/constraints\")",
+      "Bash(PGPASSWORD=postgres psql -U postgres -d glanz_db -c \"SELECT key, value FROM \\\\\"SystemSettings\\\\\" WHERE key LIKE 'booking%';\")",
+      "PowerShell($env:PGPASSWORD = \"postgres\"; & \"C:\\\\Program Files\\\\PostgreSQL\\\\17\\\\bin\\\\psql.exe\" -U postgres -d glanz_db -c \"SELECT key, value FROM `\"SystemSettings`\" WHERE key LIKE 'booking%';\")",
+      "PowerShell($env:PGPASSWORD = \"Passme123!\"; & \"C:\\\\Program Files\\\\PostgreSQL\\\\16\\\\bin\\\\psql.exe\" -U postgres -d glanz_db -c \"SELECT key, value FROM `\"SystemSettings`\" WHERE key LIKE 'booking%';\" 2>&1)",
+      "PowerShell($login = Invoke-RestMethod -Uri \"http://localhost:5289/api/Auth/login\" -Method Post -ContentType \"application/json\" -Body '{\"email\":\"admin@glanz.qa\",\"password\":\"Admin123!\"}'; $token = $login.token; $workers = Invoke-RestMethod -Uri \"http://localhost:5289/api/Auth/workers\" -Headers @{Authorization=\"Bearer $token\"}; $workers | Select-Object id, firstName, lastName, shiftStart, shiftEnd, workingDays | ConvertTo-Json)",
+      "PowerShell($login = Invoke-RestMethod -Uri \"http://localhost:5289/api/Auth/login\" -Method Post -ContentType \"application/json\" -Body '{\"email\":\"admin@glanz.qa\",\"password\":\"Admin123!\"}'; $token = $login.token; $slots = Invoke-RestMethod -Uri \"http://localhost:5289/api/Bookings/available-slots?date=2026-05-03&durationMinutes=60\" -Headers @{Authorization=\"Bearer $token\"}; $slots)"
     ]
   }
 }

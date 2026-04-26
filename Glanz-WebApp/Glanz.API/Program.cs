@@ -220,6 +220,33 @@ using (var scope = app.Services.CreateScope())
 
 await DevelopmentDataSeeder.SeedAsync(app.Services, builder.Configuration, app.Environment);
 
+// Load business hours from DB and apply to slot helpers
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var hoursRow = await dbContext.SystemSettings
+        .FirstOrDefaultAsync(s => s.Key == "booking.businessHours");
+    if (hoursRow != null && !string.IsNullOrWhiteSpace(hoursRow.Value))
+    {
+        try
+        {
+            var hours = System.Text.Json.JsonSerializer.Deserialize<BusinessHoursPerDayDto>(hoursRow.Value,
+                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            if (hours != null)
+            {
+                Glanz.API.Controllers.BookingsController.SetBusinessHoursFromSettings(hours);
+                BookingSlotHelper.SetBusinessHoursFromSettings(hours);
+            }
+        }
+        catch { }
+    }
+}
+
+// Apply configured business timezone to slot helpers
+var configuredTz = builder.Configuration["BusinessSettings:TimeZone"];
+Glanz.API.Controllers.BookingsController.ApplyConfiguredTimeZone(configuredTz);
+BookingSlotHelper.ApplyConfiguredTimeZone(configuredTz);
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

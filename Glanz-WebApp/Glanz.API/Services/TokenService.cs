@@ -9,6 +9,7 @@ namespace Glanz.API.Services
     public interface ITokenService
     {
         string GenerateToken(User user);
+        string GenerateRefreshToken();
     }
 
     public class TokenService : ITokenService
@@ -18,6 +19,13 @@ namespace Glanz.API.Services
         public TokenService(IConfiguration configuration)
         {
             _configuration = configuration;
+        }
+
+        public string GenerateRefreshToken()
+        {
+            var bytes = new byte[64];
+            System.Security.Cryptography.RandomNumberGenerator.Fill(bytes);
+            return Convert.ToBase64String(bytes);
         }
 
         public string GenerateToken(User user)

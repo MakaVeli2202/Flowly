@@ -36,7 +36,7 @@ export default function LiveWorkerMapScreen({ route, navigation }) {
   const loadBooking = useCallback(async () => {
     if (!bookingId) return;
     try {
-      const data = await bookingsAPI.getById(bookingId);
+      const data = await bookingsAPI.getByBookingNumber(bookingId);
       setBooking(data);
       if (data.status === 'Completed' || data.status === 'Cancelled') {
         setIsTrackingActive(false);

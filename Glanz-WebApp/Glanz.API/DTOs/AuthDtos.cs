@@ -64,6 +64,8 @@ namespace Glanz.API.DTOs
     public class AuthResponseDto
     {
         public string Token { get; set; } = string.Empty;
+        /// <summary>Returned so mobile clients can store it in AsyncStorage. Web uses the HttpOnly cookie instead.</summary>
+        public string? RefreshToken { get; set; }
         public UserDto User { get; set; } = null!;
     }
 
@@ -245,5 +247,10 @@ namespace Glanz.API.DTOs
         public int UserId { get; set; }
         [Required]
         public string Message { get; set; } = string.Empty;
+    }
+
+    public class RefreshTokenRequestDto
+    {
+        public string? RefreshToken { get; set; }
     }
 }

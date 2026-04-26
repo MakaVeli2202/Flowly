@@ -46,6 +46,12 @@ const normalizeStatusKey = (rawStatus, fallbackMetrics = {}) => {
   return deriveStatusFromCapacity(fallbackMetrics);
 };
 
+const DAY_CELL_CLS = {
+  available: 'bg-green-500/10 border-green-500/30 text-green-400 hover:bg-green-500/20',
+  medium:    'bg-amber-500/10 border-amber-500/30 text-amber-400 hover:bg-amber-500/20',
+  full:      'bg-red-500/10  border-red-500/30   text-red-400   cursor-not-allowed opacity-50',
+};
+
 /* ── PRISM CSS ────────────────────────────────────────────── */
 const PRISM_CSS = `
 @keyframes holo-sweep {
@@ -223,6 +229,7 @@ function BookingForm({ stripe, elements, isStripeMode }) {
   const [availabilityByDate, setAvailabilityByDate] = useState({});
   const [myCoupons,          setMyCoupons]          = useState([]);
   const bookingTopRef = useRef(null);
+  const initialized = useRef(false);
   const [formData, setFormData] = useState({
     scheduledDate:       minBookingDate,
     timeSlot:            '',
@@ -325,6 +332,8 @@ function BookingForm({ stripe, elements, isStripeMode }) {
 
   /* ── Effects (unchanged) ────────────────────────────────── */
   useEffect(() => {
+    if (initialized.current) return;
+    initialized.current = true;
     fetchPackagesCtx().then((data) => {
       if (Array.isArray(data) && data.length > 0) {
         setSelectedPackages((prev) => (prev.length > 0 ? prev : [{ packageId: data[0].id, quantity: 1 }]));
@@ -348,9 +357,6 @@ function BookingForm({ stripe, elements, isStripeMode }) {
     if (preSelected) setSelectedPackages([{ packageId: preSelected.id, quantity: 1 }]);
   }, [location]);
   useEffect(() => {
-    if (selectedPackages.length > 1) setSelectedPackages([selectedPackages[0]]);
-  }, [selectedPackages]);
-  useEffect(() => {
     if (user && canAutofillCustomerData) {
       setFormData((prev) => ({
         ...prev,
@@ -363,8 +369,9 @@ function BookingForm({ stripe, elements, isStripeMode }) {
     }
   }, [user, savedAddress, normalizedPreferredAddressType, canAutofillCustomerData]);
   useEffect(() => {
-    fetchMonthAvailability(calendarMonth);
-  }, [calendarMonth]);
+    const duration = calculateDurationMinutes();
+    fetchMonthAvailability(calendarMonth, duration || 60);
+  }, [calendarMonth, selectedPackages]);
   useEffect(() => {
     if (!formData.scheduledDate) { setAvailableSlots([]); return; }
     const durationMinutes = calculateDurationMinutes();
@@ -373,16 +380,7 @@ function BookingForm({ stripe, elements, isStripeMode }) {
     bookingsAPI.getAvailableSlots(formData.scheduledDate, durationMinutes, formData.vehicleType)
       .then((slots) => {
         if (!cancelled) {
-          const todayKey = toLocalIsoDate(0);
-          const bufferMinutes = settings.defaultBufferMinutes;
-          const filtered = formData.scheduledDate === todayKey
-            ? (slots || []).filter((slot) => {
-                const [h, m] = String(slot).split('-')[0].trim().split(':').map(Number);
-                if (!Number.isFinite(h) || !Number.isFinite(m)) return true;
-                const slotTime = new Date(); slotTime.setHours(h, m, 0, 0);
-                return (slotTime - new Date()) >= bufferMinutes * 60 * 1000;
-              })
-            : (slots || []);
+          const filtered = slots || [];
           setAvailableSlots(filtered);
           setFormData((prev) => ({ ...prev, timeSlot: filtered.includes(prev.timeSlot) ? prev.timeSlot : '' }));
         }
@@ -706,32 +704,29 @@ function BookingForm({ stripe, elements, isStripeMode }) {
                             <div key={d} className="text-[10px] font-bold text-[var(--muted-color)] text-center py-2 tracking-wider">{d}</div>
                           ))}
                         </div>
-                        <div className="grid grid-cols-7 gap-px p-px" style={{ background: 'var(--border-color)' }}>
+                        <div className="grid grid-cols-7 gap-1">
                           {getCalendarCells().map((dateObj, i) => {
-                            if (!dateObj) return (
-                              <div key={`blank-${i}`} className="h-10" style={{ background: 'var(--surface-bg)' }} />
-                            );
-                            const dateKey    = toDateKey(dateObj);
-                            const statusKey  = availabilityByDate[dateKey]?.status || 'available';
+                            if (!dateObj) return <div key={`blank-${i}`} className="h-10" />;
+                            const dateKey   = toDateKey(dateObj);
+                            const day       = availabilityByDate[dateKey];
+                            const statusKey  = normalizeStatusKey(day?.status, { freeSlots: day?.freeSlots, totalSlots: day?.totalSlots });
                             const isSelected = selectedDateObj && toDateKey(selectedDateObj) === dateKey;
                             const isBeforeMin = dateObj < minDateObj;
                             const isFull      = statusKey === 'full';
-                            const isDisabled  = isBeforeMin || isFull;
-                            const cellCls = isSelected
-                              ? 'bg-primary text-[var(--ink)] font-bold ring-1 ring-primary/40 ring-inset'
-                              : isDisabled
-                                ? 'bg-[var(--surface-bg)] text-[var(--muted-color)] opacity-30 cursor-not-allowed'
-                                : statusKey === 'medium'
-                                  ? 'bg-amber-500/6 text-amber-300 hover:bg-amber-500/14 cursor-pointer'
-                                  : 'bg-[var(--surface-bg)] text-[var(--text-color)] hover:bg-primary/10 hover:text-primary cursor-pointer';
-                            const dotCls = statusKey === 'full' ? 'bg-red-500' : statusKey === 'medium' ? 'bg-amber-400' : 'bg-green-400';
+                            const isDisabled = isBeforeMin || isFull;
+                            const todayKey   = toDateKey(new Date());
+                            const isToday    = dateKey === todayKey;
                             return (
-                              <button key={dateKey} type="button" disabled={isDisabled}
+                              <button key={dateKey} type="button"
+                                disabled={isDisabled}
                                 onClick={() => onSelectCalendarDate(dateObj)}
-                                className={`h-10 flex flex-col items-center justify-center gap-0.5 text-sm font-semibold transition-colors relative ${cellCls}`}>
+                                title={day ? `${day.freeSlots ?? 'Available'} slots` : 'No data'}
+                                className={`h-10 rounded-lg border text-sm font-bold transition relative ${DAY_CELL_CLS[statusKey]} ${
+                                  isSelected ? 'ring-2 ring-primary ring-offset-1' : ''
+                                }`}>
                                 {dateObj.getDate()}
-                                {!isBeforeMin && (
-                                  <div className={`w-1 h-1 rounded-full ${isSelected ? 'bg-[var(--ink)]/40' : dotCls} opacity-70`} />
+                                {isToday && !isBeforeMin && (
+                                  <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary" />
                                 )}
                               </button>
                             );

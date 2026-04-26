@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Glanz.API.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260425232353_FullUserSchema")]
-    partial class FullUserSchema
+    [Migration("20260426073914_InitialSchema")]
+    partial class InitialSchema
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -412,6 +412,8 @@ namespace Glanz.API.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Email");
+
                     b.HasIndex("JobPositionId");
 
                     b.ToTable("JobApplications");
@@ -459,6 +461,8 @@ namespace Glanz.API.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("IsOpen", "Rank");
 
                     b.ToTable("JobPositions");
                 });
@@ -1109,10 +1113,6 @@ namespace Glanz.API.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<string>("Iban")
-                        .HasMaxLength(34)
-                        .HasColumnType("character varying(34)");
-
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
@@ -1160,6 +1160,13 @@ namespace Glanz.API.Migrations
                     b.Property<string>("ProfileImageUrl")
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("RefreshToken")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime?>("RefreshTokenExpiry")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Role")
                         .IsRequired()
@@ -1381,7 +1388,7 @@ namespace Glanz.API.Migrations
 
                     b.HasIndex("BookingId");
 
-                    b.HasIndex("WorkerId", "BookingId");
+                    b.HasIndex("WorkerId");
 
                     b.ToTable("WorkerLocations");
                 });
@@ -1453,7 +1460,8 @@ namespace Glanz.API.Migrations
                 {
                     b.HasOne("Glanz.API.Models.JobPosition", "JobPosition")
                         .WithMany("Applications")
-                        .HasForeignKey("JobPositionId");
+                        .HasForeignKey("JobPositionId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("JobPosition");
                 });

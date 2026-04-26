@@ -8,6 +8,7 @@ using Glanz.API.Services;
 using System.Security.Claims;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Hosting;
 
 namespace Glanz.API.Controllers
 {
@@ -18,6 +19,7 @@ namespace Glanz.API.Controllers
         private readonly AppDbContext _context;
         private readonly ITokenService _tokenService;
         private readonly IConfiguration _configuration;
+        private readonly IWebHostEnvironment _env;
         private static readonly string[] DefaultAvatarUrls =
         {
             "/assets/avatars/default-gulf-male-1.svg",
@@ -28,11 +30,37 @@ namespace Glanz.API.Controllers
             "/assets/avatars/default-expat-female-1.svg"
         };
 
-        public AuthController(AppDbContext context, ITokenService tokenService, IConfiguration configuration)
+        public AuthController(AppDbContext context, ITokenService tokenService, IConfiguration configuration, IWebHostEnvironment env)
         {
             _context = context;
             _tokenService = tokenService;
             _configuration = configuration;
+            _env = env;
+        }
+
+        private void SetRefreshTokenCookie(string refreshToken)
+        {
+            var days = int.TryParse(_configuration["JwtSettings:RefreshExpirationDays"], out var d) ? d : 30;
+            Response.Cookies.Append("refreshToken", refreshToken, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure   = !_env.IsDevelopment(),
+                SameSite = SameSiteMode.Lax,
+                Expires  = DateTimeOffset.UtcNow.AddDays(days),
+                Path     = "/api/auth",
+            });
+        }
+
+        private async Task<(string accessToken, string refreshToken)> IssueTokensAsync(User user)
+        {
+            var days = int.TryParse(_configuration["JwtSettings:RefreshExpirationDays"], out var d) ? d : 30;
+            var accessToken   = _tokenService.GenerateToken(user);
+            var refreshToken  = _tokenService.GenerateRefreshToken();
+            user.RefreshToken  = refreshToken;
+            user.RefreshTokenExpiry = DateTime.UtcNow.AddDays(days);
+            user.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+            return (accessToken, refreshToken);
         }
 
         private static string GetRandomDefaultAvatarUrl()
@@ -159,12 +187,14 @@ namespace Glanz.API.Controllers
                     await _context.SaveChangesAsync();
                 }
 
-                var token = _tokenService.GenerateToken(user);
+                var (accessToken, refreshToken) = await IssueTokensAsync(user);
+                SetRefreshTokenCookie(refreshToken);
 
                 return Ok(new AuthResponseDto
                 {
-                    Token = token,
-                    User = ToUserDto(user)
+                    Token        = accessToken,
+                    RefreshToken = refreshToken,
+                    User         = ToUserDto(user)
                 });
             }
             catch (Exception ex)
@@ -373,12 +403,14 @@ namespace Glanz.API.Controllers
                     return Unauthorized(new { message = "Account is disabled" });
                 }
 
-                var token = _tokenService.GenerateToken(user);
+                var (accessToken, refreshToken) = await IssueTokensAsync(user);
+                SetRefreshTokenCookie(refreshToken);
 
                 return Ok(new AuthResponseDto
                 {
-                    Token = token,
-                    User = ToUserDto(user)
+                    Token        = accessToken,
+                    RefreshToken = refreshToken,
+                    User         = ToUserDto(user)
                 });
             }
             catch (Exception ex)
@@ -388,13 +420,61 @@ namespace Glanz.API.Controllers
             }
         }
 
+        [HttpPost("refresh")]
+        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequestDto? dto = null)
+        {
+            // Cookie (web) takes priority; body fallback (mobile / non-browser clients)
+            var incomingToken = Request.Cookies["refreshToken"]
+                             ?? dto?.RefreshToken;
+            if (string.IsNullOrWhiteSpace(incomingToken))
+                return Unauthorized(new { message = "No refresh token." });
+
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.RefreshToken == incomingToken);
+
+            if (user == null
+                || user.RefreshTokenExpiry == null
+                || user.RefreshTokenExpiry < DateTime.UtcNow)
+            {
+                return Unauthorized(new { message = "Refresh token expired or invalid." });
+            }
+
+            var (accessToken, newRefreshToken) = await IssueTokensAsync(user);
+            SetRefreshTokenCookie(newRefreshToken);
+
+            return Ok(new { token = accessToken, refreshToken = newRefreshToken });
+        }
+
+        [HttpPost("logout")]
+        [Authorize]
+        public async Task<IActionResult> Logout()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim != null && int.TryParse(userIdClaim.Value, out var userId))
+            {
+                var user = await _context.Users.FindAsync(userId);
+                if (user != null)
+                {
+                    user.RefreshToken       = null;
+                    user.RefreshTokenExpiry = null;
+                    user.UpdatedAt          = DateTime.UtcNow;
+                    await _context.SaveChangesAsync();
+                }
+            }
+
+            Response.Cookies.Delete("refreshToken", new CookieOptions { Path = "/api/auth" });
+            return Ok(new { message = "Logged out." });
+        }
+
         [Authorize]
         [HttpGet("me")]
         public async Task<ActionResult<UserDto>> GetCurrentUser()
         {
             try
             {
-                var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
+                    return Unauthorized(new { message = "Invalid token" });
                 var user = await _context.Users.FindAsync(userId);
 
                 if (user == null)
@@ -417,7 +497,9 @@ namespace Glanz.API.Controllers
         {
             try
             {
-                var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
+                    return Unauthorized(new { message = "Invalid token" });
                 var user = await _context.Users.FindAsync(userId);
 
                 if (user == null)
@@ -483,7 +565,9 @@ namespace Glanz.API.Controllers
         {
             try
             {
-                var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
+                    return Unauthorized(new { message = "Invalid token" });
                 var user = await _context.Users.FindAsync(userId);
 
                 if (user == null)
@@ -561,7 +645,9 @@ namespace Glanz.API.Controllers
                     return BadRequest(new { message = "New password and confirmation do not match" });
                 }
 
-                var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
+                    return Unauthorized(new { message = "Invalid token" });
                 var user = await _context.Users.FindAsync(userId);
 
                 if (user == null)

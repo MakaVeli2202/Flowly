@@ -440,6 +440,17 @@ namespace Glanz.API.DTOs
         public string DayEnd { get; set; } = "18:00";
     }
 
+    public class BusinessHoursPerDayDto
+    {
+        public string Sunday { get; set; } = "09:00-18:00";
+        public string Monday { get; set; } = "09:00-18:00";
+        public string Tuesday { get; set; } = "09:00-18:00";
+        public string Wednesday { get; set; } = "09:00-18:00";
+        public string Thursday { get; set; } = "09:00-18:00";
+        public string Friday { get; set; } = "00:00-00:00";
+        public string Saturday { get; set; } = "10:00-16:00";
+    }
+
     // ── Customer: self-service booking edit ─────────────────────────────────
     public class CustomerEditBookingDto
     {

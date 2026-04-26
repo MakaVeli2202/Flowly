@@ -2,165 +2,243 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Glanz.API.Data;
-using Glanz.API.DTOs;
 using Glanz.API.Models;
+using System.ComponentModel.DataAnnotations;
 
 namespace Glanz.API.Controllers
 {
+    public class SubmitJobApplicationDto
+    {
+        [Required, StringLength(100)]
+        public string FirstName { get; set; } = string.Empty;
+
+        [Required, StringLength(100)]
+        public string LastName { get; set; } = string.Empty;
+
+        [Required, EmailAddress, StringLength(255)]
+        public string Email { get; set; } = string.Empty;
+
+        [Phone, StringLength(20)]
+        public string? Phone { get; set; }
+
+        [StringLength(500)]
+        public string? Address { get; set; }
+
+        [StringLength(50)]
+        public string? NationalId { get; set; }
+
+        public DateTime? DateOfBirth { get; set; }
+
+        public int? JobPositionId { get; set; }
+
+        [StringLength(1000)]
+        public string? Experience { get; set; }
+
+        [StringLength(2000)]
+        public string? CoverLetter { get; set; }
+
+        public string? ResumeUrl { get; set; }
+    }
+
+    public class UpdateApplicationStatusDto
+    {
+        [Required]
+        public JobApplicationStatus Status { get; set; }
+
+        [StringLength(1000)]
+        public string? Notes { get; set; }
+
+        public DateTime? InterviewDate { get; set; }
+
+        [StringLength(500)]
+        public string? RejectionReason { get; set; }
+    }
+
+    public class UpsertJobPositionDto
+    {
+        [Required, StringLength(200)]
+        public string Title { get; set; } = string.Empty;
+
+        [StringLength(1000)]
+        public string? Description { get; set; }
+
+        [StringLength(100)]
+        public string? Location { get; set; }
+
+        [StringLength(100)]
+        public string? Type { get; set; }
+
+        [StringLength(100)]
+        public string? Department { get; set; }
+
+        public bool IsOpen { get; set; } = true;
+
+        public int Rank { get; set; } = 0;
+    }
+
     [ApiController]
-    [Route("api/[controller]")]
-    public class JobApplicationsController : ControllerBase
+    [Route("api/job-positions")]
+    public class JobPositionsController : ControllerBase
     {
         private readonly AppDbContext _context;
 
-        public JobApplicationsController(AppDbContext context)
-        {
-            _context = context;
-        }
+        public JobPositionsController(AppDbContext context) => _context = context;
 
-        // Public: Apply for a job
-        [HttpPost]
-        public async Task<ActionResult<JobApplicationDto>> Create([FromBody] CreateJobApplicationDto dto)
-        {
-            try
-            {
-                var application = new JobApplication
-                {
-                    FirstName = dto.FirstName,
-                    LastName = dto.LastName,
-                    Email = dto.Email,
-                    Phone = dto.Phone,
-                    Address = dto.Address,
-                    NationalId = dto.NationalId,
-                    DateOfBirth = dto.DateOfBirth,
-                    Position = dto.Position,
-                    JobPositionId = dto.JobPositionId,
-                    Experience = dto.Experience,
-                    CoverLetter = dto.CoverLetter,
-                    ResumeUrl = dto.ResumeUrl,
-                    Status = JobApplicationStatus.Pending,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
-                };
-
-                _context.JobApplications.Add(application);
-                await _context.SaveChangesAsync();
-
-                // Send confirmation email
-                await SendApplicationConfirmationEmail(application);
-
-                return Ok(ToDto(application));
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Create job application error: {ex.Message}");
-                return StatusCode(500, new { message = "Failed to submit application" });
-            }
-        }
-
-        // Public: Get open job positions
-        [HttpGet("positions")]
-        public async Task<ActionResult<List<JobPositionDto>>> GetOpenPositions()
+        [HttpGet]
+        public async Task<IActionResult> GetOpenPositions()
         {
             var positions = await _context.JobPositions
                 .Where(p => p.IsOpen)
                 .OrderBy(p => p.Rank)
-                .ThenBy(p => p.Title)
+                .Select(p => new
+                {
+                    p.Id, p.Title, p.Description, p.Location, p.Type, p.Department, p.IsOpen, p.Rank, p.CreatedAt
+                })
                 .ToListAsync();
-
-            return Ok(positions.Select(ToPositionDto).ToList());
+            return Ok(positions);
         }
+    }
 
-        // Admin: Get all applications
-        [Authorize(Roles = "Admin")]
-        [HttpGet]
-        public async Task<ActionResult<List<JobApplicationDto>>> GetAll(
-            [FromQuery] string? status = null,
-            [FromQuery] int? positionId = null)
+    [ApiController]
+    [Route("api/job-applications")]
+    public class JobApplicationsController : ControllerBase
+    {
+        private readonly AppDbContext _context;
+
+        public JobApplicationsController(AppDbContext context) => _context = context;
+
+        [HttpPost]
+        public async Task<IActionResult> Submit([FromBody] SubmitJobApplicationDto dto)
         {
-            var query = _context.JobApplications.AsQueryable();
-
-            if (!string.IsNullOrEmpty(status) && Enum.TryParse<JobApplicationStatus>(status, true, out var statusEnum))
+            var application = new JobApplication
             {
-                query = query.Where(a => a.Status == statusEnum);
-            }
+                FirstName = dto.FirstName,
+                LastName = dto.LastName,
+                Email = dto.Email,
+                Phone = dto.Phone,
+                Address = dto.Address,
+                NationalId = dto.NationalId,
+                DateOfBirth = dto.DateOfBirth,
+                JobPositionId = dto.JobPositionId,
+                Experience = dto.Experience,
+                CoverLetter = dto.CoverLetter,
+                ResumeUrl = dto.ResumeUrl,
+                Status = JobApplicationStatus.Pending
+            };
+
+            _context.JobApplications.Add(application);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Application submitted", applicationId = application.Id });
+        }
+    }
+
+    [ApiController]
+    [Route("api/admin/job-applications")]
+    [Authorize(Roles = "Admin")]
+    public class AdminJobApplicationsController : ControllerBase
+    {
+        private readonly AppDbContext _context;
+
+        public AdminJobApplicationsController(AppDbContext context) => _context = context;
+
+        [HttpGet]
+        public async Task<IActionResult> GetAll([FromQuery] JobApplicationStatus? status, [FromQuery] int? positionId)
+        {
+            var query = _context.JobApplications
+                .Include(a => a.JobPosition)
+                .AsQueryable();
+
+            if (status.HasValue)
+                query = query.Where(a => a.Status == status.Value);
 
             if (positionId.HasValue)
-            {
-                query = query.Where(a => a.JobPositionId == positionId);
-            }
+                query = query.Where(a => a.JobPositionId == positionId.Value);
 
             var applications = await query
                 .OrderByDescending(a => a.CreatedAt)
+                .Select(a => new
+                {
+                    a.Id, a.FirstName, a.LastName, a.Email, a.Phone, a.Status,
+                    a.InterviewDate, a.CreatedAt, a.EmailSent,
+                    position = a.JobPosition != null ? new { a.JobPosition.Id, a.JobPosition.Title } : null
+                })
                 .ToListAsync();
 
-            return Ok(applications.Select(ToDto).ToList());
+            return Ok(applications);
         }
 
-        // Admin: Get application by ID
-        [Authorize(Roles = "Admin")]
         [HttpGet("{id}")]
-        public async Task<ActionResult<JobApplicationDto>> GetById(int id)
+        public async Task<IActionResult> GetById(int id)
+        {
+            var application = await _context.JobApplications
+                .Include(a => a.JobPosition)
+                .FirstOrDefaultAsync(a => a.Id == id);
+
+            if (application == null)
+                return NotFound(new { message = "Application not found" });
+
+            return Ok(application);
+        }
+
+        [HttpPut("{id}/status")]
+        public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateApplicationStatusDto dto)
         {
             var application = await _context.JobApplications.FindAsync(id);
             if (application == null)
                 return NotFound(new { message = "Application not found" });
 
-            return Ok(ToDto(application));
+            application.Status = dto.Status;
+            application.Notes = dto.Notes ?? application.Notes;
+            application.InterviewDate = dto.InterviewDate ?? application.InterviewDate;
+            application.RejectionReason = dto.RejectionReason ?? application.RejectionReason;
+            application.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Status updated", status = application.Status.ToString() });
         }
 
-        // Admin: Update application status
-        [Authorize(Roles = "Admin")]
-        [HttpPut("{id}")]
-        public async Task<ActionResult<JobApplicationDto>> Update(int id, [FromBody] UpdateJobApplicationDto dto)
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
         {
-            try
-            {
-                var application = await _context.JobApplications.FindAsync(id);
-                if (application == null)
-                    return NotFound(new { message = "Application not found" });
+            var application = await _context.JobApplications.FindAsync(id);
+            if (application == null)
+                return NotFound(new { message = "Application not found" });
 
-                if (!string.IsNullOrEmpty(dto.Status) && Enum.TryParse<JobApplicationStatus>(dto.Status, true, out var newStatus))
-                {
-                    application.Status = newStatus;
-                }
+            _context.JobApplications.Remove(application);
+            await _context.SaveChangesAsync();
 
-                application.Notes = dto.Notes ?? application.Notes;
-                application.InterviewDate = dto.InterviewDate ?? application.InterviewDate;
-                application.RejectionReason = dto.RejectionReason ?? application.RejectionReason;
-                application.UpdatedAt = DateTime.UtcNow;
-
-                await _context.SaveChangesAsync();
-
-                // Send status update email
-                await SendStatusUpdateEmail(application);
-
-                return Ok(ToDto(application));
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Update application error: {ex.Message}");
-                return StatusCode(500, new { message = "Failed to update application" });
-            }
+            return Ok(new { message = "Application deleted" });
         }
+    }
 
-        // Admin: Get all positions (including closed)
-        [Authorize(Roles = "Admin")]
-        [HttpGet("admin/positions")]
-        public async Task<ActionResult<List<JobPositionDto>>> GetAllPositions()
+    [ApiController]
+    [Route("api/admin/job-positions")]
+    [Authorize(Roles = "Admin")]
+    public class AdminJobPositionsController : ControllerBase
+    {
+        private readonly AppDbContext _context;
+
+        public AdminJobPositionsController(AppDbContext context) => _context = context;
+
+        [HttpGet]
+        public async Task<IActionResult> GetAll()
         {
             var positions = await _context.JobPositions
                 .OrderBy(p => p.Rank)
-                .ThenBy(p => p.Title)
+                .Select(p => new
+                {
+                    p.Id, p.Title, p.Description, p.Location, p.Type, p.Department,
+                    p.IsOpen, p.Rank, p.CreatedAt,
+                    applicationCount = p.Applications.Count
+                })
                 .ToListAsync();
-
-            return Ok(positions.Select(ToPositionDto).ToList());
+            return Ok(positions);
         }
 
-        // Admin: Create position
-        [Authorize(Roles = "Admin")]
-        [HttpPost("admin/positions")]
-        public async Task<ActionResult<JobPositionDto>> CreatePosition([FromBody] CreateJobPositionDto dto)
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] UpsertJobPositionDto dto)
         {
             var position = new JobPosition
             {
@@ -170,175 +248,47 @@ namespace Glanz.API.Controllers
                 Type = dto.Type,
                 Department = dto.Department,
                 IsOpen = dto.IsOpen,
-                Rank = dto.Rank,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                Rank = dto.Rank
             };
 
             _context.JobPositions.Add(position);
             await _context.SaveChangesAsync();
 
-            return Ok(ToPositionDto(position));
+            return Ok(new { message = "Position created", id = position.Id });
         }
 
-        // Private helpers
-        private async Task SendApplicationConfirmationEmail(JobApplication app)
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody] UpsertJobPositionDto dto)
         {
-            try
-            {
-                var subject = "We Received Your Application - Glanz";
-                var body = $@"
-Dear {app.FirstName},
+            var position = await _context.JobPositions.FindAsync(id);
+            if (position == null)
+                return NotFound(new { message = "Position not found" });
 
-Thank you for applying to join Glanz! We have received your application for the {app.Position ?? "open position"}.
+            position.Title = dto.Title;
+            position.Description = dto.Description;
+            position.Location = dto.Location;
+            position.Type = dto.Type;
+            position.Department = dto.Department;
+            position.IsOpen = dto.IsOpen;
+            position.Rank = dto.Rank;
+            position.UpdatedAt = DateTime.UtcNow;
 
-Our team will review your application and get back to you within 5 business days.
+            await _context.SaveChangesAsync();
 
-If you have any questions, feel free to reply to this email.
-
-Best regards,
-The Glanz Team
-                ";
-
-                Console.WriteLine($"[EMAIL] To: {app.Email}");
-                Console.WriteLine($"[EMAIL] Subject: {subject}");
-                Console.WriteLine($"[EMAIL] Body: {body}");
-
-                app.EmailSent = true;
-                app.LastEmailSentAt = DateTime.UtcNow;
-                await _context.SaveChangesAsync();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Email send error: {ex.Message}");
-            }
+            return Ok(new { message = "Position updated" });
         }
 
-        private async Task SendStatusUpdateEmail(JobApplication app)
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
         {
-            try
-            {
-                string subject, body;
+            var position = await _context.JobPositions.FindAsync(id);
+            if (position == null)
+                return NotFound(new { message = "Position not found" });
 
-                switch (app.Status)
-                {
-                    case JobApplicationStatus.UnderReview:
-                        subject = "Your Application is Under Review - Glanz";
-                        body = $@"Dear {app.FirstName},
+            _context.JobPositions.Remove(position);
+            await _context.SaveChangesAsync();
 
-Your application is now under review. We'll be in touch soon with an update.
-
-Best regards,
-The Glanz Team";
-                        break;
-
-                    case JobApplicationStatus.InterviewScheduled:
-                        subject = "Interview Scheduled - Glanz";
-                        body = $@"Dear {app.FirstName},
-
-Great news! We'd like to invite you for an interview.
-
-{(app.InterviewDate.HasValue ? $"Please arrive on " + app.InterviewDate.Value.ToString("MMMM dd, yyyy 'at' h:mm tt") : "")}
-
-Reply to confirm or reschedule.
-
-Best regards,
-The Glanz Team";
-                        break;
-
-                    case JobApplicationStatus.Offered:
-                        subject = "Congratulations! You've Been Offered a Position - Glanz";
-                        body = $@"Dear {app.FirstName},
-
-Congratulations! We're pleased to offer you a position at Glanz.
-
-Please reply to this email to accept the offer and we'll send you next steps.
-
-Welcome to the team!
-
-Best regards,
-The Glanz Team";
-                        break;
-
-                    case JobApplicationStatus.Rejected:
-                        subject = "Update on Your Application - Glanz";
-                        body = $@"Dear {app.FirstName},
-
-Thank you for your interest in Glanz and taking the time to apply.
-
-After careful consideration, we've decided to move forward with other candidates whose experience more closely matches our current needs.
-
-We wish you the best in your career journey.
-
-Sincerely,
-The Glanz Team";
-                        break;
-
-                    case JobApplicationStatus.Hired:
-                        subject = "Welcome to Glanz! - Onboarding Details";
-                        body = $@"Dear {app.FirstName},
-
-Welcome to Glanz! We're thrilled to have you join our team.
-
-Please reply to this email to start your onboarding process.
-
-We can't wait to work with you!
-
-Best regards,
-The Glanz Team";
-                        break;
-
-                    default:
-                        return;
-                }
-
-                Console.WriteLine($"[EMAIL] To: {app.Email}");
-                Console.WriteLine($"[EMAIL] Subject: {subject}");
-                Console.WriteLine($"[EMAIL] Body: {body}");
-
-                app.EmailSent = true;
-                app.LastEmailSentAt = DateTime.UtcNow;
-                await _context.SaveChangesAsync();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Email send error: {ex.Message}");
-            }
+            return Ok(new { message = "Position deleted" });
         }
-
-        private static JobApplicationDto ToDto(JobApplication a) => new()
-        {
-            Id = a.Id,
-            FirstName = a.FirstName,
-            LastName = a.LastName,
-            Email = a.Email,
-            Phone = a.Phone,
-            Address = a.Address,
-            NationalId = a.NationalId,
-            DateOfBirth = a.DateOfBirth,
-            Position = a.Position,
-            JobPositionId = a.JobPositionId,
-            Experience = a.Experience,
-            CoverLetter = a.CoverLetter,
-            ResumeUrl = a.ResumeUrl,
-            Status = a.Status.ToString(),
-            Notes = a.Notes,
-            InterviewDate = a.InterviewDate,
-            RejectionReason = a.RejectionReason,
-            CreatedAt = a.CreatedAt
-        };
-
-        private static JobPositionDto ToPositionDto(JobPosition p) => new()
-        {
-            Id = p.Id,
-            Title = p.Title,
-            Description = p.Description,
-            Location = p.Location,
-            Type = p.Type,
-            Department = p.Department,
-            IsOpen = p.IsOpen,
-            Rank = p.Rank,
-            CreatedAt = p.CreatedAt
-        };
     }
 }

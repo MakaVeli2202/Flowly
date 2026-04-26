@@ -30,6 +30,27 @@ namespace Glanz.API.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "JobPositions",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Title = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Description = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
+                    Location = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    Type = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    Department = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    IsOpen = table.Column<bool>(type: "boolean", nullable: false),
+                    Rank = table.Column<int>(type: "integer", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_JobPositions", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Offers",
                 columns: table => new
                 {
@@ -197,13 +218,56 @@ namespace Glanz.API.Migrations
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
                     LoyaltyGoogleReviewActivatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     MonthlySalary = table.Column<decimal>(type: "numeric(10,2)", nullable: true),
+                    LastPaidMonth = table.Column<int>(type: "integer", nullable: true),
+                    LastPaidYear = table.Column<int>(type: "integer", nullable: true),
+                    LastPaidAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     ExpoPushToken = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    RefreshToken = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    RefreshTokenExpiry = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Users", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "JobApplications",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    FirstName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    LastName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Email = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    Phone = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
+                    Address = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    NationalId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    DateOfBirth = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    Position = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    JobPositionId = table.Column<int>(type: "integer", nullable: true),
+                    Experience = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
+                    CoverLetter = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
+                    ResumeUrl = table.Column<string>(type: "text", nullable: true),
+                    Status = table.Column<int>(type: "integer", nullable: false),
+                    Notes = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
+                    InterviewDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    RejectionReason = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    EmailSent = table.Column<bool>(type: "boolean", nullable: false),
+                    LastEmailSentAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_JobApplications", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_JobApplications_JobPositions_JobPositionId",
+                        column: x => x.JobPositionId,
+                        principalTable: "JobPositions",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
                 });
 
             migrationBuilder.CreateTable(
@@ -639,6 +703,37 @@ namespace Glanz.API.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "WorkerLocations",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    WorkerId = table.Column<int>(type: "integer", nullable: false),
+                    BookingId = table.Column<int>(type: "integer", nullable: false),
+                    Latitude = table.Column<double>(type: "double precision", nullable: false),
+                    Longitude = table.Column<double>(type: "double precision", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    Status = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_WorkerLocations", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_WorkerLocations_Bookings_BookingId",
+                        column: x => x.BookingId,
+                        principalTable: "Bookings",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_WorkerLocations_Users_WorkerId",
+                        column: x => x.WorkerId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "SubscriptionBookings",
                 columns: table => new
                 {
@@ -734,6 +829,21 @@ namespace Glanz.API.Migrations
                 name: "IX_Bookings_UserId",
                 table: "Bookings",
                 column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_JobApplications_Email",
+                table: "JobApplications",
+                column: "Email");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_JobApplications_JobPositionId",
+                table: "JobApplications",
+                column: "JobPositionId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_JobPositions_IsOpen_Rank",
+                table: "JobPositions",
+                columns: new[] { "IsOpen", "Rank" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Notifications_AdminId_IsRead",
@@ -898,6 +1008,16 @@ namespace Glanz.API.Migrations
                 name: "IX_Vehicles_UserId",
                 table: "Vehicles",
                 column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_WorkerLocations_BookingId",
+                table: "WorkerLocations",
+                column: "BookingId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_WorkerLocations_WorkerId",
+                table: "WorkerLocations",
+                column: "WorkerId");
         }
 
         /// <inheritdoc />
@@ -914,6 +1034,9 @@ namespace Glanz.API.Migrations
 
             migrationBuilder.DropTable(
                 name: "BookingPhotos");
+
+            migrationBuilder.DropTable(
+                name: "JobApplications");
 
             migrationBuilder.DropTable(
                 name: "Notifications");
@@ -952,7 +1075,10 @@ namespace Glanz.API.Migrations
                 name: "Vehicles");
 
             migrationBuilder.DropTable(
-                name: "Bookings");
+                name: "WorkerLocations");
+
+            migrationBuilder.DropTable(
+                name: "JobPositions");
 
             migrationBuilder.DropTable(
                 name: "Products");
@@ -968,6 +1094,9 @@ namespace Glanz.API.Migrations
 
             migrationBuilder.DropTable(
                 name: "Offers");
+
+            migrationBuilder.DropTable(
+                name: "Bookings");
 
             migrationBuilder.DropTable(
                 name: "SubscriptionPlans");

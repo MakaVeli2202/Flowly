@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Glanz.API.Data;
+using Glanz.API.DTOs;
 using Glanz.API.Models;
 using System.Text.Json;
 
@@ -14,7 +15,7 @@ namespace Glanz.API.Controllers
     /// GET shape:
     /// {
     ///   "pricing": { "vehicleMultipliers": { ... } },
-    ///   "booking": { "defaultBufferMinutes": 90, "workerTravelBufferMinutes": 30 }
+    ///   "booking": { "workerTravelBufferMinutes": 30 }
     /// }
     /// </summary>
     [ApiController]
@@ -22,10 +23,21 @@ namespace Glanz.API.Controllers
     public class SettingsController : ControllerBase
     {
         private const string MultipliersKey       = "pricing.vehicleMultipliers";
-        private const string BufferKey            = "booking.defaultBufferMinutes";
         private const string WorkerTravelKey      = "booking.workerTravelBufferMinutes";
         private const string DiscountKey          = "subscription.discountPercent";
         private const string SmsFollowUpKey       = "sms.followUpEnabled";
+        private const string BusinessHoursKey     = "booking.businessHours";
+
+        private static readonly Dictionary<string, (string Start, string End)> DefaultBusinessHours = new()
+        {
+            { "Sunday",    ("09:00", "18:00") },
+            { "Monday",    ("09:00", "18:00") },
+            { "Tuesday",   ("09:00", "18:00") },
+            { "Wednesday", ("09:00", "18:00") },
+            { "Thursday",  ("09:00", "18:00") },
+            { "Friday",    ("00:00", "00:00") },
+            { "Saturday",  ("10:00", "16:00") },
+        };
 
         // Safe in-code defaults — used when the SystemSettings row is absent.
         private static readonly object DefaultVehicleMultipliers = new
@@ -35,7 +47,6 @@ namespace Glanz.API.Controllers
             SUV        = 1.25,
             Pickup     = 1.5,
         };
-        private const int DefaultBufferMinutes       = 90;
         private const int DefaultWorkerTravelMinutes = 30;
 
         private static readonly JsonSerializerOptions _jsonOpts =
@@ -53,7 +64,7 @@ namespace Glanz.API.Controllers
         [HttpGet]
         public async Task<IActionResult> GetSettings()
         {
-            var keys = new[] { MultipliersKey, BufferKey, WorkerTravelKey, SmsFollowUpKey };
+            var keys = new[] { MultipliersKey, WorkerTravelKey, SmsFollowUpKey };
             var rows = await _context.SystemSettings
                 .AsNoTracking()
                 .Where(s => keys.Contains(s.Key))
@@ -75,11 +86,6 @@ namespace Glanz.API.Controllers
                 catch { /* Corrupt JSON — fall back to defaults. */ }
             }
 
-            // ── booking buffer (customer lead time) ──────────────────────────────
-            int defaultBufferMinutes = DefaultBufferMinutes;
-            if (int.TryParse(GetVal(BufferKey), out var parsedBuffer) && parsedBuffer > 0)
-                defaultBufferMinutes = parsedBuffer;
-
             // ── worker travel buffer ──────────────────────────────────────────────
             int workerTravelBufferMinutes = DefaultWorkerTravelMinutes;
             if (int.TryParse(GetVal(WorkerTravelKey), out var parsedTravel) && parsedTravel >= 0)
@@ -89,11 +95,38 @@ namespace Glanz.API.Controllers
             if (bool.TryParse(GetVal(SmsFollowUpKey), out var parsedSms))
                 smsFollowUpEnabled = parsedSms;
 
+            // ── business hours ──────────────────────────────────────────────────
+            var businessHours = new BusinessHoursPerDayDto();
+            var hoursRaw = GetVal(BusinessHoursKey);
+            if (!string.IsNullOrWhiteSpace(hoursRaw))
+            {
+                try
+                {
+                    var parsed = JsonSerializer.Deserialize<BusinessHoursPerDayDto>(hoursRaw, _jsonOpts);
+                    if (parsed != null) businessHours = parsed;
+                }
+                catch { /* Corrupt JSON — fall back to defaults. */ }
+            }
+            else
+            {
+                businessHours = new BusinessHoursPerDayDto
+                {
+                    Sunday    = $"{DefaultBusinessHours["Sunday"].Start}-{DefaultBusinessHours["Sunday"].End}",
+                    Monday    = $"{DefaultBusinessHours["Monday"].Start}-{DefaultBusinessHours["Monday"].End}",
+                    Tuesday   = $"{DefaultBusinessHours["Tuesday"].Start}-{DefaultBusinessHours["Tuesday"].End}",
+                    Wednesday = $"{DefaultBusinessHours["Wednesday"].Start}-{DefaultBusinessHours["Wednesday"].End}",
+                    Thursday  = $"{DefaultBusinessHours["Thursday"].Start}-{DefaultBusinessHours["Thursday"].End}",
+                    Friday    = $"{DefaultBusinessHours["Friday"].Start}-{DefaultBusinessHours["Friday"].End}",
+                    Saturday  = $"{DefaultBusinessHours["Saturday"].Start}-{DefaultBusinessHours["Saturday"].End}",
+                };
+            }
+
             return Ok(new
             {
                 pricing = new { vehicleMultipliers },
-                booking = new { defaultBufferMinutes, workerTravelBufferMinutes },
+                booking = new { workerTravelBufferMinutes },
                 sms     = new { followUpEnabled = smsFollowUpEnabled },
+                businessHours,
             });
         }
 
@@ -107,13 +140,6 @@ namespace Glanz.API.Controllers
                 return BadRequest(new { message = "Request body is required." });
 
             var updates = new List<(string Key, string Value)>();
-
-            if (dto.DefaultBufferMinutes.HasValue)
-            {
-                if (dto.DefaultBufferMinutes.Value < 0 || dto.DefaultBufferMinutes.Value > 1440)
-                    return BadRequest(new { message = "defaultBufferMinutes must be between 0 and 1440." });
-                updates.Add((BufferKey, dto.DefaultBufferMinutes.Value.ToString()));
-            }
 
             if (dto.WorkerTravelBufferMinutes.HasValue)
             {
@@ -131,6 +157,12 @@ namespace Glanz.API.Controllers
 
             if (dto.SmsFollowUpEnabled.HasValue)
                 updates.Add((SmsFollowUpKey, dto.SmsFollowUpEnabled.Value.ToString()));
+
+            if (dto.BusinessHours != null)
+            {
+                var json = JsonSerializer.Serialize(dto.BusinessHours, _jsonOpts);
+                updates.Add((BusinessHoursKey, json));
+            }
 
             if (updates.Count == 0)
                 return BadRequest(new { message = "No valid settings provided to update." });
@@ -162,9 +194,9 @@ namespace Glanz.API.Controllers
 
     public class UpdateSettingsDto
     {
-        public int?     DefaultBufferMinutes       { get; set; }
-        public int?     WorkerTravelBufferMinutes   { get; set; }
-        public decimal? SubscriptionDiscountPercent { get; set; }
-        public bool?    SmsFollowUpEnabled          { get; set; }
+        public int?              WorkerTravelBufferMinutes   { get; set; }
+        public decimal?          SubscriptionDiscountPercent { get; set; }
+        public bool?             SmsFollowUpEnabled          { get; set; }
+        public BusinessHoursPerDayDto? BusinessHours         { get; set; }
     }
 }

@@ -618,6 +618,17 @@ export default function MyBookingsScreen({ navigation }) {
                       </TouchableOpacity>
                     </View>
 
+                    {booking.status === 'InProgress' && (
+                      <TouchableOpacity
+                        style={s.bookAgainBtn}
+                        onPress={() => navigation.navigate('Live Tracking', { bookingId: booking.id })}
+                        activeOpacity={0.8}
+                      >
+                        <Ionicons name="navigate-outline" size={14} color="#7C3AED" />
+                        <Text style={[s.bookAgainBtnText, { color: '#7C3AED' }]}>Track Worker</Text>
+                      </TouchableOpacity>
+                    )}
+
                     {canBookAgain && (
                       <TouchableOpacity
                         style={s.bookAgainBtn}

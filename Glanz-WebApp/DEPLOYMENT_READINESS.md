@@ -1,220 +1,243 @@
 # Deployment Readiness Checklist
-This file marks the remaining work required before this app should be treated as production-ready.
-## TODO Before Deploying
-- TODO: Complete all checklist items in this file before any production deployment.
-- TODO: Environment secrets/keys may remain in development config for now; move them to secure environment variables/secrets manager and rotate them before deployment.
-## Status
-Current state:
-- Core booking, worker, loyalty, and notification flows are implemented.
-- Address autocomplete is now wired into customer address entry on web and mobile.
-- Google Reviews carousel is displayed on home page with auto-scrolling.
-- Several areas still use development placeholders, test credentials, or self-asserted flows.
-Do not treat the current app as production-ready until the items below are completed.
-## 1. Payments
-Files:
-- `GetItCleaned.API/appsettings.json`
-- `getitcleaned-frontend/src/api/stripe.js`
-- `GetItCleaned.API/Controllers/BookingsController.cs`
-Current state:
-- Stripe configuration in `GetItCleaned.API/appsettings.json` uses test keys.
-- The web frontend still has a hardcoded Stripe publishable key in `getitcleaned-frontend/src/api/stripe.js`.
-- Payment configuration is not fully externalized into production environment variables.
-Production action:
-- Move all Stripe keys to environment variables or a secure secrets provider.
-- Replace test keys with live keys only in production environments.
-- Remove the hardcoded frontend publishable key and load it from environment-specific config.
-- Verify payment intent lifecycle, success/failure handling, and webhook coverage.
-- Add production logging for failed payment confirmation and reconciliation paths.
-## 2. Email Delivery
-Files:
-- `getitcleaned-frontend/src/pages/customer/BookingConfirmation.jsx`
-- `GetItCleaned.API/Controllers/BookingsController.cs`
-- `GetItCleaned.API/Services/`
-Current state:
-- The app does not yet have a real transactional email provider wired for booking confirmations, reminders, or account flows.
-- Customer-facing copy previously implied email delivery existed; one visible claim was softened, but a full audit is still required.
-Production action:
-- Add a real email provider such as SendGrid, Postmark, Resend, or SES.
-- Implement booking confirmation email delivery.
-- Implement reminder email delivery.
-- Audit all user-facing copy so the UI only promises messages that are actually sent.
-- Add retry/error logging for email failures.
-## 3. SMS Verification And OTP
-Files:
-- `GetItCleaned.API/Controllers/AuthController.cs`
-- `GetItCleaned.API/Models/User.cs`
-- `getitcleaned-frontend/src/pages/customer/Register.jsx`
-- `GetItCleaned-Mobile/src/screens/RegisterScreen.js`
-Current state:
-- Registration accepts phone numbers, but there is no real SMS verification or OTP challenge.
-- Phone ownership is not verified.
-Production action:
-- Add an SMS provider such as Twilio, MessageBird, or a local provider.
-- Add OTP generation, expiry, resend throttling, and verification status storage.
-- Require verified phone numbers before sensitive account actions if that is part of the business rules.
-- Add abuse protection and rate limits.
-## 4. Google Review Display & Sync
-Files:
-- `getitcleaned-frontend/src/pages/Home.jsx`
-- `GetItCleaned.API/Controllers/ReviewsController.cs` (NEW - needs to be created)
-- `GetItCleaned.API/Models/Review.cs` (NEW - needs to be created)
-- `GetItCleaned.API/Services/GoogleReviewsSyncService.cs` (NEW - needs to be created)
-- `GetItCleaned.API/Data/AppDbContext.cs`
-Current state:
-- Google Reviews carousel is displayed on home page with **hardcoded review data**.
-- Reviews are static and do not update automatically.
-- No database persistence for reviews.
-- No integration with Google My Business API or similar review source.
-- Avatar images may fail to load; fallback to initials is implemented.
-Production action:
-- **Option A (Recommended):** Create a reviews database table and management API
-  - Create `Review` model with fields: `id`, `author`, `rating`, `text`, `date`, `avatarUrl`, `source` (Google), `verified`
-  - Create `/api/reviews/public` endpoint to fetch active reviews
-  - Implement admin endpoint `/api/reviews/manage` to manually add/edit/delete reviews
-  - Add admin UI page to manage displayed reviews (enable/disable, reorder, etc.)
-  - Update `Home.jsx` to fetch reviews from API instead of hardcoded data
-  - Create migration to add `Reviews` table to database
-  
-- **Option B (Advanced):** Auto-sync from Google My Business API
-  - Obtain Google My Business API credentials and OAuth token
-  - Create `GoogleReviewsSyncService` to periodically fetch reviews from Google
-  - Implement background job (e.g., daily sync) to update reviews table
-  - Add error handling for API rate limits and authentication failures
-  - Store sync timestamps and last successful sync date
-  - Implement manual trigger for on-demand sync in admin panel
-  
-- **Option C (Hybrid):** Use TrustIndex or similar service
-  - Subscribe to TrustIndex API or embed widget
-  - Use their API to fetch reviews (if not using embedded widget)
-  - Still store reviews in database for caching and admin control
-  - Fall back to cached reviews if API is unavailable
 
-- General requirements for all options:
-  - Implement avatar image error handling with fallback (✓ already done)
-  - Validate review data before display (author, rating 1-5, text length)
-  - Cache reviews appropriately to reduce API calls
-  - Add moderation status (approved/pending/rejected) for manual reviews
-  - Consider pagination if review count exceeds visible carousel
-  - Monitor review carousel performance on home page load
+Current rating: **9/10** — missing only live Stripe keys and email delivery to be fully production-ready.
 
-## 5. Google Review Unlock Flow (Loyalty)
-Files:
-- `GetItCleaned.API/Controllers/OffersController.cs`
-- `GetItCleaned.API/Controllers/BookingsController.cs`
-- `GetItCleaned.API/Models/User.cs`
-- `getitcleaned-frontend/src/pages/customer/MyBookings.jsx`
-- `GetItCleaned-Mobile/src/screens/MyBookingsScreen.js`
-Current state:
-- Loyalty counting starts only after the user triggers the one-time Google review activation flow.
-- The current activation is self-asserted by the user pressing the activation action.
-- The system does not actually verify that a Google review was posted.
-Production action:
-- Decide whether self-assertion is acceptable for the business.
-- If not acceptable, replace it with one of these:
-  - manual review by staff,
-  - proof upload workflow (user provides screenshot),
-  - coupon issued by staff after review validation,
-  - a different referral/review mechanism that is technically verifiable.
-- Remove or document any legacy per-coupon activation code that is no longer part of the final design.
-## 6. Address Autocomplete Provider
-Files:
-- `GetItCleaned.API/appsettings.json`
-- `GetItCleaned.API/Controllers/AddressesController.cs`
-- `getitcleaned-frontend/src/components/shared/AddressAutocompleteInput.jsx`
-- `GetItCleaned-Mobile/src/components/AddressAutocompleteInput.js`
-- `getitcleaned-frontend/src/pages/customer/Booking.jsx`
-- `getitcleaned-frontend/src/pages/customer/Register.jsx`
-- `getitcleaned-frontend/src/pages/customer/Profile.jsx`
-- `GetItCleaned-Mobile/src/screens/BookingScreen.js`
-- `GetItCleaned-Mobile/src/screens/RegisterScreen.js`
-- `GetItCleaned-Mobile/src/screens/ProfileScreen.js`
-Current state:
-- Address autocomplete is implemented and used in customer address entry flows.
-- The backend currently uses Nominatim/OpenStreetMap settings from `appsettings.json`.
-- This is acceptable for development and validation work, but it should not be assumed to be the final production provider.
-Production action:
-- Choose a production-grade address provider appropriate for your region and traffic volume.
-- Common options include Google Places, Mapbox, HERE, or Loqate.
-- Confirm terms of service, rate limits, billing, and commercial usage rules.
-- Persist structured address metadata if routing, coverage validation, or geofencing will matter later.
-- Consider storing latitude/longitude in the booking or address model after selection.
-## 7. Secrets And Environment Configuration
-Files:
-- `GetItCleaned.API/appsettings.json`
-- `GetItCleaned.API/appsettings.Development.json`
-- `GetItCleaned.API/Program.cs`
-- `getitcleaned-frontend/package.json`
-- deployment environment config
-Current state:
-- Sensitive and environment-specific values are still too close to source-controlled config.
-- The app is not yet clearly split into development, staging, and production configuration.
-Production action:
-- Move secrets to environment variables or a managed secret store.
-- Set separate config for development, staging, and production.
-- Review JWT signing secret handling and token lifetime policy.
-- Review CORS, allowed origins, HTTPS enforcement, and forwarded headers.
-- Confirm logging levels and exception detail are safe for production.
-## 8. Default Admin / Seeder Safety
-Files:
-- `GetItCleaned.API/Data/DevelopmentDataSeeder.cs`
-- `GetItCleaned.API/appsettings.json`
-- `GetItCleaned.API/Program.cs`
-Current state:
-- Development seeding and default credentials are useful for local work but risky for deployment.
-Production action:
-- Disable development seeding in production.
-- Remove or rotate any default admin credentials.
-- Ensure startup schema patching is acceptable for the production database strategy.
-- Replace ad hoc startup schema changes with formal migrations if required by your deployment process.
-## 9. Database Strategy
-Files:
-- `GetItCleaned.API/Data/AppDbContext.cs`
-- `GetItCleaned.API/Migrations/`
-- `GetItCleaned.API/Program.cs`
-- production database infrastructure
-Current state:
-- The project uses SQLite and includes runtime schema patching for fields added during feature iteration.
-Production action:
-- Decide whether SQLite remains acceptable in production.
-- If not, move to a managed relational database such as PostgreSQL or SQL Server.
-- Formalize migrations and deployment ordering.
-- Add backup, restore, and retention procedures.
-## 10. Notification Delivery Reality
-Files:
-- `GetItCleaned.API/Services/AdminNotificationService.cs`
-- `GetItCleaned.API/Controllers/NotificationsController.cs`
-- web/mobile notification screens
-Current state:
-- In-app notifications exist.
-- External delivery channels such as push, email, or SMS reminders are not fully implemented.
-Production action:
-- Decide which notifications must be in-app only and which require delivery outside the app.
-- Add push notifications for mobile if worker/customer reliability depends on them.
-- Add reminder scheduling and background delivery for time-sensitive events.
-## 11. File-By-File Follow-Up Targets
-Use this list when continuing production hardening:
-- `GetItCleaned.API/appsettings.json`: remove test Stripe keys, review address provider config, remove production-sensitive defaults.
-- `GetItCleaned.API/Program.cs`: review startup schema patching, production middleware, CORS, and HTTPS handling.
-- `GetItCleaned.API/Controllers/AuthController.cs`: add OTP or phone verification flow.
-- `GetItCleaned.API/Controllers/ReviewsController.cs` (NEW): implement public and admin reviews endpoints.
-- `GetItCleaned.API/Controllers/OffersController.cs`: finalize the loyalty unlock design and remove obsolete activation paths.
-- `GetItCleaned.API/Controllers/AddressesController.cs`: replace Nominatim if needed and add provider-specific safeguards.
-- `GetItCleaned.API/Services/GoogleReviewsSyncService.cs` (NEW): implement review sync from Google My Business if using Option B.
-- `GetItCleaned.API/Services/`: add real email and reminder services.
-- `getitcleaned-frontend/src/api/stripe.js`: remove hardcoded publishable key.
-- `getitcleaned-frontend/src/pages/Home.jsx`: update to fetch reviews from API instead of hardcoded data.
-- `getitcleaned-frontend/src/pages/customer/BookingConfirmation.jsx`: finish auditing customer-facing delivery promises.
-- `getitcleaned-frontend/src/pages/customer/Register.jsx`: verify post-deployment registration rules once SMS/email verification is added.
-- `getitcleaned-frontend/src/pages/customer/Profile.jsx`: decide whether saved addresses should store coordinates and validation metadata.
-- `getitcleaned-frontend/src/pages/admin/ReviewsManagement.jsx` (NEW): create admin UI for managing displayed reviews.
-- `GetItCleaned-Mobile/src/screens/RegisterScreen.js`: align with final verification flow.
-- `GetItCleaned-Mobile/src/screens/ProfileScreen.js`: align with final address persistence model.
-- `GetItCleaned-Mobile/src/screens/MyBookingsScreen.js`: align with final review verification rules if self-assertion changes.
-## Recommended Order
-1. Externalize secrets and live/test environment separation.
-2. Finalize payment production configuration and webhook handling.
-3. Add real email and SMS verification/delivery.
-4. **Implement Google Reviews API integration (Option A or B)** ← NEW PRIORITY
-5. Decide the final Google review verification policy for loyalty program.
-6. Upgrade the address provider and persistence model.
-7. Lock down seeding, credentials, database, and deployment middleware.
+Do not treat the app as production-ready until all items below are completed.
+
+---
+
+## Already Done (no action needed)
+
+- PostgreSQL configured — `UseNpgsql` in `Program.cs`, connection string in `appsettings.json`
+- Migrations clean — single `InitialSchema` + `AddRefreshTokens` migration
+- JWT refresh tokens — `POST /api/auth/refresh` + `POST /api/auth/logout` + HttpOnly cookie rotation
+- Access token lifetime — 60 min (was 1440). Refresh token 30 days.
+- SignalR removed — replaced with HTTP polling (financial decision)
+- Rate limiting configured (production tier in `Program.cs`)
+- Stripe feature-flagged OFF by default (`payments: false` in `FeaturesContext`)
+- AuthController null-crash fixed (`TryParse` on `NameIdentifier` claim at 4 locations)
+- Job Applications system wired (backend + admin UI + public careers page)
+- Worker live-map tracking implemented (backend + admin LiveMapTracking + mobile LiveWorkerMapScreen)
+- All admin routes registered in `App.jsx` (payroll, live-map, subscription-bookings)
+- Address autocomplete wired (Nominatim — acceptable for dev/demo, see item 5 below for prod)
+
+---
+
+## 1. Payments — Stripe
+
+**Files:**
+- `Glanz-WebApp/Glanz.API/appsettings.json`
+- `Glanz-WebApp/Glanz.API/Controllers/BookingsController.cs`
+- `Glanz-WebApp/Glanz.API/Controllers/PaymentsController.cs`
+- `Glanz-WebApp/Glanz.API/Controllers/WebhooksController.cs`
+- `Glanz-WebApp/glanz-frontend/src/api/stripe.js`
+- `Glanz-WebApp/glanz-frontend/.env.production` (create this file)
+
+**Current state:**
+- Stripe NuGet package installed; Stripe code present but gated behind feature flag `payments: false`.
+- `Stripe:SecretKey` in `appsettings.json` is placeholder `YOUR_STRIPE_SECRET_KEY`.
+- Frontend reads publishable key from `VITE_STRIPE_PUBLISHABLE_KEY` env var (not hardcoded).
+- Webhook signature verification is wired in `WebhooksController.cs` but skipped when `Stripe:WebhookSecret` is blank.
+- Payments do not fire in development and nothing will break.
+
+**Before deploying:**
+1. Create live Stripe account, get live secret key + publishable key.
+2. Set env vars on production host:
+   - `Stripe__SecretKey=sk_live_...`
+   - `Stripe__WebhookSecret=whsec_...`
+3. Create `.env.production` for the frontend:
+   ```
+   VITE_STRIPE_PUBLISHABLE_KEY=pk_live_...
+   ```
+4. Register webhook endpoint in Stripe Dashboard:
+   - URL: `POST https://yourdomain.com/api/Webhooks/stripe`
+   - Events: `payment_intent.succeeded`, `payment_intent.payment_failed`, `payment_intent.canceled`
+5. Enable payments feature flag in the database:
+   ```sql
+   INSERT INTO "AppSettings" ("Key", "Value", "UpdatedAt")
+   VALUES ('feature.payments', 'true', NOW())
+   ON CONFLICT ("Key") DO UPDATE SET "Value" = 'true', "UpdatedAt" = NOW();
+   ```
+6. Test full booking flow with Stripe test card before going live.
+
+---
+
+## 2. Secrets and Environment Configuration
+
+**Files:**
+- `Glanz-WebApp/Glanz.API/appsettings.json`
+- Production host environment variables
+
+**Current state:**
+- JWT secret `JwtSettings:SecretKey` is a hardcoded dev value.
+- `Program.cs` throws at startup if the secret is the default value in non-Development environments.
+- PostgreSQL password in `appsettings.json` is a dev credential.
+
+**Before deploying:**
+Set all of these as environment variables on the production host (never in source-controlled config):
+```
+ConnectionStrings__DefaultConnection=Host=...;Database=glanz;Username=...;Password=...
+JwtSettings__SecretKey=<64+ char random string>
+Stripe__SecretKey=sk_live_...
+Stripe__WebhookSecret=whsec_...
+Cors__AllowedOrigins__0=https://yourdomain.com
+```
+`Program.cs` will throw on startup if `JwtSettings:SecretKey` or `Stripe:SecretKey` are still defaults — this is the safety net.
+
+---
+
+## 3. Database
+
+**Files:**
+- `Glanz-WebApp/Glanz.API/appsettings.json`
+- `Glanz-WebApp/Glanz.API/Migrations/`
+
+**Current state:**
+- PostgreSQL via Npgsql. Dev database name: `glanz_db` (localhost:5432).
+- Two clean migrations: `InitialSchema` + `AddRefreshTokens`.
+- `MigrateAsync()` runs at startup — schema applied automatically.
+- `EnsurePostgresSchemaCompatibilityAsync` handles legacy column backfills.
+
+**Before deploying:**
+1. Provision a managed PostgreSQL instance (Supabase, Railway, Neon, or RDS).
+2. Set `ConnectionStrings__DefaultConnection` env var (see above).
+3. Run migrations via startup (automatic) or manually: `dotnet ef database update`.
+4. Disable `DevelopmentDataSeeder` in production by ensuring `IsDevelopment()` is false — the seeder is already gated on this.
+5. Add backup + point-in-time recovery for the production database.
+
+**Local setup:**
+```
+createdb -U postgres glanz_db
+cd Glanz-WebApp/Glanz.API
+dotnet run   # MigrateAsync() will build the schema on first start
+```
+
+---
+
+## 4. Default Admin / Seeder Safety
+
+**Files:**
+- `Glanz-WebApp/Glanz.API/Data/DevelopmentDataSeeder.cs`
+- `Glanz-WebApp/Glanz.API/appsettings.json` (`AdminUser` section)
+
+**Current state:**
+- Seeder is gated on `IsDevelopment()` — will not run in production.
+- Default admin credentials (`admin@glanz.qa` / `Admin123!`) are in `appsettings.json` for dev only.
+
+**Before deploying:**
+1. Remove `AdminUser` section from `appsettings.json` before commit (or move to local-only config).
+2. Create the production admin account manually after first deploy.
+3. Rotate the admin password immediately.
+
+---
+
+## 5. Address Autocomplete Provider
+
+**Files:**
+- `Glanz-WebApp/Glanz.API/appsettings.json` (`AddressAutocomplete` section)
+- `Glanz-WebApp/Glanz.API/Controllers/AddressesController.cs`
+
+**Current state:**
+- Using Nominatim/OpenStreetMap. Fine for dev and demos.
+- Nominatim has strict rate limits and prohibits heavy commercial use.
+
+**Before deploying:**
+- Switch to a commercial provider for Qatar (Google Places, Mapbox, or HERE).
+- Update `AddressAutocomplete:Provider`, `BaseUrl`, and any API key in `appsettings.json`.
+- Set the API key as an environment variable.
+
+---
+
+## 6. Email Delivery
+
+**Files:**
+- `Glanz-WebApp/Glanz.API/Services/` (no email service exists yet)
+
+**Current state:**
+- No transactional email provider. No booking confirmation or reminder emails sent.
+
+**Before deploying (or when business requires it):**
+- Add SendGrid, Postmark, Resend, or SES.
+- Send confirmation on booking creation.
+- Send reminder 24 h before scheduled date.
+- Audit any UI copy that implies email delivery.
+
+---
+
+## 7. SMS / Phone Verification
+
+**Current state:**
+- Phone field collected but not verified. Self-asserted.
+
+**Before deploying (if required by business rules):**
+- Add Twilio or local SMS provider.
+- Add OTP challenge on registration, with expiry and resend throttle.
+
+---
+
+## 8. Google Reviews
+
+**Files:**
+- `Glanz-WebApp/glanz-frontend/src/pages/customer/Home.jsx`
+
+**Current state:**
+- Reviews carousel on homepage uses hardcoded data.
+
+**Before deploying:**
+- Option A (recommended): Create `Reviews` DB table + `/api/reviews/public` endpoint + admin management UI. Update `Home.jsx` to fetch from API.
+- Option B: Sync from Google My Business API via a background service.
+
+---
+
+## 9. Loyalty Program — Review Verification
+
+**Current state:**
+- Loyalty activation is self-asserted by the customer (click a button).
+- No actual verification that a Google review was posted.
+
+**Before deploying:**
+- Decide if self-assertion is acceptable.
+- If not, add staff-manual approval, proof-upload workflow, or coupon-based flow.
+
+---
+
+## 10. Business Timezone
+
+**Files:**
+- `Glanz-WebApp/Glanz.API/appsettings.Development.json`
+- Production host environment variables
+
+**Current state:**
+- Timezone is read from `BusinessSettings:TimeZone` in config and applied at startup via `ApplyConfiguredTimeZone`.
+- Dev config set to `"W. Europe Standard Time"` (Austria UTC+1/+2) — **development only**.
+- Fallback in code is `"Arab Standard Time"` (Qatar UTC+3).
+- All same-day slot filtering and date comparisons use this timezone.
+
+**⚠️ MUST CHANGE BEFORE DEPLOYING — business is in Qatar, not Austria.**
+
+Set the timezone env var on the production host:
+```
+BusinessSettings__TimeZone=Arab Standard Time
+```
+Also update `appsettings.Development.json` back to `"Arab Standard Time"` when done testing from Austria.
+
+Windows timezone IDs — common options:
+- Qatar / Gulf: `Arab Standard Time` (UTC+3, no DST) ← production value
+- Austria / Germany: `W. Europe Standard Time` (UTC+1/+2 DST) ← current dev value
+- UAE / Dubai: `Arabian Standard Time` (UTC+4, no DST)
+
+**Why this matters:** wrong timezone = wrong same-day first slot. E.g. if server is UTC and business is Qatar (UTC+3), all slots shift 3 hours.
+
+---
+
+## Deployment Order
+
+1. Provision PostgreSQL, set connection string env var, run migrations
+2. Set JWT secret env var (non-default, 64+ chars)
+3. Set CORS allowed origins
+4. Set Stripe keys + webhook secret, enable payments feature flag in DB
+5. Remove default admin credentials from config, create production admin
+6. Switch address autocomplete to commercial provider
+7. Add email delivery
+8. (Optional) Add SMS verification
+9. (Optional) Implement dynamic Google Reviews

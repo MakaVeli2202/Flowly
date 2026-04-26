@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, Droplet, LogOut, LayoutDashboard, Sun, Moon, Bell, CheckCheck, ChevronDown, BookOpen, Users, Calendar, Package, BarChart2, Settings, Home, LogIn, UserPlus, ShoppingBag, Globe, Layers, Car, CheckCircle, XCircle, Clock, AlertTriangle, Gift, Tag, UserCheck, Briefcase } from 'lucide-react';
+import { Menu, X, Droplet, LogOut, LayoutDashboard, Sun, Moon, Bell, CheckCheck, ChevronDown, BookOpen, Users, Calendar, Package, BarChart2, Settings, Home, LogIn, UserPlus, ShoppingBag, Globe, Layers, Car, CheckCircle, XCircle, Clock, AlertTriangle, Gift, Tag, UserCheck, Briefcase, MapPin, DollarSign } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { BUSINESS } from '../../config/business';
 import { notificationsAPI } from '../../api/notifications';
@@ -53,6 +53,8 @@ const ADMIN_LINKS = [
   { to: '/admin/workers/schedule',    label: 'Schedule',    icon: Calendar },
   { to: '/admin/workers/management',   label: 'Shifts',       icon: Clock },
   { to: '/admin/workers/sales',        label: 'Sales Kit',    icon: Briefcase },
+  { to: '/admin/payroll',             label: 'Payroll',      icon: DollarSign },
+  { to: '/admin/live-map',            label: 'Live Map',     icon: MapPin },
   { to: '/admin/settings',            label: 'Settings',     icon: Settings },
 ];
 
@@ -107,6 +109,7 @@ function Navbar({ theme, onToggleTheme }) {
   const [notificationsLoading, setNotificationsLoading] = useState(false);
   // 'connected' | 'reconnecting' | 'disconnected'
   const [connState, setConnState] = useState('disconnected');
+  const [currentTime, setCurrentTime] = useState(new Date());
   const adminMenuRef = useRef(null);
   const notificationsRef = useRef(null);
   const langMenuRef = useRef(null);
@@ -136,6 +139,12 @@ function Navbar({ theme, onToggleTheme }) {
     setShowNotifications(false);
     setShowLangMenu(false);
   }, [location.pathname]);
+
+  // Update current time every second for debugging
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const loadNotificationSummary = useCallback(async () => {
     if (!isAuthenticated) {
@@ -361,6 +370,13 @@ function Navbar({ theme, onToggleTheme }) {
                     ))}
                   </div>
                 )}
+              </div>
+
+{/* Debug: Current Time */}
+              <div className="hidden md:flex items-center gap-1 px-2 py-1 rounded-md bg-black/20 text-[10px] font-mono text-amber-300 border border-amber-500/30">
+                <Clock size={10} />
+                <span>{currentTime.toLocaleTimeString()}</span>
+                <span className="text-amber-400/60">{currentTime.toLocaleDateString()}</span>
               </div>
 
               {/* Theme Toggle */}

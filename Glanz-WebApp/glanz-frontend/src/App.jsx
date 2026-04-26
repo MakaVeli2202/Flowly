@@ -54,6 +54,9 @@ const AdminJobPositions      = lazy(() => import('./pages/admin/AdminJobPosition
 const AdminSkills            = lazy(() => import('./pages/admin/AdminSkills'));
 const AdminWorkerManagement   = lazy(() => import('./pages/admin/AdminWorkerManagement'));
 const AdminWorkerSales       = lazy(() => import('./pages/admin/AdminWorkerSales'));
+const AdminPayroll           = lazy(() => import('./pages/admin/AdminPayroll'));
+const LiveMapTracking        = lazy(() => import('./pages/admin/LiveMapTracking'));
+const SubscriptionBooking    = lazy(() => import('./pages/customer/SubscriptionBooking'));
 
 // ─── Admin fallback ───────────────────────────────────────────────────────────
 
@@ -211,6 +214,12 @@ function AppRoutes() {
         {adminRoute('/admin/workers/management', AdminWorkerManagement)}
         {adminRoute('/admin/workers/sales',     AdminWorkerSales)}
         {adminRoute('/admin/subscription-bookings', AdminSubscriptionBookings)}
+        {adminRoute('/admin/payroll',              AdminPayroll)}
+        {adminRoute('/admin/live-map',             LiveMapTracking)}
+
+        <Route path="/subscription-booking" element={
+          <ProtectedRoute><Suspense fallback={<AdminFallback />}><SubscriptionBooking /></Suspense></ProtectedRoute>
+        } />
 
         {/* ── Catch-all ──────────────────────────────────────────────── */}
         <Route path="*" element={<Navigate to="/" replace />} />

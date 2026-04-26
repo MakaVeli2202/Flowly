@@ -1,5 +1,7 @@
 using Glanz.API.Models;
+using Glanz.API.DTOs;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace Glanz.API.Data;
 
@@ -343,8 +345,8 @@ public static class DevelopmentDataSeeder
         await db.SystemSettings.AddRangeAsync(new List<SystemSetting>
         {
             new() { Key = "pricing.vehicleMultipliers",       Value = "{\"Motorcycle\":0.8,\"Sedan\":1.0,\"SUV\":1.25,\"Pickup\":1.5}", UpdatedAt = now },
-            new() { Key = "booking.defaultBufferMinutes",     Value = "90",  UpdatedAt = now },
             new() { Key = "booking.workerTravelBufferMinutes",Value = "30",  UpdatedAt = now },
+            new() { Key = "booking.businessHours",           Value = JsonSerializer.Serialize(new BusinessHoursPerDayDto()), UpdatedAt = now },
             new() { Key = "payslip.companyName",         Value = "Glanz", UpdatedAt = now },
             new() { Key = "payslip.companyLogo",        Value = "",      UpdatedAt = now },
             new() { Key = "payslip.companyAddress",      Value = "Qatar", UpdatedAt = now },

@@ -30,11 +30,11 @@ const normalizeStatus = (raw) => {
   return 'full';
 };
 
-/* Day-cell semantic colors — keeping Tailwind classes for contrast clarity */
+/* Day-cell semantic colors — dark mode friendly */
 const DAY_CELL_CLS = {
-  available: 'bg-green-100 border-green-200 text-green-900 hover:bg-green-200',
-  medium:    'bg-amber-100 border-amber-200 text-amber-900 hover:bg-amber-200',
-  full:      'bg-red-100  border-red-200   text-red-900   cursor-not-allowed',
+  available: 'bg-green-500/10 border-green-500/30 text-green-400 hover:bg-green-500/20',
+  medium:    'bg-amber-500/10 border-amber-500/30 text-amber-400 hover:bg-amber-500/20',
+  full:      'bg-red-500/10  border-red-500/30   text-red-400   cursor-not-allowed opacity-50',
 };
 
 /* ══════════════════════════════════════════════════════════════
@@ -148,26 +148,27 @@ function BookingBlock({ booking, dayStartMins, totalMins }) {
       {tip && (
         <div className="absolute z-30 left-0 top-full mt-1.5 min-w-[190px] max-w-[270px] pointer-events-none"
           style={{
-            backgroundColor: 'var(--card-bg)',
-            border: '1px solid var(--border-color)',
+            backgroundColor: 'rgba(20,20,25,0.95)',
+            border: '1px solid rgba(200,169,107,0.30)',
             borderRadius: '12px',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.30)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.50)',
             padding: '12px',
+            backdropFilter: 'blur(8px)',
           }}>
           {/* Mini spectrum divider */}
           <div style={{
             height: '1.5px', marginBottom: '10px', borderRadius: '1px',
             background: 'linear-gradient(90deg, transparent, rgba(200,169,107,0.80) 40%, rgba(14,165,160,0.80) 60%, transparent)',
           }} />
-          <p className="font-bold text-[var(--heading-color)] text-[11px] mb-1">{booking.bookingNumber}</p>
-          <p className="text-[var(--text-color)] text-[11px]">
+          <p className="font-bold text-white text-[11px] mb-1">{booking.bookingNumber}</p>
+          <p className="text-gray-300 text-[11px]">
             {booking.startTime} – {endStr}
-            <span className="text-[var(--muted-color)]"> ({booking.estimatedDurationMinutes} min)</span>
+            <span className="text-gray-500"> ({booking.estimatedDurationMinutes} min)</span>
           </p>
-          <p className="text-[var(--text-color)] text-[11px] mt-1">{booking.customerName}</p>
-          <p className="text-[var(--muted-color)] text-[10px]">{booking.vehicleType}</p>
+          <p className="text-gray-300 text-[11px] mt-1">{booking.customerName}</p>
+          <p className="text-gray-500 text-[10px]">{booking.vehicleType}</p>
           {booking.packagesSummary && (
-            <p className="text-[var(--muted-color)] text-[10px] mt-0.5 leading-snug">{booking.packagesSummary}</p>
+            <p className="text-gray-500 text-[10px] mt-0.5 leading-snug">{booking.packagesSummary}</p>
           )}
           <span className={`inline-block mt-2 px-2 py-0.5 rounded-full text-[9px] font-bold ${bg} ${text}`}>
             {booking.status}
@@ -191,14 +192,13 @@ function WorkerRow({ worker, dayStartMins, dayEndMins }) {
   if (!worker.worksOnDay) {
     return (
       <div className="flex items-center gap-3 h-10">
-        <div className="w-28 shrink-0 text-right pr-2">
+        <div className="w-32 shrink-0 text-right pr-2">
           <p className="text-[11px] font-semibold text-[var(--muted-color)] truncate">{worker.firstName} {worker.lastName}</p>
         </div>
         <div className="flex-1 h-8 rounded-lg flex items-center px-3"
           style={{
-            border: '1px dashed var(--border-color)',
-            backgroundColor: 'var(--card-bg)',
-            backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(128,128,128,0.05) 4px, rgba(128,128,128,0.05) 8px)',
+            backgroundColor: 'rgba(255,255,255,0.02)',
+            border: '1px dashed rgba(255,255,255,0.08)',
           }}>
           <span className="text-[10px] text-[var(--muted-color)] italic font-medium">Day off</span>
         </div>
@@ -209,7 +209,7 @@ function WorkerRow({ worker, dayStartMins, dayEndMins }) {
   return (
     <div className="flex items-stretch gap-3 min-h-[2.75rem]">
       {/* Worker label */}
-      <div className="w-28 shrink-0 flex items-center justify-end pr-2">
+      <div className="w-32 shrink-0 flex items-center justify-end pr-2">
         <div className="text-right">
           <p className="text-xs font-bold text-[var(--heading-color)] leading-tight">{worker.firstName}</p>
           <p className="text-[10px] text-[var(--muted-color)]">{fmtTime(worker.shiftStart)}–{fmtTime(worker.shiftEnd)}</p>
@@ -218,15 +218,15 @@ function WorkerRow({ worker, dayStartMins, dayEndMins }) {
 
       {/* Timeline track */}
       <div className="flex-1 relative rounded-lg overflow-visible"
-        style={{ minHeight: '2.75rem', backgroundColor: 'var(--card-bg)', border: '1px solid var(--border-color)' }}>
+        style={{ minHeight: '2.75rem', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
         {/* Shift band — gold tint */}
         {shiftWidthPct > 0 && (
           <div className="absolute top-0 bottom-0 rounded-lg"
             style={{
               left: `${shiftLeftPct}%`, width: `${shiftWidthPct}%`,
-              background: 'rgba(200,169,107,0.08)',
-              borderLeft:  '1.5px solid rgba(200,169,107,0.22)',
-              borderRight: '1.5px solid rgba(200,169,107,0.22)',
+              background: 'rgba(200,169,107,0.12)',
+              borderLeft:  '1.5px solid rgba(200,169,107,0.28)',
+              borderRight: '1.5px solid rgba(200,169,107,0.28)',
             }}
           />
         )}
@@ -256,11 +256,11 @@ function HourGrid({ dayStartMins, dayEndMins }) {
   }
   return (
     <div className="flex items-end gap-3 mb-1 select-none">
-      <div className="w-28 shrink-0" />
+      <div className="w-32 shrink-0" />
       <div className="flex-1 relative h-4">
         {hours.map(({ label, pct }) => (
           <span key={label} className="absolute text-[9px] font-semibold text-[var(--muted-color)] -translate-x-1/2"
-            style={{ left: `${pct}%` }}>
+            style={{ left: `${pct}%`, textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}>
             {label}
           </span>
         ))}
@@ -292,7 +292,8 @@ function WorkerSchedule() {
       try {
         const from = toDateKey(new Date(monthDate.getFullYear(), monthDate.getMonth(), 1));
         const to   = toDateKey(new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0));
-        const data = await bookingsAPI.getWorkersSchedule(from, to);
+        const duration = 60;
+        const data = await bookingsAPI.getCalendarAvailability(from, to, duration);
         setDays(data || []);
         if ((data || []).length > 0) {
           const todayKey = toDateKey(new Date());
@@ -451,7 +452,7 @@ function WorkerSchedule() {
                     return (
                       <button key={key} type="button"
                         onClick={() => setSelectedDateKey(key)}
-                        title={day ? `Available: ${day.availableStarts}/${day.totalStartsCapacity}` : 'No data'}
+                        title={day ? `Available: ${day.freeSlots ?? day.availableStarts}/${day.totalSlots ?? day.totalStartsCapacity}` : 'No data'}
                         className={`relative h-10 rounded-lg border text-xs font-bold transition
                           ${DAY_CELL_CLS[status]}
                           ${selected ? 'ring-2 ring-primary ring-offset-1' : ''}
@@ -471,9 +472,9 @@ function WorkerSchedule() {
                 {/* Capacity legend */}
                 <div className="flex flex-wrap gap-1.5 mb-4">
                   {[
-                    { label: 'Good capacity', cls: 'bg-green-100 border-green-200 text-green-800' },
-                    { label: 'Medium load',   cls: 'bg-amber-100 border-amber-200 text-amber-800' },
-                    { label: 'Almost full',   cls: 'bg-red-100   border-red-200   text-red-800'   },
+                    { label: 'Good capacity', cls: 'bg-green-500/10 border-green-500/30 text-green-400' },
+                    { label: 'Medium load',   cls: 'bg-amber-500/10 border-amber-500/30 text-amber-400' },
+                    { label: 'Almost full',   cls: 'bg-red-500/10 border-red-500/30 text-red-400'   },
                   ].map(({ label, cls }) => (
                     <span key={label} className={`px-2 py-0.5 rounded-full border text-[10px] font-semibold ${cls}`}>{label}</span>
                   ))}
@@ -485,8 +486,8 @@ function WorkerSchedule() {
                     <div className="rounded-xl p-3 text-center"
                       style={{ background: 'rgba(200,169,107,0.08)', border: '1px solid rgba(200,169,107,0.24)' }}>
                       <p className="text-[9px] font-bold uppercase tracking-widest text-[var(--muted-color)] mb-1.5">Available</p>
-                      <p className="text-2xl font-black" style={{ color: '#c8a96b' }}>{selectedDay.availableStarts}</p>
-                      <p className="text-[9px] text-[var(--muted-color)] mt-0.5">of {selectedDay.totalStartsCapacity} slots</p>
+                      <p className="text-2xl font-black" style={{ color: '#c8a96b' }}>{selectedDay.freeSlots ?? selectedDay.availableStarts}</p>
+                      <p className="text-[9px] text-[var(--muted-color)] mt-0.5">of {selectedDay.totalSlots ?? selectedDay.totalStartsCapacity} slots</p>
                     </div>
                     <div className="rounded-xl p-3 text-center"
                       style={{ background: `${utilColor}10`, border: `1px solid ${utilColor}30` }}>
@@ -572,10 +573,10 @@ function WorkerSchedule() {
                 {!timelineLoading && timeline.length > 0 && (
                   /* overflowY: visible keeps tooltips unclipped; overflowX: auto enables scroll */
                   <div style={{ overflowX: 'auto', overflowY: 'visible' }}>
-                    <div className="space-y-1.5" style={{ minWidth: '480px' }}>
+                    <div className="space-y-1.5" style={{ minWidth: '720px' }}>
                       <HourGrid dayStartMins={dayStartMins} dayEndMins={dayEndMins} />
                       <div className="flex gap-3 mb-1">
-                        <div className="w-28 shrink-0" />
+                        <div className="w-32 shrink-0" />
                         <div className="flex-1 border-t border-dashed border-[var(--border-color)]" />
                       </div>
                       {timeline.map(worker => (

@@ -47,16 +47,82 @@ namespace Glanz.API.Controllers
         // Business-hours window that defines the bookable day.
         // Configurable via BusinessSettings:DayStart / DayEnd in appsettings.json.
         // Rebuilt once at startup by ApplyConfiguredTimeZone (same call that sets the timezone).
-        private static List<string> DailyTimeSlots = BuildDailyTimeSlots("09:00", "18:00");
+        private static readonly Dictionary<string, List<string>> DefaultDailyTimeSlotsByDay = new()
+        {
+            { "Sunday",    BuildDailyTimeSlots("09:00", "18:00") },
+            { "Monday",    BuildDailyTimeSlots("09:00", "18:00") },
+            { "Tuesday",   BuildDailyTimeSlots("09:00", "18:00") },
+            { "Wednesday", BuildDailyTimeSlots("09:00", "18:00") },
+            { "Thursday",  BuildDailyTimeSlots("09:00", "18:00") },
+            { "Friday",    BuildDailyTimeSlots("09:00", "18:00") },
+            { "Saturday",  BuildDailyTimeSlots("09:00", "18:00") },
+        };
+
+        private static readonly Dictionary<string, (string Start, string End)> DefaultDayBounds = new()
+        {
+            { "Sunday",    ("09:00", "18:00") },
+            { "Monday",    ("09:00", "18:00") },
+            { "Tuesday",   ("09:00", "18:00") },
+            { "Wednesday", ("09:00", "18:00") },
+            { "Thursday",  ("09:00", "18:00") },
+            { "Friday",    ("00:00", "00:00") },
+            { "Saturday",  ("10:00", "16:00") },
+        };
+
+        private static Dictionary<string, List<string>> _dailyTimeSlotsByDay = new(DefaultDailyTimeSlotsByDay);
+        private static Dictionary<string, (string Start, string End)> _dayBounds = new(DefaultDayBounds);
 
         internal static void ApplyConfiguredBusinessHours(string? dayStart, string? dayEnd)
         {
             var start = string.IsNullOrWhiteSpace(dayStart) ? "09:00" : dayStart.Trim();
             var end   = string.IsNullOrWhiteSpace(dayEnd)   ? "18:00" : dayEnd.Trim();
-            var slots = BuildDailyTimeSlots(start, end);
-            if (slots.Count > 0)
+
+            foreach (var day in _dailyTimeSlotsByDay.Keys.ToList())
             {
-                DailyTimeSlots = slots;
+                _dailyTimeSlotsByDay[day] = BuildDailyTimeSlots(start, end);
+            }
+
+            foreach (var day in _dayBounds.Keys.ToList())
+            {
+                _dayBounds[day] = (start, end);
+            }
+        }
+
+        private static List<string> GetDailyTimeSlots(string dayName)
+        {
+            return _dailyTimeSlotsByDay.TryGetValue(dayName, out var slots) ? slots : new List<string>();
+        }
+
+        private static (string Start, string End) GetDayBounds(string dayName)
+        {
+            return _dayBounds.TryGetValue(dayName, out var bounds) ? bounds : ("09:00", "18:00");
+        }
+
+        internal static void SetBusinessHoursFromSettings(BusinessHoursPerDayDto? hours)
+        {
+            if (hours == null) return;
+
+            var dayMap = new Dictionary<string, string>
+            {
+                { "Sunday",    hours.Sunday    ?? "09:00-18:00" },
+                { "Monday",    hours.Monday    ?? "09:00-18:00" },
+                { "Tuesday",   hours.Tuesday   ?? "09:00-18:00" },
+                { "Wednesday", hours.Wednesday ?? "09:00-18:00" },
+                { "Thursday",  hours.Thursday  ?? "09:00-18:00" },
+                { "Friday",    hours.Friday    ?? "00:00-00:00" },
+                { "Saturday",  hours.Saturday  ?? "10:00-16:00" },
+            };
+
+            foreach (var (day, range) in dayMap)
+            {
+                var parts = range.Split('-');
+                if (parts.Length == 2)
+                {
+                    var s = parts[0].Trim();
+                    var e = parts[1].Trim();
+                    _dailyTimeSlotsByDay[day] = BuildDailyTimeSlots(s, e);
+                    _dayBounds[day] = (s, e);
+                }
             }
         }
 
@@ -105,25 +171,25 @@ namespace Glanz.API.Controllers
             return TimeSpan.TryParse(parts[0], out start) && TimeSpan.TryParse(parts[1], out end);
         }
 
+        private static bool TryGetBusinessDayBounds(string dayName, out int dayStartMinutes, out int dayEndMinutes)
+        {
+            var (start, end) = GetDayBounds(dayName);
+            if (!TimeSpan.TryParse(start, out var shiftStart) || !TimeSpan.TryParse(end, out var shiftEnd))
+            {
+                dayStartMinutes = 0;
+                dayEndMinutes = 0;
+                return false;
+            }
+            dayStartMinutes = (int)shiftStart.TotalMinutes;
+            dayEndMinutes = (int)shiftEnd.TotalMinutes;
+            return dayEndMinutes > dayStartMinutes;
+        }
+
         private static bool TryGetBusinessDayBounds(out int dayStartMinutes, out int dayEndMinutes)
         {
-            dayStartMinutes = 0;
-            dayEndMinutes = 0;
-
-            if (DailyTimeSlots.Count == 0)
-            {
-                return false;
-            }
-
-            if (!TryParseTimeSlot(DailyTimeSlots.First(), out var firstStart, out _)
-                || !TryParseTimeSlot(DailyTimeSlots.Last(), out _, out var lastEnd))
-            {
-                return false;
-            }
-
-            dayStartMinutes = (int)firstStart.TotalMinutes;
-            dayEndMinutes = (int)lastEnd.TotalMinutes;
-            return dayEndMinutes > dayStartMinutes;
+            var nowBusiness = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, BusinessTimeZone);
+            var dayName = nowBusiness.DayOfWeek.ToString();
+            return TryGetBusinessDayBounds(dayName, out dayStartMinutes, out dayEndMinutes);
         }
 
         private static string FormatTimeSlotStart(TimeSpan start)
@@ -131,13 +197,20 @@ namespace Glanz.API.Controllers
             return $"{(int)start.TotalHours:00}:{start.Minutes:00}";
         }
 
-        private static List<string> BuildCandidateStartSlots(int durationMinutes)
+        private static List<string> BuildCandidateStartSlots(int durationMinutes, string? dayName = null)
         {
             var candidateSlots = new List<string>();
+            int dayStartMinutes, dayEndMinutes;
 
-            if (durationMinutes <= 0 || !TryGetBusinessDayBounds(out var dayStartMinutes, out var dayEndMinutes))
+            if (dayName != null)
             {
-                return candidateSlots;
+                if (!TryGetBusinessDayBounds(dayName, out dayStartMinutes, out dayEndMinutes))
+                    return candidateSlots;
+            }
+            else
+            {
+                if (!TryGetBusinessDayBounds(out dayStartMinutes, out dayEndMinutes))
+                    return candidateSlots;
             }
 
             for (var startMinutes = dayStartMinutes; startMinutes + durationMinutes <= dayEndMinutes; startMinutes += SlotSelectionStepMinutes)
@@ -255,7 +328,11 @@ namespace Glanz.API.Controllers
             return (worker.ShiftStart ?? "09:00", worker.ShiftEnd ?? "18:00");
         }
 
-        // Check if a booking time slot falls within a worker's shift
+        // Check if a booking time slot falls within a worker's shift.
+        // workerTravelBuffer is subtracted from the effective shift start — the worker needs
+        // this time to travel/prep before the first job. If the shift starts early enough
+        // that shiftStart + buffer <= businessOpen, the business-hours floor (enforced by
+        // BuildCandidateStartSlots) already satisfies the constraint at no cost to the customer.
         private static bool TimeSlotInWorkerShift(string startSlot, int durationMinutes, string shiftStart, string shiftEnd,
             int workerTravelBuffer = DefaultWorkerTravelBufferMinutes)
         {
@@ -272,17 +349,11 @@ namespace Glanz.API.Controllers
             // Handle overnight shifts (e.g., 20:00 to 06:00)
             if (shiftEndMinutes < shiftStartMinutes)
             {
-                // Buffer applies from the start of the evening portion of the shift
                 if (slotStartMinutes >= shiftStartMinutes + workerTravelBuffer)
-                {
                     return slotEndMinutes <= shiftEndMinutes + TimeSpan.FromDays(1).TotalMinutes;
-                }
-
                 return slotStartMinutes < shiftEndMinutes && slotEndMinutes <= shiftEndMinutes;
             }
 
-            // Fix 1: The first booking of the day requires a travel/prep buffer from shift start.
-            // Fix 2: The booking must end on or before the shift end (not just start within it).
             return slotStartMinutes >= shiftStartMinutes + workerTravelBuffer
                 && slotEndMinutes <= shiftEndMinutes;
         }
@@ -319,8 +390,10 @@ namespace Glanz.API.Controllers
                 return null;
             }
 
+            var nowBusiness = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, BusinessTimeZone);
+            var todayDayName = nowBusiness.DayOfWeek.ToString();
             var requiredSlots = new List<string>();
-            foreach (var slot in DailyTimeSlots)
+            foreach (var slot in GetDailyTimeSlots(todayDayName))
             {
                 if (!TryParseTimeSlot(slot, out var slotStart, out var slotEnd))
                 {
@@ -853,14 +926,14 @@ namespace Glanz.API.Controllers
         private async Task<int> CountValidSlotsForDayAsync(DateTime targetDateUtc, int durationMinutes,
             int workerTravelBuffer = DefaultWorkerTravelBufferMinutes)
         {
-            var dayOfWeek = targetDateUtc.DayOfWeek;
+            var dayName = targetDateUtc.DayOfWeek.ToString();
             var workers = await _context.Users
                 .AsNoTracking()
                 .Where(u => u.IsActive && u.Role != null && u.Role.ToLower() == "worker")
                 .ToListAsync();
 
             var availableWorkers = workers
-                .Where(w => WorkerWorksOnDay(w.WorkingDays, dayOfWeek))
+                .Where(w => WorkerWorksOnDay(w.WorkingDays, targetDateUtc.DayOfWeek))
                 .ToList();
 
             if (availableWorkers.Count == 0)
@@ -893,14 +966,14 @@ namespace Glanz.API.Controllers
                 .ToDictionary(g => g.Key, g => g.ToList());
 
             var count = 0;
-            foreach (var startSlot in BuildCandidateStartSlots(durationMinutes))
+            foreach (var startSlot in BuildCandidateStartSlots(durationMinutes, dayName))
             {
                 if (IsSlotInPastForBusinessDay(targetDateUtc, startSlot))
                     continue;
 
                 var hasCoverage = availableWorkers.Any(worker =>
                 {
-                    var (ss, se) = GetWorkerShiftForDay(worker, dayOfWeek);
+                    var (ss, se) = GetWorkerShiftForDay(worker, targetDateUtc.DayOfWeek);
                     if (!TimeSlotInWorkerShift(startSlot, durationMinutes, ss, se, workerTravelBuffer))
                         return false;
                     var wb = bookingsByWorker.TryGetValue(worker.Id, out var a) ? a : new List<Booking>();
@@ -913,7 +986,7 @@ namespace Glanz.API.Controllers
                 if (!autoAssign)
                 {
                     var eligible = availableWorkers
-                        .Where(w => { var (ss, se) = GetWorkerShiftForDay(w, dayOfWeek); return TimeSlotInWorkerShift(startSlot, durationMinutes, ss, se, workerTravelBuffer); })
+                        .Where(w => { var (ss, se) = GetWorkerShiftForDay(w, targetDateUtc.DayOfWeek); return TimeSlotInWorkerShift(startSlot, durationMinutes, ss, se, workerTravelBuffer); })
                         .ToList();
                     if (eligible.Count == 0)
                         continue;
@@ -979,18 +1052,6 @@ namespace Glanz.API.Controllers
         /// Reads from SystemSettings key "booking.defaultBufferMinutes" (set by SettingsController seed).
         /// Falls back to 90 minutes if the key is absent.
         /// </summary>
-        private async Task<int> GetBookingLeadTimeMinutesAsync()
-        {
-            var setting = await _context.SystemSettings
-                .AsNoTracking()
-                .FirstOrDefaultAsync(s => s.Key == "booking.defaultBufferMinutes");
-
-            if (setting != null && int.TryParse(setting.Value, out var parsed) && parsed > 0)
-                return parsed;
-
-            return 90; // industry default
-        }
-
         /// <summary>
         /// Returns the inter-job travel/prep buffer for workers.
         /// Reads from SystemSettings key "booking.workerTravelBufferMinutes" (set by SettingsController seed).
@@ -1006,25 +1067,6 @@ namespace Glanz.API.Controllers
                 return parsed;
 
             return DefaultWorkerTravelBufferMinutes;
-        }
-
-        /// <summary>
-        /// Returns true when the requested slot is within the mandatory lead-time window.
-        /// Protects the backend even when the mobile/web UI already filters these slots out.
-        /// </summary>
-        private static bool IsSlotWithinLeadTimeBuffer(DateTime targetDateUtc, string startSlot, int leadTimeMinutes)
-        {
-            if (leadTimeMinutes <= 0) return false;
-            if (!TryParseSlotStart(startSlot, out var slotStart)) return false;
-
-            var nowBusiness     = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, BusinessTimeZone);
-            var targetBusiness  = TimeZoneInfo.ConvertTimeFromUtc(targetDateUtc, BusinessTimeZone).Date;
-
-            // Only applies to same-day bookings
-            if (targetBusiness != nowBusiness.Date) return false;
-
-            // True if the slot starts within the lead-time window
-            return slotStart < nowBusiness.TimeOfDay.Add(TimeSpan.FromMinutes(leadTimeMinutes));
         }
 
         private async Task SetAutoAssignEnabledAsync(bool enabled)
@@ -1714,20 +1756,36 @@ namespace Glanz.API.Controllers
         [HttpGet("available-slots")]
         public async Task<ActionResult<IEnumerable<string>>> GetAvailableSlots([FromQuery] string date, [FromQuery] int? durationMinutes, [FromQuery] VehicleType? vehicleType)
         {
+            // All times are evaluated in BusinessTimeZone (Arab Standard Time = Qatar UTC+3 by default; overridable via appsettings BusinessSettings:TimeZone)
+
+            // 1. Parse date; fall back slotDuration to 60 if not provided.
             if (string.IsNullOrWhiteSpace(date) || !DateOnly.TryParse(date, out var parsedDate))
                 return BadRequest(new { message = "Invalid date format. Use YYYY-MM-DD." });
 
-            // Use the client-supplied duration when provided; fall back to 60 min (1 slot-step).
-            // Backend never derives slot width from MIN(package.duration) — the caller (frontend)
-            // knows which packages the customer selected and must send the total duration.
             var slotDuration = (durationMinutes.HasValue && durationMinutes.Value > 0) ? durationMinutes.Value : 60;
+
+            // 2. Read workerTravelBuffer from SystemSettings (also acts as same-day lead time for first job).
             var workerTravelBuffer = await GetWorkerTravelBufferMinutesAsync();
 
             try
             {
-                var targetDate = DateTime.SpecifyKind(parsedDate.ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc);
+                // 3. Convert parsedDate to business-local date. Get dayName.
+                var targetDate        = DateTime.SpecifyKind(parsedDate.ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc);
+                var nowLocal          = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, BusinessTimeZone);
+                var targetLocalDate   = TimeZoneInfo.ConvertTimeFromUtc(targetDate, BusinessTimeZone).Date;
+                var dayOfWeek         = targetLocalDate.DayOfWeek;
+                var dayName           = dayOfWeek.ToString();
 
-                var dayOfWeek = targetDate.DayOfWeek;
+                // 4. Check if business is open that day (end <= start → closed).
+                var (dayBoundsStart, dayBoundsEnd) = GetDayBounds(dayName);
+                if (!TimeSpan.TryParse(dayBoundsStart, out var boundsStartTs) ||
+                    !TimeSpan.TryParse(dayBoundsEnd,   out var boundsEndTs)   ||
+                    boundsEndTs <= boundsStartTs)
+                {
+                    return Ok(new List<string>());
+                }
+
+                // 5. Load active workers working on that day.
                 var workers = await _context.Users
                     .AsNoTracking()
                     .Where(u => u.IsActive && u.Role != null && u.Role.ToLower() == "worker")
@@ -1737,13 +1795,14 @@ namespace Glanz.API.Controllers
                     .Where(w => WorkerWorksOnDay(w.WorkingDays, dayOfWeek))
                     .ToList();
 
+                // 6. If none → return empty.
                 if (availableWorkers.Count == 0)
-                {
                     return Ok(new List<string>());
-                }
 
-                var workerIds = availableWorkers.Select(w => w.Id).ToList();
+                // 7. Load that day's bookings (assigned + unassigned, non-cancelled/completed).
+                var workerIds   = availableWorkers.Select(w => w.Id).ToList();
                 var slotsDayEnd = targetDate.AddDays(1);
+
                 var sameDayWorkerBookings = await _context.Bookings
                     .Where(b =>
                         b.AssignedWorkerId.HasValue
@@ -1772,70 +1831,73 @@ namespace Glanz.API.Controllers
                     .GroupBy(b => b.AssignedWorkerId!.Value)
                     .ToDictionary(g => g.Key, g => g.ToList());
 
+                // 8. Build candidate start slots.
+                var candidateStartSlots = BuildCandidateStartSlots(slotDuration, dayName);
+
+                // 11. Determine whether the requested date is today (business-local).
+                var isSameDay = targetLocalDate == nowLocal.Date;
+
+                // WorkerCanTakeSlot: returns true if the given worker is free to take the slot.
+                bool WorkerCanTakeSlot(User worker, string startSlot)
+                {
+                    if (!TryParseSlotStart(startSlot, out var slotStartTime))
+                        return false;
+
+                    var (ss, se) = GetWorkerShiftForDay(worker, dayOfWeek);
+
+                    // Slot must fit within worker shift (buffer applied to shift start).
+                    if (!TimeSlotInWorkerShift(startSlot, slotDuration, ss, se, workerTravelBuffer))
+                        return false;
+
+                    var workerBookings = bookingsByWorker.TryGetValue(worker.Id, out var assigned)
+                        ? assigned
+                        : new List<Booking>();
+
+                    if (HasWorkerTimeConflict(workerBookings, startSlot, slotDuration, workerTravelBuffer))
+                        return false;
+
+                    return true;
+                }
+
                 var validStartSlots = new List<string>();
-                var candidateStartSlots = BuildCandidateStartSlots(slotDuration);
 
                 foreach (var startSlot in candidateStartSlots)
                 {
-                    if (IsSlotInPastForBusinessDay(targetDate, startSlot))
-                    {
+                    if (!TryParseSlotStart(startSlot, out var slotStartTime))
                         continue;
-                    }
 
-                    var hasWorkerCoverage = availableWorkers.Any(worker =>
-                    {
-                        var (ss, se) = GetWorkerShiftForDay(worker, dayOfWeek);
-                        if (!TimeSlotInWorkerShift(startSlot, slotDuration, ss, se, workerTravelBuffer))
-                            return false;
+                    // 12a. Same-day: first bookable slot must be >= now + travel buffer.
+                    if (isSameDay && slotStartTime < nowLocal.TimeOfDay + TimeSpan.FromMinutes(workerTravelBuffer))
+                        continue;
 
-                        var workerBookings = bookingsByWorker.TryGetValue(worker.Id, out var assigned)
-                            ? assigned
-                            : new List<Booking>();
-
-                        return !HasWorkerTimeConflict(workerBookings, startSlot, slotDuration, workerTravelBuffer);
-                    });
-
+                    // 12b. At least one worker must be able to cover this slot.
+                    var hasWorkerCoverage = availableWorkers.Any(w => WorkerCanTakeSlot(w, startSlot));
                     if (!hasWorkerCoverage)
-                    {
                         continue;
-                    }
 
+                    // 12e. Manual-assign mode: require at least one free worker in the pool.
                     if (!autoAssignEnabled)
                     {
                         var eligibleWorkersForSlot = availableWorkers
-                            .Where(worker => { var (ss, se) = GetWorkerShiftForDay(worker, dayOfWeek); return TimeSlotInWorkerShift(startSlot, slotDuration, ss, se, workerTravelBuffer); })
+                            .Where(w => { var (ss, se) = GetWorkerShiftForDay(w, dayOfWeek); return TimeSlotInWorkerShift(startSlot, slotDuration, ss, se, workerTravelBuffer); })
                             .ToList();
 
                         if (eligibleWorkersForSlot.Count == 0)
-                        {
                             continue;
-                        }
 
                         var busyWorkerIds = eligibleWorkersForSlot
-                            .Where(worker =>
-                            {
-                                var workerBookings = bookingsByWorker.TryGetValue(worker.Id, out var assigned)
-                                    ? assigned
-                                    : new List<Booking>();
-
-                                return HasWorkerTimeConflict(workerBookings, startSlot, slotDuration, workerTravelBuffer);
-                            })
-                            .Select(worker => worker.Id)
+                            .Where(w => HasWorkerTimeConflict(
+                                bookingsByWorker.TryGetValue(w.Id, out var wb) ? wb : new List<Booking>(),
+                                startSlot, slotDuration, workerTravelBuffer))
+                            .Select(w => w.Id)
                             .ToHashSet();
 
-                        var freePool = eligibleWorkersForSlot.Count(worker => !busyWorkerIds.Contains(worker.Id));
-
-                        // Only block the slot if NO workers are free for it.
-                        // The old `freePool <= unassignedOverlaps` check incorrectly hid slots
-                        // when pending unassigned bookings equalled the free-worker count, even
-                        // though those bookings hadn't been assigned yet and a new customer could
-                        // still be served by an available worker.
+                        var freePool = eligibleWorkersForSlot.Count(w => !busyWorkerIds.Contains(w.Id));
                         if (freePool == 0)
-                        {
                             continue;
-                        }
                     }
 
+                    // 13. Slot passed all checks — add it.
                     validStartSlots.Add(startSlot);
                 }
 
@@ -1988,16 +2050,6 @@ namespace Glanz.API.Controllers
                     return BadRequest(new { message = "Selected time slot is in the past. Please choose a future time." });
                 }
 
-                // ── Same-day lead time check (CreatePaymentIntent) ───────────────────────
-                var leadTimeMinutesPI = await GetBookingLeadTimeMinutesAsync();
-                if (IsSlotWithinLeadTimeBuffer(scheduledBookingDate, dto.TimeSlot, leadTimeMinutesPI))
-                {
-                    return BadRequest(new
-                    {
-                        message = $"Same-day bookings require at least {leadTimeMinutesPI} minutes advance notice. Please choose a later time slot."
-                    });
-                }
-                // ─────────────────────────────────────────────────────────────────────────
 
                 var autoAssignEnabled = await IsAutoAssignEnabledAsync();
                 var workerTravelBufferPI = await GetWorkerTravelBufferMinutesAsync();
@@ -2195,16 +2247,6 @@ namespace Glanz.API.Controllers
                     return BadRequest(new { message = "Selected time slot is in the past. Please choose a future time." });
                 }
 
-                // ── Same-day lead time check (CreateBooking) ─────────────────────────────
-                var leadTimeMinutes = await GetBookingLeadTimeMinutesAsync();
-                if (IsSlotWithinLeadTimeBuffer(scheduledBookingDate, dto.TimeSlot, leadTimeMinutes))
-                {
-                    return BadRequest(new
-                    {
-                        message = $"Same-day bookings require at least {leadTimeMinutes} minutes advance notice. Please choose a later time slot."
-                    });
-                }
-                // ─────────────────────────────────────────────────────────────────────────
 
                 // ── Slot reservation conflict check (Phase 3) ────────────────────────────
                 var slotReservationEnabled = await IsFeatureFlagEnabledAsync("slotReservation");
@@ -3209,6 +3251,7 @@ namespace Glanz.API.Controllers
 
                 var requestedDurationMinutes = ResolveBookingDurationMinutes(booking);
                 var bookingDate = NormalizeUtcDate(booking.ScheduledDate);
+                var workerTravelBufferAssign = await GetWorkerTravelBufferMinutesAsync();
 
                 if (!dto.ForceAssign && !WorkerWorksOnDay(worker.WorkingDays, bookingDate.DayOfWeek))
                 {
@@ -3216,7 +3259,7 @@ namespace Glanz.API.Controllers
                 }
 
                 var (workerShiftS, workerShiftE) = GetWorkerShiftForDay(worker, bookingDate.DayOfWeek);
-                if (!dto.ForceAssign && !TimeSlotInWorkerShift(booking.TimeSlot, requestedDurationMinutes, workerShiftS, workerShiftE))
+                if (!dto.ForceAssign && !TimeSlotInWorkerShift(booking.TimeSlot, requestedDurationMinutes, workerShiftS, workerShiftE, workerTravelBufferAssign))
                 {
                     return Conflict(new { message = "Selected worker shift does not cover this booking time and duration." });
                 }
@@ -3235,7 +3278,7 @@ namespace Glanz.API.Controllers
                         .ThenInclude(bi => bi.Package)
                     .ToListAsync();
 
-                if (!dto.ForceAssign && HasWorkerTimeConflict(workerSameDayBookings, booking.TimeSlot, requestedDurationMinutes))
+                if (!dto.ForceAssign && HasWorkerTimeConflict(workerSameDayBookings, booking.TimeSlot, requestedDurationMinutes, workerTravelBufferAssign))
                 {
                     return Conflict(new { message = "Selected worker has a scheduling conflict (including travel buffer) at this time." });
                 }
@@ -3280,6 +3323,7 @@ namespace Glanz.API.Controllers
                     ? NormalizeUtcDate(DateTime.Parse(date))
                     : NormalizeUtcDate(booking.ScheduledDate);
                 var effectiveTimeSlot = !string.IsNullOrEmpty(timeSlot) ? timeSlot : booking.TimeSlot;
+                var workerTravelBufferAW = await GetWorkerTravelBufferMinutesAsync();
 
                 var workers = await _context.Users
                     .AsNoTracking()
@@ -3340,7 +3384,7 @@ namespace Glanz.API.Controllers
                     }
 
                     var (wss, wse) = GetWorkerShiftForDay(w, bookingDate.DayOfWeek);
-                    var coversBookingWindow = TimeSlotInWorkerShift(effectiveTimeSlot, requestedDurationMinutes, wss, wse);
+                    var coversBookingWindow = TimeSlotInWorkerShift(effectiveTimeSlot, requestedDurationMinutes, wss, wse, workerTravelBufferAW);
                     if (!coversBookingWindow)
                     {
                         return new WorkerAvailabilityDto
@@ -4791,6 +4835,8 @@ namespace Glanz.API.Controllers
                 if (booking.Status == BookingStatus.Completed || booking.Status == BookingStatus.Cancelled)
                     return BadRequest(new { message = "Cannot edit completed or cancelled bookings." });
 
+                var workerTravelBufferEdit = await GetWorkerTravelBufferMinutesAsync();
+
                 // ── Date / time change ──────────────────────────────────────
                 bool dateChanged = false;
                 if (dto.ScheduledDate.HasValue || dto.TimeSlot != null)
@@ -4813,7 +4859,7 @@ namespace Glanz.API.Controllers
 
                     // Check availability for the new date/time (excluding this booking)
                     var newDateTime = new DateTime(newDate.Year, newDate.Month, newDate.Day, 0, 0, 0, DateTimeKind.Utc);
-                    var slotOk = await IsSlotAvailableForEditAsync(newDateTime, newSlot, estimatedMinutes, booking.Id, booking.AssignedWorkerId);
+                    var slotOk = await IsSlotAvailableForEditAsync(newDateTime, newSlot, estimatedMinutes, booking.Id, booking.AssignedWorkerId, workerTravelBufferEdit);
                     if (!slotOk)
                         return BadRequest(new { message = "The selected date and time slot is not available. Please choose a different slot." });
 
@@ -4850,12 +4896,12 @@ namespace Glanz.API.Controllers
 
                     var checkDate = booking.ScheduledDate;
                     var checkSlot = booking.TimeSlot;
-                    var slotOkForNewDuration = await IsSlotAvailableForEditAsync(checkDate, checkSlot, newDuration, booking.Id, booking.AssignedWorkerId);
+                    var slotOkForNewDuration = await IsSlotAvailableForEditAsync(checkDate, checkSlot, newDuration, booking.Id, booking.AssignedWorkerId, workerTravelBufferEdit);
 
                     if (!slotOkForNewDuration)
                     {
                         // Return available slots for this date with the new duration
-                        var altSlots = await GetAvailableSlotsForDateAsync(checkDate, newDuration, booking.Id);
+                        var altSlots = await GetAvailableSlotsForDateAsync(checkDate, newDuration, booking.Id, workerTravelBufferEdit);
                         return BadRequest(new
                         {
                             message = $"The current time slot cannot fit the new package selection ({newDuration} min). " +
@@ -4966,6 +5012,8 @@ namespace Glanz.API.Controllers
                 if (booking.Status == BookingStatus.InProgress)
                     return BadRequest(new { message = "Cannot edit a booking that is already in progress." });
 
+                var workerTravelBufferCE = await GetWorkerTravelBufferMinutesAsync();
+
                 // ── Date / time change ──────────────────────────────────────
                 bool dateChanged = false;
                 if (dto.ScheduledDate.HasValue || dto.TimeSlot != null)
@@ -4984,10 +5032,10 @@ namespace Glanz.API.Controllers
                     if (estimatedMinutes <= 0) estimatedMinutes = 60;
 
                     var newDateTime = new DateTime(newDate.Year, newDate.Month, newDate.Day, 0, 0, 0, DateTimeKind.Utc);
-                    var slotOk = await IsSlotAvailableForEditAsync(newDateTime, newSlot, estimatedMinutes, booking.Id, booking.AssignedWorkerId);
+                    var slotOk = await IsSlotAvailableForEditAsync(newDateTime, newSlot, estimatedMinutes, booking.Id, booking.AssignedWorkerId, workerTravelBufferCE);
                     if (!slotOk)
                     {
-                        var altSlots = await GetAvailableSlotsForDateAsync(newDateTime, estimatedMinutes, booking.Id);
+                        var altSlots = await GetAvailableSlotsForDateAsync(newDateTime, estimatedMinutes, booking.Id, workerTravelBufferCE);
                         return BadRequest(new
                         {
                             message = "The selected time slot is not available.",
@@ -5024,10 +5072,10 @@ namespace Glanz.API.Controllers
 
                     var checkDate = booking.ScheduledDate;
                     var checkSlot = booking.TimeSlot;
-                    var slotOk = await IsSlotAvailableForEditAsync(checkDate, checkSlot, newDuration, booking.Id, booking.AssignedWorkerId);
+                    var slotOk = await IsSlotAvailableForEditAsync(checkDate, checkSlot, newDuration, booking.Id, booking.AssignedWorkerId, workerTravelBufferCE);
                     if (!slotOk)
                     {
-                        var altSlots = await GetAvailableSlotsForDateAsync(checkDate, newDuration, booking.Id);
+                        var altSlots = await GetAvailableSlotsForDateAsync(checkDate, newDuration, booking.Id, workerTravelBufferCE);
                         return BadRequest(new
                         {
                             message = $"The current time slot cannot fit the updated package selection ({newDuration} min).",
@@ -5103,7 +5151,8 @@ namespace Glanz.API.Controllers
             }
         }
 
-        private async Task<bool> IsSlotAvailableForEditAsync(DateTime date, string timeSlot, int estimatedMinutes, int excludeBookingId, int? preferredWorkerId)
+        private async Task<bool> IsSlotAvailableForEditAsync(DateTime date, string timeSlot, int estimatedMinutes, int excludeBookingId, int? preferredWorkerId,
+            int workerTravelBuffer = DefaultWorkerTravelBufferMinutes)
         {
             var dayOfWeek = date.DayOfWeek;
 
@@ -5136,14 +5185,14 @@ namespace Glanz.API.Controllers
             bool anyWorkerFree = availableWorkers.Any(worker =>
             {
                 var (ss, se) = GetWorkerShiftForDay(worker, dayOfWeek);
-                if (!TimeSlotInWorkerShift(timeSlot, estimatedMinutes, ss, se))
+                if (!TimeSlotInWorkerShift(timeSlot, estimatedMinutes, ss, se, workerTravelBuffer))
                     return false;
 
                 var workerBookings = bookingsByWorker.TryGetValue(worker.Id, out var assigned)
                     ? assigned
                     : new List<Booking>();
 
-                return !HasWorkerTimeConflict(workerBookings, timeSlot, estimatedMinutes);
+                return !HasWorkerTimeConflict(workerBookings, timeSlot, estimatedMinutes, workerTravelBuffer);
             });
 
             return anyWorkerFree;
@@ -5182,7 +5231,7 @@ namespace Glanz.API.Controllers
                 .ToDictionary(g => g.Key, g => g.ToList());
 
             var result = new List<string>();
-            foreach (var startSlot in BuildCandidateStartSlots(durationMinutes))
+            foreach (var startSlot in BuildCandidateStartSlots(durationMinutes, dayOfWeek.ToString()))
             {
                 var anyFree = availableWorkers.Any(worker =>
                 {

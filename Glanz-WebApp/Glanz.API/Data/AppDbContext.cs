@@ -40,6 +40,9 @@ namespace Glanz.API.Data
         public DbSet<Vehicle> Vehicles { get; set; }
         public DbSet<SlotReservation> SlotReservations { get; set; }
         public DbSet<BookingPhoto> BookingPhotos { get; set; }
+        public DbSet<WorkerLocation> WorkerLocations { get; set; }
+        public DbSet<JobApplication> JobApplications { get; set; }
+        public DbSet<JobPosition> JobPositions { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -295,6 +298,33 @@ namespace Glanz.API.Data
 
             modelBuilder.Entity<Vehicle>()
                 .HasIndex(v => v.UserId);
+
+            modelBuilder.Entity<WorkerLocation>()
+                .HasIndex(wl => wl.WorkerId);
+
+            modelBuilder.Entity<WorkerLocation>()
+                .HasOne(wl => wl.Worker)
+                .WithMany()
+                .HasForeignKey(wl => wl.WorkerId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<WorkerLocation>()
+                .HasOne(wl => wl.Booking)
+                .WithMany()
+                .HasForeignKey(wl => wl.BookingId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<JobApplication>()
+                .HasOne(ja => ja.JobPosition)
+                .WithMany(jp => jp.Applications)
+                .HasForeignKey(ja => ja.JobPositionId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<JobApplication>()
+                .HasIndex(ja => ja.Email);
+
+            modelBuilder.Entity<JobPosition>()
+                .HasIndex(jp => new { jp.IsOpen, jp.Rank });
 
         }
     }

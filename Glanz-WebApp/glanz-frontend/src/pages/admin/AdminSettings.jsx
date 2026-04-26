@@ -67,12 +67,6 @@ export default function AdminSettings() {
   const [bizError,  setBizError]  = useState('');
   const [newArea,   setNewArea]   = useState('');
 
-  // Scheduling: customer lead time (how far in advance same-day bookings must be made)
-  const [leadTimeMinutes,      setLeadTimeMinutes]      = useState(90);
-  const [leadTimeSaving,       setLeadTimeSaving]       = useState(false);
-  const [leadTimeSaved,        setLeadTimeSaved]        = useState(false);
-  const [leadTimeError,        setLeadTimeError]        = useState('');
-
   // Scheduling: worker travel/prep gap between consecutive bookings
   const [workerTravelMinutes,  setWorkerTravelMinutes]  = useState(30);
   const [workerTravelSaving,   setWorkerTravelSaving]   = useState(false);
@@ -98,6 +92,16 @@ export default function AdminSettings() {
   const [paySlipSaved, setPaySlipSaved] = useState(false);
   const [paySlipError, setPaySlipError] = useState('');
 
+  // Business hours state
+  const defaultBusinessHours = {
+    Sunday: '09:00-18:00', Monday: '09:00-18:00', Tuesday: '09:00-18:00',
+    Wednesday: '09:00-18:00', Thursday: '09:00-18:00', Friday: '00:00-00:00', Saturday: '10:00-16:00',
+  };
+  const [businessHours, setBusinessHours] = useState(defaultBusinessHours);
+  const [bizHoursSaving, setBizHoursSaving] = useState(false);
+  const [bizHoursSaved, setBizHoursSaved] = useState(false);
+  const [bizHoursError, setBizHoursError] = useState('');
+
   useEffect(() => {
     (async () => {
       try {
@@ -111,10 +115,20 @@ export default function AdminSettings() {
   useEffect(() => {
     settingsAPI.getSystemSettings()
       .then(data => {
-        setLeadTimeMinutes(data?.booking?.defaultBufferMinutes ?? data?.defaultBufferMinutes ?? 90);
         setWorkerTravelMinutes(data?.booking?.workerTravelBufferMinutes ?? data?.workerTravelBufferMinutes ?? 30);
         setDiscountPct(data?.subscriptionDiscountPercent ?? 10);
         setSmsEnabled(data?.sms?.followUpEnabled ?? false);
+        if (data?.businessHours) {
+          setBusinessHours({
+            Sunday: data.businessHours.Sunday || '09:00-18:00',
+            Monday: data.businessHours.Monday || '09:00-18:00',
+            Tuesday: data.businessHours.Tuesday || '09:00-18:00',
+            Wednesday: data.businessHours.Wednesday || '09:00-18:00',
+            Thursday: data.businessHours.Thursday || '09:00-18:00',
+            Friday: data.businessHours.Friday || '00:00-00:00',
+            Saturday: data.businessHours.Saturday || '10:00-16:00',
+          });
+        }
       })
       .catch(() => {});
   }, []);
@@ -154,20 +168,6 @@ export default function AdminSettings() {
     finally { setSaving(false); }
   };
 
-  const handleSaveLeadTime = async () => {
-    const v = Number(leadTimeMinutes);
-    if (!Number.isFinite(v) || v < 0 || v > 1440) {
-      setLeadTimeError('Lead time must be between 0 and 1440 minutes.'); return;
-    }
-    try {
-      setLeadTimeSaving(true); setLeadTimeError('');
-      await settingsAPI.updateSystemSettings({ defaultBufferMinutes: v });
-      setLeadTimeSaved(true);
-      setTimeout(() => setLeadTimeSaved(false), 3000);
-    } catch (err) { setLeadTimeError(err?.response?.data?.message || 'Failed to save lead time setting.'); }
-    finally { setLeadTimeSaving(false); }
-  };
-
   const handleSaveWorkerTravel = async () => {
     const v = Number(workerTravelMinutes);
     if (!Number.isFinite(v) || v < 0 || v > 480) {
@@ -175,7 +175,7 @@ export default function AdminSettings() {
     }
     try {
       setWorkerTravelSaving(true); setWorkerTravelError('');
-      await settingsAPI.updateSystemSettings({ workerTravelBufferMinutes: v });
+      await settingsAPI.updateSystemSettings({ WorkerTravelBufferMinutes: v });
       setWorkerTravelSaved(true);
       setTimeout(() => setWorkerTravelSaved(false), 3000);
     } catch (err) { setWorkerTravelError(err?.response?.data?.message || 'Failed to save worker travel buffer setting.'); }
@@ -204,6 +204,20 @@ export default function AdminSettings() {
       setTimeout(() => setDiscountSaved(false), 3000);
     } catch (err) { setDiscountError(err?.response?.data?.message || 'Failed to save discount.'); }
     finally { setDiscountSaving(false); }
+  };
+
+  const handleSaveBusinessHours = async () => {
+    try {
+      setBizHoursSaving(true); setBizHoursError('');
+      await settingsAPI.updateSystemSettings({ BusinessHours: businessHours });
+      setBizHoursSaved(true);
+      setTimeout(() => setBizHoursSaved(false), 3000);
+    } catch (err) { setBizHoursError(err?.response?.data?.message || 'Failed to save business hours.'); }
+    finally { setBizHoursSaving(false); }
+  };
+
+  const updateBusinessHours = (day, start, end) => {
+    setBusinessHours(prev => ({ ...prev, [day]: `${start}-${end}` }));
   };
 
   const exampleFee = policy.feeType === 'Percent'
@@ -475,13 +489,13 @@ export default function AdminSettings() {
             </div>
           </div>
 
-          {/* ── Customer Lead Time card ── */}
+          {/* ── Booking Time Buffers card (combined Customer Lead Time + Worker Travel Buffer) ── */}
           <div className="glass-card relative overflow-hidden card-stagger">
             <div className="absolute top-0 left-0 right-0 h-[2px]"
-              style={{ background:'linear-gradient(90deg,transparent,#6366f1 38%,#8b5cf6 62%,transparent)' }} />
+              style={{ background:'linear-gradient(90deg,transparent,#6366f1 38%,#06b6d4 62%,transparent)' }} />
             <div className="absolute top-0 left-0 w-[3px] h-full"
-              style={{ background:'linear-gradient(180deg,#6366f1 0%,#6366f144 60%,transparent 100%)' }} />
-            <div className="prism-ray" style={{ left:'60%', width:'14%', animation:'prism-ray-sweep 22s ease-in-out 2s infinite' }} />
+              style={{ background:'linear-gradient(180deg,#6366f1 0%,#06b6d488 60%,transparent 100%)' }} />
+            <div className="prism-ray" style={{ left:'55%', width:'14%', animation:'prism-ray-sweep 22s ease-in-out 2s infinite' }} />
 
             <div className="p-7">
               <div className="flex items-center gap-3 mb-2">
@@ -489,102 +503,43 @@ export default function AdminSettings() {
                   style={{ background:'rgba(99,102,241,.12)', border:'1px solid rgba(99,102,241,.24)' }}>
                   <Clock size={14} style={{ color:'#6366f1' }} />
                 </div>
-                <h2 className="premium-heading text-xl font-bold text-[var(--heading-color)]">Customer Lead Time</h2>
+                <h2 className="premium-heading text-xl font-bold text-[var(--heading-color)]">Booking Time Buffers</h2>
               </div>
               <p className="text-sm text-[var(--muted-color)] mb-5 ml-11">
-                Minimum advance notice required for same-day bookings. E.g. 90 min means customers cannot book a slot starting within 90 minutes of now.
+                Control how much gap workers need between consecutive jobs.
               </p>
               <div className="mb-5"><div className="spectrum-line" /></div>
 
-              {leadTimeError && (
-                <div className="flex items-start gap-3 rounded-xl border border-rose-500/25 bg-rose-500/8 px-4 py-3 mb-5">
-                  <AlertCircle size={14} className="text-rose-400 flex-shrink-0 mt-0.5" />
-                  <p className="text-rose-300 text-sm font-semibold">{leadTimeError}</p>
-                </div>
-              )}
-
-              <div className="mb-5">
-                <label className="field-label">Lead Time (minutes)</label>
-                <p className="text-xs text-[var(--muted-color)] mb-3">
-                  90 min = customers must book at least 90 minutes before the slot starts.
-                </p>
-                <div className="flex gap-2 mb-3">
-                  {[30, 60, 90, 120].map(v => (
-                    <button key={v} type="button" onClick={() => setLeadTimeMinutes(v)}
-                      className="flex-1 py-2 rounded-xl text-xs font-bold border transition"
-                      style={leadTimeMinutes === v
-                        ? { background:'rgba(99,102,241,.14)', borderColor:'rgba(99,102,241,.50)', color:'#818cf8' }
-                        : { borderColor:'var(--border-color)', color:'var(--muted-color)' }}>
-                      {v} min
-                    </button>
-                  ))}
-                </div>
-                <input type="number" min={0} max={1440} step={5} value={leadTimeMinutes}
-                  onChange={e => setLeadTimeMinutes(Math.max(0, parseInt(e.target.value) || 0))}
-                  className="field-input" />
-              </div>
-
-              <div className="rounded-xl border p-4 mb-6"
-                style={{ background:'rgba(99,102,241,.07)', borderColor:'rgba(99,102,241,.25)' }}>
+              {/* ── Worker Travel Buffer ── */}
+              <div className="mb-6 p-5 rounded-xl border"
+                style={{ background:'rgba(6,182,212,.06)', borderColor:'rgba(6,182,212,.20)' }}>
                 <div className="flex items-center gap-2 mb-1">
-                  <Clock size={12} style={{ color:'#818cf8' }} />
-                  <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color:'#818cf8' }}>Booking Rule</p>
+                  <div className="w-5 h-5 rounded flex items-center justify-center"
+                    style={{ background:'rgba(6,182,212,.15)' }}>
+                    <Clock size={10} style={{ color:'#22d3ee' }} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-[var(--heading-color)]">Worker Travel Buffer</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color:'#22d3ee' }}>Gap between consecutive jobs</p>
+                  </div>
                 </div>
-                <p className="text-sm text-[var(--text-color)]">
-                  Slot at <strong>T</strong> is bookable only if{' '}
-                  <code className="text-xs bg-white/6 px-1.5 py-0.5 rounded font-mono">T ≥ now + {leadTimeMinutes} min</code>.
+                <p className="text-xs text-[var(--muted-color)] mb-4 mt-2">
+                  Minimum gap between end of one booking and start of the next. Accounts for travel and preparation time between jobs.
                 </p>
-              </div>
 
-              <div className="cta-prism-glow rounded-xl" style={{ boxShadow:'0 0 0 1.5px rgba(99,102,241,.40)' }}>
-                <button type="button" onClick={handleSaveLeadTime} disabled={leadTimeSaving}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition disabled:opacity-60"
-                  style={{ background:'rgba(99,102,241,.15)', border:'1px solid rgba(99,102,241,.35)', color:'#818cf8' }}>
-                  {leadTimeSaving ? 'Saving…' : leadTimeSaved ? <><CheckCircle size={14} /> Saved</> : <><Save size={14} /> Save Lead Time</>}
-                </button>
-              </div>
-            </div>
-          </div>
+                {workerTravelError && (
+                  <div className="flex items-start gap-2 rounded-lg border border-rose-500/25 bg-rose-500/8 px-3 py-2 mb-4">
+                    <AlertCircle size={12} className="text-rose-400 flex-shrink-0 mt-0.5" />
+                    <p className="text-rose-300 text-xs font-semibold">{workerTravelError}</p>
+                  </div>
+                )}
 
-          {/* ── Worker Travel Buffer card ── */}
-          <div className="glass-card relative overflow-hidden card-stagger">
-            <div className="absolute top-0 left-0 right-0 h-[2px]"
-              style={{ background:'linear-gradient(90deg,transparent,#06b6d4 38%,#6366f1 62%,transparent)' }} />
-            <div className="absolute top-0 left-0 w-[3px] h-full"
-              style={{ background:'linear-gradient(180deg,#06b6d4 0%,#06b6d444 60%,transparent 100%)' }} />
-            <div className="prism-ray" style={{ left:'55%', width:'14%', animation:'prism-ray-sweep 20s ease-in-out 4s infinite' }} />
-
-            <div className="p-7">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center"
-                  style={{ background:'rgba(6,182,212,.12)', border:'1px solid rgba(6,182,212,.24)' }}>
-                  <Clock size={14} style={{ color:'#06b6d4' }} />
-                </div>
-                <h2 className="premium-heading text-xl font-bold text-[var(--heading-color)]">Worker Travel Buffer</h2>
-              </div>
-              <p className="text-sm text-[var(--muted-color)] mb-5 ml-11">
-                Minimum gap between the end of one worker booking and the start of the next. Accounts for travel and preparation time between jobs.
-              </p>
-              <div className="mb-5"><div className="spectrum-line" /></div>
-
-              {workerTravelError && (
-                <div className="flex items-start gap-3 rounded-xl border border-rose-500/25 bg-rose-500/8 px-4 py-3 mb-5">
-                  <AlertCircle size={14} className="text-rose-400 flex-shrink-0 mt-0.5" />
-                  <p className="text-rose-300 text-sm font-semibold">{workerTravelError}</p>
-                </div>
-              )}
-
-              <div className="mb-5">
-                <label className="field-label">Travel Buffer (minutes)</label>
-                <p className="text-xs text-[var(--muted-color)] mb-3">
-                  30 min = if a booking ends at 10:30, that worker's next job cannot start before 11:00.
-                </p>
                 <div className="flex gap-2 mb-3">
                   {[0, 15, 30, 45, 60].map(v => (
                     <button key={v} type="button" onClick={() => setWorkerTravelMinutes(v)}
-                      className="flex-1 py-2 rounded-xl text-xs font-bold border transition"
+                      className="flex-1 py-1.5 rounded-xl text-xs font-bold border transition"
                       style={workerTravelMinutes === v
-                        ? { background:'rgba(6,182,212,.14)', borderColor:'rgba(6,182,212,.50)', color:'#22d3ee' }
+                        ? { background:'rgba(6,182,212,.18)', borderColor:'rgba(6,182,212,.55)', color:'#22d3ee' }
                         : { borderColor:'var(--border-color)', color:'var(--muted-color)' }}>
                       {v} min
                     </button>
@@ -593,25 +548,75 @@ export default function AdminSettings() {
                 <input type="number" min={0} max={480} step={5} value={workerTravelMinutes}
                   onChange={e => setWorkerTravelMinutes(Math.max(0, parseInt(e.target.value) || 0))}
                   className="field-input" />
-              </div>
 
-              <div className="rounded-xl border p-4 mb-6"
-                style={{ background:'rgba(6,182,212,.07)', borderColor:'rgba(6,182,212,.25)' }}>
-                <div className="flex items-center gap-2 mb-1">
-                  <Clock size={12} style={{ color:'#22d3ee' }} />
-                  <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color:'#22d3ee' }}>Worker Rule</p>
-                </div>
-                <p className="text-sm text-[var(--text-color)]">
+                <p className="text-xs text-[var(--text-color)] mt-3">
                   Worker available at <strong>T</strong> only if{' '}
                   <code className="text-xs bg-white/6 px-1.5 py-0.5 rounded font-mono">T ≥ lastBookingEnd + {workerTravelMinutes} min</code>.
                 </p>
               </div>
 
+              {/* ── Save ── */}
               <div className="cta-prism-glow rounded-xl" style={{ boxShadow:'0 0 0 1.5px rgba(6,182,212,.40)' }}>
                 <button type="button" onClick={handleSaveWorkerTravel} disabled={workerTravelSaving}
                   className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition disabled:opacity-60"
                   style={{ background:'rgba(6,182,212,.15)', border:'1px solid rgba(6,182,212,.35)', color:'#22d3ee' }}>
                   {workerTravelSaving ? 'Saving…' : workerTravelSaved ? <><CheckCircle size={14} /> Saved</> : <><Save size={14} /> Save Worker Buffer</>}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Business Hours card ── */}
+          <div className="glass-card relative overflow-hidden card-stagger">
+            <div className="absolute top-0 left-0 right-0 h-[2px]"
+              style={{ background:'linear-gradient(90deg,transparent,#10b981 38%,#06b6d4 62%,transparent)' }} />
+            <div className="absolute top-0 left-0 w-[3px] h-full"
+              style={{ background:'linear-gradient(180deg,#10b981 0%,#10b98144 60%,transparent 100%)' }} />
+            <div className="prism-ray" style={{ left:'60%', width:'14%', animation:'prism-ray-sweep 20s ease-in-out 3s infinite' }} />
+
+            <div className="p-7">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center"
+                  style={{ background:'rgba(16,185,129,.12)', border:'1px solid rgba(16,185,129,.24)' }}>
+                  <Clock size={14} style={{ color:'#10b981' }} />
+                </div>
+                <h2 className="premium-heading text-xl font-bold text-[var(--heading-color)]">Business Hours</h2>
+              </div>
+              <p className="text-sm text-[var(--muted-color)] mb-5 ml-11">
+                Set opening and closing hours for each day of the week. Slots are generated in 30-minute steps within these bounds.
+              </p>
+              <div className="mb-5"><div className="spectrum-line" /></div>
+
+              {bizHoursError && (
+                <div className="flex items-start gap-3 rounded-xl border border-rose-500/25 bg-rose-500/8 px-4 py-3 mb-5">
+                  <AlertCircle size={14} className="text-rose-400 flex-shrink-0 mt-0.5" />
+                  <p className="text-rose-300 text-sm font-semibold">{bizHoursError}</p>
+                </div>
+              )}
+
+              <div className="space-y-3 mb-6">
+                {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map(day => {
+                  const [start, end] = (businessHours[day] || '09:00-18:00').split('-');
+                  return (
+                    <div key={day} className="flex items-center gap-3">
+                      <span className="w-28 text-sm font-medium text-[var(--text-color)]">{day}</span>
+                      <input type="time" value={start} step="1800"
+                        onChange={e => updateBusinessHours(day, e.target.value, end)}
+                        className="field-input flex-1" />
+                      <span className="text-[var(--muted-color)]">to</span>
+                      <input type="time" value={end} step="1800"
+                        onChange={e => updateBusinessHours(day, start, e.target.value)}
+                        className="field-input flex-1" />
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="cta-prism-glow rounded-xl" style={{ boxShadow:'0 0 0 1.5px rgba(16,185,129,.40)' }}>
+                <button type="button" onClick={handleSaveBusinessHours} disabled={bizHoursSaving}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition disabled:opacity-60"
+                  style={{ background:'rgba(16,185,129,.15)', border:'1px solid rgba(16,185,129,.35)', color:'#10b981' }}>
+                  {bizHoursSaving ? 'Saving…' : bizHoursSaved ? <><CheckCircle size={14} /> Saved</> : <><Save size={14} /> Save Business Hours</>}
                 </button>
               </div>
             </div>

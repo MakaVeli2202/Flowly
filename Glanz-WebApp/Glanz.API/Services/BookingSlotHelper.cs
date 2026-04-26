@@ -18,22 +18,98 @@ namespace Glanz.API.Services
             new() { PropertyNameCaseInsensitive = true };
 
         // Business-day bounds — mirror BookingsController defaults (09:00–18:00).
-        private static List<string> _dailySlots = BuildDailySlots("09:00", "18:00");
+        private static readonly Dictionary<string, List<string>> _dailySlotsByDay = new()
+        {
+            { "Sunday",    BuildDailySlots("09:00", "18:00") },
+            { "Monday",    BuildDailySlots("09:00", "18:00") },
+            { "Tuesday",   BuildDailySlots("09:00", "18:00") },
+            { "Wednesday", BuildDailySlots("09:00", "18:00") },
+            { "Thursday",  BuildDailySlots("09:00", "18:00") },
+            { "Friday",    BuildDailySlots("09:00", "18:00") },
+            { "Saturday",  BuildDailySlots("09:00", "18:00") },
+        };
+
+        private static readonly Dictionary<string, (string Start, string End)> _dayBounds = new()
+        {
+            { "Sunday",    ("09:00", "18:00") },
+            { "Monday",    ("09:00", "18:00") },
+            { "Tuesday",   ("09:00", "18:00") },
+            { "Wednesday", ("09:00", "18:00") },
+            { "Thursday",  ("09:00", "18:00") },
+            { "Friday",    ("00:00", "00:00") },
+            { "Saturday",  ("10:00", "16:00") },
+        };
+
         private static TimeZoneInfo _businessTz = ResolveBusinessTimeZone(null);
 
         /// <summary>
-        /// Optionally call this at startup (e.g. from Program.cs) to apply
-        /// configured business hours and timezone, matching the values given
-        /// to BookingsController.ApplyConfiguredBusinessHours / ApplyConfiguredTimeZone.
+        /// Call at startup to apply configured business hours and timezone.
+        /// For per-day hours, call SetBusinessHoursFromSettings instead.
         /// </summary>
+        internal static void ApplyConfiguredTimeZone(string? tzId)
+        {
+            if (!string.IsNullOrWhiteSpace(tzId))
+                _businessTz = ResolveBusinessTimeZone(tzId);
+        }
+
         internal static void Configure(string? dayStart, string? dayEnd, string? tzId)
         {
             var start = string.IsNullOrWhiteSpace(dayStart) ? "09:00" : dayStart.Trim();
             var end   = string.IsNullOrWhiteSpace(dayEnd)   ? "18:00" : dayEnd.Trim();
-            var slots = BuildDailySlots(start, end);
-            if (slots.Count > 0) _dailySlots = slots;
+
+            foreach (var day in _dailySlotsByDay.Keys.ToList())
+            {
+                _dailySlotsByDay[day] = BuildDailySlots(start, end);
+            }
+
+            foreach (var day in _dayBounds.Keys.ToList())
+            {
+                _dayBounds[day] = (start, end);
+            }
+
             if (!string.IsNullOrWhiteSpace(tzId))
                 _businessTz = ResolveBusinessTimeZone(tzId);
+        }
+
+        /// <summary>
+        /// Call at startup with the full per-day business hours from SystemSettings.
+        /// </summary>
+        internal static void SetBusinessHoursFromSettings(BusinessHoursPerDayDto? hours)
+        {
+            if (hours == null) return;
+
+            var dayMap = new Dictionary<string, string>
+            {
+                { "Sunday",    hours.Sunday    ?? "09:00-18:00" },
+                { "Monday",    hours.Monday    ?? "09:00-18:00" },
+                { "Tuesday",   hours.Tuesday   ?? "09:00-18:00" },
+                { "Wednesday", hours.Wednesday ?? "09:00-18:00" },
+                { "Thursday",  hours.Thursday  ?? "09:00-18:00" },
+                { "Friday",    hours.Friday    ?? "00:00-00:00" },
+                { "Saturday",  hours.Saturday  ?? "10:00-16:00" },
+            };
+
+            foreach (var (day, range) in dayMap)
+            {
+                var parts = range.Split('-');
+                if (parts.Length == 2)
+                {
+                    var s = parts[0].Trim();
+                    var e = parts[1].Trim();
+                    _dailySlotsByDay[day] = BuildDailySlots(s, e);
+                    _dayBounds[day] = (s, e);
+                }
+            }
+        }
+
+        internal static List<string> GetDailySlots(string dayName)
+        {
+            return _dailySlotsByDay.TryGetValue(dayName, out var slots) ? slots : new List<string>();
+        }
+
+        internal static (string Start, string End) GetDayBounds(string dayName)
+        {
+            return _dayBounds.TryGetValue(dayName, out var bounds) ? bounds : ("09:00", "18:00");
         }
 
         // ── Time-zone ────────────────────────────────────────────────────────
@@ -80,15 +156,24 @@ namespace Glanz.API.Services
             return TimeSpan.TryParse(n, out slotStart);
         }
 
+        private static bool TryGetBusinessDayBounds(string dayName, out int dayStartMinutes, out int dayEndMinutes)
+        {
+            var (start, end) = GetDayBounds(dayName);
+            if (!TimeSpan.TryParse(start, out var shiftStart) || !TimeSpan.TryParse(end, out var shiftEnd))
+            {
+                dayStartMinutes = 0; dayEndMinutes = 0;
+                return false;
+            }
+            dayStartMinutes = (int)shiftStart.TotalMinutes;
+            dayEndMinutes = (int)shiftEnd.TotalMinutes;
+            return dayEndMinutes > dayStartMinutes;
+        }
+
         private static bool TryGetBusinessDayBounds(out int dayStartMinutes, out int dayEndMinutes)
         {
-            dayStartMinutes = 0; dayEndMinutes = 0;
-            if (_dailySlots.Count == 0) return false;
-            if (!TryParseTimeSlot(_dailySlots[0],  out var fs, out _) ||
-                !TryParseTimeSlot(_dailySlots[^1], out _,      out var le)) return false;
-            dayStartMinutes = (int)fs.TotalMinutes;
-            dayEndMinutes   = (int)le.TotalMinutes;
-            return dayEndMinutes > dayStartMinutes;
+            var nowBusiness = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, _businessTz);
+            var dayName = nowBusiness.DayOfWeek.ToString();
+            return TryGetBusinessDayBounds(dayName, out dayStartMinutes, out dayEndMinutes);
         }
 
         private static string FormatSlotStart(TimeSpan start) =>
