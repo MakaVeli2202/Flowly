@@ -9,6 +9,7 @@ namespace Glanz.API.Services
     public interface ITokenService
     {
         string GenerateToken(User user);
+        string GenerateToken(Staff staff);
         string GenerateRefreshToken();
     }
 
@@ -30,17 +31,27 @@ namespace Glanz.API.Services
 
         public string GenerateToken(User user)
         {
+            return BuildToken(user.Id, user.Email, user.FirstName, user.LastName, user.Role);
+        }
+
+        public string GenerateToken(Staff staff)
+        {
+            return BuildToken(staff.Id, staff.Email, staff.FirstName, staff.LastName, staff.Role);
+        }
+
+        private string BuildToken(int id, string email, string firstName, string lastName, string role)
+        {
             var jwtSettings = _configuration.GetSection("JwtSettings");
             var secretKey = jwtSettings["SecretKey"];
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey!));
 
             var claims = new[]
             {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.GivenName, user.FirstName),
-                new Claim(ClaimTypes.Surname, user.LastName),
-                new Claim(ClaimTypes.Role, user.Role)
+                new Claim(ClaimTypes.NameIdentifier, id.ToString()),
+                new Claim(ClaimTypes.Email, email),
+                new Claim(ClaimTypes.GivenName, firstName),
+                new Claim(ClaimTypes.Surname, lastName),
+                new Claim(ClaimTypes.Role, role)
             };
 
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);

@@ -1,4 +1,4 @@
-using Glanz.API.Models;
+﻿using Glanz.API.Models;
 using Glanz.API.DTOs;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
@@ -35,7 +35,7 @@ public static class DevelopmentDataSeeder
 
         var now = DateTime.UtcNow;
 
-        // ── Admin ──────────────────────────────────────────────────────────────
+        // â”€â”€ Admin â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         var adminEmail    = configuration["AdminUser:Email"]     ?? "admin@glanz.qa";
         var adminPassword = configuration["AdminUser:Password"]  ?? "Admin123!";
         var admin = new User
@@ -52,8 +52,8 @@ public static class DevelopmentDataSeeder
         };
         await db.Users.AddAsync(admin);
 
-        // ── Workers ────────────────────────────────────────────────────────────
-        var workers = new List<User>
+        // â”€â”€ Workers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        var workers = new List<Staff>
         {
             new()
             {
@@ -62,7 +62,7 @@ public static class DevelopmentDataSeeder
                 Email          = "ahmed.mansoori@glanz.qa",
                 PasswordHash   = BCrypt.Net.BCrypt.HashPassword("Worker123!"),
                 Phone          = "+97450000001",
-                Role           = "Worker",
+                Role           = "Employee",
                 IsActive       = true,
                 WorkingDays    = "Sunday,Monday,Tuesday,Wednesday,Thursday",
                 ShiftStart     = "08:00",
@@ -78,7 +78,7 @@ public static class DevelopmentDataSeeder
                 Email          = "sara.alfarsi@glanz.qa",
                 PasswordHash   = BCrypt.Net.BCrypt.HashPassword("Worker123!"),
                 Phone          = "+97450000002",
-                Role           = "Worker",
+                Role           = "Employee",
                 IsActive       = true,
                 WorkingDays    = "Sunday,Monday,Tuesday,Wednesday,Thursday",
                 ShiftStart     = "10:00",
@@ -89,7 +89,7 @@ public static class DevelopmentDataSeeder
             },
         };
 
-        // ── Customers ──────────────────────────────────────────────────────────
+        // â”€â”€ Customers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         var customers = new List<User>
         {
             new()
@@ -167,10 +167,10 @@ public static class DevelopmentDataSeeder
             },
         };
 
-        await db.Users.AddRangeAsync(workers);
+        await db.Staff.AddRangeAsync(workers);
         await db.Users.AddRangeAsync(customers);
 
-        // ── Products ───────────────────────────────────────────────────────────
+        // â”€â”€ Products â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         var products = new List<Product>
         {
             new() { Name = "All-Purpose Cleaner",   Description = "Versatile cleaner for all surfaces",          Vendor = "DetailPro",     CostPerUnit = 0.91m,  Unit = "ml",   StockQuantity = 10000, IsActive = true, CreatedAt = now, UpdatedAt = now },
@@ -185,7 +185,7 @@ public static class DevelopmentDataSeeder
         };
         await db.Products.AddRangeAsync(products);
 
-        // ── Services (30) ──────────────────────────────────────────────────────
+        // â”€â”€ Services (30) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         var services = new List<Service>
         {
             // Interior
@@ -224,7 +224,7 @@ public static class DevelopmentDataSeeder
         };
         await db.Services.AddRangeAsync(services);
 
-        // ── Packages (3) ───────────────────────────────────────────────────────
+        // â”€â”€ Packages (3) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         var packages = new List<Package>
         {
             new()
@@ -268,7 +268,7 @@ public static class DevelopmentDataSeeder
 
         await db.SaveChangesAsync();
 
-        // ── Lookups ────────────────────────────────────────────────────────────
+        // â”€â”€ Lookups â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         var svc  = services.ToDictionary(s => s.Name);
         var prod = products.ToDictionary(p => p.Name);
         var pkg  = packages.ToDictionary(p => p.Name);
@@ -277,7 +277,7 @@ public static class DevelopmentDataSeeder
         var full     = pkg["Full Detail"];
         var exterior = pkg["Exterior Detail"];
 
-        // ── ServiceProducts ────────────────────────────────────────────────────
+        // â”€â”€ ServiceProducts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         await db.ServiceProducts.AddRangeAsync(new List<ServiceProduct>
         {
             // Interior services
@@ -296,8 +296,8 @@ public static class DevelopmentDataSeeder
             new() { ServiceId = svc["Ozone Treatment (Odor Elimination)"].Id, ProductId = prod["Ozone Generator Rental"].Id, QuantityUsed = 2m   },
         });
 
-        // ── PackageServices ────────────────────────────────────────────────────
-        // Interior Detail: services 1–10
+        // â”€â”€ PackageServices â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // Interior Detail: services 1â€“10
         await db.PackageServices.AddRangeAsync(new List<PackageService>
         {
             new() { PackageId = interior.Id, ServiceId = svc["Detailed Vacuum"].Id            },
@@ -341,7 +341,7 @@ public static class DevelopmentDataSeeder
             new() { PackageId = exterior.Id, ServiceId = svc["Plastic Trim Coated & Dressed"].Id      },
         });
 
-        // ── System Settings ────────────────────────────────────────────────────
+        // â”€â”€ System Settings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         await db.SystemSettings.AddRangeAsync(new List<SystemSetting>
         {
             new() { Key = "pricing.vehicleMultipliers",       Value = "{\"Motorcycle\":0.8,\"Sedan\":1.0,\"SUV\":1.25,\"Pickup\":1.5}", UpdatedAt = now },
@@ -357,21 +357,21 @@ public static class DevelopmentDataSeeder
 
         await db.SaveChangesAsync();
 
-        // ── Bookings ───────────────────────────────────────────────────────────
+        // â”€â”€ Bookings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         await SeedBookingsAsync(db, workers, customers, pkg, now);
     }
 
     private static async Task SeedBookingsAsync(
         AppDbContext db,
-        List<User> workers,
+        List<Staff> workers,
         List<User> customers,
         Dictionary<string, Package> pkg,
         DateTime now)
     {
-        // Cost constants derived from ServiceProduct chain (qty × costPerUnit, summed per package):
-        //   Interior Detail : QAR 170.10  (services 1–10)
-        //   Full Detail     : QAR 276.10  (services 1–15)
-        //   Exterior Detail : QAR 256.75  (services 11,12,13,16–22)
+        // Cost constants derived from ServiceProduct chain (qty Ã— costPerUnit, summed per package):
+        //   Interior Detail : QAR 170.10  (services 1â€“10)
+        //   Full Detail     : QAR 276.10  (services 1â€“15)
+        //   Exterior Detail : QAR 256.75  (services 11,12,13,16â€“22)
         const decimal interiorCost = 170.10m;
         const decimal fullCost     = 276.10m;
         const decimal exteriorCost = 256.75m;
@@ -393,7 +393,7 @@ public static class DevelopmentDataSeeder
 
         var bookingDefs = new[]
         {
-            // ── Past week (Apr 21–24): Completed / Paid — for payroll + financial history ──
+            // â”€â”€ Past week (Apr 21â€“24): Completed / Paid â€” for payroll + financial history â”€â”€
             new BookingDef(
                 "SEED-001",
                 new DateTime(2026, 4, 21, 12, 0, 0, DateTimeKind.Utc), "09:00-10:30",
@@ -434,7 +434,7 @@ public static class DevelopmentDataSeeder
                 new DateTime(2026, 4, 24, 10,  0, 0, DateTimeKind.Utc),
                 new DateTime(2026, 4, 24, 11, 33, 0, DateTimeKind.Utc)),
 
-            // ── Upcoming week (Apr 27 – May 1): Sun–Thu ───────────────────────
+            // â”€â”€ Upcoming week (Apr 27 â€“ May 1): Sunâ€“Thu â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             new BookingDef(
                 "SEED-005",
                 new DateTime(2026, 4, 27, 12, 0, 0, DateTimeKind.Utc), "09:00-10:30",
@@ -593,7 +593,7 @@ public static class DevelopmentDataSeeder
         DateTime ScheduledDate,
         string TimeSlot,
         User Customer,
-        User Worker,
+        Staff Worker,
         Package Package,
         VehicleType VehicleType,
         decimal VehicleMultiplier,
@@ -608,3 +608,4 @@ public static class DevelopmentDataSeeder
         DateTime? WorkStartedAt,
         DateTime? WorkCompletedAt);
 }
+

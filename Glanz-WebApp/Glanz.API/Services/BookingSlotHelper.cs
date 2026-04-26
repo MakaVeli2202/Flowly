@@ -223,7 +223,7 @@ namespace Glanz.API.Services
         }
 
         internal static (string ShiftStart, string ShiftEnd) GetWorkerShiftForDay(
-            User worker, DayOfWeek dow)
+            Staff worker, DayOfWeek dow)
         {
             if (!string.IsNullOrWhiteSpace(worker.DaySchedulesJson))
             {

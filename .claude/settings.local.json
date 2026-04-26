@@ -62,7 +62,8 @@
       "PowerShell($env:PGPASSWORD = \"postgres\"; & \"C:\\\\Program Files\\\\PostgreSQL\\\\17\\\\bin\\\\psql.exe\" -U postgres -d glanz_db -c \"SELECT key, value FROM `\"SystemSettings`\" WHERE key LIKE 'booking%';\")",
       "PowerShell($env:PGPASSWORD = \"Passme123!\"; & \"C:\\\\Program Files\\\\PostgreSQL\\\\16\\\\bin\\\\psql.exe\" -U postgres -d glanz_db -c \"SELECT key, value FROM `\"SystemSettings`\" WHERE key LIKE 'booking%';\" 2>&1)",
       "PowerShell($login = Invoke-RestMethod -Uri \"http://localhost:5289/api/Auth/login\" -Method Post -ContentType \"application/json\" -Body '{\"email\":\"admin@glanz.qa\",\"password\":\"Admin123!\"}'; $token = $login.token; $workers = Invoke-RestMethod -Uri \"http://localhost:5289/api/Auth/workers\" -Headers @{Authorization=\"Bearer $token\"}; $workers | Select-Object id, firstName, lastName, shiftStart, shiftEnd, workingDays | ConvertTo-Json)",
-      "PowerShell($login = Invoke-RestMethod -Uri \"http://localhost:5289/api/Auth/login\" -Method Post -ContentType \"application/json\" -Body '{\"email\":\"admin@glanz.qa\",\"password\":\"Admin123!\"}'; $token = $login.token; $slots = Invoke-RestMethod -Uri \"http://localhost:5289/api/Bookings/available-slots?date=2026-05-03&durationMinutes=60\" -Headers @{Authorization=\"Bearer $token\"}; $slots)"
+      "PowerShell($login = Invoke-RestMethod -Uri \"http://localhost:5289/api/Auth/login\" -Method Post -ContentType \"application/json\" -Body '{\"email\":\"admin@glanz.qa\",\"password\":\"Admin123!\"}'; $token = $login.token; $slots = Invoke-RestMethod -Uri \"http://localhost:5289/api/Bookings/available-slots?date=2026-05-03&durationMinutes=60\" -Headers @{Authorization=\"Bearer $token\"}; $slots)",
+      "Bash(taskkill /F /PID 9800)"
     ]
   }
 }

@@ -57,7 +57,7 @@ namespace Glanz.API.Models
         public int? WorkerId { get; set; }
 
         [ForeignKey("WorkerId")]
-        public User? Worker { get; set; }
+        public Staff? Worker { get; set; }
 
         [StringLength(500)]
         public string? Notes { get; set; }

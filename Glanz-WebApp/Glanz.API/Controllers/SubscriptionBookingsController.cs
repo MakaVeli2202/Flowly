@@ -50,8 +50,8 @@ namespace Glanz.API.Controllers
             var workerTravelBufferMonthly = await GetWorkerTravelBufferMinutesAsync();
 
             // Load workers once for the whole month
-            var workers = await _context.Users.AsNoTracking()
-                .Where(u => u.IsActive && u.Role != null && u.Role.ToLower() == "worker")
+            var workers = await _context.Staff.AsNoTracking()
+                .Where(s => s.IsActive)
                 .ToListAsync();
 
             var workerIds = workers.Select(w => w.Id).ToList();
@@ -171,8 +171,8 @@ namespace Glanz.API.Controllers
             var durationMinutes = await ResolveDurationAsync(packageId);
             var workerTravelBufferSlots = await GetWorkerTravelBufferMinutesAsync();
 
-            var workers = await _context.Users.AsNoTracking()
-                .Where(u => u.IsActive && u.Role != null && u.Role.ToLower() == "worker")
+            var workers = await _context.Staff.AsNoTracking()
+                .Where(s => s.IsActive)
                 .ToListAsync();
 
             var availableWorkers = workers
@@ -384,9 +384,9 @@ namespace Glanz.API.Controllers
             booking.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
-            User? worker = null;
+            Staff? worker = null;
             if (booking.WorkerId.HasValue)
-                worker = await _context.Users.FindAsync(booking.WorkerId);
+                worker = await _context.Staff.FindAsync(booking.WorkerId);
 
             return Ok(ToDto(booking, booking.UserSubscription, booking.Package, worker, booking.User, null));
         }
@@ -442,13 +442,13 @@ namespace Glanz.API.Controllers
             string                                   slot,
             int                                      durationMinutes,
             DayOfWeek                                dow,
-            List<User>                               availableWorkers,
+            List<Staff>                              availableWorkers,
             Dictionary<int, List<Booking>>           bookingsByWorker,
             Dictionary<int, List<SubscriptionBooking>> subByWorker,
             bool                                     autoAssign,
             int                                      workerTravelBuffer = 30)
         {
-            bool WorkerIsFree(User w)
+            bool WorkerIsFree(Staff w)
             {
                 var (ss, se) = BookingSlotHelper.GetWorkerShiftForDay(w, dow);
                 if (!BookingSlotHelper.TimeSlotFitsInShift(slot, durationMinutes, ss, se, workerTravelBuffer))
@@ -496,7 +496,7 @@ namespace Glanz.API.Controllers
             SubscriptionBooking b,
             UserSubscription? sub,
             Package? package,
-            User? worker,
+            Staff? worker,
             User? customer,
             object? _unused)
         {

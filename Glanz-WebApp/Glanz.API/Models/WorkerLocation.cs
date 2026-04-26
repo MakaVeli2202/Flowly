@@ -29,7 +29,7 @@ namespace Glanz.API.Models
         public string? Status { get; set; }
 
         [ForeignKey("WorkerId")]
-        public User? Worker { get; set; }
+        public Staff? Worker { get; set; }
 
         [ForeignKey("BookingId")]
         public Booking? Booking { get; set; }

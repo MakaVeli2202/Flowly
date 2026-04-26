@@ -1,4 +1,4 @@
-using Glanz.API.Data;
+﻿using Glanz.API.Data;
 using Glanz.API.DTOs;
 using Glanz.API.Models;
 using Glanz.API.Services;
@@ -35,7 +35,7 @@ namespace Glanz.API.Controllers
             return null;
         }
 
-        [Authorize(Roles = "Admin,Worker")]
+        [Authorize(Roles = "Admin,Employee")]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<OfferDto>>> GetOffers()
         {
@@ -492,3 +492,4 @@ namespace Glanz.API.Controllers
         }
     }
 }
+

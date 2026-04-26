@@ -1,9 +1,9 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Glanz.API.Models
 {
-    public class User
+    public class Staff
     {
         [Key]
         public int Id { get; set; }
@@ -31,33 +31,36 @@ namespace Glanz.API.Models
         [StringLength(1000)]
         public string? ProfileImageUrl { get; set; }
 
-        [StringLength(500)]
-        public string? HomeAddress { get; set; }
-
-        [StringLength(100)]
-        public string? HomeHouseNumber { get; set; }
-
-        [StringLength(500)]
-        public string? WorkAddress { get; set; }
-
-        [StringLength(100)]
-        public string? WorkHouseNumber { get; set; }
-
-        [StringLength(500)]
-        public string? OtherAddress { get; set; }
-
-        [StringLength(100)]
-        public string? OtherHouseNumber { get; set; }
-
-        [StringLength(20)]
-        public string PreferredAddressType { get; set; } = "Home";
-
         [Required]
         [StringLength(20)]
-        public string Role { get; set; } = "Customer";
+        public string Role { get; set; } = "Employee";
+
+        // "Detailer" | "Staff" â€” distinguishes role type within the staff table
+        [StringLength(50)]
+        public string StaffType { get; set; } = "Detailer";
+
+        [StringLength(200)]
+        public string WorkingDays { get; set; } = "Monday,Tuesday,Wednesday,Thursday,Friday";
+
+        [StringLength(10)]
+        public string ShiftStart { get; set; } = "09:00";
+
+        [StringLength(10)]
+        public string ShiftEnd { get; set; } = "18:00";
+
+        public string? DaySchedulesJson { get; set; }
 
         public bool IsActive { get; set; } = true;
-        public DateTime? LoyaltyGoogleReviewActivatedAt { get; set; }
+
+        [Column(TypeName = "decimal(10,2)")]
+        public decimal? MonthlySalary { get; set; }
+
+        public int? LastPaidMonth { get; set; }
+        public int? LastPaidYear { get; set; }
+        public DateTime? LastPaidAt { get; set; }
+
+        [StringLength(100)]
+        public string? IBAN { get; set; }
 
         [StringLength(500)]
         public string? ExpoPushToken { get; set; }
@@ -68,7 +71,6 @@ namespace Glanz.API.Models
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
-
-        public ICollection<Booking> Bookings { get; set; } = new List<Booking>();
     }
 }
+

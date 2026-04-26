@@ -17,6 +17,7 @@ namespace Glanz.API.Data
         }
 
         public DbSet<User> Users { get; set; }
+        public DbSet<Staff> Staff { get; set; }
         public DbSet<Product> Products { get; set; }
         public DbSet<Service> Services { get; set; }
         public DbSet<ServiceProduct> ServiceProducts { get; set; }
@@ -71,6 +72,11 @@ namespace Glanz.API.Data
                 .HasIndex(u => u.Phone)
                 .IsUnique()
                 .HasFilter("\"Phone\" IS NOT NULL AND \"Phone\" <> ''");
+
+            // Staff - Email unique
+            modelBuilder.Entity<Staff>()
+                .HasIndex(s => s.Email)
+                .IsUnique();
 
             // Booking - BookingNumber unique
             modelBuilder.Entity<Booking>()

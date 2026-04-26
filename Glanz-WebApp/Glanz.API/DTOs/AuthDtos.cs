@@ -49,6 +49,13 @@ namespace Glanz.API.DTOs
         [Required]
         [Phone]
         public string Phone { get; set; } = string.Empty;
+
+        // "Detailer" | "Staff"
+        [StringLength(50)]
+        public string StaffType { get; set; } = "Detailer";
+
+        [StringLength(100)]
+        public string? IBAN { get; set; }
     }
 
     public class LoginDto
@@ -91,6 +98,8 @@ namespace Glanz.API.DTOs
         /// <summary>Per-day shift overrides; null means no overrides (use ShiftStart/ShiftEnd for all days).</summary>
         public List<WorkerDayScheduleEntry>? DaySchedules { get; set; }
         public decimal? MonthlySalary { get; set; }
+        public string? IBAN { get; set; }
+        public string? StaffType { get; set; }
     }
 
     /// <summary>Per-day shift override for a single day of week.</summary>
@@ -143,6 +152,12 @@ namespace Glanz.API.DTOs
         [Required]
         [Range(0, 999999.99)]
         public decimal MonthlySalary { get; set; }
+    }
+
+    public class UpdateWorkerIbanDto
+    {
+        [StringLength(100)]
+        public string? IBAN { get; set; }
     }
 
     public class WorkerPayrollSummaryDto

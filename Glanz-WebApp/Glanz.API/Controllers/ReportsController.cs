@@ -337,8 +337,8 @@ namespace Glanz.API.Controllers
                 var startDate = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
                 var endDate = startDate.AddMonths(1);
 
-                var workers = await _context.Users
-                    .Where(u => u.Role == "Worker" && u.IsActive && u.MonthlySalary.HasValue)
+                var workers = await _context.Staff
+                    .Where(s => s.IsActive && s.MonthlySalary.HasValue)
                     .ToListAsync();
 
                 var completedInRange = await _context.Bookings
@@ -427,7 +427,7 @@ namespace Glanz.API.Controllers
             {
                 if (dto.EmployeeId > 0)
                 {
-                    var worker = await _context.Users.FirstOrDefaultAsync(u => u.Id == dto.EmployeeId && u.Role == "Worker");
+                    var worker = await _context.Staff.FirstOrDefaultAsync(s => s.Id == dto.EmployeeId);
                     if (worker == null)
                         return NotFound(new { message = "Worker not found" });
 
@@ -439,7 +439,7 @@ namespace Glanz.API.Controllers
                     return Ok(new { message = $"Marked {worker.FirstName} {worker.LastName} as paid for {dto.Month}/{dto.Year}" });
                 }
 
-                var workers = await _context.Users.Where(u => u.Role == "Worker" && u.IsActive && u.MonthlySalary.HasValue).ToListAsync();
+                var workers = await _context.Staff.Where(s => s.IsActive && s.MonthlySalary.HasValue).ToListAsync();
                 foreach (var worker in workers)
                 {
                     worker.LastPaidMonth = dto.Month;
