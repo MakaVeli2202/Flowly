@@ -16,4 +16,10 @@ export const authAPI = {
   registerPushToken: async (token) => (await apiClient.put('/Auth/push-token', { token })).data,
   clearPushToken: async () => (await apiClient.delete('/Auth/push-token')).data,
   getCustomers: async () => (await apiClient.get('/Auth/customers')).data,
+  refresh: async (refreshToken) => (await apiClient.post('/Auth/refresh', { refreshToken })).data,
+  logout: async () => (await apiClient.post('/Auth/logout')).data,
+  createWorker: async (data) => (await apiClient.post('/Auth/register-worker', data)).data,
+  deleteWorker: async (workerId) => (await apiClient.delete(`/Auth/workers/${workerId}`)).data,
+  updateWorkerSalary: async (workerId, monthlySalary) => (await apiClient.put(`/Auth/workers/${workerId}/salary`, { monthlySalary })).data,
+  getPayrollSummary: async (month, year) => (await apiClient.get('/Auth/workers/payroll', { params: { month, year } })).data,
 };

@@ -17,6 +17,7 @@ import RegisterScreen from '../screens/RegisterScreen';
 import AdminDashboardScreen from '../screens/AdminDashboardScreen';
 import AdminJobsScreen from '../screens/AdminJobsScreen';
 import CreateWorkerScreen from '../screens/CreateWorkerScreen';
+import AdminStaffScreen from '../screens/AdminStaffScreen';
 import WorkerManagementScreen from '../screens/WorkerManagementScreen';
 import HomeScreen from '../screens/HomeScreen';
 import NotificationsScreen from '../screens/NotificationsScreen';
@@ -38,6 +39,10 @@ import AdminSystemSettingsScreen from '../screens/AdminSystemSettingsScreen';
 import SubscriptionBookingScreen from '../screens/SubscriptionBookingScreen';
 import MySubscriptionScreen from '../screens/MySubscriptionScreen';
 import SubscriptionCheckoutScreen from '../screens/SubscriptionCheckoutScreen';
+import LiveWorkerMapScreen from '../screens/LiveWorkerMapScreen';
+import AdminJobPositionsScreen from '../screens/AdminJobPositionsScreen';
+import AdminContentScreen from '../screens/AdminContentScreen';
+import AdminSubscriptionBookingsScreen from '../screens/AdminSubscriptionBookingsScreen';
 
 const Stack  = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -76,9 +81,13 @@ const ADMIN_DRAWER_ITEMS = [
   { name: 'Admin Offers',        icon: 'ticket-outline',        iconFilled: 'ticket',        label: 'Offers'           },
   { name: 'Admin Subscriptions', icon: 'repeat-outline',        iconFilled: 'repeat',        label: 'Subscriptions'    },
   { name: 'Worker Management',   icon: 'people-outline',        iconFilled: 'people',        label: 'Workers'          },
+  { name: 'Admin Staff',        icon: 'person-outline',         iconFilled: 'person',         label: 'Manage Staff'    },
   { name: 'Create Worker',       icon: 'person-add-outline',    iconFilled: 'person-add',    label: 'Add Worker'       },
   { name: 'Admin Notifications', icon: 'notifications-outline', iconFilled: 'notifications', label: 'Notifications'    },
   { name: 'System Settings',     icon: 'settings-outline',      iconFilled: 'settings',      label: 'System Settings'  },
+  { name: 'Admin Job Positions',  icon: 'briefcase-outline',      iconFilled: 'briefcase',      label: 'Job Positions'   },
+  { name: 'Admin Content',     icon: 'document-text-outline', iconFilled: 'document-text', label: 'Content'        },
+  { name: 'Sub Bookings',     icon: 'repeat-outline',       iconFilled: 'repeat',        label: 'Sub Bookings'    },
 ];
 
 const DRAWER_ITEMS = [
@@ -421,6 +430,7 @@ function CustomerStack() {
       <Stack.Screen name="SubscriptionBooking"    component={SubscriptionBookingScreen}  options={{ title: 'Book Session' }} />
       <Stack.Screen name="MySubscription"         component={MySubscriptionScreen}       options={{ title: 'My Subscription' }} />
       <Stack.Screen name="SubscriptionCheckout"    component={SubscriptionCheckoutScreen} options={{ title: 'Checkout' }} />
+      <Stack.Screen name="Live Tracking"           component={LiveWorkerMapScreen}        options={{ title: 'Live Tracking' }} />
     </Stack.Navigator>
   );
 }
@@ -439,15 +449,13 @@ function AdminStack() {
     load();
     const interval = setInterval(load, 30000);
     const appSub   = AppState.addEventListener('change', (s) => { if (s === 'active') load(); });
-    let conn = null;
-    startNotificationConnection()
-      .then((c) => { if (!c) return; conn = c; c.on('ReceiveNotification', () => load()); })
-      .catch(() => {});
+    startNotificationConnection().catch(() => {});
+    const unsubNotif = subscribeToNotifications(() => load());
     return () => {
       isMounted = false;
       clearInterval(interval);
       appSub.remove();
-      if (conn) conn.off('ReceiveNotification');
+      unsubNotif();
     };
   }, []);
 
@@ -477,6 +485,7 @@ function AdminStack() {
       <Stack.Screen name="Admin Notifications"  component={NotificationsScreen}       options={{ title: 'Notifications', headerRight: () => null }}            />
       <Stack.Screen name="Create Worker"        component={CreateWorkerScreen}        options={{ title: 'Create Worker' }}                                     />
       <Stack.Screen name="Worker Management"    component={WorkerManagementScreen}    options={{ title: 'Worker Management' }}                                 />
+      <Stack.Screen name="Admin Staff"          component={AdminStaffScreen}          options={{ title: 'Manage Staff' }}                                   />
       <Stack.Screen name="Admin Products"      component={AdminProductsScreen}       options={{ title: 'Products' }}                                          />
       <Stack.Screen name="Admin Services"      component={AdminServicesScreen}       options={{ title: 'Services' }}                                          />
       <Stack.Screen name="Admin Packages"      component={AdminPackagesScreen}       options={{ title: 'Packages' }}                                          />
@@ -484,6 +493,9 @@ function AdminStack() {
       <Stack.Screen name="Admin Reports"       component={AdminReportsScreen}        options={{ title: 'Reports' }}                                           />
       <Stack.Screen name="Admin Subscriptions" component={AdminSubscriptionsScreen}  options={{ title: 'Subscriptions' }}                                     />
       <Stack.Screen name="System Settings"     component={AdminSystemSettingsScreen} options={{ title: 'System Settings' }}                                   />
+      <Stack.Screen name="Admin Job Positions"  component={AdminJobPositionsScreen}  options={{ title: 'Job Positions' }}                                    />
+      <Stack.Screen name="Admin Content"     component={AdminContentScreen}        options={{ title: 'Content' }}                                          />
+      <Stack.Screen name="Sub Bookings"     component={AdminSubscriptionBookingsScreen} options={{ title: 'Sub Bookings' }}                                />
     </Stack.Navigator>
   );
 }
