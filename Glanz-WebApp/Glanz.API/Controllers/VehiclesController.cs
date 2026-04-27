@@ -161,6 +161,7 @@ namespace Glanz.API.Controllers
 
         // POST api/Vehicles/5/image
         [HttpPost("{id:int}/image")]
+        [RequestSizeLimit(2_000_000)]
         public async Task<ActionResult<VehicleDto>> UploadImage(int id, [FromForm] UploadVehicleImageDto dto)
         {
             var userId  = GetUserId();

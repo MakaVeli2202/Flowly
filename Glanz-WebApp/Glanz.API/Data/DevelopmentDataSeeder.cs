@@ -357,6 +357,27 @@ public static class DevelopmentDataSeeder
 
         await db.SaveChangesAsync();
 
+        // ── Development test coupon ──────────────────────────────────────────────
+        // FREEDEV100 gives 100% off so developers can test the full booking + payment
+        // flow without real money. All backend validation still runs (single-use per
+        // redemption, user-bound once assigned via admin panel, etc.).
+        var devOffer = new Offer
+        {
+            Name             = "Dev Test Coupon (100% off)",
+            Code             = "FREEDEV100",
+            Description      = "Seeded dev coupon — 100% off for testing the full booking + payment flow.",
+            DiscountType     = DiscountType.Percentage,
+            DiscountValue    = 100,
+            MinBookingAmount = 0,
+            IsLoyaltyProgram = false,
+            IsActive         = true,
+            MaxUsesPerUser   = 3, // enough for smoke testing, small enough to surface real issues
+            CreatedAt        = now,
+            UpdatedAt        = now,
+        };
+        await db.Offers.AddAsync(devOffer);
+        await db.SaveChangesAsync();
+
         // â”€â”€ Bookings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         await SeedBookingsAsync(db, workers, customers, pkg, now);
     }

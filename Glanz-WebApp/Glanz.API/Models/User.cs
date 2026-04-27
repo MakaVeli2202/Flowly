@@ -57,6 +57,7 @@ namespace Glanz.API.Models
         public string Role { get; set; } = "Customer";
 
         public bool IsActive { get; set; } = true;
+        public DateTime? LoyaltyReviewPendingAt { get; set; }
         public DateTime? LoyaltyGoogleReviewActivatedAt { get; set; }
 
         [StringLength(500)]

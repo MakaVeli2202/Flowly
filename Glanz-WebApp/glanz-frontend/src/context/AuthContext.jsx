@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authAPI } from '../api/auth';
+import { setAuthToken } from '../api/axios';
 import { startNotificationConnection, stopNotificationConnection } from '../api/signalr';
 
 const AuthContext = createContext();
@@ -14,37 +15,30 @@ export function useAuth() {
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('token'));
+  const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const persistSession = (nextToken, nextUser) => {
-    localStorage.setItem('token', nextToken);
-    localStorage.setItem('user', JSON.stringify(nextUser));
+    setAuthToken(nextToken);
     setToken(nextToken);
     setUser(nextUser);
   };
 
-  // Start SignalR on cold-start resume when token already exists
-  useEffect(() => {
-    const savedToken = localStorage.getItem('token');
-    if (savedToken) {
-      startNotificationConnection().catch(() => {});
-    }
-  }, []);
-
   useEffect(() => {
     const initAuth = async () => {
-      const savedToken = localStorage.getItem('token');
-
-      if (savedToken) {
-        try {
-          const currentUser = await authAPI.getCurrentUser();
-          persistSession(savedToken, currentUser);
-        } catch {
-          authAPI.logout();
-          setToken(null);
-          setUser(null);
-        }
+      try {
+        // The HttpOnly refresh-token cookie is sent automatically.
+        // This silently re-issues an access token so the user stays
+        // logged in across page reloads without touching localStorage.
+        const refreshed = await authAPI.refresh();
+        const currentUser = await authAPI.getCurrentUser();
+        persistSession(refreshed.token, currentUser);
+        startNotificationConnection().catch(() => {});
+      } catch {
+        // No valid refresh token — user must log in.
+        setAuthToken(null);
+        setToken(null);
+        setUser(null);
       }
 
       setLoading(false);
@@ -69,40 +63,19 @@ export function AuthProvider({ children }) {
 
   const refreshUser = async () => {
     const currentUser = await authAPI.getCurrentUser();
-    const savedToken = localStorage.getItem('token');
-
-    if (savedToken) {
-      persistSession(savedToken, currentUser);
-    } else {
-      setUser(currentUser);
-    }
-
+    setUser(currentUser);
     return currentUser;
   };
 
   const updateProfile = async (profileData) => {
     const updatedUser = await authAPI.updateProfile(profileData);
-    const savedToken = localStorage.getItem('token');
-
-    if (savedToken) {
-      persistSession(savedToken, updatedUser);
-    } else {
-      setUser(updatedUser);
-    }
-
+    setUser(updatedUser);
     return updatedUser;
   };
 
   const uploadProfileImage = async (formData) => {
     const updatedUser = await authAPI.uploadProfileImage(formData);
-    const savedToken = localStorage.getItem('token');
-
-    if (savedToken) {
-      persistSession(savedToken, updatedUser);
-    } else {
-      setUser(updatedUser);
-    }
-
+    setUser(updatedUser);
     return updatedUser;
   };
 
@@ -113,6 +86,7 @@ export function AuthProvider({ children }) {
   const logout = () => {
     stopNotificationConnection();
     authAPI.logout();
+    setAuthToken(null);
     setToken(null);
     setUser(null);
   };

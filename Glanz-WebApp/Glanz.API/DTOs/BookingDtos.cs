@@ -10,6 +10,7 @@ namespace Glanz.API.DTOs
         public DateTime ScheduledDate { get; set; }
 
         [Required]
+        [StringLength(10)]
         public string TimeSlot { get; set; } = string.Empty;
 
         [Required]
@@ -23,15 +24,23 @@ namespace Glanz.API.DTOs
         [Phone]
         public string CustomerPhone { get; set; } = string.Empty;
 
+        [StringLength(500)]
         public string? CustomerAddress { get; set; }
+        [StringLength(20)]
         public string? HouseNumber { get; set; }
+        [StringLength(10)]
         public string? AddressType { get; set; } // "Home" or "Work"
 
+        [StringLength(100)]
         public string? VehicleMake { get; set; }
+        [StringLength(100)]
         public string? VehicleModel { get; set; }
+        [StringLength(10)]
         public string? VehicleYear { get; set; }
         public VehicleType VehicleType { get; set; } = VehicleType.Sedan;
+        [StringLength(1000)]
         public string? SpecialInstructions { get; set; }
+        [StringLength(60)]
         public string? OfferCode { get; set; }
         public int? CustomerSubscriptionId { get; set; }
 

@@ -56,4 +56,19 @@ export const offersAPI = {
     const response = await apiClient.post(`/Offers/${offerId}/assign-bulk`, { userIds });
     return response.data;
   }),
+
+  getPendingReviews: async () => withRetry(async () => {
+    const response = await apiClient.get('/Offers/loyalty/pending-reviews');
+    return response.data;
+  }),
+
+  approveReview: async (userId) => withRetry(async () => {
+    const response = await apiClient.post(`/Offers/loyalty/${userId}/approve-review`);
+    return response.data;
+  }),
+
+  rejectReview: async (userId) => withRetry(async () => {
+    const response = await apiClient.post(`/Offers/loyalty/${userId}/reject-review`);
+    return response.data;
+  }),
 };

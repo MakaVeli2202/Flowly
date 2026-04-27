@@ -22,11 +22,13 @@ namespace Glanz.API.Controllers
 
         private readonly AppDbContext _context;
         private readonly IConfiguration _configuration;
+        private readonly IWebHostEnvironment _env;
 
-        public PaymentsController(AppDbContext context, IConfiguration configuration)
+        public PaymentsController(AppDbContext context, IConfiguration configuration, IWebHostEnvironment env)
         {
             _context = context;
             _configuration = configuration;
+            _env = env;
             StripeConfiguration.ApiKey = _configuration["Stripe:SecretKey"];
         }
 
@@ -41,6 +43,14 @@ namespace Glanz.API.Controllers
         [HttpPost("create-intent")]
         public async Task<IActionResult> CreateIntent([FromBody] CreatePaymentIntentDto dto)
         {
+            // Auth check: always required, EXCEPT in Development with AllowDevBypass enabled.
+            // Guards against a misconfigured staging env accidentally being open to the internet.
+            // Configurable via DevBypass:AllowDevBypass in appsettings.Development.json.
+            var isDevLoopback = _env.IsDevelopment()
+                && _configuration.GetValue<bool>("DevBypass:AllowDevBypass");
+            if (!isDevLoopback && !(User.Identity?.IsAuthenticated ?? false))
+                return Unauthorized(new { message = "Authentication required." });
+
             if (dto.Amount <= 0)
                 return BadRequest(new { message = "Amount must be greater than zero." });
 
@@ -105,6 +115,12 @@ namespace Glanz.API.Controllers
         [HttpGet("intent/{intentId}")]
         public async Task<IActionResult> GetIntentStatus(string intentId)
         {
+            // Auth check: always required, EXCEPT in Development with AllowDevBypass enabled.
+            var isDevLoopback = _env.IsDevelopment()
+                && _configuration.GetValue<bool>("DevBypass:AllowDevBypass");
+            if (!isDevLoopback && !(User.Identity?.IsAuthenticated ?? false))
+                return Unauthorized(new { message = "Authentication required." });
+
             if (string.IsNullOrWhiteSpace(intentId))
                 return BadRequest(new { message = "intentId is required." });
 

@@ -16,10 +16,14 @@ namespace Glanz.API.Services
     public class TokenService : ITokenService
     {
         private readonly IConfiguration _configuration;
+        private readonly IHostEnvironment _env;
+        private readonly ILogger<TokenService> _logger;
 
-        public TokenService(IConfiguration configuration)
+        public TokenService(IConfiguration configuration, IHostEnvironment env, ILogger<TokenService> logger)
         {
             _configuration = configuration;
+            _env = env;
+            _logger = logger;
         }
 
         public string GenerateRefreshToken()
@@ -56,11 +60,24 @@ namespace Glanz.API.Services
 
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
+            // Development: use configured ExpirationMinutes (default 720 = 12 h) for friction-free testing.
+            // Production: cap to 30 minutes regardless of config. Override via JwtSettings__ExpirationMinutes
+            // Railway env var if a different production window is needed.
+            var configuredMinutes = Convert.ToDouble(jwtSettings["ExpirationMinutes"] ?? "720");
+            var expiryMinutes = _env.IsProduction()
+                ? Math.Min(configuredMinutes, 30)
+                : configuredMinutes;
+
+            // Log expiry so mismatches between dev and prod are immediately visible.
+            _logger.LogInformation(
+                "[JWT] Issued token for {Email} ({Role}) — expires in {Minutes} min ({Env})",
+                email, role, expiryMinutes, _env.EnvironmentName);
+
             var token = new JwtSecurityToken(
                 issuer: jwtSettings["Issuer"],
                 audience: jwtSettings["Audience"],
                 claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(Convert.ToDouble(jwtSettings["ExpirationMinutes"])),
+                expires: DateTime.UtcNow.AddMinutes(expiryMinutes),
                 signingCredentials: credentials
             );
 

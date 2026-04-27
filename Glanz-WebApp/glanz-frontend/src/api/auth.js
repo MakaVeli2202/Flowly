@@ -92,14 +92,16 @@ export const authAPI = {
     return response.data;
   }),
 
+  refresh: async () => {
+    const response = await apiClient.post('/Auth/refresh');
+    return response.data;
+  },
+
   logout: async () => {
     try {
       await apiClient.post('/Auth/logout');
     } catch {
       // best-effort — clear local state regardless
-    } finally {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
     }
   }
 };

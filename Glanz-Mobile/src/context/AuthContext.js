@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { secureGet, secureSet, secureMultiRemove } from '../utils/secureStorage';
 import { authAPI } from '../api/auth';
 import { startNotificationConnection, stopNotificationConnection } from '../api/signalr';
 import { registerForPushNotificationsAsync } from '../utils/pushNotifications';
@@ -30,7 +31,7 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const init = async () => {
       try {
-        const savedToken = await AsyncStorage.getItem('token');
+        const savedToken = await secureGet('token');
         const savedUser  = await AsyncStorage.getItem('user');
 
         if (!savedToken) return;
@@ -46,12 +47,12 @@ export function AuthProvider({ children }) {
           if (status === 401 || status === 403) {
             // Access token expired — try silent refresh before giving up
             try {
-              const storedRefresh = await AsyncStorage.getItem('refreshToken');
+              const storedRefresh = await secureGet('refreshToken');
               if (!storedRefresh) throw new Error('no refresh token');
               const res = await authAPI.refresh(storedRefresh);
-              await AsyncStorage.setItem('token', res.token);
+              await secureSet('token', res.token);
               if (res.refreshToken) {
-                await AsyncStorage.setItem('refreshToken', res.refreshToken);
+                await secureSet('refreshToken', res.refreshToken);
               }
               setToken(res.token);
               // Re-fetch user with the new token
@@ -60,7 +61,8 @@ export function AuthProvider({ children }) {
               setUser(freshUser);
             } catch {
               // Refresh also failed — clear everything and force login
-              await AsyncStorage.multiRemove(['token', 'refreshToken', 'user']);
+              await secureMultiRemove(['token', 'refreshToken']);
+              await AsyncStorage.removeItem('user');
               setToken(null);
               setUser(null);
               return;
@@ -82,8 +84,8 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     const res = await authAPI.login({ email, password });
-    await AsyncStorage.setItem('token', res.token);
-    if (res.refreshToken) await AsyncStorage.setItem('refreshToken', res.refreshToken);
+    await secureSet('token', res.token);
+    if (res.refreshToken) await secureSet('refreshToken', res.refreshToken);
     await AsyncStorage.setItem('user', JSON.stringify(res.user));
     setToken(res.token);
     setUser(res.user);
@@ -94,8 +96,8 @@ export function AuthProvider({ children }) {
 
   const register = async (data) => {
     const res = await authAPI.register(data);
-    await AsyncStorage.setItem('token', res.token);
-    if (res.refreshToken) await AsyncStorage.setItem('refreshToken', res.refreshToken);
+    await secureSet('token', res.token);
+    if (res.refreshToken) await secureSet('refreshToken', res.refreshToken);
     await AsyncStorage.setItem('user', JSON.stringify(res.user));
     setToken(res.token);
     setUser(res.user);
@@ -132,7 +134,8 @@ export function AuthProvider({ children }) {
     await stopNotificationConnection();
     try { await authAPI.clearPushToken(); } catch { /* non-critical */ }
     try { await authAPI.logout(); } catch { /* best-effort server-side revoke */ }
-    await AsyncStorage.multiRemove(['token', 'refreshToken', 'user']);
+    await secureMultiRemove(['token', 'refreshToken']);
+    await AsyncStorage.removeItem('user');
     setToken(null);
     setUser(null);
   };

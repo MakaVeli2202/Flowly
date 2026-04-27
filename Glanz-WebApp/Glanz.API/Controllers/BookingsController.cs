@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Glanz.API.Data;
@@ -17,20 +17,33 @@ namespace Glanz.API.Controllers
     public class BookingsController : ControllerBase
     {
         private static readonly TimeSpan WorkerArrivalNotificationCooldown = TimeSpan.FromMinutes(5);
-        private const int DefaultWorkerTravelBufferMinutes = 30; // fallback only â€” runtime value read from SystemSettings
+        private const int DefaultWorkerTravelBufferMinutes = 30; // fallback only — runtime value read from SystemSettings
         private static TimeZoneInfo BusinessTimeZone = ResolveBusinessTimeZone(null);
 
         private readonly AppDbContext _context;
         private readonly IConfiguration _configuration;
         private readonly IAdminNotificationService _adminNotificationService;
         private readonly IPricingService _pricingService;
+        private readonly IAuditService _audit;
+        private readonly CouponRateLimiter _couponLimiter;
+        private readonly IWebHostEnvironment _env;
 
-        public BookingsController(AppDbContext context, IConfiguration configuration, IAdminNotificationService adminNotificationService, IPricingService pricingService)
+        public BookingsController(
+            AppDbContext context,
+            IConfiguration configuration,
+            IAdminNotificationService adminNotificationService,
+            IPricingService pricingService,
+            IAuditService audit,
+            CouponRateLimiter couponLimiter,
+            IWebHostEnvironment env)
         {
             _context = context;
             _configuration = configuration;
             _adminNotificationService = adminNotificationService;
             _pricingService = pricingService;
+            _audit = audit;
+            _couponLimiter = couponLimiter;
+            _env = env;
             StripeConfiguration.ApiKey = _configuration["Stripe:SecretKey"];
         }
 
@@ -254,7 +267,7 @@ namespace Glanz.API.Controllers
             {
                 try { return TimeZoneInfo.FindSystemTimeZoneById(tzId); } catch { }
             }
-            // Fallback: Arab Standard Time (Qatar, UTC+3) â€” kept for backward compat.
+            // Fallback: Arab Standard Time (Qatar, UTC+3) — kept for backward compat.
             try { return TimeZoneInfo.FindSystemTimeZoneById("Arab Standard Time"); } catch { }
             return TimeZoneInfo.Utc;
         }
@@ -329,7 +342,7 @@ namespace Glanz.API.Controllers
         }
 
         // Check if a booking time slot falls within a worker's shift.
-        // workerTravelBuffer is subtracted from the effective shift start â€” the worker needs
+        // workerTravelBuffer is subtracted from the effective shift start — the worker needs
         // this time to travel/prep before the first job. If the shift starts early enough
         // that shiftStart + buffer <= businessOpen, the business-hours floor (enforced by
         // BuildCandidateStartSlots) already satisfies the constraint at no cost to the customer.
@@ -435,7 +448,7 @@ namespace Glanz.API.Controllers
 
         private static int ResolveBookingDurationMinutes(Booking booking)
         {
-            // 1. Range-format TimeSlots (e.g. "10:00-11:00") are authoritative â€”
+            // 1. Range-format TimeSlots (e.g. "10:00-11:00") are authoritative —
             //    the range IS the scheduled window regardless of the package estimate.
             if (TryParseTimeSlot(booking.TimeSlot, out var rangeStart, out var rangeEnd))
             {
@@ -1286,34 +1299,19 @@ namespace Glanz.API.Controllers
                         o.IsActive);
             }
 
-            if (offer == null)
+            // Unified "not valid" response for all lookup/status failures � prevents code enumeration.
+            if (offer == null
+                || !offer.IsActive
+                || (offer.StartsAt.HasValue && offer.StartsAt.Value > now)
+                || (offer.EndsAt.HasValue && offer.EndsAt.Value < now)
+                || (matchedUserOffer != null && matchedUserOffer.ExpiresAt.HasValue && matchedUserOffer.ExpiresAt.Value < now))
             {
-                return (null, "Offer code is invalid.");
-            }
-
-            if (!offer.IsActive)
-            {
-                return (null, "Offer is not active.");
-            }
-
-            if (offer.StartsAt.HasValue && offer.StartsAt.Value > now)
-            {
-                return (null, "Offer is not available yet.");
-            }
-
-            if (offer.EndsAt.HasValue && offer.EndsAt.Value < now)
-            {
-                return (null, "Offer has expired.");
+                return (null, "Offer code is not valid.");
             }
 
             if (offer.MinBookingAmount > subtotal)
             {
-                return (null, $"Offer requires minimum booking amount of {offer.MinBookingAmount:F2}.");
-            }
-
-            if (matchedUserOffer != null && matchedUserOffer.ExpiresAt.HasValue && matchedUserOffer.ExpiresAt.Value < now)
-            {
-                return (null, "Coupon has expired.");
+                return (null, $"Offer requires a minimum booking amount of {offer.MinBookingAmount:F2} QAR.");
             }
 
             if (matchedUserOffer != null
@@ -1641,7 +1639,7 @@ namespace Glanz.API.Controllers
                         TryParseSlotStart(b.TimeSlot, out var slotStartTs);
                         var packagesSummary = string.Join(", ", b.BookingItems
                             .Where(bi => bi.Package != null)
-                            .Select(bi => bi.Quantity > 1 ? $"{bi.Package!.Name} Ã—{bi.Quantity}" : bi.Package!.Name));
+                            .Select(bi => bi.Quantity > 1 ? $"{bi.Package!.Name} ×{bi.Quantity}" : bi.Package!.Name));
                         return new DayBookingSlotDto
                         {
                             BookingId = b.Id,
@@ -1776,7 +1774,7 @@ namespace Glanz.API.Controllers
                 var dayOfWeek         = targetLocalDate.DayOfWeek;
                 var dayName           = dayOfWeek.ToString();
 
-                // 4. Check if business is open that day (end <= start â†’ closed).
+                // 4. Check if business is open that day (end <= start → closed).
                 var (dayBoundsStart, dayBoundsEnd) = GetDayBounds(dayName);
                 if (!TimeSpan.TryParse(dayBoundsStart, out var boundsStartTs) ||
                     !TimeSpan.TryParse(dayBoundsEnd,   out var boundsEndTs)   ||
@@ -1795,7 +1793,7 @@ namespace Glanz.API.Controllers
                     .Where(w => WorkerWorksOnDay(w.WorkingDays, dayOfWeek))
                     .ToList();
 
-                // 6. If none â†’ return empty.
+                // 6. If none → return empty.
                 if (availableWorkers.Count == 0)
                     return Ok(new List<string>());
 
@@ -1897,7 +1895,7 @@ namespace Glanz.API.Controllers
                             continue;
                     }
 
-                    // 13. Slot passed all checks â€” add it.
+                    // 13. Slot passed all checks — add it.
                     validStartSlots.Add(startSlot);
                 }
 
@@ -1933,7 +1931,7 @@ namespace Glanz.API.Controllers
             });
         }
 
-        // â”€â”€ POST /api/Bookings/quote â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── POST /api/Bookings/quote ──────────────────────────────────────────────
         // Returns a server-authoritative price breakdown for the current selection
         // (packages + vehicle type + subscription + offer code) WITHOUT creating a booking.
         // Mobile calls this whenever pricing inputs change so the displayed total is always
@@ -1979,7 +1977,7 @@ namespace Glanz.API.Controllers
                 if (offerError != null)
                     return BadRequest(new { message = offerError });
 
-                // â”€â”€ Single pricing authority â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                // ── Single pricing authority ──────────────────────────────────────
                 var pricing = await _pricingService.CalculateAsync(
                     items,
                     dto.VehicleType,
@@ -2009,6 +2007,15 @@ namespace Glanz.API.Controllers
         [HttpPost("create-payment-intent")]
         public async Task<ActionResult<PaymentIntentResponseDto>> CreatePaymentIntent([FromBody] CreateBookingDto dto)
         {
+            // Auth check: always required, EXCEPT when running in Development with AllowDevBypass
+            // enabled in config. This lets mobile dev simulators, Postman, Docker containers, and
+            // remote debuggers work without a token — without risking a staging env being open.
+            // Set DevBypass:AllowDevBypass=false in appsettings.Development.json to harden locally.
+            var isDevLoopback = _env.IsDevelopment()
+                && _configuration.GetValue<bool>("DevBypass:AllowDevBypass");
+            if (!isDevLoopback && !(User.Identity?.IsAuthenticated ?? false))
+                return Unauthorized(new { message = "Authentication required." });
+
             try
             {
                 var bookingUser = await ResolveBookingUserByEmailAsync(dto.CustomerEmail);
@@ -2035,7 +2042,7 @@ namespace Glanz.API.Controllers
                     return BadRequest(new { message = "One or more packages not found" });
                 }
 
-                // Duration comes from package definition only â€” Quantity scales price/cost, not time.
+                // Duration comes from package definition only — Quantity scales price/cost, not time.
                 var totalDurationMinutes = dto.Packages
                     .Sum(item => packages[item.PackageId].EstimatedDurationMinutes);
 
@@ -2096,7 +2103,7 @@ namespace Glanz.API.Controllers
                     await _context.SaveChangesAsync();
                 }
 
-                // â”€â”€ Pricing via PricingService (single source of truth) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                // ── Pricing via PricingService (single source of truth) ──────────────
                 // Cost calculation (for margin tracking) still happens locally
                 decimal totalCost = 0;
                 foreach (var item in dto.Packages)
@@ -2122,9 +2129,15 @@ namespace Glanz.API.Controllers
 
                 // Rough subtotal used only for offer minimum-amount check
                 var prelimSubtotalIntent = pricingItems.Sum(i => Math.Round(i.BasePrice, 2) * i.Quantity);
+
+                if (!string.IsNullOrWhiteSpace(dto.OfferCode) && userId.HasValue && _couponLimiter.IsBlocked(userId.Value))
+                    return BadRequest(new { message = "Too many invalid offer code attempts. Please wait before trying again." });
+
                 var offerResolution = await ResolveOfferAsync(dto.OfferCode, userId, prelimSubtotalIntent);
                 if (offerResolution.Error != null)
                 {
+                    if (!string.IsNullOrWhiteSpace(dto.OfferCode) && userId.HasValue)
+                        _couponLimiter.RecordFailure(userId.Value);
                     return BadRequest(new { message = offerResolution.Error });
                 }
 
@@ -2180,7 +2193,7 @@ namespace Glanz.API.Controllers
         {
             try
             {
-                // â”€â”€ Idempotency check â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                // ── Idempotency check ────────────────────────────────────────────────────
                 // If the client sent a key and a booking already exists with that key, return
                 // the original booking instead of creating a duplicate. This handles the case
                 // where the network fails mid-request and the app retries.
@@ -2201,12 +2214,12 @@ namespace Glanz.API.Controllers
 
                     if (existingByKey != null)
                     {
-                        // Idempotent replay â€” return the original booking
+                        // Idempotent replay — return the original booking
                         var existingDuration = ResolveBookingDurationMinutes(existingByKey);
                         return Ok(MapBookingToDto(existingByKey, existingDuration));
                     }
                 }
-                // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                // ────────────────────────────────────────────────────────────────────────
 
                 var bookingUser = await ResolveBookingUserByEmailAsync(dto.CustomerEmail);
                 var userId = bookingUser?.Id;
@@ -2232,7 +2245,7 @@ namespace Glanz.API.Controllers
                     return BadRequest(new { message = "One or more packages not found" });
                 }
 
-                // Duration comes from package definition only â€” Quantity scales price/cost, not time.
+                // Duration comes from package definition only — Quantity scales price/cost, not time.
                 var totalDurationMinutes = dto.Packages
                     .Sum(item => packages[item.PackageId].EstimatedDurationMinutes);
 
@@ -2248,7 +2261,7 @@ namespace Glanz.API.Controllers
                 }
 
 
-                // â”€â”€ Slot reservation conflict check (Phase 3) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                // ── Slot reservation conflict check (Phase 3) ────────────────────────────
                 var slotReservationEnabled = await IsFeatureFlagEnabledAsync("slotReservation");
                 if (slotReservationEnabled)
                 {
@@ -2266,7 +2279,7 @@ namespace Glanz.API.Controllers
                         });
                     }
                 }
-                // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                // ─────────────────────────────────────────────────────────────────────────
 
                 var autoAssignEnabled = await IsAutoAssignEnabledAsync();
                 var workerTravelBufferCB = await GetWorkerTravelBufferMinutesAsync();
@@ -2288,33 +2301,29 @@ namespace Glanz.API.Controllers
                     }
                 }
 
-                var availabilities = await _context.Availabilities
+                // Ensure slot rows exist before the transaction (new rows start at
+                // CurrentBookings = 0, so pre-creation is race-safe).
+                var existingSlotKeys = await _context.Availabilities
+                    .AsNoTracking()
                     .Where(a => a.Date == scheduledBookingDate && requiredTimeSlots.Contains(a.TimeSlot))
+                    .Select(a => a.TimeSlot)
                     .ToListAsync();
 
-                var existingSlots = availabilities.Select(a => a.TimeSlot).ToHashSet();
-                var missingSlots = requiredTimeSlots.Where(slot => !existingSlots.Contains(slot)).ToList();
-
+                var missingSlots = requiredTimeSlots.Where(slot => !existingSlotKeys.Contains(slot)).ToList();
                 if (missingSlots.Count > 0)
                 {
-                    foreach (var slot in missingSlots)
+                    _context.Availabilities.AddRange(missingSlots.Select(slot => new Availability
                     {
-                        availabilities.Add(new Availability
-                        {
-                            Date = scheduledBookingDate,
-                            TimeSlot = slot,
-                            MaxBookings = DefaultMaxBookingsPerSlot,
-                            CurrentBookings = 0,
-                            IsAvailable = true
-                        });
-                    }
-
-                    _context.Availabilities.AddRange(availabilities.Where(a => missingSlots.Contains(a.TimeSlot)));
+                        Date = scheduledBookingDate,
+                        TimeSlot = slot,
+                        MaxBookings = DefaultMaxBookingsPerSlot,
+                        CurrentBookings = 0,
+                        IsAvailable = true
+                    }));
                     await _context.SaveChangesAsync();
                 }
-
-                // â”€â”€ Pricing via PricingService (single source of truth) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-                // Backend ALWAYS recalculates price â€” never trusts any client value.
+                // ── Pricing via PricingService (single source of truth) ──────────────
+                // Backend ALWAYS recalculates price — never trusts any client value.
                 var checklistItems = BuildChecklistItems(dto.Packages, packages);
 
                 decimal totalCost = 0;
@@ -2345,11 +2354,22 @@ namespace Glanz.API.Controllers
 
                 // Rough subtotal for offer minimum-amount validation
                 var prelimSubtotal = pricingItems.Sum(i => Math.Round(i.BasePrice, 2) * i.Quantity);
+
+                if (!string.IsNullOrWhiteSpace(dto.OfferCode) && userId.HasValue && _couponLimiter.IsBlocked(userId.Value))
+                    return BadRequest(new { message = "Too many invalid offer code attempts. Please wait before trying again." });
+
                 var offerResolution = await ResolveOfferAsync(dto.OfferCode, userId, prelimSubtotal);
                 if (offerResolution.Error != null)
                 {
+                    if (!string.IsNullOrWhiteSpace(dto.OfferCode) && userId.HasValue)
+                        _couponLimiter.RecordFailure(userId.Value);
+                    await _audit.LogAsync("CouponRejected", userId, dto.CustomerEmail?.Trim(), "Offer",
+                        dto.OfferCode?.Trim(), new { offerCode = dto.OfferCode, reason = offerResolution.Error }, success: false);
                     return BadRequest(new { message = offerResolution.Error });
                 }
+
+                if (offerResolution.Result != null && userId.HasValue)
+                    _couponLimiter.RecordSuccess(userId.Value);
 
                 var pricing = await _pricingService.CalculateAsync(
                     pricingItems,
@@ -2361,7 +2381,7 @@ namespace Glanz.API.Controllers
                 var finalAmount    = pricing.FinalAmount;
                 var discountAmount = pricing.TotalDiscountAmount;
 
-                // â”€â”€ Stripe amount safety gate â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                // ── Stripe amount safety gate ────────────────────────────────────────
                 // If a PaymentIntent was created (payments feature ON), verify its amount
                 // matches the server-calculated final price. Rejects manipulated amounts.
                 if (!string.IsNullOrWhiteSpace(dto.StripePaymentIntentId))
@@ -2379,7 +2399,7 @@ namespace Glanz.API.Controllers
 
                             // Stripe stores amount in smallest currency unit (fils/cents).
                             var piAmountDecimal = pi.Amount / 100m;
-                            var tolerance       = Math.Max(finalAmount * 0.01m, 0.01m); // 1% or 1 fils
+                            var tolerance       = 0.5m; // max 0.5 QAR rounding tolerance � no percentage slack
 
                             if (Math.Abs(piAmountDecimal - finalAmount) > tolerance)
                             {
@@ -2439,7 +2459,7 @@ namespace Glanz.API.Controllers
                     ScheduledDate = scheduledBookingDate,
                     TimeSlot = dto.TimeSlot,
                     Status = BookingStatus.Pending,
-                    PaymentStatus = PaymentStatus.PreAuthorized,
+                    PaymentStatus = finalAmount == 0 ? PaymentStatus.Paid : PaymentStatus.PreAuthorized,
                     TotalAmount = finalAmount,
                     DiscountAmount = discountAmount,
                     AppliedOfferCode = offerResolution.Result?.AppliedCode,
@@ -2489,6 +2509,19 @@ namespace Glanz.API.Controllers
 
                     _context.Bookings.Add(booking);
 
+                    // Re-read availabilities inside the serializable transaction so the read
+                    // is part of the conflict-detection set � prevents overbooking under
+                    // concurrent load (Serializable isolation will abort one of two racing txns).
+                    var availabilities = await _context.Availabilities
+                        .Where(a => a.Date == scheduledBookingDate && requiredTimeSlots.Contains(a.TimeSlot))
+                        .ToListAsync();
+
+                    var fullSlot = availabilities.FirstOrDefault(a => a.CurrentBookings >= a.MaxBookings);
+                    if (fullSlot != null)
+                    {
+                        return Conflict(new { message = "This time slot just became fully booked. Please choose a different slot." });
+                    }
+
                     // Reserve all required slots for the full service duration.
                     foreach (var slotAvailability in availabilities)
                     {
@@ -2510,6 +2543,21 @@ namespace Glanz.API.Controllers
                 }
 
                 await _adminNotificationService.NotifyNewBookingAsync(booking);
+
+                // Audit: booking created
+                await _audit.LogAsync(
+                    action:     finalAmount == 0 ? "FreeBookingCreated" : "BookingCreated",
+                    userId:     userId,
+                    userEmail:  booking.CustomerEmail,
+                    entityType: "Booking",
+                    entityId:   booking.BookingNumber,
+                    metadata: new
+                    {
+                        bookingNumber = booking.BookingNumber,
+                        totalAmount   = finalAmount,
+                        couponCode    = booking.AppliedOfferCode,
+                        isFree        = finalAmount == 0,
+                    });
 
                 // Return booking details
                 var bookingDto = new BookingDto
@@ -2664,6 +2712,7 @@ namespace Glanz.API.Controllers
             }
         }
 
+        [Authorize]
         [HttpGet("{bookingNumber}")]
         public async Task<ActionResult<BookingDto>> GetBooking(string bookingNumber)
         {
@@ -2678,6 +2727,14 @@ namespace Glanz.API.Controllers
                 if (booking == null)
                 {
                     return NotFound(new { message = "Booking not found" });
+                }
+
+                // Customers may only read their own bookings.
+                if (User.IsInRole("Customer"))
+                {
+                    var currentUserId = GetUserId();
+                    if (!currentUserId.HasValue || booking.UserId != currentUserId.Value)
+                        return Forbid();
                 }
 
                 var bookingDto = new BookingDto
@@ -3497,6 +3554,26 @@ namespace Glanz.API.Controllers
                 booking.Status = BookingStatus.Cancelled;
                 booking.UpdatedAt = DateTime.UtcNow;
 
+                // ── Void Stripe pre-authorisation ─────────────────────────────────────────
+                // Release the card hold immediately so the customer's funds are freed.
+                // Works in both dev (test mode) and production (real cards).
+                if (!string.IsNullOrEmpty(booking.StripePaymentIntentId)
+                    && booking.StripePaymentIntentId.StartsWith("pi_")
+                    && booking.PaymentStatus == PaymentStatus.PreAuthorized)
+                {
+                    try
+                    {
+                        var piService = new PaymentIntentService();
+                        await piService.CancelAsync(booking.StripePaymentIntentId);
+                        booking.PaymentStatus = PaymentStatus.Refunded; // no charge was made
+                    }
+                    catch (StripeException stripeEx)
+                    {
+                        // Log but do not block the cancellation — the pre-auth will expire naturally.
+                        Console.WriteLine($"[CancelBooking] Stripe void failed for booking {booking.Id}: {stripeEx.Message}");
+                    }
+                }
+
                 // Try to build time slots
                 List<string> requiredTimeSlots;
                 try
@@ -3538,6 +3615,9 @@ namespace Glanz.API.Controllers
                     return StatusCode(500, new { message = $"Failed to save cancellation: {saveEx.Message}" });
                 }
 
+                await _audit.LogAsync("BookingCancelled", userId, booking.CustomerEmail, "Booking",
+                    booking.BookingNumber, new { bookingNumber = booking.BookingNumber, initiatedBy = "Customer" });
+
                 // Notify (non-blocking)
                 try
                 {
@@ -3557,7 +3637,7 @@ namespace Glanz.API.Controllers
             }
         }
 
-        // â”€â”€â”€ Admin: Cancel + Stripe void/refund â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ─── Admin: Cancel + Stripe void/refund ──────────────────────────────────
         [Authorize(Roles = "Admin")]
         [HttpPost("{id}/admin-cancel-refund")]
         public async Task<ActionResult<AdminCancelRefundResultDto>> AdminCancelAndRefund(int id, [FromBody] AdminCancelRefundDto dto)
@@ -3575,7 +3655,7 @@ namespace Glanz.API.Controllers
                 if (booking.Status == BookingStatus.Completed)
                     return BadRequest(new { message = "Cannot cancel a completed booking." });
 
-                // Idempotent â€” already cancelled
+                // Idempotent — already cancelled
                 if (booking.Status == BookingStatus.Cancelled)
                 {
                     return Ok(new AdminCancelRefundResultDto
@@ -3650,6 +3730,13 @@ namespace Glanz.API.Controllers
 
                 await _context.SaveChangesAsync();
 
+                var adminId = GetUserId();
+                await _audit.LogAsync("BookingCancelled", adminId, booking.CustomerEmail, "Booking",
+                    booking.BookingNumber, new { bookingNumber = booking.BookingNumber, initiatedBy = "Admin", stripeAction });
+                if (stripeAction == "Refunded")
+                    await _audit.LogAsync("RefundIssued", adminId, booking.CustomerEmail, "Booking",
+                        booking.BookingNumber, new { bookingNumber = booking.BookingNumber, refundedAmount, stripeRefundId });
+
                 // Notify (non-blocking)
                 try { await _adminNotificationService.NotifyBookingCancelledAsync(booking); }
                 catch (Exception notifyEx)
@@ -3657,8 +3744,8 @@ namespace Glanz.API.Controllers
 
                 string message = stripeAction switch
                 {
-                    "Voided"   => "Booking cancelled â€” Stripe pre-authorization voided (no charge).",
-                    "Refunded" => $"Booking cancelled â€” QAR {refundedAmount:N2} refunded via Stripe.",
+                    "Voided"   => "Booking cancelled — Stripe pre-authorization voided (no charge).",
+                    "Refunded" => $"Booking cancelled — QAR {refundedAmount:N2} refunded via Stripe.",
                     _          => "Booking cancelled. No Stripe payment was on file.",
                 };
 
@@ -4029,7 +4116,58 @@ namespace Glanz.API.Controllers
                 booking.UpdatedAt = DateTime.UtcNow;
                 booking.StockDeductedAt ??= DateTime.UtcNow;
 
+                // ── Stripe payment capture ────────────────────────────────────────────────
+                // Capture the pre-authorised Stripe PaymentIntent so the customer is charged.
+                // Production: calls Stripe CaptureAsync (real money collected).
+                // Development: simulates capture locally — no real charge, Stripe test mode still works.
+                string stripeCapture = "NoPayment";
+                if (!string.IsNullOrEmpty(booking.StripePaymentIntentId)
+                    && booking.StripePaymentIntentId.StartsWith("pi_")
+                    && booking.PaymentStatus == PaymentStatus.PreAuthorized)
+                {
+                    if (_env.IsProduction())
+                    {
+                        try
+                        {
+                            var piService = new PaymentIntentService();
+                            await piService.CaptureAsync(booking.StripePaymentIntentId);
+                            booking.PaymentStatus = PaymentStatus.Paid;
+                            stripeCapture = "Captured";
+                        }
+                        catch (StripeException stripeEx)
+                        {
+                            // Log but do not fail the job completion — admin can manually
+                            // capture or retry. The booking is already marked Completed.
+                            Console.WriteLine($"[FinishJob] Stripe capture failed for booking {booking.BookingNumber}: {stripeEx.Message}");
+                        }
+                    }
+                    else
+                    {
+                        // Development: simulate capture so payment status is consistent.
+                        // Use real Stripe test cards (4242 4242 4242 4242) to test the full
+                        // Stripe flow; this path avoids needing a real PI in unit/smoke tests.
+                        booking.PaymentStatus = PaymentStatus.Paid;
+                        stripeCapture = "SimulatedDev";
+                        Console.WriteLine($"[DEV] Simulated Stripe capture for booking {booking.BookingNumber} (intent: {booking.StripePaymentIntentId})");
+                    }
+                }
+
                 await _context.SaveChangesAsync();
+
+                // Audit: payment capture result
+                await _audit.LogAsync(
+                    action:     "JobCompleted",
+                    userId:     userId,
+                    userEmail:  booking.CustomerEmail,
+                    entityType: "Booking",
+                    entityId:   booking.BookingNumber,
+                    metadata: new
+                    {
+                        bookingNumber  = booking.BookingNumber,
+                        totalAmount    = booking.TotalAmount,
+                        paymentStatus  = booking.PaymentStatus.ToString(),
+                        stripeCapture,
+                    });
 
                 try
                 {
@@ -4046,6 +4184,7 @@ namespace Glanz.API.Controllers
                     workCompletedAt = booking.WorkCompletedAt,
                     workDurationSeconds = booking.WorkDurationSeconds,
                     stockDeductedAt = booking.StockDeductedAt,
+                    stripeCapture,
                     stockShortages,
                 });
             }
@@ -4595,7 +4734,7 @@ namespace Glanz.API.Controllers
             }
         }
 
-        // â”€â”€â”€ Worker Absence + Auto-Reassign â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ─── Worker Absence + Auto-Reassign ────────────────────────────────────────
         [Authorize(Roles = "Admin")]
         [HttpPost("worker-absence")]
         public async Task<ActionResult<WorkerAbsenceResultDto>> MarkWorkerAbsent([FromBody] WorkerAbsenceDto dto)
@@ -4673,7 +4812,7 @@ namespace Glanz.API.Controllers
             }
         }
 
-        // â”€â”€â”€ Customer Change Requests â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ─── Customer Change Requests ───────────────────────────────────────────────
         [Authorize]
         [HttpPost("{id}/request-cancellation")]
         public async Task<ActionResult> RequestCancellation(int id, [FromBody] RequestCancellationDto dto)
@@ -4741,7 +4880,7 @@ namespace Glanz.API.Controllers
             }
         }
 
-        // â”€â”€â”€ Reject Cancellation Request â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ─── Reject Cancellation Request ─────────────────────────────────────────────
         [Authorize(Roles = "Admin")]
         [HttpPost("{id}/reject-cancellation-request")]
         public async Task<ActionResult> RejectCancellationRequest(int id)
@@ -4773,7 +4912,7 @@ namespace Glanz.API.Controllers
             }
         }
 
-        // â”€â”€â”€ Reject Reschedule Request â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ─── Reject Reschedule Request ────────────────────────────────────────────────
         [Authorize(Roles = "Admin")]
         [HttpPost("{id}/reject-reschedule-request")]
         public async Task<ActionResult> RejectRescheduleRequest(int id)
@@ -4806,7 +4945,7 @@ namespace Glanz.API.Controllers
             }
         }
 
-        // â”€â”€â”€ Cancellation Fee Calculation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ─── Cancellation Fee Calculation ────────────────────────────────────────────
         [Authorize]
         [HttpGet("{id}/cancellation-fee")]
         public async Task<ActionResult<CancellationFeeInfoDto>> GetCancellationFee(int id)
@@ -4870,7 +5009,7 @@ namespace Glanz.API.Controllers
             };
         }
 
-        // â”€â”€â”€ Admin: Full Booking Edit â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ─── Admin: Full Booking Edit ─────────────────────────────────────────────────
         [Authorize]
         [HttpPut("{id}/admin-edit")]
         public async Task<ActionResult<BookingDto>> AdminEditBooking(int id, [FromBody] AdminEditBookingDto dto)
@@ -4896,7 +5035,7 @@ namespace Glanz.API.Controllers
 
                 var workerTravelBufferEdit = await GetWorkerTravelBufferMinutesAsync();
 
-                // â”€â”€ Date / time change â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                // ── Date / time change ──────────────────────────────────────
                 bool dateChanged = false;
                 if (dto.ScheduledDate.HasValue || dto.TimeSlot != null)
                 {
@@ -4932,7 +5071,7 @@ namespace Glanz.API.Controllers
                     booking.TimeSlot = newSlot;
                 }
 
-                // â”€â”€ Packages â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                // ── Packages ─────────────────────────────────────────────────
                 if (dto.Packages != null && dto.Packages.Count > 0)
                 {
                     // Load all referenced packages (with cost data)
@@ -4966,7 +5105,7 @@ namespace Glanz.API.Controllers
                             message = $"The current time slot cannot fit the new package selection ({newDuration} min). " +
                                       (altSlots.Count > 0
                                           ? $"Available slots on the same day: {string.Join(", ", altSlots)}."
-                                          : "No available slots on the same day â€” please choose a different date."),
+                                          : "No available slots on the same day — please choose a different date."),
                             availableSlots = altSlots,
                             newDurationMinutes = newDuration
                         });
@@ -5006,18 +5145,18 @@ namespace Glanz.API.Controllers
                     booking.EstimatedProfit  = newTotal - newCost;
                 }
 
-                // â”€â”€ Vehicle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                // ── Vehicle ──────────────────────────────────────────────────
                 if (dto.VehicleMake    != null) booking.VehicleMake  = dto.VehicleMake;
                 if (dto.VehicleModel   != null) booking.VehicleModel = dto.VehicleModel;
                 if (dto.VehicleYear    != null) booking.VehicleYear  = dto.VehicleYear;
                 if (dto.VehicleType.HasValue)   booking.VehicleType  = dto.VehicleType.Value;
 
-                // â”€â”€ Address â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                // ── Address ──────────────────────────────────────────────────
                 if (dto.CustomerAddress != null) booking.CustomerAddress = dto.CustomerAddress;
                 if (dto.HouseNumber     != null) booking.HouseNumber     = dto.HouseNumber;
                 if (dto.AddressType     != null) booking.AddressType     = dto.AddressType;
 
-                // â”€â”€ Misc â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                // ── Misc ─────────────────────────────────────────────────────
                 if (dto.SpecialInstructions != null) booking.SpecialInstructions = dto.SpecialInstructions;
 
                 // Clear reschedule request since admin has now handled it
@@ -5044,7 +5183,7 @@ namespace Glanz.API.Controllers
             }
         }
 
-        // â”€â”€â”€ Customer: Self-Service Booking Edit â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ─── Customer: Self-Service Booking Edit ─────────────────────────────────────
         [Authorize]
         [HttpPut("{id}/customer-edit")]
         public async Task<ActionResult<BookingDto>> CustomerEditBooking(int id, [FromBody] CustomerEditBookingDto dto)
@@ -5073,7 +5212,7 @@ namespace Glanz.API.Controllers
 
                 var workerTravelBufferCE = await GetWorkerTravelBufferMinutesAsync();
 
-                // â”€â”€ Date / time change â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                // ── Date / time change ──────────────────────────────────────
                 bool dateChanged = false;
                 if (dto.ScheduledDate.HasValue || dto.TimeSlot != null)
                 {
@@ -5110,7 +5249,7 @@ namespace Glanz.API.Controllers
                     booking.TimeSlot = newSlot;
                 }
 
-                // â”€â”€ Packages â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                // ── Packages ─────────────────────────────────────────────────
                 if (dto.Packages != null && dto.Packages.Count > 0)
                 {
                     var packageIds = dto.Packages.Select(p => p.PackageId).Distinct().ToList();
@@ -5175,18 +5314,18 @@ namespace Glanz.API.Controllers
                     booking.EstimatedProfit  = newTotal - newCost;
                 }
 
-                // â”€â”€ Vehicle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                // ── Vehicle ──────────────────────────────────────────────────
                 if (dto.VehicleMake  != null) booking.VehicleMake  = dto.VehicleMake;
                 if (dto.VehicleModel != null) booking.VehicleModel = dto.VehicleModel;
                 if (dto.VehicleYear  != null) booking.VehicleYear  = dto.VehicleYear;
                 if (dto.VehicleType.HasValue)  booking.VehicleType  = dto.VehicleType.Value;
 
-                // â”€â”€ Address â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                // ── Address ──────────────────────────────────────────────────
                 if (dto.CustomerAddress != null) booking.CustomerAddress = dto.CustomerAddress;
                 if (dto.HouseNumber     != null) booking.HouseNumber     = dto.HouseNumber;
                 if (dto.AddressType     != null) booking.AddressType     = dto.AddressType;
 
-                // â”€â”€ Misc â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                // ── Misc ─────────────────────────────────────────────────────
                 if (dto.SpecialInstructions != null) booking.SpecialInstructions = dto.SpecialInstructions;
 
                 // Clear any pending reschedule request since customer is self-rescheduling
@@ -5364,7 +5503,7 @@ namespace Glanz.API.Controllers
             };
         }
 
-        // â”€â”€ Before/After Photos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── Before/After Photos ─────────────────────────────────────────────────
 
         [Authorize(Roles = "Employee,Admin")]
         [HttpPost("{id}/photos")]

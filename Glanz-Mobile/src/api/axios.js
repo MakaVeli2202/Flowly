@@ -1,6 +1,6 @@
 import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE_URL } from '../config/api';
+import { secureGet, secureSet } from '../utils/secureStorage';
 
 // ── Unauthorized handler (wired by AuthContext) ───────────────────────────────
 let _onUnauthorized = null;
@@ -17,7 +17,7 @@ const apiClient = axios.create({
 });
 
 apiClient.interceptors.request.use(async (config) => {
-  const token = await AsyncStorage.getItem('token');
+  const token = await secureGet('token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -58,16 +58,16 @@ apiClient.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const refreshToken = await AsyncStorage.getItem('refreshToken');
+        const refreshToken = await secureGet('refreshToken');
         if (!refreshToken) throw new Error('No refresh token stored.');
 
         const res = await apiClient.post('/Auth/refresh', { refreshToken });
         const newToken = res.data.token;
         const newRefreshToken = res.data.refreshToken;
 
-        await AsyncStorage.setItem('token', newToken);
+        await secureSet('token', newToken);
         if (newRefreshToken) {
-          await AsyncStorage.setItem('refreshToken', newRefreshToken);
+          await secureSet('refreshToken', newRefreshToken);
         }
 
         apiClient.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;

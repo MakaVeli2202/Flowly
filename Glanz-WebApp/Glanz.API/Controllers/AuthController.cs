@@ -20,6 +20,7 @@ namespace Glanz.API.Controllers
         private readonly ITokenService _tokenService;
         private readonly IConfiguration _configuration;
         private readonly IWebHostEnvironment _env;
+        private readonly IAuditService _audit;
         private static readonly string[] DefaultAvatarUrls =
         {
             "/assets/avatars/default-gulf-male-1.svg",
@@ -30,9 +31,10 @@ namespace Glanz.API.Controllers
             "/assets/avatars/default-expat-female-1.svg"
         };
 
-        public AuthController(AppDbContext context, ITokenService tokenService, IConfiguration configuration, IWebHostEnvironment env)
+        public AuthController(AppDbContext context, ITokenService tokenService, IConfiguration configuration, IWebHostEnvironment env, IAuditService audit)
         {
             _context = context;
+            _audit = audit;
             _tokenService = tokenService;
             _configuration = configuration;
             _env = env;
@@ -270,6 +272,14 @@ namespace Glanz.API.Controllers
 
                 _context.Staff.Add(staff);
                 await _context.SaveChangesAsync();
+
+                var adminEmail = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+                await _audit.LogAsync(
+                    action:     "WorkerCreated",
+                    userEmail:  adminEmail,
+                    entityType: "Staff",
+                    entityId:   staff.Id.ToString(),
+                    metadata: new { staffEmail = staff.Email, staffType = staff.StaffType });
 
                 return Ok(ToUserDtoFromStaff(staff));
             }
@@ -1106,8 +1116,8 @@ namespace Glanz.API.Controllers
             try
             {
                 var updates = new List<(string Key, string Value)>();
-                if (!string.IsNullOrWhiteSpace(dto.CompanyName))
-                    updates.Add(("payslip.companyName", dto.CompanyName));
+                if (dto.CompanyName != null)
+                    updates.Add(("payslip.companyName", dto.CompanyName.Trim()));
                 if (dto.CompanyLogo != null)
                     updates.Add(("payslip.companyLogo", dto.CompanyLogo ?? ""));
                 if (dto.CompanyAddress != null)

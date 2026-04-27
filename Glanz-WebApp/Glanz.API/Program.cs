@@ -14,7 +14,6 @@ using FluentValidation;
 
 var builder = WebApplication.CreateBuilder(args);
 
-const string insecureDefaultJwtSecret = "8K9mN2pQ5rT7wY0zX3cV6bN8mL1kJ4hG7fD9sA2qW5eR8tY1uI4oP7aS0dF3gH6j";
 const string insecureDefaultStripeSecret = "YOUR_STRIPE_SECRET_KEY";
 
 var jwtSecretFromConfig = builder.Configuration["JwtSettings:SecretKey"];
@@ -22,9 +21,9 @@ var stripeSecretFromConfig = builder.Configuration["Stripe:SecretKey"];
 
 if (!builder.Environment.IsDevelopment())
 {
-    if (string.IsNullOrWhiteSpace(jwtSecretFromConfig) || jwtSecretFromConfig == insecureDefaultJwtSecret)
+    if (string.IsNullOrWhiteSpace(jwtSecretFromConfig) || jwtSecretFromConfig.Length < 32)
     {
-        throw new InvalidOperationException("JwtSettings:SecretKey must be set to a non-default value outside Development.");
+        throw new InvalidOperationException("JwtSettings:SecretKey must be at least 32 characters and must not be the default placeholder.");
     }
 
     if (string.IsNullOrWhiteSpace(stripeSecretFromConfig) || stripeSecretFromConfig == insecureDefaultStripeSecret)
@@ -119,6 +118,11 @@ else
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// Security & audit services
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<Glanz.API.Services.IAuditService, Glanz.API.Services.AuditService>();
+builder.Services.AddSingleton<Glanz.API.Services.CouponRateLimiter>();
+
 // Register FluentValidation validators
 builder.Services.AddTransient<IValidator<RegisterDto>, RegisterDtoValidator>();
 builder.Services.AddTransient<IValidator<LoginDto>, LoginDtoValidator>();
@@ -139,7 +143,7 @@ builder.Services.AddCors(options =>
             policy.SetIsOriginAllowed(origin =>
                 {
                     if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri)) return false;
-                    if (uri.Host == "localhost" || uri.Host == "127.0.0.1" || uri.Host.StartsWith("192.168."))
+                    if (uri.Host == "localhost" || uri.Host == "127.0.0.1")
                         return true;
                     return extraOrigins.Contains(origin, StringComparer.OrdinalIgnoreCase);
                 })
@@ -252,6 +256,31 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+// ── Security response headers ─────────────────────────────────────────────
+// Applied before any controller response so every endpoint benefits.
+// CSP allows Stripe.js, fonts, and same-origin assets. Tighten per environment as needed.
+app.Use(async (context, next) =>
+{
+    context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+    context.Response.Headers.Append("X-Frame-Options", "DENY");
+    context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+    context.Response.Headers.Append("Permissions-Policy", "geolocation=(), camera=(), microphone=()");
+    if (!app.Environment.IsDevelopment())
+    {
+        // HSTS + CSP only in production (dev uses HTTP localhost)
+        context.Response.Headers.Append("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+        context.Response.Headers.Append("Content-Security-Policy",
+            "default-src 'self'; " +
+            "script-src 'self' https://js.stripe.com; " +
+            "frame-src https://js.stripe.com; " +
+            "connect-src 'self' https://api.stripe.com; " +
+            "font-src 'self' https://fonts.gstatic.com; " +
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+            "img-src 'self' data: https:;");
+    }
+    await next();
+});
 
 app.UseStaticFiles();
 app.UseIpRateLimiting();

@@ -44,6 +44,7 @@ namespace Glanz.API.Data
         public DbSet<WorkerLocation> WorkerLocations { get; set; }
         public DbSet<JobApplication> JobApplications { get; set; }
         public DbSet<JobPosition> JobPositions { get; set; }
+        public DbSet<AuditLog> AuditLogs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -82,6 +83,12 @@ namespace Glanz.API.Data
             modelBuilder.Entity<Booking>()
                 .HasIndex(b => b.BookingNumber)
                 .IsUnique();
+
+            // Booking - IdempotencyKey unique (nullable; null rows are excluded so they don't conflict)
+            modelBuilder.Entity<Booking>()
+                .HasIndex(b => b.IdempotencyKey)
+                .IsUnique()
+                .HasFilter("\"IdempotencyKey\" IS NOT NULL");
 
             // Availability - Date + TimeSlot unique
             modelBuilder.Entity<Availability>()
@@ -331,6 +338,12 @@ namespace Glanz.API.Data
 
             modelBuilder.Entity<JobPosition>()
                 .HasIndex(jp => new { jp.IsOpen, jp.Rank });
+
+            modelBuilder.Entity<AuditLog>()
+                .HasIndex(a => new { a.UserId, a.Timestamp });
+
+            modelBuilder.Entity<AuditLog>()
+                .HasIndex(a => new { a.Action, a.Timestamp });
 
         }
     }

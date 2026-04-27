@@ -44,10 +44,11 @@ namespace Glanz.API.Controllers
             var webhookSecret = _configuration["Stripe:WebhookSecret"];
             if (string.IsNullOrWhiteSpace(webhookSecret))
             {
-                // Webhook secret not configured — log and accept to avoid Stripe retries
-                // during development. In production this key MUST be set.
-                Console.WriteLine("[Webhook] WARNING: Stripe:WebhookSecret is not configured. Skipping signature verification.");
-                return Ok();
+                // A missing secret must be a misconfiguration — fail loudly rather than
+                // silently accepting unsigned (potentially forged) webhook payloads.
+                throw new InvalidOperationException(
+                    "Stripe:WebhookSecret is required and must be configured. " +
+                    "Register the webhook in the Stripe Dashboard and set the signing secret.");
             }
 
             // ── Verify signature ────────────────────────────────────────────────────

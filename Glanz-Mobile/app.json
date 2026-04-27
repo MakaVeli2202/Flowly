@@ -43,7 +43,8 @@
           "merchantIdentifier": "merchant.com.glanz",
           "enableGooglePay": true
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "extra": {
       "eas": {

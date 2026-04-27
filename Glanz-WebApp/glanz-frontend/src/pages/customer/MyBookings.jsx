@@ -719,18 +719,32 @@ function MyBookings() {
                     <Star size={14} className="text-yellow-300" />
                     <span className="text-sm font-bold" style={{ color: 'rgba(200,169,107,0.95)' }}>Unlock Your Loyalty Card</span>
                   </div>
-                  <p className="text-xs text-[var(--muted-color)] mb-4 leading-relaxed">
-                    Leave a quick Google review to activate your loyalty card. Every {loyalty.programs?.[0]?.triggerBookings ?? 3} completed washes earns you a free one.
-                  </p>
-                  <button
-                    onClick={openGoogleReview}
-                    disabled={activatingLoyalty}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition disabled:opacity-60"
-                    style={{ background: 'rgba(200,169,107,0.9)', color: '#0a0a0a' }}>
-                    {activatingLoyalty
-                      ? <><RefreshCw size={14} className="animate-spin" /> Activating…</>
-                      : <><Star size={14} style={{ fill: '#0a0a0a' }} /> Rate on Google</>}
-                  </button>
+
+                  {loyalty.isGoogleReviewPending ? (
+                    /* Pending admin verification */
+                    <div className="flex items-start gap-3 mt-3 p-3 rounded-lg" style={{ background: 'rgba(200,169,107,0.08)', border: '1px solid rgba(200,169,107,0.22)' }}>
+                      <RefreshCw size={14} className="mt-0.5 shrink-0" style={{ color: 'rgba(200,169,107,0.8)' }} />
+                      <div>
+                        <p className="text-xs font-semibold" style={{ color: 'rgba(200,169,107,0.95)' }}>Review submitted — pending verification</p>
+                        <p className="text-xs text-[var(--muted-color)] mt-0.5">Our team will verify your Google review and activate your loyalty card within 24 hours.</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-xs text-[var(--muted-color)] mb-4 leading-relaxed">
+                        Leave a quick Google review to activate your loyalty card. Every {loyalty.programs?.[0]?.triggerBookings ?? 3} completed washes earns you a free one.
+                      </p>
+                      <button
+                        onClick={openGoogleReview}
+                        disabled={activatingLoyalty}
+                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition disabled:opacity-60"
+                        style={{ background: 'rgba(200,169,107,0.9)', color: '#0a0a0a' }}>
+                        {activatingLoyalty
+                          ? <><RefreshCw size={14} className="animate-spin" /> Submitting…</>
+                          : <><Star size={14} style={{ fill: '#0a0a0a' }} /> Rate on Google</>}
+                      </button>
+                    </>
+                  )}
                 </div>
               )}
 

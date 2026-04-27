@@ -4,7 +4,7 @@ import {
   Plus, Edit2, Trash2, Ticket, AlertCircle, CheckCircle,
   Users, Gift, X, Star, Tag, RefreshCw, ChevronRight,
   Percent, DollarSign, Zap, Search, Clock, TrendingUp,
-  ToggleLeft, ToggleRight, Info, ArrowUpDown, Send,
+  ToggleLeft, ToggleRight, Info, ArrowUpDown, Send, ShieldCheck, ShieldX,
 } from 'lucide-react';
 import AppModal from '../../components/shared/AppModal';
 
@@ -682,7 +682,9 @@ const TABS = [
 export default function AdminOffers() {
   const [offers,          setOffers]         = useState([]);
   const [userCoupons,     setUserCoupons]    = useState([]);
-  const [loyaltyProgress, setLoyaltyProgress] = useState([]);
+  const [loyaltyProgress,  setLoyaltyProgress]  = useState([]);
+  const [pendingReviews,   setPendingReviews]   = useState([]);
+  const [reviewWorking,    setReviewWorking]    = useState(null); // userId being acted on
   const [loading,         setLoading]        = useState(true);
   const [toast,           setToast]          = useState('');
   const [toastErr,        setToastErr]       = useState('');
@@ -709,17 +711,46 @@ export default function AdminOffers() {
 
   const fetchAll = useCallback(async () => {
     try {
-      const [o, c, p] = await Promise.all([
+      const [o, c, p, r] = await Promise.all([
         offersAPI.getAll(),
         offersAPI.getUserCoupons(),
         offersAPI.getLoyaltyProgress(),
+        offersAPI.getPendingReviews(),
       ]);
       setOffers(Array.isArray(o) ? o : []);
       setUserCoupons(Array.isArray(c) ? c : []);
       setLoyaltyProgress(Array.isArray(p) ? p : []);
+      setPendingReviews(Array.isArray(r) ? r : []);
     } catch { showToast('Failed to load data.', true); }
     finally { setLoading(false); }
   }, [showToast]);
+
+  const handleApproveReview = async (userId, userName) => {
+    setReviewWorking(userId);
+    try {
+      await offersAPI.approveReview(userId);
+      showToast(`Loyalty activated for ${userName}.`);
+      fetchAll();
+    } catch { showToast('Failed to approve review.', true); }
+    finally { setReviewWorking(null); }
+  };
+
+  const handleRejectReview = (userId, userName) => {
+    showConfirm(
+      'Reject Review Request',
+      `Reject the Google review claim from ${userName}? They will need to re-submit.`,
+      async () => {
+        closeModal();
+        setReviewWorking(userId);
+        try {
+          await offersAPI.rejectReview(userId);
+          showToast(`Review request rejected for ${userName}.`);
+          fetchAll();
+        } catch { showToast('Failed to reject review.', true); }
+        finally { setReviewWorking(null); }
+      }
+    );
+  };
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
@@ -931,6 +962,11 @@ export default function AdminOffers() {
                     {loyaltyOffers.length}
                   </span>
                 )}
+                {t.id === 'loyalty' && pendingReviews.length > 0 && (
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/30 text-amber-400">
+                    {pendingReviews.length} pending
+                  </span>
+                )}
                 {t.id === 'coupons' && (
                   <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${tab === t.id ? 'bg-white/25 text-[var(--ink)]' : 'bg-amber-500/20 text-amber-400'}`}>
                     {availableCoupons.length}
@@ -986,6 +1022,63 @@ export default function AdminOffers() {
                   <div className="space-y-3">
                     {loyaltyOffers.map(o => (
                       <OfferCard key={o.id} offer={o} onEdit={handleEdit} onDelete={handleDelete} />
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* ── Pending Review Approvals ── */}
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <p className="text-xs font-bold uppercase tracking-widest text-[var(--muted-color)]">
+                    Pending Review Verifications
+                  </p>
+                  {pendingReviews.length > 0 && (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400">
+                      {pendingReviews.length}
+                    </span>
+                  )}
+                </div>
+
+                {pendingReviews.length === 0 ? (
+                  <div className="glass-card px-5 py-4 flex items-center gap-3">
+                    <ShieldCheck size={16} style={{ color: 'rgba(200,169,107,0.5)' }} />
+                    <span className="text-xs text-[var(--muted-color)]">No pending review requests.</span>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {pendingReviews.map(r => (
+                      <div key={r.userId} className="glass-card px-4 py-3 flex items-center gap-3">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-[var(--heading-color)] truncate">{r.userName}</p>
+                          <p className="text-xs text-[var(--muted-color)] truncate">{r.userEmail}</p>
+                          <p className="text-[10px] mt-0.5" style={{ color: 'rgba(200,169,107,0.65)' }}>
+                            {r.completedBookings} completed wash{r.completedBookings !== 1 ? 'es' : ''} · submitted {new Date(r.pendingAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            onClick={() => handleApproveReview(r.userId, r.userName)}
+                            disabled={reviewWorking === r.userId}
+                            title="Approve — activate loyalty counter"
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition disabled:opacity-50"
+                            style={{ background: 'rgba(34,197,94,0.15)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.3)' }}>
+                            {reviewWorking === r.userId
+                              ? <RefreshCw size={12} className="animate-spin" />
+                              : <ShieldCheck size={12} />}
+                            Approve
+                          </button>
+                          <button
+                            onClick={() => handleRejectReview(r.userId, r.userName)}
+                            disabled={reviewWorking === r.userId}
+                            title="Reject — reset the request"
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition disabled:opacity-50"
+                            style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.25)' }}>
+                            <ShieldX size={12} />
+                            Reject
+                          </button>
+                        </div>
+                      </div>
                     ))}
                   </div>
                 )}

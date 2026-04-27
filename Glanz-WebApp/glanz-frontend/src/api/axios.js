@@ -11,14 +11,19 @@ const apiClient = axios.create({
   },
 });
 
+// ── In-memory token store (never touches localStorage) ────────────────────────
+// The access token lives only in JS heap. The HttpOnly refresh-token cookie
+// is sent automatically by the browser and is inaccessible to JS.
+export function setAuthToken(token) {
+  if (token) {
+    apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+  } else {
+    delete apiClient.defaults.headers.common['Authorization'];
+  }
+}
+
 apiClient.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
+  (config) => config,
   (error) => Promise.reject(error)
 );
 
@@ -64,15 +69,13 @@ apiClient.interceptors.response.use(
       try {
         const res = await apiClient.post('/Auth/refresh');
         const newToken = res.data.token;
-        localStorage.setItem('token', newToken);
-        apiClient.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+        setAuthToken(newToken);
         flushQueue(null, newToken);
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return apiClient(originalRequest);
       } catch (refreshError) {
         flushQueue(refreshError, null);
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        setAuthToken(null);
         window.location.replace('/login');
         return Promise.reject(refreshError);
       } finally {

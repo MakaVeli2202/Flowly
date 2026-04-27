@@ -146,11 +146,21 @@ namespace Glanz.API.DTOs
     {
         public int TotalCompletedBookings { get; set; }
         public int EligibleCompletedBookings { get; set; }
+        public bool IsGoogleReviewPending { get; set; }
         public bool IsGoogleReviewActivated { get; set; }
         public DateTime? GoogleReviewActivatedAt { get; set; }
         public List<CustomerLoyaltyProgramProgressDto> Programs { get; set; } = new();
         public List<UserOfferDto> AvailableCoupons { get; set; } = new();
         public List<UserOfferDto> PendingActivationCoupons { get; set; } = new();
         public string GoogleReviewUrl { get; set; } = string.Empty;
+    }
+
+    public class PendingReviewDto
+    {
+        public int UserId { get; set; }
+        public string UserName { get; set; } = string.Empty;
+        public string UserEmail { get; set; } = string.Empty;
+        public DateTime PendingAt { get; set; }
+        public int CompletedBookings { get; set; }
     }
 }

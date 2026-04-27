@@ -17,11 +17,13 @@ namespace Glanz.API.Controllers
 
         private readonly AppDbContext _context;
         private readonly IAdminNotificationService _notificationService;
+        private readonly IAuditService _audit;
 
-        public OffersController(AppDbContext context, IAdminNotificationService notificationService)
+        public OffersController(AppDbContext context, IAdminNotificationService notificationService, IAuditService audit)
         {
             _context = context;
             _notificationService = notificationService;
+            _audit = audit;
         }
 
         private int? GetUserId()
@@ -173,14 +175,15 @@ namespace Glanz.API.Controllers
 
             return Ok(new CustomerLoyaltyDto
             {
-                TotalCompletedBookings = completedBookings,
+                TotalCompletedBookings    = completedBookings,
                 EligibleCompletedBookings = eligibleCompletedBookings,
-                IsGoogleReviewActivated = user.LoyaltyGoogleReviewActivatedAt.HasValue,
-                GoogleReviewActivatedAt = user.LoyaltyGoogleReviewActivatedAt,
-                Programs = programProgress,
-                AvailableCoupons = unlockedCoupons.Select(MapUserOffer).ToList(),
-                PendingActivationCoupons = pendingActivationCoupons.Select(MapUserOffer).ToList(),
-                GoogleReviewUrl = GoogleReviewUrl
+                IsGoogleReviewPending     = user.LoyaltyReviewPendingAt.HasValue && !user.LoyaltyGoogleReviewActivatedAt.HasValue,
+                IsGoogleReviewActivated   = user.LoyaltyGoogleReviewActivatedAt.HasValue,
+                GoogleReviewActivatedAt   = user.LoyaltyGoogleReviewActivatedAt,
+                Programs                  = programProgress,
+                AvailableCoupons          = unlockedCoupons.Select(MapUserOffer).ToList(),
+                PendingActivationCoupons  = pendingActivationCoupons.Select(MapUserOffer).ToList(),
+                GoogleReviewUrl           = GoogleReviewUrl
             });
         }
 
@@ -189,27 +192,124 @@ namespace Glanz.API.Controllers
         public async Task<ActionResult> ActivateGoogleReviewLoyalty()
         {
             var userId = GetUserId();
-            if (!userId.HasValue)
-            {
-                return Unauthorized();
-            }
+            if (!userId.HasValue) return Unauthorized();
 
             var user = await _context.Users.FindAsync(userId.Value);
-            if (user == null)
+            if (user == null) return Unauthorized();
+
+            // Already fully approved — nothing to do.
+            if (user.LoyaltyGoogleReviewActivatedAt.HasValue)
+                return Ok(new
+                {
+                    message           = "Loyalty counter already activated.",
+                    isPending         = false,
+                    googleReviewUrl   = GoogleReviewUrl,
+                });
+
+            // Mark as pending admin approval (idempotent).
+            var isNew = !user.LoyaltyReviewPendingAt.HasValue;
+            user.LoyaltyReviewPendingAt ??= DateTime.UtcNow;
+            user.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            if (isNew)
             {
-                return Unauthorized();
+                await _audit.LogAsync(
+                    action:     "LoyaltyReviewRequested",
+                    userId:     user.Id,
+                    userEmail:  user.Email,
+                    entityType: "User",
+                    entityId:   user.Id.ToString());
             }
+
+            return Ok(new
+            {
+                message         = "Review submission received. An admin will verify and activate your loyalty counter shortly.",
+                isPending       = true,
+                googleReviewUrl = GoogleReviewUrl,
+            });
+        }
+
+        // ── Admin: list pending review requests ──────────────────────────────────
+
+        [Authorize(Roles = "Admin")]
+        [HttpGet("loyalty/pending-reviews")]
+        public async Task<ActionResult<IEnumerable<PendingReviewDto>>> GetPendingReviews()
+        {
+            var pending = await _context.Users
+                .Where(u => u.LoyaltyReviewPendingAt.HasValue && !u.LoyaltyGoogleReviewActivatedAt.HasValue && u.IsActive)
+                .OrderBy(u => u.LoyaltyReviewPendingAt)
+                .ToListAsync();
+
+            var userIds = pending.Select(u => u.Id).ToList();
+
+            var bookingCounts = await _context.Bookings
+                .Where(b => b.UserId.HasValue && userIds.Contains(b.UserId.Value) && b.Status == BookingStatus.Completed)
+                .GroupBy(b => b.UserId!.Value)
+                .Select(g => new { UserId = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.UserId, x => x.Count);
+
+            var result = pending.Select(u => new PendingReviewDto
+            {
+                UserId           = u.Id,
+                UserName         = $"{u.FirstName} {u.LastName}".Trim(),
+                UserEmail        = u.Email,
+                PendingAt        = u.LoyaltyReviewPendingAt!.Value,
+                CompletedBookings = bookingCounts.TryGetValue(u.Id, out var c) ? c : 0,
+            });
+
+            return Ok(result);
+        }
+
+        // ── Admin: approve a pending review ──────────────────────────────────────
+
+        [Authorize(Roles = "Admin")]
+        [HttpPost("loyalty/{userId:int}/approve-review")]
+        public async Task<IActionResult> ApproveGoogleReview(int userId)
+        {
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null) return NotFound(new { message = "User not found." });
+
+            if (!user.LoyaltyReviewPendingAt.HasValue)
+                return BadRequest(new { message = "No pending review request for this user." });
 
             user.LoyaltyGoogleReviewActivatedAt ??= DateTime.UtcNow;
             user.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
-            return Ok(new
-            {
-                message = "Loyalty counter activated.",
-                googleReviewActivatedAt = user.LoyaltyGoogleReviewActivatedAt,
-                googleReviewUrl = GoogleReviewUrl
-            });
+            var adminId    = GetUserId();
+            await _audit.LogAsync(
+                action:     "LoyaltyReviewApproved",
+                userId:     adminId,
+                entityType: "User",
+                entityId:   userId.ToString(),
+                metadata:   new { approvedUserId = userId, userEmail = user.Email });
+
+            return Ok(new { message = $"Loyalty counter activated for {user.Email}." });
+        }
+
+        // ── Admin: reject a pending review ───────────────────────────────────────
+
+        [Authorize(Roles = "Admin")]
+        [HttpPost("loyalty/{userId:int}/reject-review")]
+        public async Task<IActionResult> RejectGoogleReview(int userId)
+        {
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null) return NotFound(new { message = "User not found." });
+
+            user.LoyaltyReviewPendingAt = null;
+            user.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            var adminId = GetUserId();
+            await _audit.LogAsync(
+                action:     "LoyaltyReviewRejected",
+                userId:     adminId,
+                entityType: "User",
+                entityId:   userId.ToString(),
+                metadata:   new { rejectedUserId = userId, userEmail = user.Email });
+
+            return Ok(new { message = $"Review request rejected for {user.Email}." });
         }
 
         [Authorize]
@@ -301,6 +401,11 @@ namespace Glanz.API.Controllers
                 return BadRequest(new { message = "Code is required for regular offers." });
             }
 
+            if (dto.DiscountType == DiscountType.Percentage && dto.DiscountValue > 100)
+            {
+                return BadRequest(new { message = "Percentage discount cannot exceed 100%." });
+            }
+
             if (dto.IsLoyaltyProgram && (!dto.TriggerCompletedBookings.HasValue || dto.TriggerCompletedBookings <= 0))
             {
                 return BadRequest(new { message = "Trigger completed bookings must be greater than zero for loyalty offers." });
@@ -374,6 +479,12 @@ namespace Glanz.API.Controllers
             if (!offer.IsLoyaltyProgram && string.IsNullOrWhiteSpace(offer.Code))
             {
                 return BadRequest(new { message = "Code is required for regular offers." });
+            }
+
+            if ((dto.DiscountType ?? offer.DiscountType) == DiscountType.Percentage
+                && (dto.DiscountValue ?? offer.DiscountValue) > 100)
+            {
+                return BadRequest(new { message = "Percentage discount cannot exceed 100%." });
             }
 
             if (offer.IsLoyaltyProgram && (!offer.TriggerCompletedBookings.HasValue || offer.TriggerCompletedBookings <= 0))
