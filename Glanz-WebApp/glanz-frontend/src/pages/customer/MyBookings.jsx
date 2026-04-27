@@ -140,18 +140,17 @@ function MyBookings() {
     setTimeout(() => setCopiedCode(null), 2000);
   };
 
-  const openGoogleReview = () => {
-    window.open(loyalty?.googleReviewUrl || 'https://www.google.com/search?q=Glanz+Qatar+Google+review', '_blank', 'noopener,noreferrer');
-  };
+  const GOOGLE_REVIEW_URL = 'https://g.page/r/CbY8wgSE0iXGEAE/review';
 
-  const activateLoyaltyCounter = async () => {
+  const openGoogleReview = async () => {
+    localStorage.setItem('glanz_review_clicked', '1');
+    window.open(GOOGLE_REVIEW_URL, '_blank', 'noopener,noreferrer');
     try {
       setActivatingLoyalty(true);
       await offersAPI.activateGoogleReviewLoyalty();
       await fetchLoyalty();
-    } catch (err) {
-      alert(err.response?.data?.message || 'Failed to activate loyalty counter.');
-    } finally { setActivatingLoyalty(false); }
+    } catch { /* silently ignore — already activated or network hiccup */ }
+    finally { setActivatingLoyalty(false); }
   };
 
   const handleCancelBooking = async (bookingId, bookingNumber) => {
@@ -697,13 +696,12 @@ function MyBookings() {
         {/* ── Loyalty panel ──────────────────────────────────────────────── */}
         {loyalty && (
           <div className="glass-card mb-8 p-6 overflow-hidden relative">
-            {/* Brand-gold decorative orbs */}
             <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(200,169,107,0.12), transparent 70%)' }} />
             <div className="absolute -bottom-10 -left-10 w-32 h-32 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(14,165,160,0.10), transparent 70%)' }} />
-            {/* Gold top accent line */}
             <div className="absolute top-0 left-0 right-0 h-0.5 rounded-t-2xl" style={{ background: 'linear-gradient(90deg, transparent, rgba(200,169,107,0.7), transparent)' }} />
 
             <div className="relative">
+              {/* Header */}
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded-xl border flex items-center justify-center flex-shrink-0" style={{ borderColor: 'rgba(200,169,107,0.35)', background: 'rgba(200,169,107,0.10)' }}>
                   <Star size={18} className="text-yellow-300 fill-yellow-300" />
@@ -714,95 +712,138 @@ function MyBookings() {
                 </div>
               </div>
 
-              {/* Google review unlock */}
-              {!loyalty.isGoogleReviewActivated && (
-                <div className="mb-6 rounded-xl border p-4" style={{ borderColor: 'rgba(200,169,107,0.25)', background: 'rgba(200,169,107,0.05)' }}>
+              {/* Step 1 — unlock with Google review */}
+              {!(loyalty.isGoogleReviewActivated || !!localStorage.getItem('DEV_BYPASS_REVIEW')) && (
+                <div className="mb-6 rounded-xl border p-5" style={{ borderColor: 'rgba(200,169,107,0.28)', background: 'rgba(200,169,107,0.05)' }}>
                   <div className="flex items-center gap-2 mb-2">
                     <Star size={14} className="text-yellow-300" />
-                    <span className="text-sm font-bold" style={{ color: 'rgba(200,169,107,0.95)' }}>One-Time Google Review Unlock</span>
+                    <span className="text-sm font-bold" style={{ color: 'rgba(200,169,107,0.95)' }}>Unlock Your Loyalty Card</span>
                   </div>
-                  <p className="text-xs text-[var(--muted-color)] mb-4">Rate Glanz on Google once to start your loyalty counter. Your next completed wash then begins the 3-slot reward cycle.</p>
-                  <div className="flex flex-wrap gap-2">
-                    <button onClick={openGoogleReview} className="px-4 py-2 rounded-xl bg-yellow-300 text-slate-900 text-xs font-bold hover:bg-yellow-200 transition">
-                      Rate on Google
-                    </button>
-                    <button onClick={activateLoyaltyCounter} disabled={activatingLoyalty}
-                      className="px-4 py-2 rounded-xl border border-[var(--border-color)] bg-white/5 text-[var(--text-color)] text-xs font-semibold hover:bg-white/10 transition disabled:opacity-50">
-                      {activatingLoyalty ? 'Activating…' : 'I rated — unlock my counter'}
-                    </button>
-                  </div>
+                  <p className="text-xs text-[var(--muted-color)] mb-4 leading-relaxed">
+                    Leave a quick Google review to activate your loyalty card. Every {loyalty.programs?.[0]?.triggerBookings ?? 3} completed washes earns you a free one.
+                  </p>
+                  <button
+                    onClick={openGoogleReview}
+                    disabled={activatingLoyalty}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition disabled:opacity-60"
+                    style={{ background: 'rgba(200,169,107,0.9)', color: '#0a0a0a' }}>
+                    {activatingLoyalty
+                      ? <><RefreshCw size={14} className="animate-spin" /> Activating…</>
+                      : <><Star size={14} style={{ fill: '#0a0a0a' }} /> Rate on Google</>}
+                  </button>
                 </div>
               )}
 
-              {/* Progress programs */}
-              {loyalty.programs?.length > 0 ? (
-                <div className="space-y-5 mb-6">
-                  {loyalty.programs.map((prog) => (
-                    <div key={prog.offerId}>
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm font-semibold text-[var(--heading-color)]">{prog.programName}</span>
-                        <span className="text-xs" style={{ color: 'rgba(200,169,107,0.75)' }}>{prog.completedBookings} / {prog.triggerBookings}</span>
-                      </div>
-                      {/* Slot cells */}
-                      <div className="grid gap-2 mb-3" style={{ gridTemplateColumns: `repeat(${prog.triggerBookings}, 1fr)` }}>
-                        {Array.from({ length: prog.triggerBookings }).map((_, i) => {
-                          const filled = i < prog.completedBookings;
-                          return (
-                            <div key={i} className={`h-12 rounded-xl border flex items-center justify-center font-black text-sm transition-all ${
-                              filled
-                                ? 'border-yellow-300 bg-yellow-300/90 text-slate-900'
-                                : 'border-[var(--border-color)] bg-white/5 text-[var(--muted-color)]'
-                            }`}>
-                              {i + 1}
+              {/* Step 2 — stamp cards */}
+              {(loyalty.isGoogleReviewActivated || !!localStorage.getItem('DEV_BYPASS_REVIEW')) && (
+                loyalty.programs?.length > 0 ? (
+                  <div className="space-y-4 mb-4">
+                    {loyalty.programs.map((prog, idx) => {
+                      const rewardReady = prog.bookingsToNext === 0;
+                      const coupon = loyalty.availableCoupons?.[idx] ?? loyalty.availableCoupons?.[0];
+                      return (
+                        <div key={prog.offerId} className="rounded-2xl border p-5 transition-all"
+                          style={{
+                            borderColor: rewardReady ? 'rgba(200,169,107,0.55)' : 'rgba(200,169,107,0.18)',
+                            background:  rewardReady ? 'rgba(200,169,107,0.07)' : 'rgba(255,255,255,0.02)',
+                            borderStyle: 'dashed',
+                          }}>
+                          {/* Card header */}
+                          <div className="flex justify-between items-center mb-5">
+                            <span className="text-sm font-bold text-[var(--heading-color)]">{prog.programName}</span>
+                            {rewardReady
+                              ? <span className="text-xs font-bold px-2.5 py-1 rounded-full" style={{ background: 'rgba(200,169,107,0.20)', color: 'rgba(200,169,107,1)' }}>Reward Ready!</span>
+                              : <span className="text-xs" style={{ color: 'rgba(200,169,107,0.65)' }}>{prog.completedBookings} / {prog.triggerBookings} washes</span>
+                            }
+                          </div>
+
+                          {/* Stamp slots */}
+                          <div className="grid gap-3 mb-4" style={{ gridTemplateColumns: `repeat(${prog.triggerBookings}, 1fr)` }}>
+                            {Array.from({ length: prog.triggerBookings }).map((_, i) => {
+                              const filled = i < prog.completedBookings;
+                              return (
+                                <div key={i} className="flex flex-col items-center justify-center gap-1.5 rounded-2xl border-2 py-3 transition-all"
+                                  style={{
+                                    borderColor: filled ? 'rgba(200,169,107,0.8)' : 'rgba(200,169,107,0.18)',
+                                    borderStyle: filled ? 'solid' : 'dashed',
+                                    background:  filled ? 'rgba(200,169,107,0.12)' : 'rgba(255,255,255,0.02)',
+                                  }}>
+                                  <Car size={22} style={{ color: filled ? 'rgba(200,169,107,1)' : 'rgba(200,169,107,0.22)' }} />
+                                  <span className="text-[10px] font-bold" style={{ color: filled ? 'rgba(200,169,107,0.9)' : 'rgba(200,169,107,0.25)' }}>{i + 1}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          {/* Progress bar */}
+                          <div className="w-full bg-white/8 rounded-full h-1.5 overflow-hidden mb-3">
+                            <div className="h-1.5 rounded-full transition-all duration-700"
+                              style={{ width: `${prog.progressPercent}%`, background: 'linear-gradient(90deg, rgba(200,169,107,0.9), rgba(14,165,160,0.85))' }} />
+                          </div>
+
+                          {/* Reward CTA */}
+                          {rewardReady && coupon ? (
+                            <div className="mt-3 flex items-center gap-3 flex-wrap">
+                              <div className="flex items-center gap-2 rounded-lg px-3 py-2 flex-1 min-w-0" style={{ background: 'rgba(0,0,0,0.22)' }}>
+                                <code className="text-yellow-300 font-mono text-sm font-bold tracking-widest truncate">{coupon.personalCode}</code>
+                                <button onClick={() => copyCode(coupon.personalCode)} className="text-[var(--muted-color)] hover:text-white transition ml-auto flex-shrink-0" title="Copy">
+                                  {copiedCode === coupon.personalCode ? <Check size={13} className="text-green-400" /> : <Copy size={13} />}
+                                </button>
+                              </div>
+                              <button
+                                onClick={() => navigate(`/booking?coupon=${coupon.personalCode}`)}
+                                className="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-bold transition flex-shrink-0"
+                                style={{ background: 'rgba(200,169,107,0.9)', color: '#0a0a0a' }}>
+                                Book Free Wash <ArrowRight size={14} />
+                              </button>
                             </div>
-                          );
-                        })}
-                      </div>
-                      {/* Progress bar */}
-                      <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
-                        <div className="h-2 rounded-full transition-all duration-700"
-                          style={{ width: `${prog.progressPercent}%`, background: 'linear-gradient(90deg, rgba(200,169,107,0.9), rgba(14,165,160,0.85))' }} />
-                      </div>
-                      <p className="text-xs mt-2" style={{ color: 'rgba(200,169,107,0.65)' }}>
-                        {!loyalty.isGoogleReviewActivated
-                          ? 'Rate us on Google once to unlock the counter.'
-                          : prog.bookingsToNext === 0
-                            ? 'Reward ready — your free wash code is below.'
-                            : `${prog.bookingsToNext} more wash${prog.bookingsToNext !== 1 ? 'es' : ''} to unlock your reward.`}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm mb-6 text-[var(--muted-color)]">No active loyalty programs right now.</p>
+                          ) : rewardReady ? (
+                            <p className="text-xs mt-2" style={{ color: 'rgba(200,169,107,0.65)' }}>Your reward coupon is being issued — refresh in a moment.</p>
+                          ) : (
+                            <p className="text-xs" style={{ color: 'rgba(200,169,107,0.5)' }}>
+                              {prog.bookingsToNext} more wash{prog.bookingsToNext !== 1 ? 'es' : ''} to earn your free wash.
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-sm mb-4 text-[var(--muted-color)]">No active loyalty programs right now.</p>
+                )
               )}
 
-              {/* Coupons */}
-              {loyalty.availableCoupons?.length > 0 && (
-                <div>
+              {/* Extra coupons (admin-issued or overflow) */}
+              {loyalty.availableCoupons?.length > (loyalty.programs?.filter(p => p.bookingsToNext === 0).length ?? 0) && (
+                <div className="mt-2">
                   <div className="flex items-center gap-2 mb-3">
-                    <Gift size={15} className="text-yellow-300" />
-                    <span className="text-sm font-bold" style={{ color: 'rgba(200,169,107,0.95)' }}>Rewards Ready to Use</span>
+                    <Gift size={14} className="text-yellow-300" />
+                    <span className="text-sm font-bold" style={{ color: 'rgba(200,169,107,0.90)' }}>Other Rewards</span>
                   </div>
                   <div className="grid sm:grid-cols-2 gap-3">
-                    {loyalty.availableCoupons.map((coupon) => (
+                    {loyalty.availableCoupons.slice(loyalty.programs?.filter(p => p.bookingsToNext === 0).length ?? 0).map((coupon) => (
                       <div key={coupon.id} className="rounded-xl border p-4" style={{ borderColor: 'rgba(200,169,107,0.20)', background: 'rgba(200,169,107,0.04)' }}>
                         <p className="text-sm font-semibold text-[var(--heading-color)] mb-2">{coupon.offerName}</p>
-                        <div className="flex items-center justify-between gap-2 rounded-lg px-3 py-2" style={{ background: 'rgba(0,0,0,0.18)' }}>
+                        <div className="flex items-center justify-between gap-2 rounded-lg px-3 py-2 mb-3" style={{ background: 'rgba(0,0,0,0.18)' }}>
                           <code className="text-yellow-300 font-mono text-sm font-bold tracking-widest">{coupon.personalCode}</code>
-                          <button onClick={() => copyCode(coupon.personalCode)} className="text-[var(--muted-color)] hover:text-[var(--text-color)] transition" title="Copy">
-                            {copiedCode === coupon.personalCode ? <Check size={14} className="text-green-400" /> : <Copy size={14} />}
+                          <button onClick={() => copyCode(coupon.personalCode)} className="text-[var(--muted-color)] hover:text-white transition" title="Copy">
+                            {copiedCode === coupon.personalCode ? <Check size={13} className="text-green-400" /> : <Copy size={13} />}
                           </button>
                         </div>
+                        <button
+                          onClick={() => navigate(`/booking?coupon=${coupon.personalCode}`)}
+                          className="w-full flex items-center justify-center gap-2 py-2 rounded-xl text-sm font-bold transition"
+                          style={{ background: 'rgba(200,169,107,0.9)', color: '#0a0a0a' }}>
+                          Book with Reward <ArrowRight size={14} />
+                        </button>
                         {coupon.expiresAt && (
-                          <p className="text-xs mt-2" style={{ color: 'rgba(200,169,107,0.60)' }}>
+                          <p className="text-[10px] mt-2 text-center" style={{ color: 'rgba(200,169,107,0.55)' }}>
                             Expires {new Date(coupon.expiresAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                           </p>
                         )}
                       </div>
                     ))}
                   </div>
-                  <p className="text-xs mt-3 text-[var(--muted-color)]">Apply these codes at checkout to redeem your reward.</p>
                 </div>
               )}
             </div>

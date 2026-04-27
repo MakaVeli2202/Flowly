@@ -3,7 +3,6 @@ import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Link, useNavigate } from 'react-router-dom';
 import heroVideo from '../../assets/videos/hero-detailing.mp4';
-import rainOnGlassVideo from '../../assets/videos/RainOnGlass.mp4';
 import {
   ArrowRight, Star, Shield, Clock, Award, Sparkles, Zap,
   MapPin, ChevronLeft, ChevronRight, ChevronDown, CheckCircle2,
@@ -562,7 +561,7 @@ function Home() {
   /* ── Data fetching — parallelized ── */
   useEffect(() => {
     Promise.allSettled([
-      statsAPI.getPublic().then(data => { setStats(Array.isArray(data) ? data : []); return data; }).catch(() => []),
+      statsAPI.getPublic().then(data => { setStats(data || {}); return data; }).catch(() => {}),
       reviewsAPI.getPublic().then(data => { setReviews(Array.isArray(data) ? data : []); return data; }).catch(() => []),
       packagesAPI.getAll().then(data => {
         const active = (data || []).filter(p => p.isActive);
@@ -843,18 +842,6 @@ function Home() {
       />
       <style>{PRISM_CSS}</style>
       <PrismaticCursorOrb />
-
-      {/* ══ RAIN ON GLASS — full-page ambient background ══ */}
-      <video
-        className="fixed inset-0 w-full h-full object-cover pointer-events-none select-none"
-        style={{ zIndex: 0, opacity: 0.13, mixBlendMode: 'screen' }}
-        autoPlay loop muted playsInline
-        preload="none"
-        poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1920 1080'%3E%3Crect fill='%230d1117' width='1920' height='1080'/%3E%3C/svg%3E"
-        aria-hidden="true"
-      >
-        <source src={rainOnGlassVideo} type="video/mp4" />
-      </video>
 
       {/* ══ HERO ══ */}
       <section ref={heroSectionRef} className="relative min-h-screen flex items-center justify-center overflow-hidden">
@@ -1288,9 +1275,18 @@ function Home() {
             <p className="text-[var(--muted-color)] text-sm mb-3">
               Based on <span className="font-semibold text-primary">{reviews.length}+ reviews</span>
             </p>
-            <div className="flex justify-center">
+            <div className="flex flex-col items-center gap-3">
               <img src="https://cdn.trustindex.io/assets/platform/Google/logo-dark.svg" alt="Google Reviews" className="h-8"
                 onError={e => { e.target.style.display = 'none'; }} />
+              <a
+                href="https://g.page/r/CbY8wgSE0iXGEAE/review"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold border border-primary/40 text-primary hover:bg-primary/10 transition-all duration-200"
+              >
+                <Star size={14} className="fill-primary" />
+                Leave a Review
+              </a>
             </div>
           </div>
           {loading.reviews ? (

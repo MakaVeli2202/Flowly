@@ -50,5 +50,10 @@ export const offersAPI = {
   assignToUser: async (offerId, userId) => withRetry(async () => {
     const response = await apiClient.post(`/Offers/${offerId}/assign/${userId}`);
     return response.data;
-  })
+  }),
+
+  assignBulk: async (offerId, userIds) => withRetry(async () => {
+    const response = await apiClient.post(`/Offers/${offerId}/assign-bulk`, { userIds });
+    return response.data;
+  }),
 };

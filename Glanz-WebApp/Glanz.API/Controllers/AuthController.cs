@@ -1110,14 +1110,14 @@ namespace Glanz.API.Controllers
                     updates.Add(("payslip.companyName", dto.CompanyName));
                 if (dto.CompanyLogo != null)
                     updates.Add(("payslip.companyLogo", dto.CompanyLogo ?? ""));
-                if (!string.IsNullOrWhiteSpace(dto.CompanyAddress))
-                    updates.Add(("payslip.companyAddress", dto.CompanyAddress));
-                if (!string.IsNullOrWhiteSpace(dto.CompanyPhone))
-                    updates.Add(("payslip.companyPhone", dto.CompanyPhone));
-                if (!string.IsNullOrWhiteSpace(dto.CompanyEmail))
-                    updates.Add(("payslip.companyEmail", dto.CompanyEmail));
-                if (!string.IsNullOrWhiteSpace(dto.FooterText))
-                    updates.Add(("payslip.footerText", dto.FooterText));
+                if (dto.CompanyAddress != null)
+                    updates.Add(("payslip.companyAddress", dto.CompanyAddress.Trim()));
+                if (dto.CompanyPhone != null)
+                    updates.Add(("payslip.companyPhone", dto.CompanyPhone.Trim()));
+                if (dto.CompanyEmail != null)
+                    updates.Add(("payslip.companyEmail", dto.CompanyEmail.Trim()));
+                if (dto.FooterText != null)
+                    updates.Add(("payslip.footerText", dto.FooterText.Trim()));
 
                 foreach (var (key, value) in updates)
                 {

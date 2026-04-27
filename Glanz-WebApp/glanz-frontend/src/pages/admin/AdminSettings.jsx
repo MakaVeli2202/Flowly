@@ -120,13 +120,13 @@ export default function AdminSettings() {
         setSmsEnabled(data?.sms?.followUpEnabled ?? false);
         if (data?.businessHours) {
           setBusinessHours({
-            Sunday: data.businessHours.Sunday || '09:00-18:00',
-            Monday: data.businessHours.Monday || '09:00-18:00',
-            Tuesday: data.businessHours.Tuesday || '09:00-18:00',
-            Wednesday: data.businessHours.Wednesday || '09:00-18:00',
-            Thursday: data.businessHours.Thursday || '09:00-18:00',
-            Friday: data.businessHours.Friday || '00:00-00:00',
-            Saturday: data.businessHours.Saturday || '10:00-16:00',
+            Sunday:    data.businessHours.sunday    || '09:00-18:00',
+            Monday:    data.businessHours.monday    || '09:00-18:00',
+            Tuesday:   data.businessHours.tuesday   || '09:00-18:00',
+            Wednesday: data.businessHours.wednesday || '09:00-18:00',
+            Thursday:  data.businessHours.thursday  || '09:00-18:00',
+            Friday:    data.businessHours.friday    || '00:00-00:00',
+            Saturday:  data.businessHours.saturday  || '10:00-16:00',
           });
         }
       })

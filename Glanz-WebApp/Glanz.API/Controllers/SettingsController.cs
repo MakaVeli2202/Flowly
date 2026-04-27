@@ -64,7 +64,7 @@ namespace Glanz.API.Controllers
         [HttpGet]
         public async Task<IActionResult> GetSettings()
         {
-            var keys = new[] { MultipliersKey, WorkerTravelKey, SmsFollowUpKey };
+            var keys = new[] { MultipliersKey, WorkerTravelKey, SmsFollowUpKey, DiscountKey, BusinessHoursKey };
             var rows = await _context.SystemSettings
                 .AsNoTracking()
                 .Where(s => keys.Contains(s.Key))
@@ -94,6 +94,11 @@ namespace Glanz.API.Controllers
             bool smsFollowUpEnabled = false;
             if (bool.TryParse(GetVal(SmsFollowUpKey), out var parsedSms))
                 smsFollowUpEnabled = parsedSms;
+
+            // ── subscription discount ────────────────────────────────────────────
+            decimal subscriptionDiscountPercent = 10;
+            if (decimal.TryParse(GetVal(DiscountKey), out var parsedDiscount) && parsedDiscount >= 0)
+                subscriptionDiscountPercent = parsedDiscount;
 
             // ── business hours ──────────────────────────────────────────────────
             var businessHours = new BusinessHoursPerDayDto();
@@ -126,6 +131,7 @@ namespace Glanz.API.Controllers
                 pricing = new { vehicleMultipliers },
                 booking = new { workerTravelBufferMinutes },
                 sms     = new { followUpEnabled = smsFollowUpEnabled },
+                subscriptionDiscountPercent,
                 businessHours,
             });
         }

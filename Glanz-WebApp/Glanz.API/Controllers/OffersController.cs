@@ -285,7 +285,8 @@ namespace Glanz.API.Controllers
                 UserName = $"{u.FirstName} {u.LastName}".Trim(),
                 UserEmail = u.Email,
                 CompletedBookingsCount = completedBookingsByUser.TryGetValue(u.Id, out var completed) ? completed : 0,
-                AvailableCouponsCount = availableCouponsByUser.TryGetValue(u.Id, out var coupons) ? coupons : 0
+                AvailableCouponsCount = availableCouponsByUser.TryGetValue(u.Id, out var coupons) ? coupons : 0,
+                MemberSince = u.CreatedAt
             });
 
             return Ok(progress);
@@ -439,6 +440,59 @@ namespace Glanz.API.Controllers
             await _context.SaveChangesAsync();
             await _notificationService.NotifyOfferAssignedAsync(userId, offer, personalCode);
             return Ok(new { message = "Coupon assigned to user.", code = personalCode });
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpPost("{id}/assign-bulk")]
+        public async Task<ActionResult> AssignOfferToMultipleUsers(int id, [FromBody] BulkAssignDto dto)
+        {
+            var offer = await _context.Offers.FindAsync(id);
+            if (offer == null)
+                return NotFound(new { message = "Offer not found." });
+
+            if (dto.UserIds == null || dto.UserIds.Count == 0)
+                return BadRequest(new { message = "No users specified." });
+
+            var userIds = dto.UserIds.Distinct().ToList();
+            var existingUserIds = await _context.Users
+                .Where(u => userIds.Contains(u.Id))
+                .Select(u => u.Id)
+                .ToListAsync();
+
+            var assigned = new List<(int userId, string code)>();
+            var skipped  = new List<int>();
+
+            foreach (var userId in existingUserIds)
+            {
+                var personalCode = BuildPersonalCode(offer.Code, userId);
+                var already = await _context.UserOffers.AnyAsync(uo => uo.PersonalCode == personalCode && !uo.IsRedeemed);
+                if (already) { skipped.Add(userId); continue; }
+
+                _context.UserOffers.Add(new UserOffer
+                {
+                    UserId = userId,
+                    OfferId = offer.Id,
+                    PersonalCode = personalCode,
+                    AssignedAt = DateTime.UtcNow,
+                    ExpiresAt = DateTime.UtcNow.AddDays(Math.Max(1, offer.CouponValidityDays)),
+                    IsRedeemed = false
+                });
+                assigned.Add((userId, personalCode));
+            }
+            await _context.SaveChangesAsync();
+
+            foreach (var (userId, code) in assigned)
+            {
+                try { await _notificationService.NotifyOfferAssignedAsync(userId, offer, code); }
+                catch { /* notification failure must not abort the bulk operation */ }
+            }
+
+            return Ok(new
+            {
+                message  = $"{assigned.Count} coupon(s) assigned, {skipped.Count} skipped (already have one).",
+                assigned = assigned.Count,
+                skipped  = skipped.Count
+            });
         }
 
         private static string BuildPersonalCode(string? baseCode, int userId)

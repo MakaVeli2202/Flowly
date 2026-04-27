@@ -10,7 +10,7 @@ import { useSettings } from '../../context/SettingsContext';
 import {
   Calendar, Clock, User, Mail, Phone, Car,
   AlertCircle, CheckCircle, ChevronLeft, ChevronRight,
-  Tag, MapPin, Zap, ArrowRight, Ticket, Shield, Star, CreditCard,
+  Tag, MapPin, Zap, ArrowRight, Ticket, Shield, Star, CreditCard, Gift,
 } from 'lucide-react';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { stripePromise } from '../../api/stripe';
@@ -238,7 +238,7 @@ function BookingForm({ stripe, elements, isStripeMode }) {
     customerPhone:       canAutofillCustomerData ? user?.phone  || '' : '',
     customerAddress:     '',
     addressType:         'Home',
-    offerCode:           '',
+    offerCode:           new URLSearchParams(location.search).get('coupon')?.toUpperCase() || '',
     vehicleType:         'Sedan',
     vehicleMake:         '',
     vehicleModel:        '',
@@ -503,20 +503,25 @@ function BookingForm({ stripe, elements, isStripeMode }) {
         // Use server-authoritative price from quote if available; fall back to
         // client calculation only if the quote endpoint hasn't responded yet.
         const serverAmount = quote?.finalPrice ?? calculateTotal();
-        const intentRes = await bookingsAPI.createPaymentIntentV2({
-          amount: serverAmount,
-          scheduledDate: bookingData.scheduledDate,
-          timeSlot: bookingData.timeSlot,
-          durationMinutes: calculateDurationMinutes(),
-          customerEmail: bookingData.customerEmail,
-        });
-        const cardElement = elements.getElement(CardElement);
-        if (!cardElement) { setError('Card input unavailable. Please refresh and try again.'); return; }
-        const { error: stripeError, paymentIntent } = await stripe.confirmCardPayment(intentRes.clientSecret, {
-          payment_method: { card: cardElement, billing_details: { name: formData.customerName, email: formData.customerEmail } },
-        });
-        if (stripeError) { setError(stripeError.message || 'Payment failed. Please try another card.'); return; }
-        stripePaymentIntentId = paymentIntent?.id || stripePaymentIntentId;
+        if (serverAmount > 0) {
+          // Normal paid booking — run Stripe charge
+          const intentRes = await bookingsAPI.createPaymentIntentV2({
+            amount: serverAmount,
+            scheduledDate: bookingData.scheduledDate,
+            timeSlot: bookingData.timeSlot,
+            durationMinutes: calculateDurationMinutes(),
+            customerEmail: bookingData.customerEmail,
+          });
+          const cardElement = elements.getElement(CardElement);
+          if (!cardElement) { setError('Card input unavailable. Please refresh and try again.'); return; }
+          const { error: stripeError, paymentIntent } = await stripe.confirmCardPayment(intentRes.clientSecret, {
+            payment_method: { card: cardElement, billing_details: { name: formData.customerName, email: formData.customerEmail } },
+          });
+          if (stripeError) { setError(stripeError.message || 'Payment failed. Please try another card.'); return; }
+          stripePaymentIntentId = paymentIntent?.id || stripePaymentIntentId;
+        }
+        // serverAmount === 0 means a 100% discount coupon covers the full amount —
+        // skip Stripe entirely and let the backend validate the coupon at booking creation.
       }
       const response = await bookingsAPI.create({ ...bookingData, stripePaymentIntentId });
       setSuccess('Booking confirmed! Redirecting…');
@@ -967,7 +972,18 @@ function BookingForm({ stripe, elements, isStripeMode }) {
                 <div className="glass-card p-6 relative overflow-hidden">
                   <div className="prism-ray" style={{ left: '28%', width: '13%', animation: 'prism-ray-sweep 15s ease-in-out 9s infinite' }} />
                   <SectionHeading icon={CreditCard} step={7}>Payment</SectionHeading>
-                  {isStripeMode ? (
+                  {isStripeMode && (quote?.finalPrice ?? 1) === 0 ? (
+                    <div className="rounded-xl border border-dashed p-5 flex items-start gap-3"
+                      style={{ borderColor: 'rgba(200,169,107,0.35)', background: 'rgba(200,169,107,0.04)' }}>
+                      <Gift size={18} className="text-yellow-300 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-semibold text-[var(--heading-color)]">Free booking — no payment needed</p>
+                        <p className="text-xs text-[var(--muted-color)] mt-1">
+                          Your reward coupon covers the full amount. Confirm below to complete your booking.
+                        </p>
+                      </div>
+                    </div>
+                  ) : isStripeMode ? (
                     <>
                       <div className="rounded-xl border border-[var(--border-color)] bg-[var(--surface-bg)] p-4">
                         <CardElement options={{
@@ -1164,7 +1180,7 @@ function BookingForm({ stripe, elements, isStripeMode }) {
   );
 }
 
-/* ── Stripe wrapper (unchanged) ─────────────────────────────── */
+/* ── Stripe wrapper ─────────────────────────────────────────── */
 function StripeBookingForm() {
   const stripe   = useStripe();
   const elements = useElements();
@@ -1173,7 +1189,29 @@ function StripeBookingForm() {
 
 function Booking() {
   const { payments } = useFeatures();
-  return payments ? (
+  const devBypass = !!localStorage.getItem('DEV_BYPASS_PAYMENT');
+  const paymentsEnabled = payments || devBypass;
+
+  if (paymentsEnabled && !stripePromise) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-8">
+        <div className="glass-card max-w-md w-full p-8 text-center">
+          <div className="w-12 h-12 rounded-xl bg-red-500/12 border border-red-500/25 flex items-center justify-center mx-auto mb-4">
+            <CreditCard size={22} className="text-red-400" />
+          </div>
+          <h2 className="premium-heading text-xl font-bold text-[var(--heading-color)] mb-3">Stripe Not Configured</h2>
+          <p className="text-sm text-[var(--muted-color)] leading-relaxed mb-4">
+            <code className="text-xs bg-white/8 px-2 py-1 rounded">VITE_STRIPE_PUBLISHABLE_KEY</code> is missing from your environment file.
+          </p>
+          <p className="text-xs text-[var(--muted-color)]">
+            Add your Stripe publishable key (<code className="text-primary">pk_test_…</code> or <code className="text-primary">pk_live_…</code>) to <code className="text-xs bg-white/8 px-1.5 py-0.5 rounded">.env.development</code> and restart the dev server.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return paymentsEnabled ? (
     <Elements stripe={stripePromise}><StripeBookingForm /></Elements>
   ) : (
     <BookingForm stripe={null} elements={null} isStripeMode={false} />

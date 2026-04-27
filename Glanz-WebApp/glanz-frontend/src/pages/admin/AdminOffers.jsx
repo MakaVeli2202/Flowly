@@ -1,26 +1,37 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { offersAPI } from '../../api/offers';
 import {
   Plus, Edit2, Trash2, Ticket, AlertCircle, CheckCircle,
-  Users, Gift, X, Star,
+  Users, Gift, X, Star, Tag, RefreshCw, ChevronRight,
+  Percent, DollarSign, Zap, Search, Clock, TrendingUp,
+  ToggleLeft, ToggleRight, Info, ArrowUpDown, Send,
 } from 'lucide-react';
 import AppModal from '../../components/shared/AppModal';
 
+/* ─── Constants ──────────────────────────────────────────────────────────── */
 const DISCOUNT_TYPES = ['Percentage', 'FixedAmount', 'FreeBooking'];
 
-const DISCOUNT_BADGE = {
-  Percentage:  { color: '#c8a96b', label: 'Percent' },
-  FixedAmount: { color: '#0ea5a0', label: 'Fixed'   },
-  FreeBooking: { color: '#22c55e', label: 'Free'    },
+const DISCOUNT_META = {
+  Percentage:  { color: '#c8a96b', label: 'Percentage', icon: Percent,     hint: 'e.g. 20 = 20% off'       },
+  FixedAmount: { color: '#0ea5a0', label: 'Fixed QAR',  icon: DollarSign,  hint: 'e.g. 50 = 50 QAR off'    },
+  FreeBooking: { color: '#22c55e', label: 'Free Booking',icon: Gift,        hint: 'Discount value is ignored' },
 };
 
-const fmtValue = (type, value) => {
-  if (type === 'Percentage')  return `${value}%`;
+const fmtDiscount = (type, value) => {
+  if (type === 'Percentage')  return `${value}% off`;
   if (type === 'FreeBooking') return 'Free booking';
-  return `${value} QAR`;
+  return `${value} QAR off`;
 };
 
-/* ── PRISM CSS ─────────────────────────────────────────────── */
+const fmtDate = (d) => d ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : null;
+const isExpired = (endsAt) => endsAt && new Date(endsAt) < new Date();
+const isExpiringSoon = (endsAt) => {
+  if (!endsAt) return false;
+  const diff = new Date(endsAt) - new Date();
+  return diff > 0 && diff < 7 * 86400000;
+};
+
+/* ─── PRISM CSS ──────────────────────────────────────────────────────────── */
 const PRISM_CSS = `
 @keyframes holo-sweep {
   0%   { background-position: 0% 50%; }
@@ -28,25 +39,13 @@ const PRISM_CSS = `
 }
 @keyframes prism-ray-sweep {
   0%   { transform: translateX(-130%) skewX(-15deg); opacity: 0; }
-  10%  { opacity: 1; }
-  90%  { opacity: 1; }
+  10%  { opacity: 1; } 90% { opacity: 1; }
   100% { transform: translateX(460%) skewX(-15deg); opacity: 0; }
 }
-@keyframes spectrum-float {
-  0%,100% { transform: translate(0,0) rotate(0deg);           opacity: 0.18; }
-  33%      { transform: translate(12px,-14px) rotate(120deg); opacity: 0.30; }
-  66%      { transform: translate(-7px,8px)   rotate(240deg); opacity: 0.22; }
-}
-@keyframes cta-rainbow-glow {
-  0%,100% { box-shadow: 0 0 0 1.5px rgba(255,80,80,.42),  0 0 22px rgba(255,165,0,.15); }
-  33%      { box-shadow: 0 0 0 1.5px rgba(0,200,255,.42),  0 0 22px rgba(160,0,255,.15); }
-  66%      { box-shadow: 0 0 0 1.5px rgba(0,255,120,.42),  0 0 22px rgba(255,0,100,.15); }
-}
 @keyframes card-enter {
-  from { transform: translateY(14px) scale(0.988); opacity: 0; }
-  to   { transform: translateY(0)    scale(1);     opacity: 1; }
+  from { transform: translateY(12px) scale(0.99); opacity: 0; }
+  to   { transform: translateY(0) scale(1); opacity: 1; }
 }
-
 .prism-cursor-blob {
   position: fixed; pointer-events: none; z-index: 0;
   border-radius: 50%; filter: blur(90px); mix-blend-mode: screen;
@@ -56,724 +55,1099 @@ const PRISM_CSS = `
   position: absolute; top: -30%; height: 160%; pointer-events: none;
   transform: skewX(-18deg);
   background: linear-gradient(90deg,
-    transparent 0%, rgba(255,55,55,.030) 15%, rgba(255,200,0,.042) 30%,
-    rgba(0,255,145,.034) 50%, rgba(0,145,255,.034) 70%,
-    rgba(195,0,255,.026) 85%, transparent 100%);
+    transparent 0%, rgba(255,55,55,.028) 15%, rgba(255,200,0,.038) 30%,
+    rgba(0,255,145,.030) 50%, rgba(0,145,255,.030) 70%,
+    rgba(195,0,255,.022) 85%, transparent 100%);
 }
 .prism-glass { position: relative; overflow: hidden; }
 .prism-glass::after {
   content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
   background: radial-gradient(circle at var(--px,50%) var(--py,50%),
-    rgba(255,200,80,.10) 0%, rgba(80,255,160,.07) 30%,
-    rgba(40,130,255,.07) 55%, transparent 80%);
+    rgba(255,200,80,.09) 0%, rgba(80,255,160,.065) 30%,
+    rgba(40,130,255,.065) 55%, transparent 80%);
   opacity: 0; transition: opacity 0.32s; mix-blend-mode: screen;
 }
 .prism-glass:hover::after { opacity: 1; }
 .spectrum-line {
   height: 1.5px;
   background: linear-gradient(90deg,
-    transparent 0%, rgba(255,0,100,.80) 12%, rgba(255,165,0,.85) 24%,
-    rgba(255,255,0,.85) 36%, rgba(0,255,100,.85) 48%,
-    rgba(0,150,255,.85) 60%, rgba(150,0,255,.80) 72%, transparent 85%);
+    transparent 0%, rgba(255,0,100,.75) 12%, rgba(255,165,0,.80) 24%,
+    rgba(255,255,0,.80) 36%, rgba(0,255,100,.80) 48%,
+    rgba(0,150,255,.80) 60%, rgba(150,0,255,.75) 72%, transparent 85%);
   background-size: 200% 100%;
-  animation: holo-sweep 5s linear infinite; opacity: 0.40;
+  animation: holo-sweep 5s linear infinite; opacity: 0.38;
 }
-.cta-prism-glow { animation: cta-rainbow-glow 5s ease-in-out infinite; }
-.card-stagger   { animation: card-enter 0.52s cubic-bezier(0.22,1,0.36,1) both; }
-
-.field-input {
-  width: 100%; padding: 10px 14px; border-radius: 12px;
-  border: 1px solid var(--border-color); background: var(--surface-bg);
-  color: var(--text-color); font-size: 0.875rem;
-  transition: border-color 0.2s, box-shadow 0.2s;
-  outline: none; resize: none;
-}
-.field-input:focus {
-  border-color: rgba(200,169,107,0.65);
-  box-shadow: 0 0 0 3px rgba(200,169,107,0.12);
-}
-.field-input:disabled { opacity: 0.40; cursor: not-allowed; }
-.field-label {
-  display: block; font-size: 0.68rem; font-weight: 700;
-  letter-spacing: 0.20em; text-transform: uppercase;
-  color: var(--muted-color); margin-bottom: 7px;
-}
+.card-enter { animation: card-enter 0.45s cubic-bezier(0.22,1,0.36,1) both; }
+.fi { width:100%; padding:10px 14px; border-radius:12px; border:1px solid var(--border-color);
+  background:var(--surface-bg); color:var(--text-color); font-size:.875rem;
+  transition:border-color .2s, box-shadow .2s; outline:none; resize:none; }
+.fi:focus { border-color:rgba(200,169,107,.65); box-shadow:0 0 0 3px rgba(200,169,107,.12); }
+.fi:disabled { opacity:.38; cursor:not-allowed; }
+.fl { display:block; font-size:.68rem; font-weight:700; letter-spacing:.20em;
+  text-transform:uppercase; color:var(--muted-color); margin-bottom:6px; }
 `;
 
-/* ── Cursor orb ─────────────────────────────────────────────── */
-function PrismaticCursorOrb() {
+/* ─── Cursor orb ─────────────────────────────────────────────────────────── */
+function CursorOrb() {
   const ref = useRef(null);
   useEffect(() => {
     const el = ref.current; if (!el) return;
-    let mx = window.innerWidth / 2, my = window.innerHeight / 2;
-    let cx = mx, cy = my, rafId;
-    const onMove = (e) => { mx = e.clientX; my = e.clientY; };
+    let mx = window.innerWidth/2, my = window.innerHeight/2, cx = mx, cy = my, raf;
+    const onMove = e => { mx = e.clientX; my = e.clientY; };
     const tick = () => {
-      cx += (mx - cx) * 0.07; cy += (my - cy) * 0.07;
-      const hue = (mx / window.innerWidth) * 360;
-      el.style.transform  = `translate3d(${cx}px,${cy}px,0)`;
-      el.style.background = `conic-gradient(from ${hue}deg,rgba(255,0,80,.09),rgba(255,160,0,.07),rgba(255,255,0,.06),rgba(0,255,100,.07),rgba(0,160,255,.09),rgba(160,0,255,.07),rgba(255,0,80,.09))`;
-      rafId = requestAnimationFrame(tick);
+      cx += (mx-cx)*.07; cy += (my-cy)*.07;
+      el.style.transform = `translate3d(${cx}px,${cy}px,0)`;
+      el.style.background = `conic-gradient(from ${(mx/window.innerWidth)*360}deg,rgba(200,169,107,.08),rgba(14,165,160,.06),rgba(200,169,107,.08))`;
+      raf = requestAnimationFrame(tick);
     };
-    rafId = requestAnimationFrame(tick);
+    raf = requestAnimationFrame(tick);
     window.addEventListener('mousemove', onMove, { passive: true });
-    return () => { cancelAnimationFrame(rafId); window.removeEventListener('mousemove', onMove); };
+    return () => { cancelAnimationFrame(raf); window.removeEventListener('mousemove', onMove); };
   }, []);
-  return <div ref={ref} className="prism-cursor-blob" style={{ width: 480, height: 480, top: '-240px', left: '-240px' }} />;
+  return <div ref={ref} className="prism-cursor-blob" style={{ width: 460, height: 460, top: '-230px', left: '-230px' }} />;
 }
 
-/* ── FormField ───────────────────────────────────────────────── */
-function FormField({ label, hint, children }) {
+/* ─── Shared primitives ──────────────────────────────────────────────────── */
+function FF({ label, hint, children }) {
   return (
     <div>
-      <label className="field-label">{label}</label>
+      <label className="fl">{label}</label>
       {children}
       {hint && <p className="mt-1.5 text-[11px] text-[var(--muted-color)] leading-relaxed">{hint}</p>}
     </div>
   );
 }
 
-/* ── FormDivider ─────────────────────────────────────────────── */
-function FormDivider({ label }) {
-  return (
-    <div className="flex items-center gap-3 py-1">
-      <div className="flex-1 h-px bg-[var(--border-color)]" />
-      <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)]">{label}</p>
-      <div className="flex-1 h-px bg-[var(--border-color)]" />
-    </div>
-  );
-}
-
-/* ── Toggle ──────────────────────────────────────────────────── */
 function Toggle({ name, checked, onChange, label, disabled = false }) {
   return (
-    <label className={`flex items-center gap-3 ${disabled ? 'cursor-not-allowed opacity-45' : 'cursor-pointer group'}`}>
+    <label className={`flex items-center gap-3 ${disabled ? 'cursor-not-allowed opacity-45' : 'cursor-pointer'}`}>
       <div className="relative flex-shrink-0">
         <input type="checkbox" name={name} checked={checked} onChange={onChange} disabled={disabled} className="sr-only" />
-        <div className={`w-10 h-[22px] rounded-full transition-colors duration-200 ${checked ? 'bg-primary' : 'bg-[var(--border-color)]'}`} />
-        <div className={`absolute top-[3px] left-[3px] w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${checked ? 'translate-x-[18px]' : 'translate-x-0'}`} />
+        <div className={`w-10 h-[22px] rounded-full transition-colors ${checked ? 'bg-primary' : 'bg-[var(--border-color)]'}`} />
+        <div className={`absolute top-[3px] left-[3px] w-4 h-4 bg-white rounded-full shadow transition-transform ${checked ? 'translate-x-[18px]' : ''}`} />
       </div>
       <span className="text-sm font-bold text-[var(--text-color)] select-none">{label}</span>
     </label>
   );
 }
 
-/* ── DiscountBadge ───────────────────────────────────────────── */
-function DiscountBadge({ type }) {
-  const style = DISCOUNT_BADGE[type] || { color: '#94a3b8', label: type };
+function Stat({ value, label, color = '#c8a96b', sub }) {
   return (
-    <span className="inline-flex items-center text-[10px] font-bold uppercase tracking-wide px-2.5 py-0.5 rounded-full"
-      style={{ background: `${style.color}18`, border: `1px solid ${style.color}30`, color: style.color }}>
-      {style.label}
-    </span>
+    <div className="glass-card p-4 text-center relative overflow-hidden">
+      <div className="absolute top-0 left-0 right-0 h-0.5 rounded-t-xl"
+        style={{ background: `linear-gradient(90deg, transparent, ${color}60, transparent)` }} />
+      <p className="text-2xl font-black mb-0.5" style={{ color }}>{value}</p>
+      <p className="text-xs font-semibold text-[var(--heading-color)]">{label}</p>
+      {sub && <p className="text-[11px] text-[var(--muted-color)] mt-0.5">{sub}</p>}
+    </div>
   );
 }
 
-/* ════════════════════════════════════════════════════════════
-   MANAGE OFFERS
-════════════════════════════════════════════════════════════ */
-function ManageOffers() {
-  const [offers,         setOffers]         = useState([]);
-  const [userCoupons,    setUserCoupons]    = useState([]);
-  const [loyaltyProgress, setLoyaltyProgress] = useState([]);
-  const [loading,        setLoading]        = useState(true);
-  const [error,          setError]          = useState('');
-  const [success,        setSuccess]        = useState('');
-  const [showForm,       setShowForm]       = useState(false);
-  const [editingOffer,   setEditingOffer]   = useState(null);
-  const [modal, setModal] = useState({ open: false, title: '', message: '', variant: 'danger', onConfirm: null });
+/* ─── Shared form save helper ────────────────────────────────────────────── */
+async function saveOffer(payload, editing) {
+  if (editing) return offersAPI.update(editing.id, payload);
+  return offersAPI.create(payload);
+}
 
-  const showConfirm = (title, message, variant, onConfirm) =>
-    setModal({ open: true, title, message, variant, onConfirm });
-  const closeModal = () => setModal((m) => ({ ...m, open: false, onConfirm: null }));
-
-  const [assigningOfferId, setAssigningOfferId] = useState('');
-  const [assigningUserId,  setAssigningUserId]  = useState('');
-
-  const [formData, setFormData] = useState({
-    name: '', code: '', description: '',
-    discountType: 'Percentage', discountValue: '10',
-    minBookingAmount: '0', isLoyaltyProgram: false,
-    triggerCompletedBookings: '3', couponValidityDays: '90',
-    maxUsesPerUser: '', startsAt: '', endsAt: '', isActive: true,
-  });
-
-  const customerOptions = useMemo(() =>
-    loyaltyProgress.map((user) => ({ id: user.userId, label: `${user.userName} (${user.userEmail})` })),
-    [loyaltyProgress]
+function SaveRow({ saving, editing, onCancel, label }) {
+  return (
+    <div className="flex gap-3 pt-4 border-t border-[var(--border-color)]">
+      <button type="submit" disabled={saving}
+        className="flex items-center gap-2 bg-primary text-[var(--ink)] px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-primary/90 transition disabled:opacity-55">
+        {saving ? <><RefreshCw size={13} className="animate-spin" /> Saving…</> : <><CheckCircle size={13} /> {editing ? 'Save Changes' : label}</>}
+      </button>
+      <button type="button" onClick={onCancel}
+        className="px-6 py-2.5 rounded-xl border border-[var(--border-color)] text-sm font-bold text-[var(--text-color)] hover:bg-white/5 transition">
+        Cancel
+      </button>
+    </div>
   );
+}
 
-  useEffect(() => { fetchAll(); }, []);
+/* ─── PromoForm — locked to isLoyaltyProgram=false ───────────────────────── */
+function PromoForm({ editing, onSave, onCancel }) {
+  const [form, setForm] = useState(() => ({
+    name:             editing?.name             ?? '',
+    code:             editing?.code             ?? '',
+    description:      editing?.description      ?? '',
+    discountType:     editing?.discountType     ?? 'Percentage',
+    discountValue:    String(editing?.discountValue  ?? 10),
+    minBookingAmount: String(editing?.minBookingAmount ?? 0),
+    maxUsesPerUser:   editing?.maxUsesPerUser    ? String(editing.maxUsesPerUser) : '',
+    startsAt:         editing?.startsAt          ? editing.startsAt.slice(0, 16) : '',
+    endsAt:           editing?.endsAt            ? editing.endsAt.slice(0, 16)   : '',
+    isActive:         editing?.isActive          ?? true,
+  }));
+  const [saving, setSaving] = useState(false);
+  const [err, setErr]       = useState('');
 
-  const fetchAll = async () => {
+  const ch = e => {
+    const { name, value, type, checked } = e.target;
+    setForm(p => ({ ...p, [name]: type === 'checkbox' ? checked : value }));
+  };
+
+  const handleSubmit = async e => {
+    e.preventDefault(); setErr('');
+    if (!form.name.trim()) { setErr('Name is required.'); return; }
+    setSaving(true);
     try {
-      setLoading(true);
-      const [offersData, couponsData, progressData] = await Promise.all([
+      await saveOffer({
+        name:             form.name.trim(),
+        code:             form.code.trim().toUpperCase() || null,
+        description:      form.description.trim() || null,
+        discountType:     form.discountType,
+        discountValue:    Number(form.discountValue || 0),
+        minBookingAmount: Number(form.minBookingAmount || 0),
+        isLoyaltyProgram: false,
+        triggerCompletedBookings: null,
+        couponValidityDays: 90,
+        maxUsesPerUser:   form.maxUsesPerUser ? Number(form.maxUsesPerUser) : null,
+        startsAt:         form.startsAt || null,
+        endsAt:           form.endsAt   || null,
+        isActive:         form.isActive,
+      }, editing);
+      onSave(editing ? 'Promo code updated.' : 'Promo code created.');
+    } catch (ex) { setErr(ex.response?.data?.message || 'Failed to save.'); }
+    finally { setSaving(false); }
+  };
+
+  const TypeIcon = DISCOUNT_META[form.discountType]?.icon || Tag;
+
+  return (
+    <div className="glass-card card-enter relative overflow-hidden">
+      <div className="absolute top-0 left-0 w-[3px] h-full"
+        style={{ background: 'linear-gradient(180deg, #c8a96b, #c8a96b44 60%, transparent)' }} />
+      <div className="absolute top-0 left-0 right-0 h-0.5"
+        style={{ background: 'linear-gradient(90deg, transparent, rgba(200,169,107,0.5), transparent)' }} />
+
+      <div className="p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center"
+              style={{ background: 'rgba(200,169,107,0.12)', border: '1px solid rgba(200,169,107,0.25)' }}>
+              <Tag size={15} style={{ color: '#c8a96b' }} />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#c8a96b' }}>Promo Code</p>
+              <h3 className="premium-heading text-lg font-bold text-[var(--heading-color)] leading-tight">
+                {editing ? editing.name : 'New Promo Code'}
+              </h3>
+            </div>
+          </div>
+          <button onClick={onCancel} className="w-8 h-8 rounded-xl border border-[var(--border-color)] flex items-center justify-center text-[var(--muted-color)] hover:bg-white/5 transition">
+            <X size={14} />
+          </button>
+        </div>
+
+        {err && (
+          <div className="mb-4 flex items-center gap-2 text-red-400 text-sm bg-red-500/8 border border-red-500/25 rounded-xl px-4 py-3">
+            <AlertCircle size={14} /> {err}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid md:grid-cols-2 gap-4">
+            <FF label="Name *">
+              <input name="name" required value={form.name} onChange={ch} className="fi" placeholder="e.g. Welcome Discount" />
+            </FF>
+            <FF label="Coupon Code" hint="Leave blank to auto-generate. e.g. WELCOME20">
+              <input name="code" value={form.code} onChange={ch} className="fi"
+                placeholder="WELCOME20" style={{ textTransform: 'uppercase' }} />
+            </FF>
+          </div>
+
+          <FF label="Description (optional)">
+            <textarea name="description" value={form.description} onChange={ch} rows={2} className="fi"
+              placeholder="Shown to customers — e.g. 20% off your first booking." />
+          </FF>
+
+          <div className="grid sm:grid-cols-3 gap-4">
+            <FF label="Discount Type">
+              <select name="discountType" value={form.discountType} onChange={ch} className="fi">
+                {DISCOUNT_TYPES.map(t => <option key={t} value={t}>{DISCOUNT_META[t].label}</option>)}
+              </select>
+            </FF>
+            <FF label="Value" hint={DISCOUNT_META[form.discountType]?.hint}>
+              <div className="relative">
+                <TypeIcon size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--muted-color)] pointer-events-none" />
+                <input name="discountValue" type="number" step="0.01" min="0"
+                  value={form.discountValue} onChange={ch}
+                  disabled={form.discountType === 'FreeBooking'} className="fi pl-9" />
+              </div>
+            </FF>
+            <FF label="Min Booking Amount (QAR)" hint="0 = no minimum">
+              <input name="minBookingAmount" type="number" step="0.01" min="0"
+                value={form.minBookingAmount} onChange={ch} className="fi" />
+            </FF>
+          </div>
+
+          <div className="grid sm:grid-cols-3 gap-4">
+            <FF label="Max Uses per Customer" hint="Leave blank = unlimited">
+              <input name="maxUsesPerUser" type="number" min="1"
+                value={form.maxUsesPerUser} onChange={ch} className="fi" placeholder="Unlimited" />
+            </FF>
+            <FF label="Starts At (optional)">
+              <input type="datetime-local" name="startsAt" value={form.startsAt} onChange={ch} className="fi" />
+            </FF>
+            <FF label="Ends At (optional)">
+              <input type="datetime-local" name="endsAt" value={form.endsAt} onChange={ch} className="fi" />
+            </FF>
+          </div>
+
+          <Toggle name="isActive" checked={form.isActive} onChange={ch} label="Active — customers can use this code" />
+          <SaveRow saving={saving} editing={editing} onCancel={onCancel} label="Create Promo Code" />
+        </form>
+      </div>
+    </div>
+  );
+}
+
+/* ─── LoyaltyForm — locked to isLoyaltyProgram=true ─────────────────────── */
+function LoyaltyForm({ editing, onSave, onCancel }) {
+  const [form, setForm] = useState(() => ({
+    name:                    editing?.name                    ?? '',
+    description:             editing?.description             ?? '',
+    discountType:            editing?.discountType            ?? 'Percentage',
+    discountValue:           String(editing?.discountValue    ?? 10),
+    triggerCompletedBookings: String(editing?.triggerCompletedBookings ?? 3),
+    couponValidityDays:      String(editing?.couponValidityDays ?? 90),
+    isActive:                editing?.isActive                ?? true,
+  }));
+  const [saving, setSaving] = useState(false);
+  const [err, setErr]       = useState('');
+
+  const ch = e => {
+    const { name, value, type, checked } = e.target;
+    setForm(p => ({ ...p, [name]: type === 'checkbox' ? checked : value }));
+  };
+
+  const handleSubmit = async e => {
+    e.preventDefault(); setErr('');
+    if (!form.name.trim()) { setErr('Name is required.'); return; }
+    if (Number(form.triggerCompletedBookings) < 1) { setErr('Trigger must be at least 1.'); return; }
+    setSaving(true);
+    try {
+      await saveOffer({
+        name:                    form.name.trim(),
+        code:                    null,
+        description:             form.description.trim() || null,
+        discountType:            form.discountType,
+        discountValue:           Number(form.discountValue || 0),
+        minBookingAmount:        0,
+        isLoyaltyProgram:        true,
+        triggerCompletedBookings: Number(form.triggerCompletedBookings),
+        couponValidityDays:      Number(form.couponValidityDays || 90),
+        maxUsesPerUser:          null,
+        startsAt:                null,
+        endsAt:                  null,
+        isActive:                form.isActive,
+      }, editing);
+      onSave(editing ? 'Loyalty program updated.' : 'Loyalty program created.');
+    } catch (ex) { setErr(ex.response?.data?.message || 'Failed to save.'); }
+    finally { setSaving(false); }
+  };
+
+  const TypeIcon = DISCOUNT_META[form.discountType]?.icon || Tag;
+  const trigger  = Number(form.triggerCompletedBookings) || 0;
+
+  return (
+    <div className="glass-card card-enter relative overflow-hidden">
+      <div className="absolute top-0 left-0 w-[3px] h-full"
+        style={{ background: 'linear-gradient(180deg, #f59e0b, #f59e0b44 60%, transparent)' }} />
+      <div className="absolute top-0 left-0 right-0 h-0.5"
+        style={{ background: 'linear-gradient(90deg, transparent, rgba(245,158,11,0.5), transparent)' }} />
+
+      <div className="p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center"
+              style={{ background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.25)' }}>
+              <Star size={15} style={{ color: '#f59e0b' }} fill="#f59e0b" />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-amber-400">Loyalty Program</p>
+              <h3 className="premium-heading text-lg font-bold text-[var(--heading-color)] leading-tight">
+                {editing ? editing.name : 'New Loyalty Program'}
+              </h3>
+            </div>
+          </div>
+          <button onClick={onCancel} className="w-8 h-8 rounded-xl border border-[var(--border-color)] flex items-center justify-center text-[var(--muted-color)] hover:bg-white/5 transition">
+            <X size={14} />
+          </button>
+        </div>
+
+        {/* Live preview */}
+        <div className="mb-4 rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-xs text-amber-300 leading-relaxed">
+          <Star size={11} className="inline mr-1.5 mb-0.5" fill="currentColor" />
+          After a customer completes{' '}
+          <strong>{trigger > 0 ? trigger : '?'} booking{trigger !== 1 ? 's' : ''}</strong>,
+          they automatically receive a personal coupon for{' '}
+          <strong>
+            {form.discountType === 'FreeBooking' ? 'a free booking'
+              : form.discountType === 'Percentage' ? `${form.discountValue || '?'}% off`
+              : `${form.discountValue || '?'} QAR off`}
+          </strong>
+          {' '}valid for <strong>{form.couponValidityDays || '?'} days</strong>.
+          No code entry needed — it appears in their rewards automatically.
+        </div>
+
+        {err && (
+          <div className="mb-4 flex items-center gap-2 text-red-400 text-sm bg-red-500/8 border border-red-500/25 rounded-xl px-4 py-3">
+            <AlertCircle size={14} /> {err}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <FF label="Program Name *">
+            <input name="name" required value={form.name} onChange={ch} className="fi"
+              placeholder="e.g. 3-Wash Reward" />
+          </FF>
+
+          <FF label="Description (optional)">
+            <textarea name="description" value={form.description} onChange={ch} rows={2} className="fi"
+              placeholder="Shown to customers in their rewards section." />
+          </FF>
+
+          <div className="grid sm:grid-cols-2 gap-4">
+            <FF label="Trigger — Bookings to Complete" hint="Customer earns the reward after this many completed bookings.">
+              <input name="triggerCompletedBookings" type="number" min="1" max="50" required
+                value={form.triggerCompletedBookings} onChange={ch} className="fi" />
+            </FF>
+            <FF label="Coupon Valid For (days)" hint="How long the issued coupon stays valid.">
+              <input name="couponValidityDays" type="number" min="1"
+                value={form.couponValidityDays} onChange={ch} className="fi" />
+            </FF>
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-4">
+            <FF label="Reward Type">
+              <select name="discountType" value={form.discountType} onChange={ch} className="fi">
+                {DISCOUNT_TYPES.map(t => <option key={t} value={t}>{DISCOUNT_META[t].label}</option>)}
+              </select>
+            </FF>
+            <FF label="Reward Value" hint={DISCOUNT_META[form.discountType]?.hint}>
+              <div className="relative">
+                <TypeIcon size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--muted-color)] pointer-events-none" />
+                <input name="discountValue" type="number" step="0.01" min="0"
+                  value={form.discountValue} onChange={ch}
+                  disabled={form.discountType === 'FreeBooking'} className="fi pl-9" />
+              </div>
+            </FF>
+          </div>
+
+          <Toggle name="isActive" checked={form.isActive} onChange={ch} label="Active — counting customer bookings now" />
+          <SaveRow saving={saving} editing={editing} onCancel={onCancel} label="Create Loyalty Program" />
+        </form>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Offer card ─────────────────────────────────────────────────────────── */
+function OfferCard({ offer, onEdit, onDelete }) {
+  const meta = DISCOUNT_META[offer.discountType] || DISCOUNT_META.Percentage;
+  const expired = isExpired(offer.endsAt);
+  const expiring = isExpiringSoon(offer.endsAt);
+
+  return (
+    <div className="glass-card prism-glass relative overflow-hidden"
+      onMouseMove={e => {
+        const r = e.currentTarget.getBoundingClientRect();
+        e.currentTarget.style.setProperty('--px', `${((e.clientX-r.left)/r.width*100).toFixed(1)}%`);
+        e.currentTarget.style.setProperty('--py', `${((e.clientY-r.top)/r.height*100).toFixed(1)}%`);
+      }}>
+      <div className="absolute top-0 left-0 right-0 h-0.5"
+        style={{ background: `linear-gradient(90deg, transparent, ${meta.color}55, transparent)` }} />
+
+      <div className="p-5">
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div className="flex items-start gap-3 flex-1 min-w-0">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
+              style={{ background: `${meta.color}15`, border: `1px solid ${meta.color}30` }}>
+              {offer.isLoyaltyProgram
+                ? <Star size={15} style={{ color: '#f59e0b' }} fill="#f59e0b" />
+                : <Tag size={15} style={{ color: meta.color }} />}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-2 mb-1">
+                <p className="font-bold text-[var(--heading-color)] text-sm truncate">{offer.name}</p>
+                {offer.isLoyaltyProgram && (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                    style={{ background: 'rgba(245,158,11,0.12)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.25)' }}>
+                    Loyalty
+                  </span>
+                )}
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                  expired
+                    ? 'border-red-500/30 bg-red-500/10 text-red-400'
+                    : offer.isActive
+                      ? 'border-green-500/28 bg-green-500/8 text-green-400'
+                      : 'border-[var(--border-color)] text-[var(--muted-color)]'
+                }`}>
+                  {expired ? 'Expired' : offer.isActive ? 'Active' : 'Inactive'}
+                </span>
+                {expiring && !expired && (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-500/30 bg-amber-500/8 text-amber-400">
+                    Expiring soon
+                  </span>
+                )}
+              </div>
+              {offer.description && (
+                <p className="text-xs text-[var(--muted-color)] leading-relaxed line-clamp-2">{offer.description}</p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Key details row */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
+          <div className="rounded-lg bg-white/3 border border-[var(--border-color)] px-3 py-2">
+            <p className="text-[10px] text-[var(--muted-color)] font-semibold uppercase tracking-wide mb-0.5">Discount</p>
+            <p className="text-sm font-black" style={{ color: meta.color }}>{fmtDiscount(offer.discountType, offer.discountValue)}</p>
+          </div>
+          <div className="rounded-lg bg-white/3 border border-[var(--border-color)] px-3 py-2">
+            <p className="text-[10px] text-[var(--muted-color)] font-semibold uppercase tracking-wide mb-0.5">
+              {offer.isLoyaltyProgram ? 'Trigger' : 'Code'}
+            </p>
+            {offer.isLoyaltyProgram ? (
+              <p className="text-sm font-black text-amber-400">Every {offer.triggerCompletedBookings} washes</p>
+            ) : offer.code ? (
+              <code className="text-xs font-black text-primary tracking-wider">{offer.code}</code>
+            ) : (
+              <p className="text-xs text-[var(--muted-color)]">No code</p>
+            )}
+          </div>
+          <div className="rounded-lg bg-white/3 border border-[var(--border-color)] px-3 py-2">
+            <p className="text-[10px] text-[var(--muted-color)] font-semibold uppercase tracking-wide mb-0.5">Min Amount</p>
+            <p className="text-sm font-black text-[var(--heading-color)]">
+              {offer.minBookingAmount > 0 ? `${offer.minBookingAmount} QAR` : 'None'}
+            </p>
+          </div>
+          <div className="rounded-lg bg-white/3 border border-[var(--border-color)] px-3 py-2">
+            <p className="text-[10px] text-[var(--muted-color)] font-semibold uppercase tracking-wide mb-0.5">Expires</p>
+            <p className="text-sm font-black text-[var(--heading-color)]">
+              {offer.endsAt ? fmtDate(offer.endsAt) : 'Never'}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex gap-2 pt-3 border-t border-[var(--border-color)]">
+          <button onClick={() => onEdit(offer)}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg border border-primary/30 text-primary text-xs font-bold hover:bg-primary/10 transition">
+            <Edit2 size={11} /> Edit
+          </button>
+          <button onClick={() => onDelete(offer.id, offer.name)}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg border border-red-500/25 text-red-400 text-xs font-bold hover:bg-red-500/8 transition">
+            <Trash2 size={11} /> Remove
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Loyalty progress row ───────────────────────────────────────────────── */
+function LoyaltyRow({ row, loyaltyOffers, onAssign }) {
+  const [assigning, setAssigning] = useState(false);
+  const [selectedOffer, setSelectedOffer] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState('');
+
+  const handleAssign = async () => {
+    if (!selectedOffer) return;
+    setBusy(true);
+    try {
+      const res = await offersAPI.assignToUser(selectedOffer, row.userId);
+      setDone(`Coupon issued: ${res.code}`);
+      setAssigning(false);
+      onAssign();
+    } catch (ex) { setDone(ex.response?.data?.message || 'Failed.'); }
+    finally { setBusy(false); }
+  };
+
+  return (
+    <div className="rounded-xl border border-[var(--border-color)] bg-white/[0.018] p-4">
+      <div className="flex items-start justify-between gap-3 mb-3">
+        <div className="min-w-0">
+          <p className="text-sm font-bold text-[var(--heading-color)] truncate">{row.userName}</p>
+          <p className="text-xs text-[var(--muted-color)] truncate">{row.userEmail}</p>
+        </div>
+        <div className="text-right flex-shrink-0">
+          <p className="text-xl font-black text-amber-400">{row.completedBookingsCount}</p>
+          <p className="text-[10px] text-[var(--muted-color)]">bookings</p>
+        </div>
+      </div>
+
+      {/* Progress bars toward each loyalty offer trigger */}
+      {loyaltyOffers.length > 0 && (
+        <div className="space-y-2 mb-3">
+          {loyaltyOffers.map(lo => {
+            const trigger = lo.triggerCompletedBookings || 1;
+            const pct = Math.min((row.completedBookingsCount / trigger) * 100, 100);
+            const completed = row.completedBookingsCount >= trigger;
+            return (
+              <div key={lo.id}>
+                <div className="flex justify-between text-[11px] mb-1">
+                  <span className="text-[var(--muted-color)]">{lo.name}</span>
+                  <span style={{ color: completed ? '#22c55e' : '#f59e0b' }}>
+                    {completed ? '✓ Reward earned' : `${row.completedBookingsCount} / ${trigger}`}
+                  </span>
+                </div>
+                <div className="h-1.5 rounded-full bg-white/8 overflow-hidden">
+                  <div className="h-full rounded-full transition-all duration-500"
+                    style={{ width: `${pct}%`, background: completed ? 'rgba(34,197,94,0.7)' : 'linear-gradient(90deg, rgba(200,169,107,0.8), rgba(245,158,11,0.8))' }} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[11px] text-[var(--muted-color)]">
+          {row.availableCouponsCount > 0
+            ? <span className="text-green-400 font-semibold">{row.availableCouponsCount} unused coupon{row.availableCouponsCount > 1 ? 's' : ''}</span>
+            : 'No coupons available'}
+        </span>
+        {!assigning ? (
+          <button onClick={() => setAssigning(true)}
+            className="text-xs font-bold px-3 py-1.5 rounded-lg border border-primary/30 text-primary hover:bg-primary/10 transition">
+            Give reward
+          </button>
+        ) : (
+          <div className="flex items-center gap-2">
+            <select value={selectedOffer} onChange={e => setSelectedOffer(e.target.value)}
+              className="text-xs rounded-lg border border-[var(--border-color)] bg-[var(--surface-bg)] text-[var(--text-color)] px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary/50">
+              <option value="">Pick offer…</option>
+              {loyaltyOffers.map(lo => <option key={lo.id} value={lo.id}>{lo.name}</option>)}
+            </select>
+            <button onClick={handleAssign} disabled={!selectedOffer || busy}
+              className="text-xs font-bold px-3 py-1.5 rounded-lg bg-primary text-[var(--ink)] hover:bg-primary/90 transition disabled:opacity-50">
+              {busy ? '…' : 'Issue'}
+            </button>
+            <button onClick={() => setAssigning(false)} className="text-[var(--muted-color)] hover:text-[var(--text-color)] transition">
+              <X size={13} />
+            </button>
+          </div>
+        )}
+      </div>
+      {done && <p className="text-xs mt-2 text-green-400 font-semibold">{done}</p>}
+    </div>
+  );
+}
+
+/* ─── Coupon row ─────────────────────────────────────────────────────────── */
+function CouponRow({ coupon }) {
+  const expiring = isExpiringSoon(coupon.expiresAt);
+  const expired = isExpired(coupon.expiresAt);
+  return (
+    <div className={`rounded-xl border px-4 py-3.5 transition ${
+      coupon.isRedeemed ? 'border-[var(--border-color)] opacity-55' :
+      expired ? 'border-red-500/20 bg-red-500/4' :
+      expiring ? 'border-amber-500/25 bg-amber-500/5' :
+      'border-[var(--border-color)] bg-white/[0.018]'
+    }`}>
+      <div className="flex items-start justify-between gap-3 mb-1.5">
+        <code className="text-sm font-black text-[var(--heading-color)] tracking-wider">{coupon.personalCode}</code>
+        <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border flex-shrink-0 ${
+          coupon.isRedeemed ? 'border-[var(--border-color)] text-[var(--muted-color)]' :
+          expired ? 'border-red-500/30 text-red-400' :
+          expiring ? 'border-amber-500/30 text-amber-400' :
+          'border-green-500/25 bg-green-500/8 text-green-400'
+        }`}>
+          {coupon.isRedeemed ? 'Used' : expired ? 'Expired' : expiring ? 'Expiring' : 'Available'}
+        </span>
+      </div>
+      <p className="text-xs text-[var(--muted-color)]">
+        <span className="font-semibold text-[var(--text-color)]">{coupon.userName}</span>
+        {' · '}{coupon.offerName}
+      </p>
+      <p className="text-[11px] text-[var(--muted-color)] mt-1">
+        {coupon.isRedeemed
+          ? `Used ${fmtDate(coupon.redeemedAt)}`
+          : coupon.expiresAt ? `Expires ${fmtDate(coupon.expiresAt)}` : 'No expiry'}
+      </p>
+    </div>
+  );
+}
+
+/* ─── Main page ──────────────────────────────────────────────────────────── */
+const TABS = [
+  { id: 'offers',   label: 'Promo Codes',       icon: Tag,   desc: 'Codes customers enter at checkout' },
+  { id: 'loyalty',  label: 'Loyalty Programs',  icon: Star,  desc: 'Auto-rewards after N bookings'     },
+  { id: 'coupons',  label: 'Issued Coupons',    icon: Ticket,desc: 'All coupons issued to customers'   },
+  { id: 'give',     label: 'Give Reward',        icon: Send,  desc: 'Assign coupons to customers now'   },
+];
+
+export default function AdminOffers() {
+  const [offers,          setOffers]         = useState([]);
+  const [userCoupons,     setUserCoupons]    = useState([]);
+  const [loyaltyProgress, setLoyaltyProgress] = useState([]);
+  const [loading,         setLoading]        = useState(true);
+  const [toast,           setToast]          = useState('');
+  const [toastErr,        setToastErr]       = useState('');
+  const [tab,             setTab]            = useState('offers');
+  const [formType,        setFormType]       = useState(null); // null | 'promo' | 'loyalty'
+  const [editingOffer,    setEditingOffer]   = useState(null);
+  const [search,          setSearch]         = useState('');
+  const [modal, setModal] = useState({ open: false, title: '', message: '', onConfirm: null });
+
+  // Give Reward tab state
+  const [giveSort,      setGiveSort]      = useState('bookings'); // 'bookings' | 'memberSince'
+  const [selected,      setSelected]      = useState(new Set());
+  const [giveOfferId,   setGiveOfferId]   = useState('');
+  const [giving,        setGiving]        = useState(false);
+
+  const showToast = useCallback((msg, isErr = false) => {
+    if (isErr) setToastErr(msg); else setToast(msg);
+    setTimeout(() => { if (isErr) setToastErr(''); else setToast(''); }, 4000);
+  }, []);
+
+  const showConfirm = (title, message, onConfirm) =>
+    setModal({ open: true, title, message, onConfirm });
+  const closeModal = () => setModal(m => ({ ...m, open: false }));
+
+  const fetchAll = useCallback(async () => {
+    try {
+      const [o, c, p] = await Promise.all([
         offersAPI.getAll(),
         offersAPI.getUserCoupons(),
         offersAPI.getLoyaltyProgress(),
       ]);
-      setOffers(offersData);
-      setUserCoupons(couponsData);
-      setLoyaltyProgress(progressData);
-    } catch { setError('Failed to load offers data.'); }
+      setOffers(Array.isArray(o) ? o : []);
+      setUserCoupons(Array.isArray(c) ? c : []);
+      setLoyaltyProgress(Array.isArray(p) ? p : []);
+    } catch { showToast('Failed to load data.', true); }
     finally { setLoading(false); }
-  };
+  }, [showToast]);
 
-  const resetForm = () => {
-    setFormData({
-      name: '', code: '', description: '',
-      discountType: 'Percentage', discountValue: '10',
-      minBookingAmount: '0', isLoyaltyProgram: false,
-      triggerCompletedBookings: '3', couponValidityDays: '90',
-      maxUsesPerUser: '', startsAt: '', endsAt: '', isActive: true,
-    });
-    setEditingOffer(null);
-    setShowForm(false);
-  };
+  useEffect(() => { fetchAll(); }, [fetchAll]);
 
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
-  };
+  const promoCodes   = useMemo(() => offers.filter(o => !o.isLoyaltyProgram), [offers]);
+  const loyaltyOffers = useMemo(() => offers.filter(o => o.isLoyaltyProgram), [offers]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError(''); setSuccess('');
-    try {
-      const payload = {
-        name: formData.name,
-        code: formData.code || null,
-        description: formData.description || null,
-        discountType: formData.discountType,
-        discountValue: Number(formData.discountValue || 0),
-        minBookingAmount: Number(formData.minBookingAmount || 0),
-        isLoyaltyProgram: formData.isLoyaltyProgram,
-        triggerCompletedBookings: formData.isLoyaltyProgram ? Number(formData.triggerCompletedBookings || 0) : null,
-        couponValidityDays: Number(formData.couponValidityDays || 90),
-        maxUsesPerUser: formData.maxUsesPerUser ? Number(formData.maxUsesPerUser) : null,
-        startsAt: formData.startsAt || null,
-        endsAt: formData.endsAt || null,
-        isActive: formData.isActive,
-      };
-      if (editingOffer) {
-        await offersAPI.update(editingOffer.id, payload);
-        setSuccess('Offer updated successfully.');
-      } else {
-        await offersAPI.create(payload);
-        setSuccess('Offer created successfully.');
-      }
-      resetForm(); fetchAll();
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to save offer.');
-    }
-  };
+  const filteredCoupons = useMemo(() => {
+    if (!search.trim()) return userCoupons;
+    const q = search.toLowerCase();
+    return userCoupons.filter(c =>
+      c.personalCode?.toLowerCase().includes(q) ||
+      c.userName?.toLowerCase().includes(q) ||
+      c.offerName?.toLowerCase().includes(q)
+    );
+  }, [userCoupons, search]);
 
-  const handleEdit = (offer) => {
-    setEditingOffer(offer);
-    setFormData({
-      name: offer.name, code: offer.code || '',
-      description: offer.description || '',
-      discountType: offer.discountType,
-      discountValue: String(offer.discountValue ?? 0),
-      minBookingAmount: String(offer.minBookingAmount ?? 0),
-      isLoyaltyProgram: offer.isLoyaltyProgram,
-      triggerCompletedBookings: String(offer.triggerCompletedBookings ?? 3),
-      couponValidityDays: String(offer.couponValidityDays ?? 90),
-      maxUsesPerUser: offer.maxUsesPerUser ? String(offer.maxUsesPerUser) : '',
-      startsAt: offer.startsAt ? offer.startsAt.slice(0, 16) : '',
-      endsAt: offer.endsAt ? offer.endsAt.slice(0, 16) : '',
-      isActive: offer.isActive,
-    });
-    setShowForm(true);
-  };
+  const availableCoupons = useMemo(() => userCoupons.filter(c => !c.isRedeemed && !isExpired(c.expiresAt)), [userCoupons]);
+  const redeemedCoupons  = useMemo(() => userCoupons.filter(c => c.isRedeemed), [userCoupons]);
+
+  const sortedProgress = useMemo(() => {
+    const arr = [...loyaltyProgress];
+    if (giveSort === 'bookings')    return arr.sort((a, b) => b.completedBookingsCount - a.completedBookingsCount);
+    if (giveSort === 'memberSince') return arr.sort((a, b) => new Date(a.memberSince) - new Date(b.memberSince));
+    return arr;
+  }, [loyaltyProgress, giveSort]);
 
   const handleDelete = (id, name) => {
     showConfirm(
       'Remove Offer',
-      `Are you sure you want to remove "${name}"? This cannot be undone.`,
-      'danger',
+      `Remove "${name}"? Existing issued coupons are not affected.`,
       async () => {
         closeModal();
-        try {
-          await offersAPI.delete(id);
-          setSuccess('Offer deactivated successfully.');
-          fetchAll();
-        } catch { setError('Failed to deactivate offer.'); }
+        try { await offersAPI.delete(id); showToast('Offer removed.'); fetchAll(); }
+        catch { showToast('Failed to remove.', true); }
       }
     );
   };
 
-  const handleAssignCoupon = async (e) => {
-    e.preventDefault();
-    setError(''); setSuccess('');
-    if (!assigningOfferId || !assigningUserId) {
-      setError('Choose both offer and user to assign coupon.');
-      return;
-    }
+  const handleEdit = offer => {
+    setEditingOffer(offer);
+    setFormType(offer.isLoyaltyProgram ? 'loyalty' : 'promo');
+    setTab(offer.isLoyaltyProgram ? 'loyalty' : 'offers');
+  };
+
+  const closeForm = () => { setFormType(null); setEditingOffer(null); };
+
+  const handleFormSave = msg => {
+    closeForm();
+    showToast(msg);
+    fetchAll();
+  };
+
+  const handleGiveReward = async () => {
+    if (!giveOfferId) return showToast('Pick an offer first.', true);
+    if (selected.size === 0) return showToast('Select at least one customer.', true);
     try {
-      const res = await offersAPI.assignToUser(assigningOfferId, assigningUserId);
-      setSuccess(`Coupon assigned. Code: ${res.code}`);
+      setGiving(true);
+      const res = await offersAPI.assignBulk(parseInt(giveOfferId), [...selected]);
+      setSelected(new Set());
+      showToast(res.message || `Done — ${res.assigned} assigned, ${res.skipped} skipped.`);
       fetchAll();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to assign coupon.');
-    }
+      showToast(err.response?.data?.message || 'Failed to assign rewards.', true);
+    } finally { setGiving(false); }
   };
 
   if (loading) return (
-    <div className="flex flex-col items-center justify-center min-h-screen gap-4">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
-      <p className="text-[var(--muted-color)] text-sm">Loading offers data…</p>
+    <div className="flex items-center justify-center min-h-[60vh] gap-3">
+      <div className="w-8 h-8 rounded-full border-2 border-[var(--border-color)] border-t-primary animate-spin" />
+      <p className="text-[var(--muted-color)] text-sm">Loading…</p>
     </div>
   );
 
-  const formAccent = editingOffer ? '#0ea5a0' : '#c8a96b';
-  const inp = 'field-input';
-
-  /* ── RENDER ────────────────────────────────────────────────── */
   return (
     <>
       <style>{PRISM_CSS}</style>
-      <PrismaticCursorOrb />
+      <CursorOrb />
+
+      {/* Toast */}
+      {(toast || toastErr) && (
+        <div className={`fixed top-5 right-5 z-50 flex items-center gap-3 px-5 py-3 rounded-xl shadow-2xl border text-sm font-semibold card-enter ${
+          toastErr
+            ? 'bg-red-500/15 border-red-500/30 text-red-300'
+            : 'bg-green-500/12 border-green-500/25 text-green-300'
+        }`}>
+          {toastErr ? <AlertCircle size={15} /> : <CheckCircle size={15} />}
+          {toastErr || toast}
+        </div>
+      )}
 
       <div className="min-h-screen py-10 relative"
-        style={{
-          background: `
-            radial-gradient(circle at 7% 6%, rgba(200,169,107,0.05) 0%, transparent 38%),
-            radial-gradient(circle at 93% 92%, rgba(14,165,160,0.04) 0%, transparent 32%)
-          `,
-        }}
-      >
-        {/* Backdrop orb */}
-        <div className="absolute top-0 right-0 w-80 h-64 rounded-full pointer-events-none"
-          style={{ background: 'conic-gradient(from 55deg,rgba(200,169,107,.06),rgba(14,165,160,.04),rgba(200,169,107,.06))', filter: 'blur(85px)', animation: 'spectrum-float 20s ease-in-out infinite' }} />
+        style={{ background: 'radial-gradient(circle at 7% 6%, rgba(200,169,107,0.06), transparent 38%), radial-gradient(circle at 93% 92%, rgba(14,165,160,0.04), transparent 32%), var(--surface-bg)' }}>
+        <div className="container mx-auto px-4 max-w-5xl relative z-10 space-y-6">
 
-        <div className="container mx-auto px-4 relative z-10 space-y-6">
-
-          {/* ── Page header ──────────────────────────────── */}
+          {/* ── Header ── */}
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <div className="flex items-center gap-3 mb-2">
-                <span className="h-px w-7" style={{ background: 'linear-gradient(90deg, transparent, #c8a96b)' }} />
-                <p className="text-[0.60rem] font-bold uppercase tracking-[0.26em] text-primary">Admin Panel</p>
-                <span className="h-px w-7" style={{ background: 'linear-gradient(90deg, #c8a96b, transparent)' }} />
+              <div className="flex items-center gap-2 mb-2">
+                <span className="h-px w-6" style={{ background: 'linear-gradient(90deg, transparent, #c8a96b)' }} />
+                <p className="text-[10px] font-bold uppercase tracking-[0.26em] text-primary">Admin Panel</p>
               </div>
-              <div className="flex items-center gap-3 mb-1.5">
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center"
-                  style={{ background: 'rgba(200,169,107,0.12)', border: '1px solid rgba(200,169,107,0.24)' }}>
-                  <Ticket size={16} style={{ color: '#c8a96b' }} />
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+                  style={{ background: 'rgba(200,169,107,0.12)', border: '1px solid rgba(200,169,107,0.25)' }}>
+                  <Gift size={18} style={{ color: '#c8a96b' }} />
                 </div>
-                <h1 className="premium-heading text-4xl md:text-5xl font-bold text-[var(--heading-color)]">Offers &amp; Loyalty</h1>
+                <div>
+                  <h1 className="premium-heading text-3xl md:text-4xl font-bold text-[var(--heading-color)]">Offers &amp; Loyalty</h1>
+                  <p className="text-xs text-[var(--muted-color)] mt-0.5">Promo codes, loyalty rewards, and issued coupons</p>
+                </div>
               </div>
-              <p className="text-sm text-[var(--muted-color)] ml-12">Create discount campaigns and user-specific coupons.</p>
             </div>
-            <div className={showForm ? '' : 'cta-prism-glow rounded-xl'}>
-              <button type="button" onClick={() => setShowForm((prev) => !prev)}
-                className="flex items-center gap-2.5 px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-bold hover:bg-primary/90 transition">
-                {showForm ? <X size={15} /> : <Plus size={15} />}
-                {showForm ? 'Close Form' : 'Add Offer'}
+            <div className="flex gap-2">
+              <button onClick={() => { setEditingOffer(null); setFormType('promo'); setTab('offers'); }}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold border border-primary/40 text-primary hover:bg-primary/10 transition">
+                <Tag size={14} /> Promo Code
+              </button>
+              <button onClick={() => { setEditingOffer(null); setFormType('loyalty'); setTab('loyalty'); }}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500/15 border border-amber-500/35 text-amber-400 text-sm font-bold hover:bg-amber-500/25 transition">
+                <Star size={14} /> Loyalty Program
               </button>
             </div>
           </div>
 
-          {/* ── Alerts ───────────────────────────────────── */}
-          {error && (
-            <div className="flex items-start gap-3 rounded-xl border border-rose-500/25 bg-rose-500/8 px-5 py-4">
-              <AlertCircle size={16} className="text-rose-400 flex-shrink-0 mt-0.5" />
-              <p className="text-rose-300 text-sm font-semibold">{error}</p>
-              <button type="button" onClick={() => setError('')} className="ml-auto text-rose-400 hover:text-rose-300 transition">
-                <X size={14} />
-              </button>
-            </div>
+          {/* ── Stats ── */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <Stat value={offers.filter(o => o.isActive).length} label="Active Offers" color="#c8a96b"
+              sub={`${offers.length} total`} />
+            <Stat value={loyaltyOffers.filter(o => o.isActive).length} label="Loyalty Programs" color="#f59e0b"
+              sub={`${loyaltyProgress.length} members`} />
+            <Stat value={availableCoupons.length} label="Unused Coupons" color="#0ea5a0"
+              sub="waiting to be redeemed" />
+            <Stat value={redeemedCoupons.length} label="Redeemed" color="#22c55e"
+              sub={`${userCoupons.length} total issued`} />
+          </div>
+
+          {/* ── Secondary stats ── */}
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { label: 'Promo Codes',      value: promoCodes.length,    color: '#c8a96b' },
+              { label: 'Loyalty Programs', value: loyaltyOffers.length, color: '#f59e0b' },
+              { label: 'Issued Coupons',   value: userCoupons.length,   color: '#a855f7' },
+            ].map(s => (
+              <div key={s.label} className="glass-card px-4 py-3 flex items-center gap-3">
+                <span className="text-xl font-black" style={{ color: s.color }}>{s.value}</span>
+                <span className="text-xs text-[var(--muted-color)] font-semibold leading-tight">{s.label}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* ── Forms (type-locked) ── */}
+          {formType === 'promo' && (
+            <PromoForm editing={editingOffer} onSave={handleFormSave} onCancel={closeForm} />
           )}
-          {success && (
-            <div className="flex items-start gap-3 rounded-xl border border-green-500/25 bg-green-500/8 px-5 py-4">
-              <CheckCircle size={16} className="text-green-400 flex-shrink-0 mt-0.5" />
-              <p className="text-green-300 text-sm font-semibold">{success}</p>
-              <button type="button" onClick={() => setSuccess('')} className="ml-auto text-green-400 hover:text-green-300 transition">
-                <X size={14} />
-              </button>
-            </div>
+          {formType === 'loyalty' && (
+            <LoyaltyForm editing={editingOffer} onSave={handleFormSave} onCancel={closeForm} />
           )}
 
-          {/* ── Create / Edit form ───────────────────────── */}
-          {showForm && (
-            <div className="glass-card relative overflow-hidden card-stagger">
-              {/* Left accent bar */}
-              <div className="absolute top-0 left-0 w-[3px] h-full"
-                style={{ background: `linear-gradient(180deg, ${formAccent} 0%, ${formAccent}44 60%, transparent 100%)` }} />
-              <div className="prism-ray" style={{ left: '70%', width: '12%', animation: 'prism-ray-sweep 18s ease-in-out 3s infinite' }} />
+          {/* ── How it works callout ── */}
+          <div className="glass-card p-4 flex flex-wrap gap-6 text-xs text-[var(--muted-color)]">
+            <div className="flex items-start gap-2 flex-1 min-w-[160px]">
+              <div className="w-6 h-6 rounded-lg bg-primary/12 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <Tag size={12} className="text-primary" />
+              </div>
+              <div>
+                <p className="font-bold text-[var(--text-color)] mb-0.5">Promo Code</p>
+                Customer types a code at checkout → gets the discount immediately.
+              </div>
+            </div>
+            <div className="flex items-start gap-2 flex-1 min-w-[160px]">
+              <div className="w-6 h-6 rounded-lg bg-amber-500/12 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <Star size={12} className="text-amber-400" />
+              </div>
+              <div>
+                <p className="font-bold text-[var(--text-color)] mb-0.5">Loyalty Program</p>
+                After N completed bookings, a personal coupon is auto-issued to the customer.
+              </div>
+            </div>
+            <div className="flex items-start gap-2 flex-1 min-w-[160px]">
+              <div className="w-6 h-6 rounded-lg bg-purple-500/12 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <Ticket size={12} className="text-purple-400" />
+              </div>
+              <div>
+                <p className="font-bold text-[var(--text-color)] mb-0.5">Coupon</p>
+                A personal one-time code. Can be auto-generated by loyalty or manually given here.
+              </div>
+            </div>
+          </div>
 
-              <div className="p-7">
-                {/* Form header */}
-                <div className="flex items-center justify-between gap-4 mb-4">
-                  <div>
-                    <div className="flex items-center gap-3 mb-1">
-                      <span className="h-px w-5" style={{ background: `linear-gradient(90deg, transparent, ${formAccent})` }} />
-                      <p className="text-[0.58rem] font-bold uppercase tracking-[0.24em]" style={{ color: formAccent }}>
-                        {editingOffer ? 'Edit Mode' : 'New Offer'}
-                      </p>
-                      <span className="h-px w-5" style={{ background: `linear-gradient(90deg, ${formAccent}, transparent)` }} />
-                    </div>
-                    <h2 className="premium-heading text-xl font-bold text-[var(--heading-color)]">
-                      {editingOffer ? `Editing: ${editingOffer.name}` : 'Create Offer'}
-                    </h2>
-                  </div>
-                  <button type="button" onClick={resetForm}
-                    className="w-8 h-8 rounded-xl border border-[var(--border-color)] flex items-center justify-center text-[var(--muted-color)] hover:bg-white/5 hover:text-[var(--text-color)] transition">
-                    <X size={14} />
+          {/* ── Tabs ── */}
+          <div className="glass-card p-1.5 flex gap-1">
+            {TABS.map(t => (
+              <button key={t.id} onClick={() => setTab(t.id)}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition ${
+                  tab === t.id
+                    ? 'bg-primary text-[var(--ink)]'
+                    : 'text-[var(--muted-color)] hover:text-[var(--text-color)] hover:bg-white/5'
+                }`}>
+                <t.icon size={14} />
+                <span className="hidden sm:inline">{t.label}</span>
+                <span className="sm:hidden">{t.label.split(' ')[0]}</span>
+                {t.id === 'offers' && (
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${tab === t.id ? 'bg-white/25 text-[var(--ink)]' : 'bg-white/8 text-[var(--muted-color)]'}`}>
+                    {promoCodes.length}
+                  </span>
+                )}
+                {t.id === 'loyalty' && (
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${tab === t.id ? 'bg-white/25 text-[var(--ink)]' : 'bg-white/8 text-[var(--muted-color)]'}`}>
+                    {loyaltyOffers.length}
+                  </span>
+                )}
+                {t.id === 'coupons' && (
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${tab === t.id ? 'bg-white/25 text-[var(--ink)]' : 'bg-amber-500/20 text-amber-400'}`}>
+                    {availableCoupons.length}
+                  </span>
+                )}
+                {t.id === 'give' && (
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${tab === t.id ? 'bg-white/25 text-[var(--ink)]' : 'bg-emerald-500/20 text-emerald-400'}`}>
+                    {loyaltyProgress.length}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* ══ TAB: Promo Codes ══ */}
+          {tab === 'offers' && (
+            <div className="space-y-3 card-enter">
+              {promoCodes.length === 0 ? (
+                <div className="glass-card p-14 text-center">
+                  <Tag size={28} className="mx-auto mb-3 text-[var(--muted-color)]" />
+                  <p className="text-sm font-semibold text-[var(--heading-color)] mb-1">No promo codes yet</p>
+                  <p className="text-xs text-[var(--muted-color)] mb-4">Create a code customers can enter at checkout for a discount.</p>
+                  <button onClick={() => { setEditingOffer(null); setFormType('promo'); }}
+                    className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-primary text-[var(--ink)] text-sm font-bold hover:bg-primary/90 transition">
+                    <Plus size={14} /> Create First Code
                   </button>
                 </div>
-                <div className="mb-5"><div className="spectrum-line" /></div>
+              ) : (
+                promoCodes.map(o => (
+                  <OfferCard key={o.id} offer={o} onEdit={handleEdit} onDelete={handleDelete} />
+                ))
+              )}
+            </div>
+          )}
 
-                <form onSubmit={handleSubmit} className="space-y-5">
-                  {/* Basic */}
-                  <div className="grid md:grid-cols-2 gap-5">
-                    <FormField label="Name *">
-                      <input name="name" required value={formData.name} onChange={handleChange} className={inp} />
-                    </FormField>
-                    <FormField label="Coupon Code"
-                      hint={formData.isLoyaltyProgram ? 'Auto-generated for loyalty programs.' : 'e.g. WELCOME10'}>
-                      <input name="code" value={formData.code} onChange={handleChange}
-                        disabled={formData.isLoyaltyProgram} className={inp} placeholder="WELCOME10 or LOYAL" />
-                    </FormField>
-                  </div>
-                  <FormField label="Description">
-                    <textarea name="description" value={formData.description} onChange={handleChange} rows={2} className={inp} />
-                  </FormField>
-
-                  <FormDivider label="Pricing" />
-                  <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-5">
-                    <FormField label="Discount Type *">
-                      <select name="discountType" value={formData.discountType} onChange={handleChange} className={inp}>
-                        {DISCOUNT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
-                      </select>
-                    </FormField>
-                    <FormField label="Discount Value *">
-                      <input name="discountValue" type="number" step="0.01" value={formData.discountValue} onChange={handleChange} className={inp} />
-                    </FormField>
-                    <FormField label="Min Booking Amount">
-                      <input name="minBookingAmount" type="number" step="0.01" value={formData.minBookingAmount} onChange={handleChange} className={inp} />
-                    </FormField>
-                    <FormField label="Max Uses / User">
-                      <input name="maxUsesPerUser" type="number" value={formData.maxUsesPerUser} onChange={handleChange} className={inp} placeholder="Unlimited" />
-                    </FormField>
-                  </div>
-
-                  <FormDivider label="Loyalty Program" />
-                  <div className="grid sm:grid-cols-3 gap-5 items-end">
-                    <div className="flex flex-col justify-end pb-1">
-                      <Toggle name="isLoyaltyProgram" checked={formData.isLoyaltyProgram} onChange={handleChange}
-                        label="Is Loyalty Program" />
-                      {formData.isLoyaltyProgram && (
-                        <p className="text-[11px] text-amber-400 mt-2 leading-relaxed">
-                          Coupons auto-generated when trigger count is reached.
-                        </p>
-                      )}
-                    </div>
-                    <FormField label="Trigger Completed Bookings"
-                      hint={!formData.isLoyaltyProgram ? 'Enable loyalty to configure.' : undefined}>
-                      <input name="triggerCompletedBookings" type="number"
-                        value={formData.triggerCompletedBookings} onChange={handleChange}
-                        disabled={!formData.isLoyaltyProgram} className={inp} />
-                    </FormField>
-                    <FormField label="Coupon Validity (days)">
-                      <input name="couponValidityDays" type="number" value={formData.couponValidityDays} onChange={handleChange} className={inp} />
-                    </FormField>
-                  </div>
-
-                  <FormDivider label="Schedule" />
-                  <div className="grid sm:grid-cols-3 gap-5 items-end">
-                    <FormField label="Starts At">
-                      <input type="datetime-local" name="startsAt" value={formData.startsAt} onChange={handleChange} className={inp} />
-                    </FormField>
-                    <FormField label="Ends At">
-                      <input type="datetime-local" name="endsAt" value={formData.endsAt} onChange={handleChange} className={inp} />
-                    </FormField>
-                    <div className="flex flex-col justify-end pb-1">
-                      <Toggle name="isActive" checked={formData.isActive} onChange={handleChange} label="Active" />
-                    </div>
-                  </div>
-
-                  {/* Buttons */}
-                  <div className="flex gap-3 pt-2">
-                    <div className="cta-prism-glow rounded-xl">
-                      <button type="submit"
-                        className="flex items-center gap-2 bg-primary text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-primary/90 transition">
-                        <CheckCircle size={14} />
-                        {editingOffer ? 'Update Offer' : 'Create Offer'}
-                      </button>
-                    </div>
-                    <button type="button" onClick={resetForm}
-                      className="px-6 py-2.5 rounded-xl border border-[var(--border-color)] text-sm font-bold text-[var(--text-color)] hover:bg-white/5 transition">
-                      Cancel
+          {/* ══ TAB: Loyalty Programs ══ */}
+          {tab === 'loyalty' && (
+            <div className="space-y-5 card-enter">
+              {/* Programs */}
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest text-[var(--muted-color)] mb-3">Programs</p>
+                {loyaltyOffers.length === 0 ? (
+                  <div className="glass-card p-10 text-center">
+                    <Star size={28} className="mx-auto mb-3 text-amber-400" />
+                    <p className="text-sm font-semibold text-[var(--heading-color)] mb-1">No loyalty programs</p>
+                    <p className="text-xs text-[var(--muted-color)] mb-4">Create a program that auto-rewards customers after N completed bookings.</p>
+                    <button onClick={() => { setEditingOffer(null); setFormType('loyalty'); }}
+                      className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-amber-500/15 border border-amber-500/35 text-amber-400 text-sm font-bold hover:bg-amber-500/25 transition">
+                      <Plus size={14} /> Create Program
                     </button>
                   </div>
-                </form>
+                ) : (
+                  <div className="space-y-3">
+                    {loyaltyOffers.map(o => (
+                      <OfferCard key={o.id} offer={o} onEdit={handleEdit} onDelete={handleDelete} />
+                    ))}
+                  </div>
+                )}
               </div>
+
+              {/* Customer progress */}
+              {loyaltyProgress.length > 0 && (
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-widest text-[var(--muted-color)] mb-3">
+                    Customer Progress — {loyaltyProgress.length} member{loyaltyProgress.length !== 1 ? 's' : ''}
+                  </p>
+                  <div className="space-y-3">
+                    {loyaltyProgress.map(row => (
+                      <LoyaltyRow key={row.userId} row={row} loyaltyOffers={loyaltyOffers} onAssign={fetchAll} />
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
-          {/* ── Offers table ─────────────────────────────── */}
-          <div className="glass-card relative overflow-hidden card-stagger" style={{ animationDelay: '0.06s' }}>
-            <div className="absolute top-0 left-0 right-0 h-[2px]"
-              style={{ background: 'linear-gradient(90deg, transparent, #c8a96b 38%, #0ea5a0 62%, transparent)' }} />
-            <div className="absolute top-0 left-0 w-[3px] h-full"
-              style={{ background: 'linear-gradient(180deg, #c8a96b 0%, #c8a96b44 60%, transparent 100%)' }} />
-            <div className="prism-ray" style={{ left: '62%', width: '13%', animation: 'prism-ray-sweep 22s ease-in-out 5s infinite' }} />
-
-            <div className="px-7 pt-6 pb-4">
-              <div className="flex items-center gap-3 mb-2">
-                <span className="h-px w-5" style={{ background: 'linear-gradient(90deg, transparent, #c8a96b)' }} />
-                <p className="text-[0.58rem] font-bold uppercase tracking-[0.24em] text-primary">Catalog</p>
-                <span className="h-px w-5" style={{ background: 'linear-gradient(90deg, #c8a96b, transparent)' }} />
-              </div>
-              <div className="flex items-center justify-between gap-3 mb-4">
-                <h2 className="premium-heading text-xl font-bold text-[var(--heading-color)]">Offers</h2>
-                <span className="text-xs font-bold px-2.5 py-1 rounded-full"
-                  style={{ background: 'rgba(200,169,107,0.12)', border: '1px solid rgba(200,169,107,0.25)', color: '#c8a96b' }}>
-                  {offers.length} total · {offers.filter(o => o.isActive).length} active
-                </span>
-              </div>
-              <div className="mb-4"><div className="spectrum-line" /></div>
-            </div>
-
-            {offers.length === 0 ? (
-              <div className="px-7 pb-10 text-center">
-                <Ticket size={32} className="mx-auto mb-3 text-[var(--muted-color)]" />
-                <p className="text-sm text-[var(--muted-color)]">No offers yet. Create your first offer above.</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto pb-2">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-[var(--border-color)]">
-                      {['Name', 'Code', 'Type', 'Value', 'Loyalty', 'Status', 'Actions'].map((h) => (
-                        <th key={h} className="px-6 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)]">{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[var(--border-color)]">
-                    {offers.map((offer) => (
-                      <tr key={offer.id} className="hover:bg-white/[0.015] transition">
-                        {/* Name */}
-                        <td className="px-6 py-4">
-                          <p className="font-bold text-[var(--heading-color)] text-sm">{offer.name}</p>
-                          {offer.description && (
-                            <p className="text-[11px] text-[var(--muted-color)] mt-0.5 max-w-[180px] truncate">{offer.description}</p>
-                          )}
-                        </td>
-                        {/* Code */}
-                        <td className="px-6 py-4">
-                          {offer.code ? (
-                            <span className="font-mono text-xs font-black px-2.5 py-1 rounded-lg"
-                              style={{ background: 'rgba(200,169,107,0.10)', color: '#c8a96b', border: '1px solid rgba(200,169,107,0.22)' }}>
-                              {offer.code}
-                            </span>
-                          ) : (
-                            <span className="text-[var(--muted-color)]">—</span>
-                          )}
-                        </td>
-                        {/* Type */}
-                        <td className="px-6 py-4">
-                          <DiscountBadge type={offer.discountType} />
-                        </td>
-                        {/* Value */}
-                        <td className="px-6 py-4">
-                          <span className="text-sm font-black text-primary">{fmtValue(offer.discountType, offer.discountValue)}</span>
-                        </td>
-                        {/* Loyalty */}
-                        <td className="px-6 py-4">
-                          {offer.isLoyaltyProgram ? (
-                            <span className="inline-flex items-center gap-1.5 text-xs font-bold"
-                              style={{ color: '#f59e0b' }}>
-                              <Star size={11} fill="#f59e0b" stroke="none" />
-                              Every {offer.triggerCompletedBookings}
-                            </span>
-                          ) : (
-                            <span className="text-[var(--muted-color)]">—</span>
-                          )}
-                        </td>
-                        {/* Status */}
-                        <td className="px-6 py-4">
-                          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide ${
-                            offer.isActive
-                              ? 'text-green-400 border border-green-500/28 bg-green-500/8'
-                              : 'text-[var(--muted-color)] border border-[var(--border-color)]'
-                          }`}>
-                            {offer.isActive ? 'Active' : 'Inactive'}
-                          </span>
-                        </td>
-                        {/* Actions */}
-                        <td className="px-6 py-4">
-                          <div className="flex gap-2">
-                            <button onClick={() => handleEdit(offer)}
-                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-primary/30 text-primary text-xs font-bold hover:bg-primary/10 transition">
-                              <Edit2 size={11} /> Edit
-                            </button>
-                            <button onClick={() => handleDelete(offer.id, offer.name)}
-                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-rose-500/28 text-rose-400 text-xs font-bold hover:bg-rose-500/8 transition">
-                              <Trash2 size={11} /> Remove
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
+          {/* ══ TAB: Give Reward ══ */}
+          {tab === 'give' && (
+            <div className="space-y-4 card-enter">
+              {/* Controls */}
+              <div className="glass-card p-4 flex flex-wrap items-end gap-4">
+                {/* Offer picker */}
+                <div className="flex-1 min-w-[200px]">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)] mb-1.5">Offer to Give</p>
+                  <select
+                    value={giveOfferId}
+                    onChange={e => setGiveOfferId(e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--surface-bg)] text-[var(--text-color)] text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition">
+                    <option value="">— pick an offer —</option>
+                    {offers.filter(o => o.isActive).map(o => (
+                      <option key={o.id} value={o.id}>
+                        {o.isLoyaltyProgram ? '⭐ ' : '🏷️ '}{o.name}{o.code ? ` (${o.code})` : ''}
+                      </option>
                     ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-
-          {/* ── Assign coupon ─────────────────────────────── */}
-          <div className="glass-card relative overflow-hidden card-stagger" style={{ animationDelay: '0.12s' }}>
-            <div className="absolute top-0 left-0 w-[3px] h-full"
-              style={{ background: 'linear-gradient(180deg, #3b82f6 0%, #3b82f644 60%, transparent 100%)' }} />
-            <div className="prism-ray" style={{ left: '76%', width: '10%', animation: 'prism-ray-sweep 19s ease-in-out 8s infinite' }} />
-
-            <div className="p-7">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center"
-                  style={{ background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.24)' }}>
-                  <Gift size={14} style={{ color: '#3b82f6' }} />
+                  </select>
                 </div>
-                <h2 className="premium-heading text-lg font-bold text-[var(--heading-color)]">Assign Coupon to User</h2>
-              </div>
-              <div className="mb-5"><div className="spectrum-line" /></div>
 
-              <form onSubmit={handleAssignCoupon} className="grid md:grid-cols-3 gap-5 items-end">
-                <FormField label="Offer">
-                  <select value={assigningOfferId} onChange={(e) => setAssigningOfferId(e.target.value)} className={inp}>
-                    <option value="">Select active offer</option>
-                    {offers.filter((o) => o.isActive).map((offer) => (
-                      <option key={offer.id} value={offer.id}>{offer.name}</option>
-                    ))}
-                  </select>
-                </FormField>
-                <FormField label="Customer">
-                  <select value={assigningUserId} onChange={(e) => setAssigningUserId(e.target.value)} className={inp}>
-                    <option value="">Select customer</option>
-                    {customerOptions.map((user) => (
-                      <option key={user.id} value={user.id}>{user.label}</option>
-                    ))}
-                  </select>
-                </FormField>
-                <div>
-                  <button type="submit"
-                    className="w-full py-[10px] rounded-xl text-sm font-bold transition"
-                    style={{ background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.30)', color: '#3b82f6' }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(59,130,246,0.24)'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(59,130,246,0.15)'; }}
-                  >
-                    Assign Coupon
+                {/* Sort */}
+                <div className="min-w-[160px]">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)] mb-1.5">Sort By</p>
+                  <div className="flex rounded-xl border border-[var(--border-color)] overflow-hidden text-xs font-semibold">
+                    <button
+                      onClick={() => setGiveSort('bookings')}
+                      className={`flex-1 px-3 py-2.5 flex items-center justify-center gap-1.5 transition ${giveSort === 'bookings' ? 'bg-primary text-[var(--ink)]' : 'text-[var(--muted-color)] hover:bg-white/5'}`}>
+                      <TrendingUp size={12} /> Washes
+                    </button>
+                    <button
+                      onClick={() => setGiveSort('memberSince')}
+                      className={`flex-1 px-3 py-2.5 flex items-center justify-center gap-1.5 transition ${giveSort === 'memberSince' ? 'bg-primary text-[var(--ink)]' : 'text-[var(--muted-color)] hover:bg-white/5'}`}>
+                      <Clock size={12} /> Oldest
+                    </button>
+                  </div>
+                </div>
+
+                {/* Select all / none */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setSelected(new Set(sortedProgress.map(u => u.userId)))}
+                    className="px-3 py-2.5 rounded-xl border border-[var(--border-color)] text-xs font-semibold text-[var(--text-color)] hover:bg-white/5 transition">
+                    Select All
+                  </button>
+                  <button
+                    onClick={() => setSelected(new Set())}
+                    className="px-3 py-2.5 rounded-xl border border-[var(--border-color)] text-xs font-semibold text-[var(--muted-color)] hover:bg-white/5 transition">
+                    None
                   </button>
                 </div>
-              </form>
-            </div>
-          </div>
 
-          {/* ── Loyalty progress + User coupons ──────────── */}
-          <div className="grid lg:grid-cols-2 gap-6">
-
-            {/* Loyalty Progress */}
-            <div className="glass-card relative overflow-hidden card-stagger" style={{ animationDelay: '0.18s' }}>
-              <div className="absolute top-0 left-0 w-[3px] h-full"
-                style={{ background: 'linear-gradient(180deg, #f59e0b 0%, #f59e0b44 60%, transparent 100%)' }} />
-              <div className="prism-ray" style={{ left: '68%', width: '11%', animation: 'prism-ray-sweep 17s ease-in-out 6s infinite' }} />
-
-              <div className="p-6">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center"
-                    style={{ background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.24)' }}>
-                    <Users size={14} style={{ color: '#f59e0b' }} />
-                  </div>
-                  <h2 className="premium-heading text-lg font-bold text-[var(--heading-color)]">Loyalty Progress</h2>
-                </div>
-                <div className="mb-4"><div className="spectrum-line" /></div>
-
-                {loyaltyProgress.length === 0 ? (
-                  <div className="py-8 text-center">
-                    <Star size={28} className="mx-auto mb-2" style={{ color: '#f59e0b' }} />
-                    <p className="text-sm text-[var(--muted-color)]">No loyalty progress data yet.</p>
-                  </div>
-                ) : (
-                  <div className="space-y-2 max-h-[360px] overflow-y-auto pr-1">
-                    {loyaltyProgress.map((row) => (
-                      <div key={row.userId}
-                        className="flex items-center justify-between rounded-xl border border-[var(--border-color)] px-4 py-3.5 hover:border-amber-500/28 transition">
-                        <div className="min-w-0">
-                          <p className="text-sm font-bold text-[var(--heading-color)] truncate">{row.userName}</p>
-                          <p className="text-[11px] text-[var(--muted-color)] truncate">{row.userEmail}</p>
-                        </div>
-                        <div className="text-right flex-shrink-0 ml-4">
-                          <p className="text-xs text-[var(--muted-color)] mb-0.5">Completed</p>
-                          <p className="text-lg font-black" style={{ color: '#f59e0b' }}>{row.completedBookingsCount}</p>
-                          <p className="text-[11px] text-[var(--muted-color)]">
-                            {row.availableCouponsCount} coupon{row.availableCouponsCount !== 1 ? 's' : ''}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                {/* Give button */}
+                <button
+                  onClick={handleGiveReward}
+                  disabled={giving || selected.size === 0 || !giveOfferId}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{ background: selected.size > 0 && giveOfferId ? 'rgba(200,169,107,0.9)' : undefined, color: selected.size > 0 && giveOfferId ? '#0a0a0a' : undefined, border: !(selected.size > 0 && giveOfferId) ? '1px solid var(--border-color)' : undefined }}>
+                  {giving
+                    ? <><RefreshCw size={14} className="animate-spin" /> Sending…</>
+                    : <><Send size={14} /> Give to {selected.size > 0 ? selected.size : '…'} Selected</>}
+                </button>
               </div>
-            </div>
 
-            {/* User Coupons */}
-            <div className="glass-card relative overflow-hidden card-stagger" style={{ animationDelay: '0.24s' }}>
-              <div className="absolute top-0 left-0 w-[3px] h-full"
-                style={{ background: 'linear-gradient(180deg, #8b5cf6 0%, #8b5cf644 60%, transparent 100%)' }} />
-              <div className="prism-ray" style={{ left: '65%', width: '12%', animation: 'prism-ray-sweep 21s ease-in-out 10s infinite' }} />
-
-              <div className="p-6">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center"
-                    style={{ background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.24)' }}>
-                    <Ticket size={14} style={{ color: '#8b5cf6' }} />
-                  </div>
-                  <h2 className="premium-heading text-lg font-bold text-[var(--heading-color)]">User Coupons</h2>
+              {/* Customer table */}
+              {sortedProgress.length === 0 ? (
+                <div className="glass-card p-12 text-center">
+                  <Users size={28} className="mx-auto mb-3 text-[var(--muted-color)]" />
+                  <p className="text-sm text-[var(--muted-color)]">No customers yet.</p>
                 </div>
-                <div className="mb-4"><div className="spectrum-line" /></div>
-
-                {userCoupons.length === 0 ? (
-                  <div className="py-8 text-center">
-                    <Ticket size={28} className="mx-auto mb-2" style={{ color: '#8b5cf6' }} />
-                    <p className="text-sm text-[var(--muted-color)]">No coupons issued yet.</p>
+              ) : (
+                <div className="glass-card overflow-hidden">
+                  {/* Table header */}
+                  <div className="grid grid-cols-[auto_1fr_1fr_auto_auto] gap-x-4 px-4 py-3 border-b border-[var(--border-color)] text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)]">
+                    <span />
+                    <span>Customer</span>
+                    <span>Email</span>
+                    <span className="text-right">Completed Washes</span>
+                    <span className="text-right">Member Since</span>
                   </div>
-                ) : (
-                  <div className="space-y-2 max-h-[360px] overflow-y-auto pr-1">
-                    {userCoupons.map((coupon) => (
-                      <div key={coupon.id}
-                        className={`rounded-xl border px-4 py-3.5 transition ${
-                          coupon.isRedeemed
-                            ? 'border-[var(--border-color)] opacity-55'
-                            : 'border-purple-500/22 bg-purple-500/5'
-                        }`}
-                      >
-                        <div className="flex items-start justify-between gap-3 mb-1.5">
-                          <span className="font-mono text-sm font-black text-[var(--heading-color)]">{coupon.personalCode}</span>
-                          <span className={`flex-shrink-0 text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full ${
-                            coupon.isRedeemed
-                              ? 'border border-[var(--border-color)] text-[var(--muted-color)]'
-                              : 'border border-green-500/25 bg-green-500/10 text-green-400'
-                          }`}>
-                            {coupon.isRedeemed ? 'Redeemed' : 'Available'}
+                  <div className="divide-y divide-[var(--border-color)]">
+                    {sortedProgress.map((u, idx) => {
+                      const checked = selected.has(u.userId);
+                      return (
+                        <label key={u.userId}
+                          className={`grid grid-cols-[auto_1fr_1fr_auto_auto] gap-x-4 px-4 py-3 items-center cursor-pointer transition ${checked ? 'bg-primary/6' : 'hover:bg-white/3'}`}>
+                          <input type="checkbox" checked={checked}
+                            onChange={e => {
+                              const next = new Set(selected);
+                              e.target.checked ? next.add(u.userId) : next.delete(u.userId);
+                              setSelected(next);
+                            }}
+                            className="w-4 h-4 rounded accent-primary" />
+                          <span className="text-sm font-semibold text-[var(--heading-color)] truncate">{u.userName}</span>
+                          <span className="text-xs text-[var(--muted-color)] truncate">{u.userEmail}</span>
+                          <span className="text-sm font-bold text-right" style={{ color: u.completedBookingsCount > 0 ? '#c8a96b' : undefined }}>
+                            {u.completedBookingsCount}
                           </span>
-                        </div>
-                        <p className="text-xs text-[var(--muted-color)]">{coupon.offerName} · {coupon.userName}</p>
-                        <p className="text-[11px] text-[var(--muted-color)] mt-1.5">
-                          {coupon.isRedeemed
-                            ? `Redeemed ${new Date(coupon.redeemedAt).toLocaleString()}`
-                            : `Expires: ${coupon.expiresAt ? new Date(coupon.expiresAt).toLocaleDateString() : 'No expiry'}`}
-                        </p>
-                      </div>
-                    ))}
+                          <span className="text-xs text-[var(--muted-color)] text-right whitespace-nowrap">
+                            {u.memberSince ? new Date(u.memberSince).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }) : '—'}
+                          </span>
+                        </label>
+                      );
+                    })}
                   </div>
-                )}
-              </div>
+                  <div className="px-4 py-3 border-t border-[var(--border-color)] flex items-center justify-between">
+                    <p className="text-xs text-[var(--muted-color)]">{sortedProgress.length} customers · only completed bookings count toward loyalty</p>
+                    <p className="text-xs font-semibold text-[var(--heading-color)]">{selected.size} selected</p>
+                  </div>
+                </div>
+              )}
             </div>
+          )}
 
-          </div>
+          {/* ══ TAB: Issued Coupons ══ */}
+          {tab === 'coupons' && (
+            <div className="space-y-4 card-enter">
+              <div className="relative">
+                <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--muted-color)]" />
+                <input
+                  value={search} onChange={e => setSearch(e.target.value)}
+                  placeholder="Search by code, customer name, or offer…"
+                  className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--surface-bg)] text-[var(--text-color)] text-sm placeholder:text-[var(--muted-color)] focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition"
+                />
+              </div>
+
+              {filteredCoupons.length === 0 ? (
+                <div className="glass-card p-12 text-center">
+                  <Ticket size={28} className="mx-auto mb-3 text-[var(--muted-color)]" />
+                  <p className="text-sm text-[var(--muted-color)]">
+                    {search ? 'No coupons match your search.' : 'No coupons issued yet.'}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {filteredCoupons.map(c => <CouponRow key={c.id} coupon={c} />)}
+                </div>
+              )}
+            </div>
+          )}
+
         </div>
       </div>
 
@@ -781,13 +1155,11 @@ function ManageOffers() {
         isOpen={modal.open}
         title={modal.title}
         message={modal.message}
-        variant={modal.variant}
-        confirmLabel="Confirm"
+        variant="danger"
+        confirmLabel="Remove"
         onConfirm={modal.onConfirm}
         onClose={closeModal}
       />
     </>
   );
 }
-
-export default ManageOffers;

@@ -16,6 +16,7 @@ import Navbar               from './components/layout/Navbar';
 import Footer               from './components/layout/Footer';
 import ProtectedRoute       from './components/shared/ProtectedRoute';
 import ChatWidget           from './components/shared/ChatWidget';
+import RainBackground       from './components/shared/RainBackground';
 
 // ─── Customer pages (eager) ───────────────────────────────────────────────────
 import Home                from './pages/customer/Home';
@@ -56,6 +57,7 @@ const AdminWorkerManagement   = lazy(() => import('./pages/admin/AdminWorkerMana
 const AdminWorkerSales       = lazy(() => import('./pages/admin/AdminWorkerSales'));
 const AdminPayroll           = lazy(() => import('./pages/admin/AdminPayroll'));
 const LiveMapTracking        = lazy(() => import('./pages/admin/LiveMapTracking'));
+const AdminDevSettings       = lazy(() => import('./pages/admin/AdminDevSettings'));
 const SubscriptionBooking    = lazy(() => import('./pages/customer/SubscriptionBooking'));
 
 // ─── Admin fallback ───────────────────────────────────────────────────────────
@@ -216,6 +218,7 @@ function AppRoutes() {
         {adminRoute('/admin/subscription-bookings', AdminSubscriptionBookings)}
         {adminRoute('/admin/payroll',              AdminPayroll)}
         {adminRoute('/admin/live-map',             LiveMapTracking)}
+        {adminRoute('/admin/dev-settings',         AdminDevSettings)}
 
         <Route path="/subscription-booking" element={
           <ProtectedRoute><Suspense fallback={<AdminFallback />}><SubscriptionBooking /></Suspense></ProtectedRoute>
@@ -276,6 +279,7 @@ function App() {
           <ErrorBoundary>
             <ToastProvider>
             <div className="relative flex flex-col min-h-screen [overflow:clip] app-shell">
+              <RainBackground />
               <div className="cursor-spotlight" aria-hidden="true" />
               <div className="noise-grain"      aria-hidden="true" />
               <div className="scroll-progress-bar" style={{ width: `${scrollProgress}%` }} aria-hidden="true" />

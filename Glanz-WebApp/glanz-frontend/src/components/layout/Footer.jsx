@@ -1,12 +1,19 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, Phone, MapPin, Briefcase } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { BUSINESS } from '../../config/business';
+import { getBusiness } from '../../config/business';
 
 function Footer() {
   const { isAuthenticated, isAdmin } = useAuth();
   const bookingLinkLabel = isAdmin ? 'Create Booking' : 'Book Now';
+  const [business, setBusiness] = useState(getBusiness());
+
+  useEffect(() => {
+    const handleConfigChange = () => setBusiness(getBusiness());
+    window.addEventListener('businessConfigChanged', handleConfigChange);
+    return () => window.removeEventListener('businessConfigChanged', handleConfigChange);
+  }, []);
 
   return (
     <footer className="border-t py-12 backdrop-blur-xl themed-nav">
@@ -15,10 +22,10 @@ function Footer() {
           
           <div>
             <div className="mb-4">
-              <img src="/Glanz-Logo.png" alt={BUSINESS.name} className="h-12 w-auto object-contain" />
+              <img src="/Glanz-Logo.png" alt={business.name} className="h-12 w-auto object-contain" />
             </div>
             <p className="text-[var(--muted-color)]">
-              {BUSINESS.tagline}
+              {business.tagline}
             </p>
           </div>
 
@@ -59,22 +66,22 @@ function Footer() {
             <ul className="space-y-2">
               <li className="flex items-center gap-2 text-[var(--muted-color)]">
                 <Phone size={16} />
-                {BUSINESS.phone}
+                {business.phone}
               </li>
               <li className="flex items-center gap-2 text-[var(--muted-color)]">
                 <Mail size={16} />
-                {BUSINESS.email}
+                {business.email}
               </li>
               <li className="flex items-center gap-2 text-[var(--muted-color)]">
                 <MapPin size={16} />
-                {BUSINESS.location}
+                {business.location}
               </li>
             </ul>
           </div>
         </div>
 
         <div className="border-t mt-8 pt-8 text-center text-[var(--muted-color)]" style={{ borderColor: 'var(--border-color)' }}>
-          <p>&copy; {new Date().getFullYear()} {BUSINESS.name}. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} {business.name}. All rights reserved.</p>
         </div>
       </div>
     </footer>

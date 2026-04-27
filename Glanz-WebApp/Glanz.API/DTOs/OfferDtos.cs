@@ -122,6 +122,7 @@ namespace Glanz.API.DTOs
         public string UserEmail { get; set; } = string.Empty;
         public int CompletedBookingsCount { get; set; }
         public int AvailableCouponsCount { get; set; }
+        public DateTime MemberSince { get; set; }
     }
 
     public class CustomerLoyaltyProgramProgressDto
@@ -133,6 +134,12 @@ namespace Glanz.API.DTOs
         public int CompletedBookings { get; set; }
         public int BookingsToNext { get; set; }
         public decimal ProgressPercent { get; set; }
+    }
+
+    public class BulkAssignDto
+    {
+        [Required]
+        public List<int> UserIds { get; set; } = new();
     }
 
     public class CustomerLoyaltyDto
