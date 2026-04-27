@@ -4323,7 +4323,8 @@ namespace Glanz.API.Controllers
                 }
 
                 var quantityToAdd = Math.Max(1, dto.Quantity);
-                var vehicleMultiplier = GetVehicleMultiplier(booking.VehicleType);
+                var vehicleMultipliers = await _pricingService.GetVehicleMultipliersAsync();
+                var vehicleMultiplier = vehicleMultipliers.TryGetValue(booking.VehicleType, out var vm4326) ? vm4326 : 1.0m;
                 var unitPrice = Math.Round(package.Price * vehicleMultiplier, 2);
                 var packageUnitCost = package.PackageServices
                     .Sum(ps => ps.Service.ServiceProducts
@@ -4589,7 +4590,8 @@ namespace Glanz.API.Controllers
                 }
 
                 var quantityToAdd = Math.Max(1, dto.Quantity);
-                var vehicleMultiplier = GetVehicleMultiplier(booking.VehicleType);
+                var vehicleMultipliers4592 = await _pricingService.GetVehicleMultipliersAsync();
+                var vehicleMultiplier = vehicleMultipliers4592.TryGetValue(booking.VehicleType, out var vm4592) ? vm4592 : 1.0m;
                 var unitPrice = Math.Round(singleServiceAddonPackage.Price * vehicleMultiplier, 2);
                 var packageUnitCost = singleServiceAddonPackage.PackageServices
                     .Sum(ps => ps.Service.ServiceProducts
@@ -5112,7 +5114,8 @@ namespace Glanz.API.Controllers
                     }
 
                     // Replace booking items
-                    var vehicleMultiplier = GetVehicleMultiplier(booking.VehicleType);
+                    var vehicleMultipliers5115 = await _pricingService.GetVehicleMultipliersAsync();
+                    var vehicleMultiplier = vehicleMultipliers5115.TryGetValue(booking.VehicleType, out var vm5115) ? vm5115 : 1.0m;
                     decimal newTotal = 0m, newCost = 0m;
                     var newItems = new List<BookingItem>();
 
@@ -5282,7 +5285,8 @@ namespace Glanz.API.Controllers
                         });
                     }
 
-                    var vehicleMultiplier = GetVehicleMultiplier(booking.VehicleType);
+                    var vehicleMultipliers5285 = await _pricingService.GetVehicleMultipliersAsync();
+                    var vehicleMultiplier = vehicleMultipliers5285.TryGetValue(booking.VehicleType, out var vm5285) ? vm5285 : 1.0m;
                     decimal newTotal = 0m, newCost = 0m;
                     var newItems = new List<BookingItem>();
 
