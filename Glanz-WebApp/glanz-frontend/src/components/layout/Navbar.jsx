@@ -261,6 +261,16 @@ function Navbar({ theme, onToggleTheme }) {
   };
 
   const handleNotificationClick = (notification) => {
+    const type = notification.type || '';
+    const isOfferNotif = type === 'SpecialOffer' || type === 'OfferAssigned';
+
+    if (isOfferNotif && !isAdmin) {
+      setShowNotifications(false);
+      handleMarkNotificationRead(notification.id);
+      navigate('/my-bookings');
+      return;
+    }
+
     if (notification.bookingId) {
       if (isAdmin) {
         sessionStorage.setItem('highlightBookingId', notification.bookingId);

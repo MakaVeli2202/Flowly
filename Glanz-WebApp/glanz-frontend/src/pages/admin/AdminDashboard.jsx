@@ -234,7 +234,7 @@ function AdminDashboard() {
     };
     fetchDashboardData();
 
-    // Refresh summary counts when booking-related events arrive over SignalR
+    // Refresh summary counts when booking-related notifications arrive
     const BOOKING_EVENTS = new Set([
       'NewBooking', 'BookingConfirmed', 'BookingCancelled', 'BookingStatusChanged',
       'JobStarted', 'JobCompleted', 'BookingReassigned', 'BookingClaimed', 'BookingUnassigned',
@@ -249,7 +249,7 @@ function AdminDashboard() {
     return subscribeToNotifications(onNotif);
   }, []);
 
-  // 60 s fallback poll — catches updates when SignalR is disconnected.
+  // 60 s fallback poll — catches updates missed between notification polls.
   const silentSummaryRefresh = useCallback(() => {
     reportsAPI.getDashboardSummary().then(d => { if (d) setSummary(d); }).catch(() => {});
   }, []);

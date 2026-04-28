@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { authAPI } from '../api/auth';
 import { setAuthToken } from '../api/axios';
 import { startNotificationConnection, stopNotificationConnection } from '../api/signalr';
@@ -17,6 +17,12 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
+  // Prevents React Strict Mode's double effect invocation from sending two
+  // concurrent /Auth/refresh requests.  If the server rotates refresh tokens
+  // (single-use), the second request would arrive with an already-invalidated
+  // cookie and return 401 — logging the user out.  The ref survives the fake
+  // unmount/remount cycle in Strict Mode, so only one request is ever sent.
+  const initCalledRef = useRef(false);
 
   const persistSession = (nextToken, nextUser) => {
     setAuthToken(nextToken);
@@ -25,23 +31,30 @@ export function AuthProvider({ children }) {
   };
 
   useEffect(() => {
+    if (initCalledRef.current) return;
+    initCalledRef.current = true;
+
     const initAuth = async () => {
       try {
-        // The HttpOnly refresh-token cookie is sent automatically.
-        // This silently re-issues an access token so the user stays
-        // logged in across page reloads without touching localStorage.
+        // HttpOnly refresh-token cookie is sent automatically by the browser.
+        // This silently re-issues an access token so the user stays logged in
+        // across page reloads without storing anything in localStorage.
         const refreshed = await authAPI.refresh();
+        // Apply the new access token to axios BEFORE calling /Auth/me,
+        // otherwise the request goes out unauthenticated and returns 401.
+        setAuthToken(refreshed.token);
         const currentUser = await authAPI.getCurrentUser();
-        persistSession(refreshed.token, currentUser);
+        setToken(refreshed.token);
+        setUser(currentUser);
         startNotificationConnection().catch(() => {});
       } catch {
-        // No valid refresh token — user must log in.
+        // No valid refresh token — user must log in manually.
         setAuthToken(null);
         setToken(null);
         setUser(null);
+      } finally {
+        setLoading(false);
       }
-
-      setLoading(false);
     };
 
     initAuth();

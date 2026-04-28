@@ -754,19 +754,28 @@ function MyBookings() {
                   <div className="space-y-4 mb-4">
                     {loyalty.programs.map((prog, idx) => {
                       const rewardReady = prog.bookingsToNext === 0;
-                      const coupon = loyalty.availableCoupons?.[idx] ?? loyalty.availableCoupons?.[0];
+                      const coupon = loyalty.availableCoupons?.find(c =>
+                        c.offerId === prog.offerId
+                      ) ?? (loyalty.availableCoupons?.[idx] ?? null);
+                      // Coupon was already redeemed (booking made) but booking not yet
+                      // completed — show a "fresh cycle" (0 stamps) state instead of
+                      // keeping all stamps highlighted.
+                      const rewardPendingReset = rewardReady && !coupon;
+                      const displayCompleted   = rewardPendingReset ? 0 : prog.completedBookings;
                       return (
                         <div key={prog.offerId} className="rounded-2xl border p-5 transition-all"
                           style={{
-                            borderColor: rewardReady ? 'rgba(200,169,107,0.55)' : 'rgba(200,169,107,0.18)',
-                            background:  rewardReady ? 'rgba(200,169,107,0.07)' : 'rgba(255,255,255,0.02)',
+                            borderColor: rewardReady && coupon ? 'rgba(200,169,107,0.55)' : 'rgba(200,169,107,0.18)',
+                            background:  rewardReady && coupon ? 'rgba(200,169,107,0.07)' : 'rgba(255,255,255,0.02)',
                             borderStyle: 'dashed',
                           }}>
                           {/* Card header */}
                           <div className="flex justify-between items-center mb-5">
                             <span className="text-sm font-bold text-[var(--heading-color)]">{prog.programName}</span>
-                            {rewardReady
+                            {rewardReady && coupon
                               ? <span className="text-xs font-bold px-2.5 py-1 rounded-full" style={{ background: 'rgba(200,169,107,0.20)', color: 'rgba(200,169,107,1)' }}>Reward Ready!</span>
+                              : rewardPendingReset
+                              ? <span className="text-xs font-bold px-2.5 py-1 rounded-full" style={{ background: 'rgba(14,165,160,0.15)', color: 'rgba(14,165,160,0.9)' }}>Free wash booked!</span>
                               : <span className="text-xs" style={{ color: 'rgba(200,169,107,0.65)' }}>{prog.completedBookings} / {prog.triggerBookings} washes</span>
                             }
                           </div>
@@ -774,7 +783,7 @@ function MyBookings() {
                           {/* Stamp slots */}
                           <div className="grid gap-3 mb-4" style={{ gridTemplateColumns: `repeat(${prog.triggerBookings}, 1fr)` }}>
                             {Array.from({ length: prog.triggerBookings }).map((_, i) => {
-                              const filled = i < prog.completedBookings;
+                              const filled = i < displayCompleted;
                               return (
                                 <div key={i} className="flex flex-col items-center justify-center gap-1.5 rounded-2xl border-2 py-3 transition-all"
                                   style={{
@@ -792,7 +801,7 @@ function MyBookings() {
                           {/* Progress bar */}
                           <div className="w-full bg-white/8 rounded-full h-1.5 overflow-hidden mb-3">
                             <div className="h-1.5 rounded-full transition-all duration-700"
-                              style={{ width: `${prog.progressPercent}%`, background: 'linear-gradient(90deg, rgba(200,169,107,0.9), rgba(14,165,160,0.85))' }} />
+                              style={{ width: rewardPendingReset ? '0%' : `${prog.progressPercent}%`, background: 'linear-gradient(90deg, rgba(200,169,107,0.9), rgba(14,165,160,0.85))' }} />
                           </div>
 
                           {/* Reward CTA */}
@@ -811,8 +820,10 @@ function MyBookings() {
                                 Book Free Wash <ArrowRight size={14} />
                               </button>
                             </div>
-                          ) : rewardReady ? (
-                            <p className="text-xs mt-2" style={{ color: 'rgba(200,169,107,0.65)' }}>Your reward coupon is being issued — refresh in a moment.</p>
+                          ) : rewardPendingReset ? (
+                            <p className="text-xs mt-2" style={{ color: 'rgba(14,165,160,0.75)' }}>
+                              Your free wash is booked! Stamps will reset once your wash is completed.
+                            </p>
                           ) : (
                             <p className="text-xs" style={{ color: 'rgba(200,169,107,0.5)' }}>
                               {prog.bookingsToNext} more wash{prog.bookingsToNext !== 1 ? 'es' : ''} to earn your free wash.

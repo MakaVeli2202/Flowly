@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5289/api';
+import apiClient from './axios';
 
 const _notifListeners = new Set();
 let pollInterval = null;
@@ -32,18 +32,11 @@ export async function startNotificationConnection() {
 
   const poll = async () => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) return;
-
-      const res = await fetch(`${API_BASE}/notifications`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const notifs = await res.json();
-        notifs.forEach(_dispatchNotification);
-      }
+      const res = await apiClient.get('/notifications');
+      const notifs = Array.isArray(res.data) ? res.data : [];
+      notifs.forEach(_dispatchNotification);
     } catch { /* silent */ } finally {
-      if (!_seeded) _seeded = true; // after first poll completes, future dispatches fire listeners
+      if (!_seeded) _seeded = true;
     }
   };
 

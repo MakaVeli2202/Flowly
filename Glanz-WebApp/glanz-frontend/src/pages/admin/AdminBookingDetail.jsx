@@ -187,7 +187,7 @@ export default function AdminBookingDetail() {
     if (fresh) setBooking(fresh);
   };
 
-  // Auto-refresh this booking when a related SignalR notification arrives
+  // Auto-refresh this booking when a related notification arrives
   useEffect(() => {
     const numericId = Number(id);
     const onNotif = (notif) => {

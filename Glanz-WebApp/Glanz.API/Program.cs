@@ -5,7 +5,6 @@ using System.Text;
 using System.Data.Common;
 using Glanz.API.Data;
 using Glanz.API.Services;
-using Glanz.API.Hubs;
 using Glanz.API.Filters;
 using Glanz.API.Validators;
 using Glanz.API.DTOs;
@@ -51,7 +50,6 @@ builder.Services.AddControllers(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHttpClient();
-builder.Services.AddSignalR();
 
 // Rate limiting - only enabled in production
 if (!builder.Environment.IsDevelopment())
@@ -187,21 +185,6 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = jwtSettings["Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey!))
     };
-    // SignalR WebSocket connections cannot send Authorization headers,
-    // so the JWT is passed via ?access_token= query param for hub connections.
-    options.Events = new JwtBearerEvents
-    {
-        OnMessageReceived = context =>
-        {
-            var token = context.Request.Query["access_token"];
-            var path = context.HttpContext.Request.Path;
-            if (!string.IsNullOrEmpty(token) && path.StartsWithSegments("/hubs"))
-            {
-                context.Token = token;
-            }
-            return Task.CompletedTask;
-        }
-    };
 });
 
 builder.Services.AddAuthorization();
@@ -288,7 +271,6 @@ app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
-app.MapHub<NotificationHub>("/hubs/notifications");
 
 app.Run();
 

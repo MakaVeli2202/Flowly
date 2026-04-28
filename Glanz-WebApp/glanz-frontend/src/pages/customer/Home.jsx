@@ -12,6 +12,7 @@ import { getSiteContent } from '../../config/siteContent';
 import { useAuth } from '../../context/AuthContext';
 import { statsAPI } from '../../api/stats';
 import { packagesAPI } from '../../api/packages';
+import { servicesAPI } from '../../api/services';
 import SEO from '../../components/shared/SEO';
 import { getBusiness } from '../../config/business';
 import { Skeleton, CardSkeleton, BookingCardSkeleton } from '../../components/shared/Skeleton';
@@ -497,6 +498,7 @@ function Home() {
   const [statsStarted, setStatsStarted]             = useState(false);
   const [reviews, setReviews]                       = useState([]);
   const [packages, setPackages]                     = useState([]);
+  const [services, setServices]                     = useState([]);
   const [serviceAreas, setServiceAreas]             = useState(() => getBusiness().serviceAreas || SERVICE_AREAS_DEFAULT);
   const [currentReviewIndex, setCurrentReviewIndex] = useState(0);
   const [visibleReviewCount, setVisibleReviewCount] = useState(1);
@@ -567,6 +569,11 @@ function Home() {
         const active = (data || []).filter(p => p.isActive);
         packageCountRef.current = active.length || SERVICE_HIGHLIGHTS.length;
         setPackages(active);
+        return active;
+      }).catch(() => []),
+      servicesAPI.getAll().then(data => {
+        const active = (data || []).filter(s => s.isActive !== false);
+        setServices(active);
         return active;
       }).catch(() => []),
     ])
@@ -814,7 +821,9 @@ function Home() {
     setCurrentReviewIndex(p => (p >= max ? 0 : p + 1));
   };
 
-  const marqueeItems    = [...MARQUEE_ITEMS, ...MARQUEE_ITEMS];
+  const marqueeSource  = services.length > 0 ? services.map(s => s.name) : MARQUEE_ITEMS;
+  const marqueeItems    = [...marqueeSource, ...marqueeSource];
+  const marqueeDuration = 28;
   const reviewDotsCount = Math.ceil(reviews.length / visibleReviewCount);
 
   // Service highlights: live from API; falls back to hardcoded while loading
@@ -935,7 +944,7 @@ function Home() {
       <div className="py-[14px] border-y border-[var(--border-color)]"
         style={{ background: 'color-mix(in srgb, var(--surface-bg-alt) 70%, transparent)' }} aria-hidden="true">
         <div className="marquee-outer">
-          <div className="marquee-inner">
+          <div className="marquee-inner" style={{ animationDuration: `${marqueeDuration}s` }}>
             {marqueeItems.map((item, i) => (
               <span key={i} className="inline-flex items-center gap-2.5 px-5 text-[0.72rem] font-semibold tracking-[0.18em] uppercase whitespace-nowrap" style={{ color: 'var(--muted-color)' }}>
                 <span style={{ color: '#c8a96b', fontSize: '0.9rem', lineHeight: 1 }}>✦</span>{item}

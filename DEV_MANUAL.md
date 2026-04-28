@@ -19,8 +19,16 @@
    - 4.5 [Loyalty System](#45-loyalty-system)
    - 4.6 [Worker Assignment](#46-worker-assignment)
    - 4.7 [Subscriptions](#47-subscriptions)
-   - 4.8 [Real-Time Notifications](#48-real-time-notifications)
+   - 4.8 [Notifications](#48-notifications)
    - 4.9 [Location Tracking](#49-location-tracking)
+   - 4.10 [AI Chatbot Assistant](#410-ai-chatbot-assistant)
+   - 4.11 [Public Data (Homepage)](#411-public-data-homepage)
+   - 4.12 [Admin Content Management](#412-admin-content-management)
+   - 4.13 [Detailer Skills System](#413-detailer-skills-system)
+   - 4.14 [Services & Products CRUD](#414-services--products-crud)
+   - 4.15 [Reports & Payroll](#415-reports--payroll)
+   - 4.16 [Careers & Job Applications](#416-careers--job-applications)
+   - 4.17 [Worker Sales & Scheduling](#417-worker-sales--scheduling)
 5. [API Reference](#5-api-reference)
 6. [Security Model](#6-security-model)
 7. [Data Flow Examples](#7-data-flow-examples)
@@ -482,27 +490,71 @@ View assignments:   GET  /api/Offers/user-coupons
 
 ### 4.5 Loyalty System
 
-Customers earn points for completed bookings and Google reviews.
+The loyalty system is **stamp-card based**, not points-based. Every N completed paid bookings earns the customer a free-wash coupon. The system is gated behind a one-time Google review approval step.
 
-#### Points flow
+#### Step 1 — Unlock (Google review)
 
 ```
-Booking completed by worker → Backend awards loyalty points to customer
-  → Points stored on User record (LoyaltyPoints field)
-  → Customer can view: GET /api/Offers/my-loyalty
-  → Progress tiers:    GET /api/Offers/loyalty-progress
+Customer taps "Rate on Google" in My Bookings → opens Google review URL in browser
+  │
+  ▼
+POST /api/Offers/loyalty/activate-google-review
+  → Sets User.LoyaltyReviewPendingAt = now
+  → Shows "Review submitted — pending verification" badge in My Bookings
 
-Customer submits Google review → POST /api/Offers/loyalty/activate-google-review
-  → Creates a pending review record
-  → Admin reviews: GET /api/Offers/loyalty/pending-reviews
-  → Admin approves: POST /api/Offers/loyalty/{userId}/approve-review
-    → Award bonus points to customer
-  → Admin rejects: POST /api/Offers/loyalty/{userId}/reject-review
+Admin reviews: GET /api/Offers/loyalty/pending-reviews
+
+Admin approves: POST /api/Offers/loyalty/{userId}/approve-review
+  → Sets User.LoyaltyGoogleReviewActivatedAt = now
+  → Customer's loyalty card is now active (stamps start counting from this date)
+
+Admin rejects: POST /api/Offers/loyalty/{userId}/reject-review
+  → Clears pending state — customer can try again
 ```
 
-#### Tier thresholds
+The loyalty activation timestamp gates which bookings count:
+- Only bookings completed **after** `LoyaltyGoogleReviewActivatedAt` count toward stamps.
+- Only bookings with `TotalAmount > 0` count (free reward bookings don't count toward the next cycle).
 
-Tier thresholds are configured in admin settings. When a customer reaches a threshold, they unlock a reward (typically a coupon assigned automatically).
+#### Step 2 — Earning stamps
+
+```
+Worker finishes booking → POST /api/Bookings/{id}/finish
+  │
+  ▼
+Backend calls IssueLoyaltyCouponsAsync(userId)
+  │
+  ▼
+Counts eligible completed bookings since activation
+  │
+  ▼
+If count % triggerBookings == 0 → milestone reached
+  └─ Issues a UserOffer (personal coupon code) to the customer
+  └─ UserOffer.EarnedAtCompletedBookingsCount = count
+     (prevents issuing duplicate coupon for the same milestone)
+  └─ Coupon is valid for `offer.CouponValidityDays` days
+```
+
+#### Stamp card UI states (My Bookings)
+
+| Backend state | UI display |
+|---|---|
+| `bookingsToNext > 0` | N filled car stamps out of trigger, progress bar at N/trigger% |
+| `bookingsToNext == 0` **and** coupon available | "Reward Ready!" badge, all stamps filled, coupon code shown with "Book Free Wash" button |
+| `bookingsToNext == 0` **and** no coupon (coupon already redeemed, free booking not yet completed) | "Free wash booked!" badge, **0 stamps filled**, progress bar at 0%, message: "Stamps will reset once your wash is completed" |
+
+The third state is important: after the customer books their free wash, the coupon is immediately marked `IsRedeemed = true`. The next cycle can't start until the free booking is completed (so the counter increments). The UI correctly shows a fresh empty card rather than keeping all stamps highlighted.
+
+#### Loyalty API endpoints
+
+| Method | Route | Auth | Purpose |
+|--------|-------|------|---------|
+| GET | `/api/Offers/my-loyalty` | Customer | Full loyalty card state (programs, coupons, progress) |
+| GET | `/api/Offers/loyalty-progress` | Customer | Per-program progress |
+| POST | `/api/Offers/loyalty/activate-google-review` | Customer | Submit review for approval |
+| GET | `/api/Offers/loyalty/pending-reviews` | Admin | List customers awaiting review approval |
+| POST | `/api/Offers/loyalty/{userId}/approve-review` | Admin | Approve and activate customer's loyalty card |
+| POST | `/api/Offers/loyalty/{userId}/reject-review` | Admin | Reject review submission |
 
 ---
 
@@ -587,11 +639,50 @@ Booking within subscription:
 
 ---
 
-### 4.8 Real-Time Notifications
+### 4.8 Notifications
 
-#### Web (SignalR)
+> **Important**: Despite the file being named `signalr.js`, the web frontend no longer uses a live WebSocket/SignalR connection. It was replaced with an HTTP polling approach. The SignalR hub still exists on the backend (`/notificationHub`) but is **not used by the current web client**.
 
-The web app maintains a persistent WebSocket connection to `/notificationHub`. When a booking status changes, the backend pushes the update directly to the connected browser. The `signalr.js` API file manages the connection lifecycle.
+#### Web (polling)
+
+`src/api/signalr.js` manages an interval-based poller that calls `GET /api/notifications` every **15 seconds** using the authenticated `apiClient` (Bearer token applied automatically). It dispatches new notifications to all subscribers via a `Set` of listener callbacks.
+
+```
+startNotificationConnection() called after login or page-refresh auth
+  │
+  ▼
+setInterval(poll, 15000)  +  immediate first poll
+  │
+  ▼
+First poll — seeds already-known notification IDs (no sound/callback fired)
+  │
+  ▼
+Subsequent polls — any new notification ID fires all subscribed callbacks
+  │
+  ▼
+Navbar subscribes via subscribeToNotifications(fn) — updates bell badge + dropdown
+```
+
+Key behaviors:
+- **No duplicate firing**: dispatched IDs are tracked in `_dispatchedIds`. A notification is never dispatched more than once per session.
+- **Seed-only first poll**: prevents sounding an alert for old notifications when the user first loads the page.
+- **Auth**: always uses `apiClient` (axios), which holds the in-memory Bearer token. Never uses `localStorage`.
+- **Pause on hover**: the bell dropdown pauses `animation-play-state` but does NOT stop polling.
+- `stopNotificationConnection()` clears the interval and resets the seed flag.
+- `subscribeToNotifications(fn)` returns an unsubscribe function — call it in component cleanup.
+- `clearDispatchedNotifications()` is available to reset seen-IDs (e.g., on logout).
+
+#### Notification click routing (web)
+
+When a customer clicks a notification in the Navbar dropdown, the destination depends on notification type:
+
+| Notification type | Customer navigates to | Admin navigates to |
+|---|---|---|
+| `NewBooking`, `BookingConfirmed`, `BookingCancelled`, `BookingStatusChanged`, `BookingReassigned`, `BookingClaimed` | `/my-bookings` (highlights the booking) | `/admin/bookings` (highlights the booking) |
+| `SpecialOffer`, `OfferAssigned` | `/my-bookings` | (no special routing) |
+| All others | No navigation | No navigation |
+
+Highlight is done by writing `bookingId` to `sessionStorage` and dispatching a `highlight-customer-booking` or `highlight-booking` CustomEvent that the respective page listens for.
 
 #### Mobile (Expo Push Notifications)
 
@@ -613,21 +704,39 @@ When event occurs (booking confirmed, worker on way, etc.):
   Device displays push notification
 ```
 
-The mobile app also polls `/api/Notifications/recent` on a short interval as a fallback for missed pushes.
+The mobile app also polls `/api/Notifications` on a short interval as a fallback for missed pushes.
 
 #### Notification types
 
 | Event | Who receives |
 |-------|-------------|
-| Booking confirmed | Customer |
-| Worker assigned | Customer + Worker |
-| Worker on my way | Customer |
-| Worker arrived | Customer |
-| Job started | Customer |
-| Job completed | Customer |
-| Payment failed | Customer + Admin |
-| Unassigned job | Admin |
-| Payroll due | Admin |
+| `NewBooking` | Admin |
+| `BookingConfirmed` | Customer |
+| `BookingCancelled` | Customer + Admin |
+| `BookingStatusChanged` | Customer |
+| `BookingReassigned` | Customer + Worker |
+| `BookingClaimed` | Customer |
+| `BookingUnassigned` | Admin |
+| `WorkerOnMyWay` | Customer |
+| `WorkerArrived` | Customer |
+| `JobStarted` | Customer |
+| `JobCompleted` | Customer |
+| `PaymentFailed` | Customer + Admin |
+| `PayrollDue` | Admin |
+| `SpecialOffer` | Customer (targeted) |
+| `OfferAssigned` | Customer |
+| `LoyaltyRewardEarned` | Customer |
+
+#### Notification API endpoints
+
+| Method | Route | Auth | Purpose |
+|--------|-------|------|---------|
+| GET | `/api/Notifications` | Required | All notifications (paginated) |
+| GET | `/api/Notifications/recent` | Required | Latest N notifications |
+| GET | `/api/Notifications/unread-count` | Required | Count of unread |
+| PUT | `/api/Notifications/{id}/mark-read` | Required | Mark one as read |
+| PUT | `/api/Notifications/mark-all-read` | Required | Mark all as read |
+| POST | `/api/Notifications/send-test` | Admin | Send a test notification |
 
 ---
 
@@ -652,9 +761,237 @@ Worker finishes job → POST /api/Location/stop/{bookingId}
   Location tracking stops
 ```
 
+The admin live map (`/admin/live-map`) shows all active workers on a Google Map in real time. It polls the location endpoint periodically and places markers for each worker that has a booking in progress. Admins can click a marker to see the worker's name and current job details.
+
 ---
 
-## 5. API Reference
+### 4.10 AI Chatbot Assistant
+
+An in-app assistant allows customers to ask questions about services, pricing, bookings, and cancellations. It is available on both mobile (`ChatbotScreen`) and the web frontend.
+
+#### How it works
+
+The chatbot endpoint (`POST /api/Chatbot/chat`) has two modes:
+
+**AI mode (Claude API configured):**
+- If `Anthropic:ApiKey` is set in `appsettings.json`, the backend calls the Anthropic Claude API.
+- The system prompt is built dynamically from live DB data (active packages with names, tiers, prices, estimated durations).
+- Claude responds as a Glanz customer service representative.
+- Responses are marked `isAI: true` in the response DTO.
+
+**Canned FAQ mode (default / fallback):**
+- Used when no API key is configured, or when the Claude call fails.
+- Matches the customer's message against a dictionary of keywords (case-insensitive): `hello`, `price`, `cancel`, `book`, `payment`, `subscription`, `hours`, `contact`, `refund`, etc.
+- Returns pre-written answers covering common questions.
+- Responses are marked `isAI: false`.
+
+#### Integration notes
+
+To enable live AI responses:
+1. Get an Anthropic API key from [console.anthropic.com](https://console.anthropic.com).
+2. Add to `appsettings.json`:
+   ```json
+   "Anthropic": {
+     "ApiKey": "sk-ant-..."
+   }
+   ```
+3. The chatbot will automatically use Claude for all messages.
+4. If the API call fails (e.g., rate limit), it gracefully falls back to canned answers.
+
+#### Chatbot API
+
+| Method | Route | Auth | Purpose |
+|--------|-------|------|---------|
+| POST | `/api/Chatbot/chat` | None | Send a message, get a reply |
+
+**Request:**
+```json
+{ "message": "How do I cancel a booking?" }
+```
+
+**Response:**
+```json
+{ "reply": "To cancel, go to My Bookings...", "isAI": true }
+```
+
+---
+
+### 4.11 Public Data (Homepage)
+
+The customer-facing homepage (`Home.jsx` / `HomeScreen`) loads live data from several public (unauthenticated) endpoints:
+
+#### Service marquee
+
+The scrolling ticker on the homepage pulls service names from `/api/Services`. If the API returns no results, the frontend falls back to a hardcoded list of service names.
+
+#### Homepage stats
+
+`GET /api/Stats` returns aggregate statistics displayed on the homepage (total bookings completed, total customers, etc.). This endpoint requires no authentication.
+
+#### Customer reviews carousel
+
+`GET /api/Reviews/public` returns approved customer reviews for the homepage carousel.  
+`GET /api/Reviews/summary` returns aggregate review stats (average rating, total count).
+
+If the public reviews API returns no data, `reviewsAPI.getPublic()` returns a hardcoded set of sample reviews as fallback.
+
+#### Reviews API
+
+| Method | Route | Auth | Purpose |
+|--------|-------|------|---------|
+| GET | `/api/Reviews/public` | None | Approved reviews for homepage |
+| GET | `/api/Reviews/summary` | None | Aggregate rating stats |
+| POST | `/api/Reviews` | Customer | Submit a review |
+| GET | `/api/Reviews` | Admin | All reviews (manage) |
+| PUT | `/api/Reviews/{id}/approve` | Admin | Approve a review |
+| DELETE | `/api/Reviews/{id}` | Admin | Delete a review |
+
+---
+
+### 4.12 Admin Content Management
+
+Admins can edit customer-facing text labels (hero heading, subheading, CTA button text, booking page intro, etc.) without a code deployment.
+
+- **Web page**: `/admin/content` (`AdminContent.jsx`)
+- **Mobile screen**: `AdminContentScreen.js`
+- **Storage**: `localStorage` under the key `siteContent` (browser-side). Changes are broadcast to other open tabs via a `siteContentChanged` CustomEvent on `window`.
+- **Persistence**: Content is stored in the browser. It does NOT sync to the backend or to other devices. If `localStorage` is cleared, content resets to defaults.
+
+Editable fields include:
+
+| Field | Where shown |
+|-------|-------------|
+| Hero badge text | Homepage hero area |
+| Hero heading | Homepage hero heading |
+| Hero subheading | Homepage subtext |
+| Primary CTA label | Homepage "Book Now" button |
+| Secondary CTA label | Homepage second button |
+| Booking page intro | Top of the booking flow |
+
+---
+
+### 4.13 Detailer Skills System
+
+Admins can define a library of detailing skills and assign them to individual workers.
+
+- **Web page**: `/admin/skills` (`AdminSkills.jsx`)
+- **Storage**: `localStorage` keys `adminSkills` (skill library) and `adminWorkerSkills` (per-worker assignments). Not backed by a database table.
+- **Events**: Changes fire a `workerSkillsChanged` CustomEvent so other open tabs/components can update live.
+
+**Skill categories**: `Exterior`, `Interior`, `Specialty`, `Other`
+
+Each skill has: `id`, `name`, `category`, `description`.
+
+Worker skill assignments are used for display purposes and planned smart job matching. Currently the auto-assignment algorithm does not filter by skills — that is a future enhancement.
+
+---
+
+### 4.14 Services & Products CRUD
+
+#### Services
+
+Admins manage the list of services offered (linked to packages). Services power the homepage marquee.
+
+- **Web page**: `/admin/services` (`AdminServices.jsx`)
+- **Mobile screen**: `AdminServicesScreen.js`
+- **API**: `ServicesController.cs`
+
+| Method | Route | Auth | Purpose |
+|--------|-------|------|---------|
+| GET | `/api/Services` | None | List all services |
+| POST | `/api/Services` | Admin | Create service |
+| PUT | `/api/Services/{id}` | Admin | Update service |
+| DELETE | `/api/Services/{id}` | Admin | Delete service |
+
+#### Products
+
+Admins manage physical/chemical products used in services.
+
+- **Web page**: `/admin/products` (`AdminProducts.jsx`)
+- **Mobile screen**: `AdminProductsScreen.js`
+- **API**: `ProductController.cs` (or `ProductsController.cs`)
+
+| Method | Route | Auth | Purpose |
+|--------|-------|------|---------|
+| GET | `/api/Products` | None | List all products |
+| POST | `/api/Products` | Admin | Create product |
+| PUT | `/api/Products/{id}` | Admin | Update product |
+| DELETE | `/api/Products/{id}` | Admin | Delete product |
+
+---
+
+### 4.15 Reports & Payroll
+
+#### Financial & Operational Reports
+
+- **Web pages**: `AdminReportFinancial.jsx`, `AdminReportOperational.jsx` (accessible via `/admin/reports`)
+- **Mobile screen**: `AdminReportsScreen.js`
+- **API**: `ReportsController.cs`
+
+Reports include: revenue by date range, bookings breakdown, worker performance, cancellation rates, package popularity.
+
+PDF export is available on web (browser print-to-PDF).
+
+#### Payroll
+
+- **Web page**: `/admin/payroll` (`AdminPayroll.jsx`), also embedded in `AdminStaff.jsx`
+- **Flow**: Admin selects month/year → views per-worker breakdown → marks workers as paid → optionally prints payslips.
+
+**Payslip generation**: clicking "Print Payslip" opens an HTML popup → triggers `window.print()`. A plain-text download is also available.
+
+| Method | Route | Auth | Purpose |
+|--------|-------|------|---------|
+| GET | `/api/Reports/payroll?month=X&year=Y` | Admin | Monthly payroll summary |
+| PUT | `/api/Auth/workers/{id}/salary` | Admin | Set worker monthly salary |
+| POST | `/api/Auth/workers/mark-paid` | Admin | Mark workers as paid for a month |
+| GET | `/api/Auth/workers/payroll/check-due` | Admin | Check if payroll run is due |
+| GET | `/api/Auth/workers/payroll/settings` | Admin | Payroll settings (e.g., pay day) |
+| PUT | `/api/Auth/workers/payroll/settings` | Admin | Update payroll settings |
+
+---
+
+### 4.16 Careers & Job Applications
+
+Glanz has a public careers page where applicants can browse open positions and submit applications.
+
+- **Public page**: `/careers` (`Careers.jsx`) — lists active job positions
+- **Admin pages**: `/admin/job-positions` (`AdminJobPositions.jsx`), `/admin/job-applications` (`AdminJobApplications.jsx`)
+- **Mobile**: This feature is web-only by design
+- **API**: `JobApplicationsController.cs`
+
+#### Flow
+
+```
+Admin creates job position → POST /api/JobApplications/positions
+  → Visible on /careers public page
+
+Applicant visits /careers, clicks "Apply" → submits form
+  → POST /api/JobApplications
+  → Admin notified
+
+Admin reviews: GET /api/JobApplications (with status filter)
+Admin shortlists or rejects: PUT /api/JobApplications/{id}/status
+```
+
+---
+
+### 4.17 Worker Sales & Scheduling
+
+#### Worker Sales
+
+Tracks revenue generated by each worker, used for performance review and commission calculations.
+
+- **Web page**: `/admin/worker-sales` (`AdminWorkerSales.jsx`)
+- **Mobile screen**: `WorkerSalesScreen.js`
+
+#### Admin Notification Management
+
+Admins can view a log of all system notifications sent across the platform.
+
+- **Web page**: `/admin/notifications` (`AdminNotifications.jsx`)
+
+---
+
 
 ### Auth endpoints
 
@@ -662,42 +999,88 @@ Worker finishes job → POST /api/Location/stop/{bookingId}
 |--------|-------|------|---------|
 | POST | `/api/Auth/register` | None | Customer signup |
 | POST | `/api/Auth/login` | None | Login (all roles) |
-| POST | `/api/Auth/refresh` | None | Refresh JWT |
+| POST | `/api/Auth/refresh` | None | Refresh JWT (refresh token in HttpOnly cookie on web, body on mobile) |
 | POST | `/api/Auth/logout` | Required | Revoke refresh token |
 | GET | `/api/Auth/me` | Required | Get my profile |
 | PUT | `/api/Auth/me` | Required | Update my profile |
 | POST | `/api/Auth/change-password` | Required | Change password |
-| PUT | `/api/Auth/push-token` | Required | Register push token |
+| PUT | `/api/Auth/push-token` | Required | Register Expo push token |
 | POST | `/api/Auth/register-worker` | Admin | Create worker account |
 | GET | `/api/Auth/workers` | Admin | List all workers |
 | PUT | `/api/Auth/workers/{id}/schedule` | Admin | Update worker shift |
 | PUT | `/api/Auth/workers/{id}/status` | Admin | Activate/deactivate worker |
+| PUT | `/api/Auth/workers/{id}/salary` | Admin | Set worker monthly salary |
 | DELETE | `/api/Auth/workers/{id}` | Admin | Delete worker |
+| POST | `/api/Auth/workers/mark-paid` | Admin | Mark workers as paid for a month |
 | GET | `/api/Auth/workers/payroll` | Admin | Payroll summary |
+| GET | `/api/Auth/workers/payroll/check-due` | Admin | Check if payroll run is due |
+| GET | `/api/Auth/workers/payroll/settings` | Admin | Payroll/payslip settings |
+| PUT | `/api/Auth/workers/payroll/settings` | Admin | Update payroll settings |
 
 ### Booking endpoints
 
 | Method | Route | Auth | Purpose |
 |--------|-------|------|---------|
 | POST | `/api/Bookings` | Required | Create booking |
-| GET | `/api/Bookings` | Required | My bookings |
+| GET | `/api/Bookings` | Required | My bookings (customer) |
 | GET | `/api/Bookings/all` | Admin | All bookings |
+| GET | `/api/Bookings/Employee` | Worker | My assigned bookings |
 | GET | `/api/Bookings/{bookingNumber}` | Required | Booking detail |
-| GET | `/api/Bookings/available-slots` | None | Available time slots |
+| GET | `/api/Bookings/available-slots` | None | Available time slots for a date |
 | GET | `/api/Bookings/availability-calendar` | None | Month availability grid |
-| POST | `/api/Bookings/quote` | None | Price quote |
-| DELETE | `/api/Bookings/{id}` | Required | Cancel booking |
-| PUT | `/api/Bookings/{id}/customer-edit` | Customer | Edit booking |
+| GET | `/api/Bookings/constraints` | None | Public holidays / closed days |
+| GET | `/api/Bookings/workers/schedule` | Admin | Workers' schedule for a date |
+| GET | `/api/Bookings/workers/day-timeline` | Admin | Hour-by-hour worker timeline |
+| GET | `/api/Bookings/assignment-mode` | Admin | Current assignment mode |
+| PUT | `/api/Bookings/assignment-mode` | Admin | Set assignment mode (manual/auto) |
+| POST | `/api/Bookings/quote` | None | Price quote (also validates coupon) |
+| POST | `/api/Bookings/create-payment-intent` | None | Create Stripe PaymentIntent + hold slot |
+| PUT | `/api/Bookings/{id}/customer-edit` | Customer | Edit booking (date/time/notes) |
 | PUT | `/api/Bookings/{id}/admin-edit` | Admin | Admin edit booking |
-| PUT | `/api/Bookings/{id}/status` | Admin | Update status |
+| PUT | `/api/Bookings/{id}/status` | Admin | Update booking status |
+| PUT | `/api/Bookings/{id}/payment-status` | Admin | Update payment status |
+| DELETE | `/api/Bookings/{id}` | Required | Delete/cancel booking |
+| POST | `/api/Bookings/{id}/claim` | Worker | Worker self-assigns an unassigned booking |
+| POST | `/api/Bookings/assign-worker` | Admin | Assign specific worker to booking |
+| GET | `/api/Bookings/{id}/available-workers` | Admin | Workers available for a booking's slot |
 | POST | `/api/Bookings/{id}/start` | Worker | Start job |
-| POST | `/api/Bookings/{id}/on-my-way` | Worker | Send on-my-way notification |
-| POST | `/api/Bookings/{id}/arrived` | Worker | Mark arrived |
-| POST | `/api/Bookings/{id}/finish` | Worker | Complete job |
-| POST | `/api/Bookings/{id}/running-late` | Worker | Report delay |
-| POST | `/api/Bookings/{id}/photos` | Worker | Upload photos |
-| POST | `/api/Bookings/{id}/admin-cancel-refund` | Admin | Cancel + refund |
-| POST | `/api/Bookings/assign-worker` | Admin | Assign worker |
+| POST | `/api/Bookings/{id}/on-my-way` | Worker | Send on-my-way notification (once only) |
+| POST | `/api/Bookings/{id}/arrived` | Worker | Mark arrived at customer |
+| POST | `/api/Bookings/{id}/finish` | Worker | Complete job (triggers loyalty issuance) |
+| POST | `/api/Bookings/{id}/pause` | Worker | Pause active job |
+| POST | `/api/Bookings/{id}/resume` | Worker | Resume paused job |
+| POST | `/api/Bookings/{id}/running-late` | Worker | Send running-late notification |
+| POST | `/api/Bookings/{id}/photos` | Worker | Upload before/after photos |
+| GET | `/api/Bookings/{id}/photos` | Required | Get booking photos |
+| PUT | `/api/Bookings/{bookingId}/checklist/{checklistItemId}` | Worker | Tick off a checklist item |
+| POST | `/api/Bookings/{id}/add-package` | Admin | Add package to in-progress booking |
+| POST | `/api/Bookings/{id}/add-service` | Admin | Add ad-hoc service to booking |
+| POST | `/api/Bookings/{id}/request-cancellation` | Customer | Request cancellation (may incur fee) |
+| POST | `/api/Bookings/{id}/request-reschedule` | Customer | Request reschedule |
+| POST | `/api/Bookings/{id}/reject-cancellation-request` | Admin | Reject customer cancellation request |
+| POST | `/api/Bookings/{id}/reject-reschedule-request` | Admin | Reject customer reschedule request |
+| GET | `/api/Bookings/{id}/cancellation-fee` | Required | Preview cancellation fee |
+| POST | `/api/Bookings/{id}/admin-cancel-refund` | Admin | Admin-initiated cancel + Stripe refund |
+| POST | `/api/Bookings/worker-absence` | Admin | Block a worker as absent for a day |
+
+### Offer / Loyalty endpoints
+
+| Method | Route | Auth | Purpose |
+|--------|-------|------|---------|
+| GET | `/api/Offers` | None | Active offers |
+| GET | `/api/Offers/my-coupons` | Customer | My coupons |
+| GET | `/api/Offers/user-coupons` | Admin | All user coupons (admin view) |
+| GET | `/api/Offers/my-loyalty` | Customer | Full loyalty card state |
+| GET | `/api/Offers/loyalty-progress` | Customer | Per-program progress |
+| POST | `/api/Offers/loyalty/activate-google-review` | Customer | Submit Google review for approval |
+| GET | `/api/Offers/loyalty/pending-reviews` | Admin | Customers awaiting review approval |
+| POST | `/api/Offers/loyalty/{userId}/approve-review` | Admin | Approve and activate loyalty card |
+| POST | `/api/Offers/loyalty/{userId}/reject-review` | Admin | Reject review submission |
+| POST | `/api/Offers` | Admin | Create offer |
+| PUT | `/api/Offers/{id}` | Admin | Edit offer |
+| DELETE | `/api/Offers/{id}` | Admin | Delete offer |
+| POST | `/api/Offers/{id}/assign/{userId}` | Admin | Assign coupon to specific user |
+| POST | `/api/Offers/{id}/assign-bulk` | Admin | Assign coupon to multiple users |
 
 ### Payment endpoints
 
@@ -709,20 +1092,6 @@ Worker finishes job → POST /api/Location/stop/{bookingId}
 
 > *Auth bypassed in dev when `DevBypass:AllowDevBypass = true`
 
-### Offer / Loyalty endpoints
-
-| Method | Route | Auth | Purpose |
-|--------|-------|------|---------|
-| GET | `/api/Offers` | None | Active offers |
-| GET | `/api/Offers/my-coupons` | Customer | My coupons |
-| GET | `/api/Offers/my-loyalty` | Customer | My loyalty points |
-| GET | `/api/Offers/loyalty-progress` | Customer | Loyalty tiers |
-| POST | `/api/Offers/loyalty/activate-google-review` | Customer | Submit review for approval |
-| POST | `/api/Offers` | Admin | Create offer |
-| PUT | `/api/Offers/{id}` | Admin | Edit offer |
-| DELETE | `/api/Offers/{id}` | Admin | Delete offer |
-| POST | `/api/Offers/{id}/assign/{userId}` | Admin | Assign coupon to user |
-
 ### Vehicle endpoints
 
 | Method | Route | Auth | Purpose |
@@ -732,6 +1101,91 @@ Worker finishes job → POST /api/Location/stop/{bookingId}
 | PUT | `/api/Vehicles/{id}` | Customer | Update vehicle |
 | DELETE | `/api/Vehicles/{id}` | Customer | Remove vehicle |
 | PUT | `/api/Vehicles/{id}/default` | Customer | Set default vehicle |
+
+### Notification endpoints
+
+| Method | Route | Auth | Purpose |
+|--------|-------|------|---------|
+| GET | `/api/Notifications` | Required | All notifications (paginated) |
+| GET | `/api/Notifications/recent` | Required | Latest N notifications |
+| GET | `/api/Notifications/unread-count` | Required | Count of unread |
+| PUT | `/api/Notifications/{id}/mark-read` | Required | Mark one as read |
+| PUT | `/api/Notifications/mark-all-read` | Required | Mark all as read |
+| POST | `/api/Notifications/send-test` | Admin | Send a test notification |
+
+### Services & Products endpoints
+
+| Method | Route | Auth | Purpose |
+|--------|-------|------|---------|
+| GET | `/api/Services` | None | List all services |
+| POST | `/api/Services` | Admin | Create service |
+| PUT | `/api/Services/{id}` | Admin | Update service |
+| DELETE | `/api/Services/{id}` | Admin | Delete service |
+| GET | `/api/Products` | None | List all products |
+| POST | `/api/Products` | Admin | Create product |
+| PUT | `/api/Products/{id}` | Admin | Update product |
+| DELETE | `/api/Products/{id}` | Admin | Delete product |
+
+### Reviews endpoints
+
+| Method | Route | Auth | Purpose |
+|--------|-------|------|---------|
+| GET | `/api/Reviews/public` | None | Approved reviews for homepage carousel |
+| GET | `/api/Reviews/summary` | None | Aggregate rating statistics |
+| POST | `/api/Reviews` | Customer | Submit a review |
+| GET | `/api/Reviews` | Admin | All reviews |
+| PUT | `/api/Reviews/{id}/approve` | Admin | Approve a review |
+| DELETE | `/api/Reviews/{id}` | Admin | Delete a review |
+
+### Stats endpoint
+
+| Method | Route | Auth | Purpose |
+|--------|-------|------|---------|
+| GET | `/api/Stats` | None | Public homepage statistics (total bookings, customers, etc.) |
+
+### Settings endpoints
+
+| Method | Route | Auth | Purpose |
+|--------|-------|------|---------|
+| GET | `/api/Settings` | Admin | All app settings |
+| PUT | `/api/Settings` | Admin | Update settings (multipliers, hours, etc.) |
+| GET | `/api/AdminSettings/cancellation-policy` | Admin | Cancellation fee policy |
+| PUT | `/api/AdminSettings/cancellation-policy` | Admin | Update cancellation fee policy |
+
+### Chatbot endpoint
+
+| Method | Route | Auth | Purpose |
+|--------|-------|------|---------|
+| POST | `/api/Chatbot/chat` | None | Send a message, receive a reply |
+
+### Location endpoints
+
+| Method | Route | Auth | Purpose |
+|--------|-------|------|---------|
+| POST | `/api/Location/update` | Worker | Send GPS location for active booking |
+| GET | `/api/Location/{bookingId}` | Required | Get latest worker location for booking |
+| POST | `/api/Location/stop/{bookingId}` | Worker | Stop location tracking for booking |
+
+### Addresses endpoints
+
+| Method | Route | Auth | Purpose |
+|--------|-------|------|---------|
+| GET | `/api/Addresses` | Customer | My saved addresses |
+| POST | `/api/Addresses` | Customer | Save a new address |
+| PUT | `/api/Addresses/{id}` | Customer | Update address |
+| DELETE | `/api/Addresses/{id}` | Customer | Remove address |
+
+### Job Applications endpoints
+
+| Method | Route | Auth | Purpose |
+|--------|-------|------|---------|
+| GET | `/api/JobApplications/positions` | None | Active job positions (public) |
+| POST | `/api/JobApplications/positions` | Admin | Create job position |
+| PUT | `/api/JobApplications/positions/{id}` | Admin | Update job position |
+| DELETE | `/api/JobApplications/positions/{id}` | Admin | Delete job position |
+| POST | `/api/JobApplications` | None | Submit job application |
+| GET | `/api/JobApplications` | Admin | All applications |
+| PUT | `/api/JobApplications/{id}/status` | Admin | Update application status |
 
 ---
 
@@ -1049,6 +1503,38 @@ Logs are written to stdout (standard Docker/cloud logging pattern). Check your h
 4. Check for active `SlotReservations` that haven't expired: `SELECT * FROM SlotReservations WHERE ExpiresAt > NOW()`
 5. Check if all workers are on leave or absent for that day.
 
+### 9.6 How to debug auth on page reload (web)
+
+When `POST /api/Auth/refresh` or `GET /api/Auth/me` returns 401 immediately after a page load:
+
+**Root cause A — React Strict Mode double-fire:**  
+In development, React Strict Mode mounts → unmounts → remounts every component. This means any `useEffect` with `[]` deps runs twice. If two `/Auth/refresh` calls race, the backend may rotate the token, making the second call fail.
+
+Fix already in place: `AuthContext.jsx` uses `initCalledRef = useRef(false)` to guard against the second invocation:
+```js
+if (initCalledRef.current) return;
+initCalledRef.current = true;
+```
+`useRef` survives the unmount/remount cycle (unlike `useState`), so the guard works correctly.
+
+**Root cause B — Token not set before `GET /Auth/me`:**  
+If `setAuthToken(token)` is called AFTER `authAPI.getCurrentUser()`, the `/Auth/me` request will have no `Authorization` header.
+
+Correct order in `initAuth()`:
+```js
+const refreshed = await authAPI.refresh();
+setAuthToken(refreshed.token);          // ← MUST come first
+const currentUser = await authAPI.getCurrentUser();  // ← now has the token
+setToken(refreshed.token);
+setUser(currentUser);
+```
+
+**Checking in browser:**
+1. Open DevTools → Network tab.
+2. Reload the page.
+3. Look for `POST /Auth/refresh` → should return 200 with a new token.
+4. Look for `GET /Auth/me` → should return 200. If 401, check the `Authorization` request header is present.
+
 ---
 
 ## 10. Deployment Notes
@@ -1150,6 +1636,9 @@ These features exist only on the web and are NOT expected on mobile — this is 
 | Careers / Job Applications | Public landing page feature |
 | PDF report export | Mobile file system limitations; not a core operator workflow |
 | Address autocomplete (full map) | Mobile uses text input with Nominatim autocomplete |
+| Admin Content Management (`/admin/content`) | Text is stored in browser localStorage — not synced to backend |
+| Admin Skills system (`/admin/skills`) | Skill data stored in localStorage — not synced to backend |
+| Live Map Tracking (`/admin/live-map`) | Admin overview; mobile workers only send location, don't view the map |
 
 ### 10.7 Security checklist before going live
 
@@ -1165,5 +1654,5 @@ These features exist only on the web and are NOT expected on mobile — this is 
 
 ---
 
-*Last updated: 2026-04-28*
+*Last updated: 2026-05-30*
 *Maintained by: Backend & Mobile lead*

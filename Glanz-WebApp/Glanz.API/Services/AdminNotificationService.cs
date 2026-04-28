@@ -1,7 +1,5 @@
 using Glanz.API.Data;
-using Glanz.API.Hubs;
 using Glanz.API.Models;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Glanz.API.Services
@@ -37,13 +35,11 @@ namespace Glanz.API.Services
     {
         private const int LowStockThreshold = 20;
         private readonly AppDbContext _context;
-        private readonly IHubContext<NotificationHub> _hub;
         private readonly IExpoPushService _expoPush;
 
-        public AdminNotificationService(AppDbContext context, IHubContext<NotificationHub> hub, IExpoPushService expoPush)
+        public AdminNotificationService(AppDbContext context, IExpoPushService expoPush)
         {
             _context  = context;
-            _hub      = hub;
             _expoPush = expoPush;
         }
 
@@ -267,12 +263,6 @@ namespace Glanz.API.Services
             await _context.Notifications.AddRangeAsync(notifications);
             await _context.SaveChangesAsync();
 
-            // SignalR — instant in-app update
-            var pushPayload = new { type = type.ToString(), message, bookingId };
-            var signalrTasks = adminIds.Select(adminId =>
-                _hub.Clients.Group($"user-{adminId}").SendAsync("ReceiveNotification", pushPayload));
-            await Task.WhenAll(signalrTasks);
-
             // Expo push — delivers even when app is closed
             var expoTokens = admins
                 .Where(a => !string.IsNullOrWhiteSpace(a.ExpoPushToken))
@@ -304,10 +294,6 @@ namespace Glanz.API.Services
             });
 
             await _context.SaveChangesAsync();
-
-            // SignalR — instant in-app update
-            var pushPayload = new { type = type.ToString(), message, bookingId };
-            await _hub.Clients.Group($"user-{userId}").SendAsync("ReceiveNotification", pushPayload);
 
             // Expo push — delivers even when app is closed
             if (!string.IsNullOrWhiteSpace(user.ExpoPushToken))
