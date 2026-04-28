@@ -1357,12 +1357,14 @@ namespace Glanz.API.Controllers
                 return;
             }
 
-            // Only count bookings completed AFTER the review was approved —
-            // the loyalty counter starts from zero on the day of verification.
+            // Only count PAID bookings completed AFTER the review was approved.
+            // Free bookings (loyalty reward redemptions, TotalAmount == 0) are excluded
+            // so using a reward doesn't accidentally count toward the next cycle.
             var completedCount = await _context.Bookings
                 .CountAsync(b =>
                     b.UserId == userId
                     && b.Status == BookingStatus.Completed
+                    && b.TotalAmount > 0
                     && b.WorkCompletedAt.HasValue
                     && b.WorkCompletedAt.Value >= activationAt.Value);
 

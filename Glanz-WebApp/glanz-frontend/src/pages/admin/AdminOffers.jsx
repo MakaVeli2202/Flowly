@@ -548,59 +548,77 @@ function OfferCard({ offer, onEdit, onDelete }) {
 
 /* ─── Loyalty progress row ───────────────────────────────────────────────── */
 function LoyaltyRow({ row, loyaltyOffers, onAssign }) {
-  const [assigning, setAssigning] = useState(false);
-  const [selectedOffer, setSelectedOffer] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [done, setDone] = useState('');
-
-  const handleAssign = async () => {
-    if (!selectedOffer) return;
-    setBusy(true);
-    try {
-      const res = await offersAPI.assignToUser(selectedOffer, row.userId);
-      setDone(`Coupon issued: ${res.code}`);
-      setAssigning(false);
-      onAssign();
-    } catch (ex) { setDone(ex.response?.data?.message || 'Failed.'); }
-    finally { setBusy(false); }
-  };
+  const fmtShort = (d) => d ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : null;
 
   return (
-    <div className="rounded-xl border border-[var(--border-color)] bg-white/[0.018] p-4">
+    <div className={`rounded-xl border p-4 transition ${row.isActivated ? 'border-[var(--border-color)] bg-white/[0.018]' : 'border-amber-500/20 bg-amber-500/4'}`}>
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="min-w-0">
-          <p className="text-sm font-bold text-[var(--heading-color)] truncate">{row.userName}</p>
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="text-sm font-bold text-[var(--heading-color)] truncate">{row.userName}</p>
+            {row.isActivated
+              ? <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-500/15 text-green-400 border border-green-500/25 shrink-0">✓ Verified</span>
+              : <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/25 shrink-0">Pending review</span>
+            }
+          </div>
           <p className="text-xs text-[var(--muted-color)] truncate">{row.userEmail}</p>
+          {row.isActivated && row.activatedAt && (
+            <p className="text-[10px] mt-0.5" style={{ color: 'rgba(200,169,107,0.65)' }}>
+              Counter started {fmtShort(row.activatedAt)}
+            </p>
+          )}
         </div>
         <div className="text-right flex-shrink-0">
-          <p className="text-xl font-black text-amber-400">{row.completedBookingsCount}</p>
-          <p className="text-[10px] text-[var(--muted-color)]">bookings</p>
+          {row.isActivated ? (
+            <>
+              <p className="text-xl font-black text-amber-400">{row.eligibleBookingsCount}</p>
+              <p className="text-[10px] text-[var(--muted-color)]">since approval</p>
+              {row.completedBookingsCount !== row.eligibleBookingsCount && (
+                <p className="text-[10px] text-[var(--muted-color)]">{row.completedBookingsCount} total</p>
+              )}
+            </>
+          ) : (
+            <>
+              <p className="text-xl font-black text-[var(--muted-color)]">{row.completedBookingsCount}</p>
+              <p className="text-[10px] text-[var(--muted-color)]">total washes</p>
+            </>
+          )}
         </div>
       </div>
 
-      {/* Progress bars toward each loyalty offer trigger */}
-      {loyaltyOffers.length > 0 && (
+      {/* Progress bars — only meaningful after activation */}
+      {row.isActivated && loyaltyOffers.length > 0 && (
         <div className="space-y-2 mb-3">
           {loyaltyOffers.map(lo => {
             const trigger = lo.triggerCompletedBookings || 1;
-            const pct = Math.min((row.completedBookingsCount / trigger) * 100, 100);
-            const completed = row.completedBookingsCount >= trigger;
+            const eligible = row.eligibleBookingsCount;
+            const positionInCycle = eligible % trigger;
+            const pct = positionInCycle === 0 && eligible > 0
+              ? 100
+              : Math.min((positionInCycle / trigger) * 100, 100);
+            const milestoneReached = eligible > 0 && positionInCycle === 0;
             return (
               <div key={lo.id}>
                 <div className="flex justify-between text-[11px] mb-1">
                   <span className="text-[var(--muted-color)]">{lo.name}</span>
-                  <span style={{ color: completed ? '#22c55e' : '#f59e0b' }}>
-                    {completed ? '✓ Reward earned' : `${row.completedBookingsCount} / ${trigger}`}
+                  <span style={{ color: milestoneReached ? '#22c55e' : '#f59e0b' }}>
+                    {milestoneReached ? '✓ Reward issued' : `${positionInCycle} / ${trigger}`}
                   </span>
                 </div>
                 <div className="h-1.5 rounded-full bg-white/8 overflow-hidden">
                   <div className="h-full rounded-full transition-all duration-500"
-                    style={{ width: `${pct}%`, background: completed ? 'rgba(34,197,94,0.7)' : 'linear-gradient(90deg, rgba(200,169,107,0.8), rgba(245,158,11,0.8))' }} />
+                    style={{ width: `${pct}%`, background: milestoneReached ? 'rgba(34,197,94,0.7)' : 'linear-gradient(90deg, rgba(200,169,107,0.8), rgba(245,158,11,0.8))' }} />
                 </div>
               </div>
             );
           })}
         </div>
+      )}
+
+      {!row.isActivated && (
+        <p className="text-[11px] text-amber-400/70 mb-2">
+          Waiting for Google review verification — counter has not started yet.
+        </p>
       )}
 
       <div className="flex items-center justify-between gap-2">
@@ -609,29 +627,7 @@ function LoyaltyRow({ row, loyaltyOffers, onAssign }) {
             ? <span className="text-green-400 font-semibold">{row.availableCouponsCount} unused coupon{row.availableCouponsCount > 1 ? 's' : ''}</span>
             : 'No coupons available'}
         </span>
-        {!assigning ? (
-          <button onClick={() => setAssigning(true)}
-            className="text-xs font-bold px-3 py-1.5 rounded-lg border border-primary/30 text-primary hover:bg-primary/10 transition">
-            Give reward
-          </button>
-        ) : (
-          <div className="flex items-center gap-2">
-            <select value={selectedOffer} onChange={e => setSelectedOffer(e.target.value)}
-              className="text-xs rounded-lg border border-[var(--border-color)] bg-[var(--surface-bg)] text-[var(--text-color)] px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary/50">
-              <option value="">Pick offer…</option>
-              {loyaltyOffers.map(lo => <option key={lo.id} value={lo.id}>{lo.name}</option>)}
-            </select>
-            <button onClick={handleAssign} disabled={!selectedOffer || busy}
-              className="text-xs font-bold px-3 py-1.5 rounded-lg bg-primary text-[var(--ink)] hover:bg-primary/90 transition disabled:opacity-50">
-              {busy ? '…' : 'Issue'}
-            </button>
-            <button onClick={() => setAssigning(false)} className="text-[var(--muted-color)] hover:text-[var(--text-color)] transition">
-              <X size={13} />
-            </button>
-          </div>
-        )}
       </div>
-      {done && <p className="text-xs mt-2 text-green-400 font-semibold">{done}</p>}
     </div>
   );
 }

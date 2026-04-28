@@ -120,9 +120,14 @@ namespace Glanz.API.DTOs
         public int UserId { get; set; }
         public string UserName { get; set; } = string.Empty;
         public string UserEmail { get; set; } = string.Empty;
+        /// <summary>Total all-time completed bookings (for reference).</summary>
         public int CompletedBookingsCount { get; set; }
+        /// <summary>Bookings completed after Google review was approved — this is what counts toward rewards.</summary>
+        public int EligibleBookingsCount { get; set; }
         public int AvailableCouponsCount { get; set; }
         public DateTime MemberSince { get; set; }
+        public bool IsActivated { get; set; }
+        public DateTime? ActivatedAt { get; set; }
     }
 
     public class CustomerLoyaltyProgramProgressDto

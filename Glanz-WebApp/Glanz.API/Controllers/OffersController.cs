@@ -107,12 +107,13 @@ namespace Glanz.API.Controllers
             }
 
             var completedBookings = await _context.Bookings
-                .CountAsync(b => b.UserId == userId.Value && b.Status == BookingStatus.Completed);
+                .CountAsync(b => b.UserId == userId.Value && b.Status == BookingStatus.Completed && b.TotalAmount > 0);
 
             var eligibleCompletedBookings = user.LoyaltyGoogleReviewActivatedAt.HasValue
                 ? await _context.Bookings.CountAsync(b =>
                     b.UserId == userId.Value
                     && b.Status == BookingStatus.Completed
+                    && b.TotalAmount > 0
                     && ((b.WorkCompletedAt ?? b.UpdatedAt) >= user.LoyaltyGoogleReviewActivatedAt.Value))
                 : 0;
 
@@ -366,11 +367,33 @@ namespace Glanz.API.Controllers
 
             var userIds = users.Select(u => u.Id).ToList();
 
-            var completedBookingsByUser = await _context.Bookings
-                .Where(b => b.UserId.HasValue && userIds.Contains(b.UserId.Value) && b.Status == BookingStatus.Completed)
-                .GroupBy(b => b.UserId!.Value)
-                .Select(g => new { UserId = g.Key, Count = g.Count() })
-                .ToDictionaryAsync(x => x.UserId, x => x.Count);
+            var allBookings = await _context.Bookings
+                .Where(b => b.UserId.HasValue && userIds.Contains(b.UserId.Value)
+                            && b.Status == BookingStatus.Completed
+                            && b.TotalAmount > 0)   // exclude free/loyalty-redeemed bookings
+                .Select(b => new { UserId = b.UserId!.Value, b.WorkCompletedAt, b.UpdatedAt })
+                .ToListAsync();
+
+            // All-time count by user
+            var completedBookingsByUser = allBookings
+                .GroupBy(b => b.UserId)
+                .ToDictionary(g => g.Key, g => g.Count());
+
+            // Post-activation count by user (uses each user's LoyaltyGoogleReviewActivatedAt)
+            var activationByUser = users.ToDictionary(
+                u => u.Id,
+                u => u.LoyaltyGoogleReviewActivatedAt);
+
+            var eligibleBookingsByUser = allBookings
+                .GroupBy(b => b.UserId)
+                .ToDictionary(
+                    g => g.Key,
+                    g =>
+                    {
+                        var activatedAt = activationByUser.TryGetValue(g.Key, out var a) ? a : null;
+                        if (!activatedAt.HasValue) return 0;
+                        return g.Count(b => (b.WorkCompletedAt ?? b.UpdatedAt) >= activatedAt.Value);
+                    });
 
             var availableCouponsByUser = await _context.UserOffers
                 .Where(uo => userIds.Contains(uo.UserId)
@@ -386,8 +409,11 @@ namespace Glanz.API.Controllers
                 UserName = $"{u.FirstName} {u.LastName}".Trim(),
                 UserEmail = u.Email,
                 CompletedBookingsCount = completedBookingsByUser.TryGetValue(u.Id, out var completed) ? completed : 0,
+                EligibleBookingsCount = eligibleBookingsByUser.TryGetValue(u.Id, out var eligible) ? eligible : 0,
                 AvailableCouponsCount = availableCouponsByUser.TryGetValue(u.Id, out var coupons) ? coupons : 0,
-                MemberSince = u.CreatedAt
+                MemberSince = u.CreatedAt,
+                IsActivated = u.LoyaltyGoogleReviewActivatedAt.HasValue,
+                ActivatedAt = u.LoyaltyGoogleReviewActivatedAt
             });
 
             return Ok(progress);
