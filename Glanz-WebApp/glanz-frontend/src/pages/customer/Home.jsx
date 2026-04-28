@@ -703,8 +703,7 @@ function Home() {
           handled entirely by the browser before any paint.
         */
         const setHeight = () => {
-          // Extra 0.4× vh gives more vertical scroll per horizontal pixel → easier to read
-          section.style.height = `${getTotal() + window.innerHeight * 1.4}px`;
+          section.style.height = `${getTotal() + window.innerHeight}px`;
         };
         setHeight();
 

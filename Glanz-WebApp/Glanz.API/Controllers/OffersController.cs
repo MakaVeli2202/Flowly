@@ -220,6 +220,7 @@ namespace Glanz.API.Controllers
                     userEmail:  user.Email,
                     entityType: "User",
                     entityId:   user.Id.ToString());
+                await _notificationService.NotifyLoyaltyReviewRequestedAsync(user);
             }
 
             return Ok(new
@@ -277,7 +278,7 @@ namespace Glanz.API.Controllers
             user.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
-            var adminId    = GetUserId();
+            var adminId = GetUserId();
             await _audit.LogAsync(
                 action:     "LoyaltyReviewApproved",
                 userId:     adminId,
@@ -412,9 +413,11 @@ namespace Glanz.API.Controllers
             }
 
             var normalizedCode = string.IsNullOrWhiteSpace(dto.Code) ? null : dto.Code.Trim().ToUpperInvariant();
-            if (!string.IsNullOrWhiteSpace(normalizedCode) && await _context.Offers.AnyAsync(o => o.Code == normalizedCode))
+            // Case-insensitive duplicate check (PostgreSQL text comparison is case-sensitive by default)
+            if (!string.IsNullOrWhiteSpace(normalizedCode) &&
+                await _context.Offers.AnyAsync(o => o.Code != null && o.Code.ToUpper() == normalizedCode))
             {
-                return BadRequest(new { message = "Offer code already exists." });
+                return Conflict(new { message = "An offer with this code already exists." });
             }
 
             var offer = new Offer
@@ -437,7 +440,19 @@ namespace Glanz.API.Controllers
             };
 
             _context.Offers.Add(offer);
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (Microsoft.EntityFrameworkCore.DbUpdateException)
+            {
+                // Race condition: another request inserted the same code between our check and save.
+                var codeConflict = normalizedCode != null &&
+                    await _context.Offers.AnyAsync(o => o.Code != null && o.Code.ToUpper() == normalizedCode);
+                return Conflict(new { message = codeConflict
+                    ? "An offer with this code already exists."
+                    : "Failed to save the offer due to a database conflict. Please try again." });
+            }
 
             return CreatedAtAction(nameof(GetOffers), new { id = offer.Id }, MapOffer(offer));
         }
@@ -468,9 +483,11 @@ namespace Glanz.API.Controllers
             if (dto.Code != null)
             {
                 var normalizedCode = string.IsNullOrWhiteSpace(dto.Code) ? null : dto.Code.Trim().ToUpperInvariant();
-                if (!string.IsNullOrWhiteSpace(normalizedCode) && await _context.Offers.AnyAsync(o => o.Id != id && o.Code == normalizedCode))
+                // Case-insensitive check excluding the offer being updated
+                if (!string.IsNullOrWhiteSpace(normalizedCode) &&
+                    await _context.Offers.AnyAsync(o => o.Id != id && o.Code != null && o.Code.ToUpper() == normalizedCode))
                 {
-                    return BadRequest(new { message = "Offer code already exists." });
+                    return Conflict(new { message = "An offer with this code already exists." });
                 }
 
                 offer.Code = normalizedCode;

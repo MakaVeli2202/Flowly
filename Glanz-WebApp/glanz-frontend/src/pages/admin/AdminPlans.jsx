@@ -180,9 +180,15 @@ function AdminPlans() {
 
   const handleSubmit = async (e) => {
     e.preventDefault(); setError(''); setSuccess('');
-    const price = Number(formData.price);
     if (!formData.name.trim()) { setError('Plan name is required.'); return; }
-    if (!Number.isFinite(price) || price <= 0) { setError('Price must be a positive number.'); return; }
+    if (formData.packageIds.length === 0) { setError('Add at least one package to calculate the price.'); return; }
+    const base = formData.packageIds.reduce((sum, id) => {
+      const pkg = allPackages.find(p => p.id === id);
+      return sum + (pkg ? Number(pkg.price) : 0);
+    }, 0);
+    const disc = Number(formData.discountPercent) || 0;
+    const price = Math.round(base * (1 - disc / 100) * 100) / 100;
+    if (price <= 0) { setError('Computed price must be greater than 0.'); return; }
 
     const payload = {
       name:            formData.name.trim(),
@@ -368,10 +374,25 @@ function AdminPlans() {
                         required className={inp} placeholder="e.g. Sedan Monthly" />
                     </div>
                     <div>
-                      <label className="plan-field-label">Price (QAR) *</label>
-                      <input type="number" step="0.01" min="0" value={formData.price}
-                        onChange={(e) => set('price', e.target.value)}
-                        required className={inp} placeholder="199.00" />
+                      <label className="plan-field-label">Price (QAR) <span className="normal-case font-normal">— auto from packages</span></label>
+                      {(() => {
+                        const base = formData.packageIds.reduce((sum, id) => {
+                          const pkg = allPackages.find(p => p.id === id);
+                          return sum + (pkg ? Number(pkg.price) : 0);
+                        }, 0);
+                        const disc = Number(formData.discountPercent) || 0;
+                        const computed = Math.round(base * (1 - disc / 100) * 100) / 100;
+                        return (
+                          <div className={`${inp} flex items-center justify-between pointer-events-none select-none opacity-80`}>
+                            <span className="text-[var(--text-color)]">
+                              {formData.packageIds.length === 0 ? 'Add packages above' : `QAR ${computed.toFixed(2)}`}
+                            </span>
+                            {disc > 0 && formData.packageIds.length > 0 && (
+                              <span className="text-xs text-green-400 font-semibold">{disc}% off · base QAR {base.toFixed(2)}</span>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
 

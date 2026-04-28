@@ -3,10 +3,13 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5289/api
 const _notifListeners = new Set();
 let pollInterval = null;
 const _dispatchedIds = new Set();
+// First poll after session start seeds IDs without firing listeners (no sound for old notifs).
+let _seeded = false;
 
 function _dispatchNotification(notif) {
   if (_dispatchedIds.has(notif.id)) return;
   _dispatchedIds.add(notif.id);
+  if (!_seeded) return; // seed-only: register IDs but don't fire sound/callbacks
   _notifListeners.forEach((fn) => { try { fn(notif); } catch { /* silent */ } });
 }
 
@@ -25,6 +28,7 @@ export function getNotificationConnection() {
 
 export async function startNotificationConnection() {
   if (pollInterval) return;
+  _seeded = false; // reset seed flag on each new session
 
   const poll = async () => {
     try {
@@ -38,7 +42,9 @@ export async function startNotificationConnection() {
         const notifs = await res.json();
         notifs.forEach(_dispatchNotification);
       }
-    } catch { /* silent */ }
+    } catch { /* silent */ } finally {
+      if (!_seeded) _seeded = true; // after first poll completes, future dispatches fire listeners
+    }
   };
 
   pollInterval = setInterval(poll, 15000);
@@ -50,6 +56,7 @@ export async function stopNotificationConnection() {
     clearInterval(pollInterval);
     pollInterval = null;
   }
+  _seeded = false;
 }
 
 export function clearDispatchedNotifications() {

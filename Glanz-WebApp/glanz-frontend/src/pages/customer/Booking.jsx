@@ -218,6 +218,7 @@ function BookingForm({ stripe, elements, isStripeMode }) {
   const [success,             setSuccess]             = useState('');
   const [mySubscription,      setMySubscription]      = useState(null);
   const [paymentProcessing,   setPaymentProcessing]   = useState(false);
+  const [paymentMethod,       setPaymentMethod]       = useState('card');
   const [availabilityLoading, setAvailabilityLoading] = useState(false);
   const [slotsLoading,        setSlotsLoading]        = useState(false);
   const [availableSlots,      setAvailableSlots]      = useState(null);
@@ -602,10 +603,60 @@ function BookingForm({ stripe, elements, isStripeMode }) {
                 {error   && <StatusBanner type="error"   message={error}   />}
                 {success && <StatusBanner type="success" message={success} />}
 
-                {/* ── 01 Package ──────────────────────────────────────── */}
+                {/* ── 01 Vehicle ──────────────────────────────────────── */}
+                <div className="glass-card p-6 relative overflow-hidden">
+                  <div className="prism-ray" style={{ left: '55%', width: '16%', animation: 'prism-ray-sweep 11s ease-in-out 6s infinite' }} />
+                  <SectionHeading icon={Car} step={1}>Vehicle Details</SectionHeading>
+                  <div className="mb-5">
+                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-color)] mb-3">Vehicle Type</p>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      {[
+                        { value: 'Motorcycle', label: 'Motorcycle', badge: '−20%', badgeCls: 'text-green-400 bg-green-500/10 border-green-500/25' },
+                        { value: 'Sedan',      label: 'Sedan',      badge: 'Base',  badgeCls: 'text-[var(--muted-color)] bg-white/5 border-[var(--border-color)]' },
+                        { value: 'SUV',        label: 'SUV / 4×4',  badge: '+25%', badgeCls: 'text-amber-400 bg-amber-500/10 border-amber-500/25' },
+                        { value: 'Pickup',     label: 'Pickup',     badge: '+50%', badgeCls: 'text-amber-400 bg-amber-500/10 border-amber-500/25' },
+                      ].map(({ value, label, badge, badgeCls }) => (
+                        <button
+                          key={value}
+                          type="button"
+                          onClick={() => setFormData({ ...formData, vehicleType: value })}
+                          onMouseMove={(e) => {
+                            const r = e.currentTarget.getBoundingClientRect();
+                            e.currentTarget.style.setProperty('--px', `${((e.clientX - r.left) / r.width  * 100).toFixed(1)}%`);
+                            e.currentTarget.style.setProperty('--py', `${((e.clientY - r.top)  / r.height * 100).toFixed(1)}%`);
+                          }}
+                          className={`rounded-xl border-2 p-3 text-center transition-all duration-200 prism-glass ${
+                            formData.vehicleType === value
+                              ? 'border-primary bg-primary/10 text-primary pkg-selected-glow'
+                              : 'border-[var(--border-color)] text-[var(--muted-color)] hover:border-primary/40'
+                          }`}
+                        >
+                          <p className="text-sm font-bold leading-tight">{label}</p>
+                          <span className={`mt-1.5 inline-block text-[10px] font-bold px-1.5 py-0.5 rounded-full border ${badgeCls}`}>{badge}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    {[
+                      { label: 'Make',  name: 'vehicleMake',  placeholder: 'Toyota' },
+                      { label: 'Model', name: 'vehicleModel', placeholder: 'Camry'  },
+                      { label: 'Year',  name: 'vehicleYear',  placeholder: '2022', maxLength: 4 },
+                    ].map(({ label, name, placeholder, maxLength }) => (
+                      <div key={name}>
+                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-color)] mb-2">{label}</p>
+                        <input type="text" name={name} value={formData[name]} onChange={handleChange}
+                          placeholder={placeholder} maxLength={maxLength}
+                          className="w-full rounded-xl border border-[var(--border-color)] bg-[var(--surface-bg)] text-[var(--text-color)] px-3 py-2.5 text-sm placeholder:text-[var(--muted-color)] focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* ── 02 Package ──────────────────────────────────────── */}
                 <div className="glass-card p-6 relative overflow-hidden">
                   <div className="prism-ray" style={{ left: '68%', width: '14%', animation: 'prism-ray-sweep 18s ease-in-out 1s infinite' }} />
-                  <SectionHeading icon={Zap} step={1}>Select Package</SectionHeading>
+                  <SectionHeading icon={Zap} step={2}>Select Package</SectionHeading>
                   {packagesCtxLoading && packages.length === 0 ? (
                     <div className="flex items-center gap-3 py-10 justify-center">
                       <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
@@ -678,11 +729,11 @@ function BookingForm({ stripe, elements, isStripeMode }) {
                   )}
                 </div>
 
-                {/* ── 02 Schedule — no overflow-hidden (select dropdown) ── */}
+                {/* ── 03 Schedule — no overflow-hidden (select dropdown) ── */}
                 <div className="glass-card p-6 relative">
                   <div className="absolute top-0 left-8 right-8 h-[1px] pointer-events-none"
                     style={{ background: 'linear-gradient(90deg, transparent, rgba(200,169,107,0.3), rgba(14,165,160,0.25), transparent)' }} />
-                  <SectionHeading icon={Calendar} step={2}>Schedule</SectionHeading>
+                  <SectionHeading icon={Calendar} step={3}>Schedule</SectionHeading>
                   <div className="grid md:grid-cols-2 gap-6">
                     {/* Calendar */}
                     <div>
@@ -799,10 +850,10 @@ function BookingForm({ stripe, elements, isStripeMode }) {
                   </div>
                 </div>
 
-                {/* ── 03 Customer info ────────────────────────────────── */}
+                {/* ── 04 Customer info ────────────────────────────────── */}
                 <div className="glass-card p-6 relative overflow-hidden">
                   <div className="prism-ray" style={{ left: '78%', width: '11%', animation: 'prism-ray-sweep 16s ease-in-out 7s infinite' }} />
-                  <SectionHeading icon={User} step={3}>Your Information</SectionHeading>
+                  <SectionHeading icon={User} step={4}>Your Information</SectionHeading>
                   <div className="grid md:grid-cols-2 gap-4">
                     {[
                       { label: 'Full Name',     name: 'customerName',  type: 'text',  icon: User,  placeholder: 'John Smith',      colSpan: '' },
@@ -822,17 +873,17 @@ function BookingForm({ stripe, elements, isStripeMode }) {
                   </div>
                 </div>
 
-                {/* ── 04 Address — no overflow-hidden (autocomplete dropdown) ── */}
+                {/* ── 05 Address — no overflow-hidden (autocomplete dropdown) ── */}
                 <div className="glass-card p-6 relative">
                   <div className="absolute top-0 left-8 right-8 h-[1px] pointer-events-none"
                     style={{ background: 'linear-gradient(90deg, transparent, rgba(14,165,160,0.3), rgba(200,169,107,0.25), transparent)' }} />
-                  <SectionHeading icon={MapPin} step={4}>Service Address</SectionHeading>
+                  <SectionHeading icon={MapPin} step={5}>Service Address</SectionHeading>
                   {canAutofillCustomerData && (
                     <div className="mb-5 rounded-xl border border-[var(--border-color)] p-4" style={{ background: 'rgba(255,255,255,0.025)' }}>
                       <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-color)] mb-3">Saved Addresses</p>
                       <div className="flex flex-wrap gap-2">
                         {Object.entries(savedAddresses).map(([type, address]) => {
-                          const isActive = formData.addressType === type && formData.customerAddress === address;
+                          const isActive = formData.addressType === type && formData.customerAddress.trim() === address.trim();
                           return (
                             <button key={type} type="button" disabled={!address}
                               onClick={() => { if (!address) return; setFormData((prev) => ({ ...prev, customerAddress: address, addressType: type })); }}
@@ -876,63 +927,19 @@ function BookingForm({ stripe, elements, isStripeMode }) {
                       </div>
                     </div>
                   )}
-                </div>
-
-                {/* ── 05 Vehicle ──────────────────────────────────────── */}
-                <div className="glass-card p-6 relative overflow-hidden">
-                  <div className="prism-ray" style={{ left: '55%', width: '16%', animation: 'prism-ray-sweep 11s ease-in-out 6s infinite' }} />
-                  <SectionHeading icon={Car} step={5}>Vehicle Details</SectionHeading>
-                  <div className="mb-5">
-                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-color)] mb-3">Vehicle Type</p>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                      {[
-                        { value: 'Motorcycle', label: 'Motorcycle', badge: '−20%', badgeCls: 'text-green-400 bg-green-500/10 border-green-500/25' },
-                        { value: 'Sedan',      label: 'Sedan',      badge: 'Base',  badgeCls: 'text-[var(--muted-color)] bg-white/5 border-[var(--border-color)]' },
-                        { value: 'SUV',        label: 'SUV / 4×4',  badge: '+25%', badgeCls: 'text-amber-400 bg-amber-500/10 border-amber-500/25' },
-                        { value: 'Pickup',     label: 'Pickup',     badge: '+50%', badgeCls: 'text-amber-400 bg-amber-500/10 border-amber-500/25' },
-                      ].map(({ value, label, badge, badgeCls }) => (
-                        <button
-                          key={value}
-                          type="button"
-                          onClick={() => setFormData({ ...formData, vehicleType: value })}
-                          onMouseMove={(e) => {
-                            const r = e.currentTarget.getBoundingClientRect();
-                            e.currentTarget.style.setProperty('--px', `${((e.clientX - r.left) / r.width  * 100).toFixed(1)}%`);
-                            e.currentTarget.style.setProperty('--py', `${((e.clientY - r.top)  / r.height * 100).toFixed(1)}%`);
-                          }}
-                          className={`rounded-xl border-2 p-3 text-center transition-all duration-200 prism-glass ${
-                            formData.vehicleType === value
-                              ? 'border-primary bg-primary/10 text-primary pkg-selected-glow'
-                              : 'border-[var(--border-color)] text-[var(--muted-color)] hover:border-primary/40'
-                          }`}
-                        >
-                          <p className="text-sm font-bold leading-tight">{label}</p>
-                          <span className={`mt-1.5 inline-block text-[10px] font-bold px-1.5 py-0.5 rounded-full border ${badgeCls}`}>{badge}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-3 gap-3">
-                    {[
-                      { label: 'Make',  name: 'vehicleMake',  placeholder: 'Toyota' },
-                      { label: 'Model', name: 'vehicleModel', placeholder: 'Camry'  },
-                      { label: 'Year',  name: 'vehicleYear',  placeholder: '2022', maxLength: 4 },
-                    ].map(({ label, name, placeholder, maxLength }) => (
-                      <div key={name}>
-                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-color)] mb-2">{label}</p>
-                        <input type="text" name={name} value={formData[name]} onChange={handleChange}
-                          placeholder={placeholder} maxLength={maxLength}
-                          className="w-full rounded-xl border border-[var(--border-color)] bg-[var(--surface-bg)] text-[var(--text-color)] px-3 py-2.5 text-sm placeholder:text-[var(--muted-color)] focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition" />
-                      </div>
-                    ))}
+                  <div className="mt-5">
+                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-color)] mb-2">Special Instructions</p>
+                    <textarea name="specialInstructions" value={formData.specialInstructions} onChange={handleChange}
+                      rows={3} placeholder="Any specific requests or concerns about your vehicle or service location…"
+                      className="w-full rounded-xl border border-[var(--border-color)] bg-[var(--surface-bg)] text-[var(--text-color)] px-4 py-3 text-sm placeholder:text-[var(--muted-color)] focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition resize-none" />
                   </div>
                 </div>
 
-                {/* ── 06 Offers & Notes ───────────────────────────────── */}
+                {/* ── 06 Offers ───────────────────────────────────────── */}
                 <div className="glass-card p-6 relative overflow-hidden">
                   <div className="prism-ray" style={{ left: '76%', width: '10%', animation: 'prism-ray-sweep 19s ease-in-out 2s infinite' }} />
-                  <SectionHeading icon={Tag} step={6}>Offers &amp; Notes</SectionHeading>
-                  <div className="mb-5">
+                  <SectionHeading icon={Tag} step={6}>Offers</SectionHeading>
+                  <div>
                     <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-color)] mb-2">Coupon Code</p>
                     <div className="relative">
                       <Ticket size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--muted-color)]" />
@@ -960,12 +967,6 @@ function BookingForm({ stripe, elements, isStripeMode }) {
                       Loyalty rewards appear here after completed bookings. Discounts are validated server-side at checkout.
                     </p>
                   </div>
-                  <div>
-                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-color)] mb-2">Special Instructions</p>
-                    <textarea name="specialInstructions" value={formData.specialInstructions} onChange={handleChange}
-                      rows={3} placeholder="Any specific requests or concerns about your vehicle or service location…"
-                      className="w-full rounded-xl border border-[var(--border-color)] bg-[var(--surface-bg)] text-[var(--text-color)] px-4 py-3 text-sm placeholder:text-[var(--muted-color)] focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition resize-none" />
-                  </div>
                 </div>
 
                 {/* ── 07 Payment ──────────────────────────────────────── */}
@@ -985,20 +986,51 @@ function BookingForm({ stripe, elements, isStripeMode }) {
                     </div>
                   ) : isStripeMode ? (
                     <>
-                      <div className="rounded-xl border border-[var(--border-color)] bg-[var(--surface-bg)] p-4">
-                        <CardElement options={{
-                          style: {
-                            base: { fontSize: '15px', color: '#E8E9EC', '::placeholder': { color: '#7A8495' } },
-                            invalid: { color: '#EF4444' },
-                          },
-                        }} />
+                      {/* Payment method selector */}
+                      <div className="flex gap-2 mb-4">
+                        {[
+                          { id: 'card',       label: 'Credit / Debit Card', icon: CreditCard },
+                          { id: 'google_pay', label: 'Google Pay',          icon: Shield },
+                          { id: 'apple_pay',  label: 'Apple Pay',           icon: Star },
+                        ].map(({ id, label, icon: MethodIcon }) => (
+                          <button key={id} type="button"
+                            onClick={() => setPaymentMethod(id)}
+                            className={`flex-1 flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl border-2 text-xs font-semibold transition-all ${
+                              paymentMethod === id
+                                ? 'border-primary bg-primary/10 text-primary'
+                                : 'border-[var(--border-color)] text-[var(--muted-color)] hover:border-primary/40'
+                            }`}>
+                            <MethodIcon size={16} />
+                            <span className="text-[10px] leading-tight text-center">{label}</span>
+                          </button>
+                        ))}
                       </div>
-                      <div className="flex items-center gap-2 mt-3">
-                        <Shield size={11} className="text-[var(--muted-color)] flex-shrink-0" />
-                        <p className="text-xs text-[var(--muted-color)]">
-                          Your card will be pre-authorised. Payment is captured only after service completion.
-                        </p>
-                      </div>
+                      {paymentMethod === 'card' ? (
+                        <>
+                          <div className="rounded-xl border border-[var(--border-color)] bg-[var(--surface-bg)] p-4">
+                            <CardElement options={{
+                              style: {
+                                base: { fontSize: '15px', color: '#E8E9EC', '::placeholder': { color: '#7A8495' } },
+                                invalid: { color: '#EF4444' },
+                              },
+                            }} />
+                          </div>
+                          <div className="flex items-center gap-2 mt-3">
+                            <Shield size={11} className="text-[var(--muted-color)] flex-shrink-0" />
+                            <p className="text-xs text-[var(--muted-color)]">
+                              Your card will be pre-authorised. Payment is captured only after service completion.
+                            </p>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="rounded-xl border border-dashed border-[var(--border-color)] p-5 flex items-center gap-3"
+                          style={{ background: 'rgba(255,255,255,0.015)' }}>
+                          <AlertCircle size={16} className="text-[var(--muted-color)] flex-shrink-0" />
+                          <p className="text-sm text-[var(--muted-color)]">
+                            {paymentMethod === 'google_pay' ? 'Google Pay' : 'Apple Pay'} coming soon. Please use Credit / Debit Card to complete your booking.
+                          </p>
+                        </div>
+                      )}
                     </>
                   ) : (
                     <div className="rounded-xl border border-dashed border-[var(--border-color)] p-5"

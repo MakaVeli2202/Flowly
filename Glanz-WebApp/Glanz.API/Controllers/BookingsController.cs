@@ -1346,21 +1346,25 @@ namespace Glanz.API.Controllers
 
         private async Task IssueLoyaltyCouponsAsync(int userId)
         {
-            var loyaltyActivationAt = await _context.Users
+            // Gate: customer must have their Google review approved first.
+            var activationAt = await _context.Users
                 .Where(u => u.Id == userId)
                 .Select(u => u.LoyaltyGoogleReviewActivatedAt)
                 .FirstOrDefaultAsync();
 
-            if (!loyaltyActivationAt.HasValue)
+            if (!activationAt.HasValue)
             {
                 return;
             }
 
+            // Only count bookings completed AFTER the review was approved —
+            // the loyalty counter starts from zero on the day of verification.
             var completedCount = await _context.Bookings
                 .CountAsync(b =>
                     b.UserId == userId
                     && b.Status == BookingStatus.Completed
-                    && ((b.WorkCompletedAt ?? b.UpdatedAt) >= loyaltyActivationAt.Value));
+                    && b.WorkCompletedAt.HasValue
+                    && b.WorkCompletedAt.Value >= activationAt.Value);
 
             if (completedCount <= 0)
             {
@@ -1416,6 +1420,8 @@ namespace Glanz.API.Controllers
 
                 earnedCoupons.Add((offer, personalCode));
             }
+
+            if (earnedCoupons.Count == 0) return;
 
             await _context.SaveChangesAsync();
 
@@ -2854,6 +2860,7 @@ namespace Glanz.API.Controllers
                     AssignedWorkerName = b.AssignedWorker == null ? null : $"{b.AssignedWorker.FirstName} {b.AssignedWorker.LastName}".Trim(),
                     WorkerArrivedAt = b.WorkerArrivedAt,
                     WorkerRunningLateAt = b.WorkerRunningLateAt,
+                    WorkerOnMyWayAt = b.WorkerOnMyWayAt,
                     WorkStartedAt = b.WorkStartedAt,
                     WorkCompletedAt = b.WorkCompletedAt,
                     WorkDurationSeconds = b.WorkDurationSeconds,

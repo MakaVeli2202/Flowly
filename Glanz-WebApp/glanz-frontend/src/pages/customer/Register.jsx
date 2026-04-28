@@ -3,9 +3,10 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
   UserPlus, User, Mail, Lock, AlertCircle,
-  Eye, EyeOff, Shield, CheckCircle, ArrowRight, Zap,
+  Eye, EyeOff, Shield, CheckCircle, ArrowRight, Zap, Phone, MapPin,
 } from 'lucide-react';
 import SEO from '../../components/shared/SEO';
+import AddressAutocompleteInput from '../../components/shared/AddressAutocompleteInput';
 
 /* ── PRISM CSS (same as Login) ─────────────────────────────── */
 const PRISM_CSS = `
@@ -139,6 +140,7 @@ function Register() {
   const { register } = useAuth();
   const [formData, setFormData] = useState({
     firstName: '', lastName: '', email: '', password: '', confirmPassword: '',
+    phone: '', address: '',
   });
   const [error,               setError]               = useState('');
   const [loading,             setLoading]             = useState(false);
@@ -165,11 +167,16 @@ function Register() {
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match.'); return;
     }
+    if (formData.phone && !/^\+?[\d\s\-().]{7,20}$/.test(formData.phone.trim())) {
+      setError('Please enter a valid phone number.'); return;
+    }
     setLoading(true);
     try {
       await register({
         firstName: formData.firstName, lastName: formData.lastName,
         email: formData.email,         password: formData.password,
+        phone: formData.phone.trim() || undefined,
+        preferredAddress: formData.address.trim() || undefined,
       });
       if (selectedPackage)                              navigate('/booking', { state: { selectedPackage }, replace: true });
       else if (from && from !== '/register' && from !== '/login') navigate(from, { replace: true });
@@ -390,6 +397,31 @@ function Register() {
                       }
                     </p>
                   )}
+                </div>
+
+                {/* Phone */}
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-color)] mb-2">
+                    Phone Number <span className="normal-case font-normal">(optional)</span>
+                  </label>
+                  <div className="relative">
+                    <Phone size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--muted-color)]" />
+                    <input
+                      type="tel" name="phone" value={formData.phone} onChange={handleChange}
+                      placeholder="+974 3300 0000"
+                      className="w-full pl-10 pr-4 py-3 rounded-xl border border-[var(--border-color)] bg-[var(--surface-bg)] text-[var(--text-color)] text-sm placeholder:text-[var(--muted-color)] focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition"
+                    />
+                  </div>
+                </div>
+
+                {/* Address */}
+                <div>
+                  <AddressAutocompleteInput
+                    label={<span className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-color)]">Address <span className="normal-case font-normal">(optional)</span></span>}
+                    value={formData.address}
+                    onChange={(v) => setFormData((prev) => ({ ...prev, address: v }))}
+                    placeholder="Search your home or work address"
+                  />
                 </div>
 
                 {/* Submit */}

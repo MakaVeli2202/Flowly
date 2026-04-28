@@ -27,6 +27,7 @@ namespace Glanz.API.Controllers
         private const string DiscountKey          = "subscription.discountPercent";
         private const string SmsFollowUpKey       = "sms.followUpEnabled";
         private const string BusinessHoursKey     = "booking.businessHours";
+        private const string BusinessConfigKey    = "business.config";
 
         private static readonly Dictionary<string, (string Start, string End)> DefaultBusinessHours = new()
         {
@@ -64,7 +65,7 @@ namespace Glanz.API.Controllers
         [HttpGet]
         public async Task<IActionResult> GetSettings()
         {
-            var keys = new[] { MultipliersKey, WorkerTravelKey, SmsFollowUpKey, DiscountKey, BusinessHoursKey };
+            var keys = new[] { MultipliersKey, WorkerTravelKey, SmsFollowUpKey, DiscountKey, BusinessHoursKey, BusinessConfigKey };
             var rows = await _context.SystemSettings
                 .AsNoTracking()
                 .Where(s => keys.Contains(s.Key))
@@ -126,6 +127,27 @@ namespace Glanz.API.Controllers
                 };
             }
 
+            // ── business config ──────────────────────────────────────────────────
+            BusinessConfigDto businessConfig = new()
+            {
+                Name         = "Glanz",
+                Tagline      = "Professional car detailing services in Qatar. Quality you can trust.",
+                Phone        = "+974 4444 4444",
+                Email        = "info@Glanz.qa",
+                Location     = "Doha, Qatar",
+                ServiceAreas = ["Doha", "Al Rayyan", "Al Wakrah", "Lusail", "Al Khor", "Dukhan", "Al Shahaniya"],
+            };
+            var bizRaw = GetVal(BusinessConfigKey);
+            if (!string.IsNullOrWhiteSpace(bizRaw))
+            {
+                try
+                {
+                    var parsed = JsonSerializer.Deserialize<BusinessConfigDto>(bizRaw, _jsonOpts);
+                    if (parsed != null) businessConfig = parsed;
+                }
+                catch { /* Corrupt JSON — fall back to defaults. */ }
+            }
+
             return Ok(new
             {
                 pricing = new { vehicleMultipliers },
@@ -133,6 +155,7 @@ namespace Glanz.API.Controllers
                 sms     = new { followUpEnabled = smsFollowUpEnabled },
                 subscriptionDiscountPercent,
                 businessHours,
+                businessConfig,
             });
         }
 
@@ -170,6 +193,12 @@ namespace Glanz.API.Controllers
                 updates.Add((BusinessHoursKey, json));
             }
 
+            if (dto.BusinessConfig != null)
+            {
+                var json = JsonSerializer.Serialize(dto.BusinessConfig, _jsonOpts);
+                updates.Add((BusinessConfigKey, json));
+            }
+
             if (updates.Count == 0)
                 return BadRequest(new { message = "No valid settings provided to update." });
 
@@ -204,5 +233,16 @@ namespace Glanz.API.Controllers
         public decimal?          SubscriptionDiscountPercent { get; set; }
         public bool?             SmsFollowUpEnabled          { get; set; }
         public BusinessHoursPerDayDto? BusinessHours         { get; set; }
+        public BusinessConfigDto?      BusinessConfig        { get; set; }
+    }
+
+    public class BusinessConfigDto
+    {
+        public string?       Name         { get; set; }
+        public string?       Tagline      { get; set; }
+        public string?       Phone        { get; set; }
+        public string?       Email        { get; set; }
+        public string?       Location     { get; set; }
+        public List<string>? ServiceAreas { get; set; }
     }
 }

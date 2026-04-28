@@ -22,7 +22,6 @@ import { API_BASE_URL } from '../config/api';
 
 const statusOptions       = ['Pending', 'Confirmed', 'InProgress', 'Completed', 'Cancelled'];
 const workerStatusOptions  = ['Pending', 'Confirmed', 'InProgress', 'Paused', 'Completed'];
-const dispatchPhone        = '+97444444444';
 const workerArrivalCooldownMs  = 5 * 60 * 1000;
 const workerTestDayOffsetDays  = 1;
 
@@ -506,7 +505,10 @@ export default function AdminJobsScreen({ route, navigation }) {
 
   // ── Actions ────────────────────────────────────────────────────────────────
   const callCustomer = async (phone) => { if (phone) await Linking.openURL(`tel:${phone}`); };
-  const callDispatch  = async () => { await Linking.openURL(`tel:${dispatchPhone}`); };
+  const callDispatch  = async () => {
+    const phone = settings?.businessConfig?.phone || '+974 4444 4444';
+    await Linking.openURL(`tel:${phone.replace(/\s/g, '')}`);
+  };
 
   const openAssignModal = async (booking) => {
     setAssignModalBooking(booking);
@@ -1471,10 +1473,22 @@ const DetailView = () => {
             </View>
           )}
           {isMyJob && canStartJob && (
-            <TouchableOpacity style={[w.actionBtn, w.actionBtnGreen, updatingId === booking.id && s.btnDisabled]} onPress={() => startJob(booking.id)} disabled={updatingId === booking.id}>
-              <Ionicons name="play-circle-outline" size={17} color="#fff" />
-              <Text style={w.actionBtnText}>{updatingId === booking.id ? 'Starting…' : 'Start Job'}</Text>
-            </TouchableOpacity>
+            <>
+              {!hasArrived && (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6, marginTop: 4, paddingHorizontal: 2 }}>
+                  <Ionicons name="information-circle-outline" size={14} color="#64748B" />
+                  <Text style={{ fontSize: 12, color: '#64748B' }}>Press "I Am Here" to unlock job start</Text>
+                </View>
+              )}
+              <TouchableOpacity
+                style={[w.actionBtn, w.actionBtnGreen, (!hasArrived || updatingId === booking.id) && s.btnDisabled]}
+                onPress={() => startJob(booking.id)}
+                disabled={!hasArrived || updatingId === booking.id}
+              >
+                <Ionicons name="play-circle-outline" size={17} color="#fff" />
+                <Text style={w.actionBtnText}>{updatingId === booking.id ? 'Starting…' : 'Start Job'}</Text>
+              </TouchableOpacity>
+            </>
           )}
           {isMyJob && booking.status === 'InProgress' && (
             <View style={w.controlRow}>

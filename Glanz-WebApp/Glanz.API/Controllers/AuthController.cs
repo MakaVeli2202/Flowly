@@ -49,7 +49,7 @@ namespace Glanz.API.Controllers
                 Secure   = !_env.IsDevelopment(),
                 SameSite = SameSiteMode.Lax,
                 Expires  = DateTimeOffset.UtcNow.AddDays(days),
-                Path     = "/api/auth",
+                Path     = "/",
             });
         }
 
@@ -540,7 +540,7 @@ namespace Glanz.API.Controllers
                 }
             }
 
-            Response.Cookies.Delete("refreshToken", new CookieOptions { Path = "/api/auth" });
+            Response.Cookies.Delete("refreshToken", new CookieOptions { Path = "/" });
             return Ok(new { message = "Logged out." });
         }
 

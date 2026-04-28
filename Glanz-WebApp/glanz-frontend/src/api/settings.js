@@ -31,4 +31,9 @@ export const settingsAPI = {
     const response = await apiClient.put('/Settings', { smsFollowUpEnabled: followUpEnabled });
     return response.data;
   }),
+
+  updateBusinessConfig: async (config) => withRetry(async () => {
+    const response = await apiClient.put('/Settings', { businessConfig: config });
+    return response.data;
+  }),
 };

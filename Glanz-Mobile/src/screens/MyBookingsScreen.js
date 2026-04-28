@@ -429,6 +429,11 @@ export default function MyBookingsScreen({ navigation }) {
                 <View style={{ flex: 1 }}>
                   <Text style={s.couponName}>{c.offerName}</Text>
                   <Text style={s.couponCode}>{c.personalCode}</Text>
+                  {c.expiresAt && (
+                    <Text style={s.couponExpiry}>
+                      Expires {new Date(c.expiresAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
+                    </Text>
+                  )}
                 </View>
               </View>
             ))}
@@ -925,6 +930,7 @@ const s = StyleSheet.create({
   },
   couponName: { color: 'rgba(255,255,255,0.7)', fontWeight: '600', fontSize: 12 },
   couponCode: { color: '#FDE68A', fontWeight: '900', fontSize: 13, marginTop: 2, letterSpacing: 0.5 },
+  couponExpiry: { color: 'rgba(255,255,255,0.45)', fontSize: 10, marginTop: 3 },
 
   /* Empty state */
   emptyWrap: {

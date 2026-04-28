@@ -5,6 +5,7 @@
  *   - vehicleMultipliers:       price multipliers per vehicle type
  *   - defaultBufferMinutes:     same-day booking minimum customer lead time
  *   - workerTravelBufferMinutes: gap between consecutive worker bookings (travel/prep)
+ *   - businessConfig:           admin-editable business details (name, phone, email, …)
  *
  * Falls back to safe defaults if GET /Settings is unavailable or returns an
  * old response shape — backward-compatible during the backend migration.
@@ -21,6 +22,14 @@ export const DEFAULT_SETTINGS = {
   defaultBufferMinutes:      90,
   workerTravelBufferMinutes: 30,
   workerReminderBeforeTravelMinutes: 5,
+  businessConfig: {
+    name:         'Glanz',
+    tagline:      'Professional car detailing services in Qatar.',
+    phone:        '+974 4444 4444',
+    email:        'info@glanz.qa',
+    location:     'Doha, Qatar',
+    serviceAreas: [],
+  },
 };
 
 const SettingsContext = createContext(DEFAULT_SETTINGS);
@@ -56,6 +65,10 @@ export function SettingsProvider({ children }) {
           workerReminderBeforeTravelMinutes: Number.isFinite(data.booking?.workerReminderBeforeTravelMinutes)
             ? data.booking.workerReminderBeforeTravelMinutes
             : prev.workerReminderBeforeTravelMinutes,
+
+          businessConfig: (data.businessConfig && typeof data.businessConfig === 'object')
+            ? { ...DEFAULT_SETTINGS.businessConfig, ...data.businessConfig }
+            : prev.businessConfig,
         }));
       })
       .catch(() => {

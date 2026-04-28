@@ -45,6 +45,7 @@ export default function SubscriptionBooking() {
   const [loadingAvail, setLoadingAvail] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [calendarError, setCalendarError] = useState('');
   const [success, setSuccess] = useState(null);
 
   useEffect(() => {
@@ -87,6 +88,7 @@ export default function SubscriptionBooking() {
   const selectDate = async (dateStr) => {
     setSelectedDate(dateStr);
     setSelectedSlot(null);
+    setCalendarError('');
     setLoadingSlots(true);
     try {
       const data = await subscriptionsAPI.getSlots({ date: dateStr });
@@ -112,7 +114,15 @@ export default function SubscriptionBooking() {
       setSuccess(result);
       setStep(4);
     } catch (e) {
-      setError(e?.response?.data?.message || 'Failed to create booking. Please try again.');
+      const msg = e?.response?.data?.message || 'Failed to create booking. Please try again.';
+      const isSlotConflict = /slot|unavailable|conflict|booked/i.test(msg);
+      if (isSlotConflict) {
+        setCalendarError(msg);
+        setSelectedSlot('');
+        setStep(2);
+      } else {
+        setError(msg);
+      }
     } finally {
       setSubmitting(false);
     }
@@ -279,6 +289,12 @@ export default function SubscriptionBooking() {
         {/* ── STEP 2: Calendar ── */}
         {step === 2 && (
           <div className="space-y-5">
+            {calendarError && (
+              <div className="rounded-xl border border-rose-500/30 bg-rose-500/8 px-4 py-3 flex items-start gap-2">
+                <AlertCircle size={15} className="text-rose-400 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-rose-300">{calendarError} Please choose a different date or time.</p>
+              </div>
+            )}
             <div className="glass-card p-5">
               {/* Month navigation */}
               <div className="flex items-center justify-between mb-4">
@@ -408,6 +424,29 @@ export default function SubscriptionBooking() {
                 {discountPct > 0 && <Row label={`Discount (${discountPct}%)`} value={`-${formatQAR(discountAmt)}`} valueColor="#10b981" />}
                 <Row label="You Pay" value={formatQAR(finalPrice)} bold />
               </div>
+
+              {selectedDate && (
+                <div className="mt-5 rounded-xl border border-[var(--border-color)] p-4" style={{ background: 'rgba(255,255,255,0.025)' }}>
+                  <p className="text-xs font-bold uppercase tracking-[0.15em] text-[var(--muted-color)] mb-3">Upcoming Schedule</p>
+                  <div className="space-y-1.5">
+                    {[0, 7, 14, 21].map((offset) => {
+                      const d = new Date(selectedDate + 'T00:00:00');
+                      d.setDate(d.getDate() + offset);
+                      return (
+                        <div key={offset} className="flex items-center gap-3 text-sm">
+                          <span className={`w-16 text-[10px] font-bold uppercase tracking-wide ${offset === 0 ? 'text-primary' : 'text-[var(--muted-color)]'}`}>
+                            {offset === 0 ? 'Week 1' : `Week ${offset / 7 + 1}`}
+                          </span>
+                          <span className={offset === 0 ? 'text-[var(--heading-color)] font-semibold' : 'text-[var(--text-color)]'}>
+                            {d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}
+                          </span>
+                          <span className="text-[var(--muted-color)] text-xs">{selectedSlot?.split('-')[0]}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               <div className="mt-5">
                 <label className="block text-xs text-[var(--muted-color)] mb-1.5">Notes (optional)</label>

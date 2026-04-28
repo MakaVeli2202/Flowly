@@ -1014,41 +1014,6 @@ function AdminBookings() {
                       </div>
                     </SectionCard>
 
-                    {/* ── Customer requests ────────────────── */}
-                    {(selectedBooking.cancellationRequested || selectedBooking.rescheduleRequested) && (
-                      <div className="rounded-xl border border-amber-500/28 bg-amber-500/5 p-5">
-                        <div className="flex items-center gap-2 mb-4">
-                          <AlertCircle size={14} className="text-amber-400" />
-                          <h3 className="text-sm font-bold text-amber-400">Customer Requests</h3>
-                        </div>
-                        {selectedBooking.cancellationRequested && (
-                          <div className="rounded-xl border border-rose-500/22 bg-[var(--card-bg)] p-4 mb-3">
-                            <p className="text-sm font-bold text-rose-400 mb-1">🚫 Cancellation Request</p>
-                            <p className="text-sm text-[var(--text-color)]">{selectedBooking.cancellationRequestReason || 'No reason provided'}</p>
-                            {selectedBooking.cancellationRequestedAt && (
-                              <p className="text-[11px] text-[var(--muted-color)] mt-1">Requested: {new Date(selectedBooking.cancellationRequestedAt).toLocaleString()}</p>
-                            )}
-                            <p className="text-[11px] text-amber-400 mt-2">Action: Set status to Cancelled if approved, or contact customer.</p>
-                          </div>
-                        )}
-                        {selectedBooking.rescheduleRequested && (
-                          <div className="rounded-xl border border-blue-500/22 bg-[var(--card-bg)] p-4">
-                            <p className="text-sm font-bold text-blue-400 mb-1">📅 Reschedule Request</p>
-                            {selectedBooking.reschedulePreferredDate && (
-                              <p className="text-sm text-[var(--text-color)]">Preferred: {selectedBooking.reschedulePreferredDate}</p>
-                            )}
-                            {selectedBooking.rescheduleRequestNote && (
-                              <p className="text-sm text-[var(--muted-color)] mt-1">{selectedBooking.rescheduleRequestNote}</p>
-                            )}
-                            {selectedBooking.rescheduleRequestedAt && (
-                              <p className="text-[11px] text-[var(--muted-color)] mt-1">Requested: {new Date(selectedBooking.rescheduleRequestedAt).toLocaleString()}</p>
-                            )}
-                            <p className="text-[11px] text-amber-400 mt-2">Action: Contact customer and update scheduled date if agreed.</p>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
                     {/* ── Booking controls ─────────────────── */}
                     <SectionCard title="Booking Controls" icon={Wrench} accent="#0ea5a0">
                       <div className="grid sm:grid-cols-2 gap-4">

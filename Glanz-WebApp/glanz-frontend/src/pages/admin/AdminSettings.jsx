@@ -129,6 +129,18 @@ export default function AdminSettings() {
             Saturday:  data.businessHours.saturday  || '10:00-16:00',
           });
         }
+        if (data?.businessConfig) {
+          const bc = data.businessConfig;
+          setBiz(b => ({
+            ...b,
+            ...(bc.name         && { name:         bc.name }),
+            ...(bc.tagline      && { tagline:       bc.tagline }),
+            ...(bc.phone        && { phone:         bc.phone }),
+            ...(bc.email        && { email:         bc.email }),
+            ...(bc.location     && { location:      bc.location }),
+            ...(bc.serviceAreas && { serviceAreas:  bc.serviceAreas }),
+          }));
+        }
       })
       .catch(() => {});
   }, []);
@@ -467,15 +479,23 @@ export default function AdminSettings() {
                 <button
                   type="button"
                   disabled={bizSaving}
-                  onClick={() => {
+                  onClick={async () => {
                     setBizSaving(true);
                     setBizError('');
                     try {
+                      await settingsAPI.updateBusinessConfig({
+                        name:         biz.name,
+                        tagline:      biz.tagline,
+                        phone:        biz.phone,
+                        email:        biz.email,
+                        location:     biz.location,
+                        serviceAreas: biz.serviceAreas,
+                      });
                       saveBusiness(biz);
                       setBizSaved(true);
                       setTimeout(() => setBizSaved(false), 3000);
-                    } catch {
-                      setBizError('Failed to save business configuration.');
+                    } catch (err) {
+                      setBizError(err?.response?.data?.message || 'Failed to save business configuration.');
                     } finally {
                       setBizSaving(false);
                     }

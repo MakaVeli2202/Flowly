@@ -21,7 +21,8 @@ namespace Glanz.API.Models
         LoyaltyReward = 12,
         JobResumed = 17,
         ServiceAdded = 18,
-        PayrollDue = 19
+        PayrollDue = 19,
+        LoyaltyReviewRequested = 20
     }
 
     public class Notification

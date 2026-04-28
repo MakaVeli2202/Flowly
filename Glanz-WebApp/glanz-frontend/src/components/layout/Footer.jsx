@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, Phone, MapPin, Briefcase } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { getBusiness } from '../../config/business';
+import { getBusiness, saveBusiness } from '../../config/business';
+import { settingsAPI } from '../../api/settings';
 
 function Footer() {
   const { isAuthenticated, isAdmin } = useAuth();
@@ -10,6 +11,15 @@ function Footer() {
   const [business, setBusiness] = useState(getBusiness());
 
   useEffect(() => {
+    settingsAPI.getSystemSettings()
+      .then(data => {
+        if (data?.businessConfig) {
+          const merged = saveBusiness(data.businessConfig);
+          setBusiness(merged);
+        }
+      })
+      .catch(() => {});
+
     const handleConfigChange = () => setBusiness(getBusiness());
     window.addEventListener('businessConfigChanged', handleConfigChange);
     return () => window.removeEventListener('businessConfigChanged', handleConfigChange);
@@ -54,9 +64,9 @@ function Footer() {
           <div>
             <h3 className="text-lg font-semibold mb-4">Services</h3>
             <ul className="space-y-2 text-[var(--muted-color)]">
-              <li>Exterior Detailing</li>
-              <li>Interior Detailing</li>
-              <li>Paint Protection</li>
+              <li>Full Car Detailing</li>
+              <li>Headlight Restoration </li>
+              <li>Seat Stain Removal</li>
               <li>Ceramic Coating</li>
             </ul>
           </div>

@@ -71,12 +71,13 @@ function Root() {
   const { loading, isAdmin, isWorker } = useAuth();
   const navigationRef = useRef(null);
 
-  // Handle notification tap — deep-link to the relevant booking
+  // Handle notification tap — deep-link to the relevant screen
   useEffect(() => {
     const sub = Notifications.addNotificationResponseReceivedListener((response) => {
-      const data       = response.notification.request.content.data;
-      const bookingId  = data?.bookingId ?? null;
-      const nav        = navigationRef.current;
+      const data      = response.notification.request.content.data;
+      const type      = data?.type ?? null;
+      const bookingId = data?.bookingId ?? null;
+      const nav       = navigationRef.current;
       if (!nav) return;
 
       if (isAdmin) {
@@ -84,10 +85,15 @@ function Root() {
       } else if (isWorker) {
         nav.navigate('Today Work', bookingId ? { openBookingId: bookingId } : {});
       } else {
-        nav.navigate('Main', {
-          screen: 'My Bookings',
-          params: bookingId ? { openBookingId: bookingId } : {},
-        });
+        // Loyalty reward notifications go straight to My Bookings (rewards tab)
+        if (type === 'LoyaltyReward') {
+          nav.navigate('Main', { screen: 'My Bookings' });
+        } else {
+          nav.navigate('Main', {
+            screen: 'My Bookings',
+            params: bookingId ? { openBookingId: bookingId } : {},
+          });
+        }
       }
     });
     return () => sub.remove();

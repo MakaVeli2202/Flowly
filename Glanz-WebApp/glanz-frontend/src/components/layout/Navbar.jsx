@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, Droplet, LogOut, LayoutDashboard, Sun, Moon, Bell, CheckCheck, ChevronDown, BookOpen, Users, Calendar, Package, BarChart2, Settings, Home, LogIn, UserPlus, ShoppingBag, Globe, Layers, Car, CheckCircle, XCircle, Clock, AlertTriangle, Gift, Tag, UserCheck, Briefcase, MapPin, DollarSign, Wrench } from 'lucide-react';
+import { Menu, X, Droplet, LogOut, LayoutDashboard, Sun, Moon, Bell, CheckCheck, ChevronDown, BookOpen, Users, Calendar, Package, BarChart2, Settings, Home, LogIn, UserPlus, ShoppingBag, Globe, Layers, Car, CheckCircle, XCircle, Clock, AlertTriangle, Gift, Tag, UserCheck, Briefcase, MapPin, DollarSign, Wrench, Star } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { BUSINESS } from '../../config/business';
 import { notificationsAPI } from '../../api/notifications';
@@ -29,7 +29,8 @@ const NOTIF_CONFIG = {
   OfferAssigned:        { icon: Gift,        color: 'text-emerald-400 bg-emerald-500/20', label: 'New Offer' },
   CancellationRequested:{ icon: XCircle,   color: 'text-orange-400 bg-orange-500/20', label: 'Cancellation Request' },
   RescheduleRequested:{ icon: Clock,      color: 'text-amber-400 bg-amber-500/20', label: 'Reschedule Request' },
-  BookingUnassigned:   { icon: UserCheck,   color: 'text-rose-400 bg-rose-500/20', label: 'Worker Unassigned' },
+  BookingUnassigned:        { icon: UserCheck,   color: 'text-rose-400 bg-rose-500/20', label: 'Worker Unassigned' },
+  LoyaltyReviewRequested:   { icon: Star,        color: 'text-yellow-400 bg-yellow-500/20', label: 'Loyalty Review' },
 };
 
 function formatNotifType(type) {
@@ -66,15 +67,40 @@ const CUSTOMER_LINKS = [
   { to: '/plans',      label: 'Plans',    icon: Layers   },
 ];
 
+// Shared AudioContext — created once and unlocked on first user gesture
+let _audioCtx = null;
+
+function _getOrCreateAudioCtx() {
+  if (!_audioCtx) {
+    const Ctor = window.AudioContext || window.webkitAudioContext;
+    if (!Ctor) return null;
+    _audioCtx = new Ctor();
+  }
+  return _audioCtx;
+}
+
+// Unlock audio on first user interaction (click/keydown/touch)
+// so that sound works even when the tab is in background or has no recent gesture.
+function _unlockAudio() {
+  const ctx = _getOrCreateAudioCtx();
+  if (!ctx) return;
+  if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+}
+['click', 'keydown', 'touchstart', 'pointerdown'].forEach((ev) =>
+  document.addEventListener(ev, _unlockAudio, { once: false, passive: true })
+);
+
 async function playNotificationSound() {
   // Vibrate on mobile browsers that support it (Android Chrome/Firefox)
   if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
 
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const ctx = _getOrCreateAudioCtx();
+    if (!ctx) return;
 
-    // Resume in case browser suspended the context (required without user gesture)
+    // Resume in case browser suspended the context
     if (ctx.state === 'suspended') await ctx.resume();
+    if (ctx.state !== 'running') return; // give up if still blocked
 
     const t = ctx.currentTime;
 
@@ -92,8 +118,6 @@ async function playNotificationSound() {
       osc.start(t + i * 0.12);
       osc.stop(t + i * 0.12 + decay);
     });
-
-    setTimeout(() => ctx.close(), 1200);
   } catch {
     // Silent fail — browser may block audio without prior user interaction
   }

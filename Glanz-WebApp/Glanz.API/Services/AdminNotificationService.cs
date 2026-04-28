@@ -29,6 +29,7 @@ namespace Glanz.API.Services
         Task NotifyServiceAddedAsync(Booking booking, string serviceName, decimal newTotal, int newDurationMinutes);
         Task NotifyCancellationRequestRejectedAsync(Booking booking);
         Task NotifyRescheduleRequestRejectedAsync(Booking booking);
+        Task NotifyLoyaltyReviewRequestedAsync(User user);
     }
        
 
@@ -160,7 +161,7 @@ namespace Glanz.API.Services
         public Task NotifyWorkerOnMyWayAsync(Booking booking)
         {
             var adminMessage = $"{GetWorkerName(booking.AssignedWorkerId)} is on the way to {booking.CustomerName}'s location.";
-            var customerMessage = "Your detailer is heading your way! Track their arrival in real-time.";
+            var customerMessage = "Your detailer is on the way and will arrive shortly. We'll keep you updated!";
             return NotifyAdminsAndCustomerAsync(
                 NotificationType.WorkerOnMyWay,
                 adminMessage,
@@ -217,6 +218,14 @@ namespace Glanz.API.Services
                 userId,
                 NotificationType.LoyaltyReward,
                 $"You've earned {offerName}! Leave us a Google review to activate it, then use code {personalCode}.");
+        }
+
+        public Task NotifyLoyaltyReviewRequestedAsync(User user)
+        {
+            var name = $"{user.FirstName} {user.LastName}".Trim();
+            return CreateForAllAdminsAsync(
+                NotificationType.LoyaltyReviewRequested,
+                $"Customer {name} submitted a Google review and is requesting loyalty reward activation.");
         }
 
         private string GetWorkerName(int? workerId)
