@@ -36,11 +36,13 @@ namespace Glanz.API.Services
         private const int LowStockThreshold = 20;
         private readonly AppDbContext _context;
         private readonly IExpoPushService _expoPush;
+        private readonly IRealtimeService _realtime;
 
-        public AdminNotificationService(AppDbContext context, IExpoPushService expoPush)
+        public AdminNotificationService(AppDbContext context, IExpoPushService expoPush, IRealtimeService realtime)
         {
             _context  = context;
             _expoPush = expoPush;
+            _realtime = realtime;
         }
 
         public Task NotifyNewBookingAsync(Booking booking)
@@ -263,6 +265,14 @@ namespace Glanz.API.Services
             await _context.Notifications.AddRangeAsync(notifications);
             await _context.SaveChangesAsync();
 
+            // WebSocket push — instant delivery to connected clients
+            var savedIds = notifications.Select(n => n.Id).ToList();
+            for (int i = 0; i < adminIds.Count; i++)
+            {
+                await _realtime.BroadcastNotificationAsync(
+                    adminIds[i], savedIds[i], type, message, bookingId);
+            }
+
             // Expo push — delivers even when app is closed
             var expoTokens = admins
                 .Where(a => !string.IsNullOrWhiteSpace(a.ExpoPushToken))
@@ -283,7 +293,7 @@ namespace Glanz.API.Services
                 return;
             }
 
-            await _context.Notifications.AddAsync(new Notification
+            var notif = new Notification
             {
                 UserId    = userId,
                 Type      = type,
@@ -291,9 +301,12 @@ namespace Glanz.API.Services
                 Message   = message,
                 IsRead    = false,
                 CreatedAt = DateTime.UtcNow,
-            });
-
+            };
+            await _context.Notifications.AddAsync(notif);
             await _context.SaveChangesAsync();
+
+            // WebSocket push — instant delivery to connected clients
+            await _realtime.BroadcastNotificationAsync(userId, notif.Id, type, message, bookingId);
 
             // Expo push — delivers even when app is closed
             if (!string.IsNullOrWhiteSpace(user.ExpoPushToken))

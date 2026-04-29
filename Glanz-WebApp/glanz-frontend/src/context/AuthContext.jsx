@@ -1,7 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { authAPI } from '../api/auth';
 import { setAuthToken } from '../api/axios';
-import { startNotificationConnection, stopNotificationConnection } from '../api/signalr';
+import { startNotificationConnection, stopNotificationConnection } from '../api/notificationBus';
+import realtimeService from '../api/realtimeService';
+import { cacheManager } from '../core/cacheManager';
 
 const AuthContext = createContext();
 
@@ -46,7 +48,9 @@ export function AuthProvider({ children }) {
         const currentUser = await authAPI.getCurrentUser();
         setToken(refreshed.token);
         setUser(currentUser);
-        startNotificationConnection().catch(() => {});
+        // Connect WebSocket hub and start notification bus
+        await realtimeService.connect(refreshed.token);
+        startNotificationConnection();
       } catch {
         // No valid refresh token — user must log in manually.
         setAuthToken(null);
@@ -60,17 +64,26 @@ export function AuthProvider({ children }) {
     initAuth();
   }, []);
 
-  const login = async (email, password) => {
+    const login = async (email, password) => {
     const response = await authAPI.login({ email, password });
+    if (response.user?.role === 'Employee') {
+      await authAPI.logout();
+      setAuthToken(null);
+      setToken(null);
+      setUser(null);
+      throw new Error('This action is not allowed with a company account. Please use the mobile app to log in as a detailer.');
+    }
     persistSession(response.token, response.user);
-    startNotificationConnection().catch(() => {});
+    await realtimeService.connect(response.token);
+    startNotificationConnection();
     return response;
   };
 
   const register = async (userData) => {
     const response = await authAPI.register(userData);
     persistSession(response.token, response.user);
-    startNotificationConnection().catch(() => {});
+    await realtimeService.connect(response.token);
+    startNotificationConnection();
     return response;
   };
 
@@ -98,18 +111,20 @@ export function AuthProvider({ children }) {
 
   const logout = () => {
     stopNotificationConnection();
+    realtimeService.disconnect();
     authAPI.logout();
     setAuthToken(null);
     setToken(null);
     setUser(null);
+    cacheManager.clear();
   };
 
-  const value = {
+    const value = {
     user,
     token,
     isAuthenticated: !!token,
     isAdmin: user?.role === 'Admin',
-    isWorker: user?.role === 'Worker',
+    isEmployee: user?.role === 'Employee',
     login,
     register,
     refreshUser,

@@ -1,5 +1,10 @@
 import apiClient from './axios';
 import { withRetry } from '../utils/retry';
+import { cacheManager } from '../core/cacheManager';
+
+const CACHE_TTL  = 30_000;
+const CACHE_KEY  = 'bookings';
+const invalidate = () => cacheManager.invalidate(CACHE_KEY);
 
 export const bookingsAPI = {
   createPaymentIntent: async (data) => withRetry(async () => {
@@ -14,23 +19,15 @@ export const bookingsAPI = {
 
   create: async (data) => withRetry(async () => {
     const response = await apiClient.post('/Bookings', data);
+    invalidate();
     return response.data;
   }),
 
-  getMyBookings: async () => withRetry(async () => {
-    const response = await apiClient.get('/Bookings');
-    return response.data;
-  }),
+  getMyBookings: async () => cacheManager.fetch(`${CACHE_KEY}:mine`, () => apiClient.get('/Bookings').then((r) => r.data), CACHE_TTL),
 
-  getAll: async () => withRetry(async () => {
-    const response = await apiClient.get('/Bookings/all');
-    return response.data;
-  }),
+  getAll: async () => cacheManager.fetch(`${CACHE_KEY}:all`, () => apiClient.get('/Bookings/all').then((r) => r.data), CACHE_TTL),
 
-  getWorkerBookings: async () => withRetry(async () => {
-    const response = await apiClient.get('/Bookings/worker');
-    return response.data;
-  }),
+  getWorkerBookings: async () => cacheManager.fetch(`${CACHE_KEY}:worker`, () => apiClient.get('/Bookings/worker').then((r) => r.data), CACHE_TTL),
 
   getByBookingNumber: async (bookingNumber) => withRetry(async () => {
     const response = await apiClient.get(`/Bookings/${bookingNumber}`);
@@ -82,6 +79,7 @@ export const bookingsAPI = {
 
   updateStatus: async (id, status) => withRetry(async () => {
     const response = await apiClient.put(`/Bookings/${id}/status`, { status });
+    invalidate();
     return response.data;
   }),
 
@@ -120,11 +118,13 @@ export const bookingsAPI = {
 
   cancel: async (id) => withRetry(async () => {
     const response = await apiClient.delete(`/Bookings/${id}`);
+    invalidate();
     return response.data;
   }),
 
   startJob: async (bookingId) => withRetry(async () => {
     const response = await apiClient.post(`/Bookings/${bookingId}/start`);
+    invalidate();
     return response.data;
   }),
 
@@ -140,6 +140,7 @@ export const bookingsAPI = {
 
   finishJob: async (bookingId) => withRetry(async () => {
     const response = await apiClient.post(`/Bookings/${bookingId}/finish`);
+    invalidate();
     return response.data;
   }),
 
@@ -150,6 +151,7 @@ export const bookingsAPI = {
 
   claim: async (bookingId) => withRetry(async () => {
     const response = await apiClient.post(`/Bookings/${bookingId}/claim`);
+    invalidate();
     return response.data;
   }),
 
@@ -180,11 +182,13 @@ export const bookingsAPI = {
 
   adminEdit: async (id, dto) => withRetry(async () => {
     const response = await apiClient.put(`/Bookings/${id}/admin-edit`, dto);
+    invalidate();
     return response.data;
   }),
 
   adminCancelRefund: async (id, dto = {}) => withRetry(async () => {
     const response = await apiClient.post(`/Bookings/${id}/admin-cancel-refund`, dto);
+    invalidate();
     return response.data;
   }),
 

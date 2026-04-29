@@ -9,7 +9,7 @@ import {
   Calendar, Clock, AlertCircle, CheckCircle, XCircle,
   Package, Gift, Star, Copy, Check, Edit2, X,
   ArrowRight, Ticket, Car, MapPin, ChevronRight,
-  AlertTriangle, RefreshCw,
+  AlertTriangle, RefreshCw, Upload, Image,
 } from 'lucide-react';
 import { formatQAR } from '../../utils/currency';
 import AvailabilityCalendar from '../../components/shared/AvailabilityCalendar';
@@ -68,6 +68,10 @@ function MyBookings() {
   const [loyalty,            setLoyalty]            = useState(null);
   const [copiedCode,         setCopiedCode]         = useState(null);
   const [activatingLoyalty,  setActivatingLoyalty]  = useState(false);
+  const [reviewStep,         setReviewStep]         = useState(1);
+  const [screenshotFile,     setScreenshotFile]     = useState(null);
+  const [screenshotPreview, setScreenshotPreview]  = useState(null);
+  const [uploadingScreenshot, setUploadingScreenshot] = useState(false);
   const [highlightedBookingId,setHighlightedBookingId] = useState(null);
 
   // Edit modal state
@@ -85,7 +89,6 @@ function MyBookings() {
     Promise.all([fetchBookings(), fetchLoyalty()]);
   }, []);
 
-  // 30 s background poll — customer sees status changes without manual refresh
   const silentFetch = useCallback(() => {
     bookingsAPI.getMyBookings()
       .then(data => setBookings(Array.isArray(data) ? data : []))
@@ -142,15 +145,32 @@ function MyBookings() {
 
   const GOOGLE_REVIEW_URL = 'https://g.page/r/CbY8wgSE0iXGEAE/review';
 
-  const openGoogleReview = async () => {
+  const openGoogleReview = () => {
     localStorage.setItem('glanz_review_clicked', '1');
     window.open(GOOGLE_REVIEW_URL, '_blank', 'noopener,noreferrer');
+    setReviewStep(2);
+  };
+
+  const handleScreenshotChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setScreenshotFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => setScreenshotPreview(reader.result);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const submitReviewWithScreenshot = async () => {
+    if (!screenshotFile) return;
     try {
-      setActivatingLoyalty(true);
-      await offersAPI.activateGoogleReviewLoyalty();
+      setUploadingScreenshot(true);
+      await offersAPI.activateGoogleReviewLoyalty(screenshotFile);
+      setReviewStep(4);
       await fetchLoyalty();
-    } catch { /* silently ignore — already activated or network hiccup */ }
-    finally { setActivatingLoyalty(false); }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to submit screenshot.');
+    } finally { setUploadingScreenshot(false); }
   };
 
   const handleCancelBooking = async (bookingId, bookingNumber) => {
@@ -204,55 +224,60 @@ function MyBookings() {
   };
 
   const openEditModal = async (booking) => {
+    const initPackages   = (booking.items || []).map(i => ({ packageId: i.packageId, quantity: i.quantity }));
+    const initVehicleType = booking.vehicleType || 'Sedan';
+    const initDate        = booking.scheduledDate ? new Date(booking.scheduledDate).toISOString().split('T')[0] : '';
+
     setEditBooking(booking);
     setEditForm({
-      scheduledDate:       booking.scheduledDate ? new Date(booking.scheduledDate).toISOString().split('T')[0] : '',
+      scheduledDate:       initDate,
       timeSlot:            booking.timeSlot           || '',
       vehicleMake:         booking.vehicleMake         || '',
       vehicleModel:        booking.vehicleModel        || '',
       vehicleYear:         booking.vehicleYear         || '',
-      vehicleType:         booking.vehicleType         || 'Sedan',
+      vehicleType:         initVehicleType,
       customerAddress:     booking.customerAddress     || '',
       houseNumber:         booking.houseNumber         || '',
       addressType:         booking.addressType         || 'Home',
       specialInstructions: booking.specialInstructions || '',
-      packages:            (booking.items || []).map(i => ({ packageId: i.packageId, quantity: i.quantity })),
+      packages:            initPackages,
     });
     setEditError(''); setEditSlotWarning(null); setEditConfirm(false);
+
+    let loadedPackages = allPackages;
     if (allPackages.length === 0) {
-      try { setAllPackages(await packagesAPI.getAll() || []); } catch {}
+      try { loadedPackages = await packagesAPI.getAll() || []; setAllPackages(loadedPackages); } catch {}
     }
-    await loadEditSlots(
-      booking.scheduledDate ? new Date(booking.scheduledDate).toISOString().split('T')[0] : ''
-    );
+    await loadEditSlots(initDate, initPackages, initVehicleType, loadedPackages);
   };
 
-  const loadEditSlots = async (date) => {
+  const loadEditSlots = async (date, packages, vehicleType, pkgList) => {
     if (!date) return;
     try {
       setEditSlotsLoading(true);
-      const duration = editForm.packages?.length 
-        ? allPackages.filter(p => editForm.packages.some(ep => ep.packageId === p.id)).reduce((sum, p) => sum + (p.estimatedDurationMinutes || 60), 0)
+      const pkgs = packages ?? editForm.packages;
+      const vt   = vehicleType ?? editForm.vehicleType;
+      const pList = pkgList ?? allPackages;
+      const duration = pkgs?.length
+        ? pList.filter(p => pkgs.some(ep => ep.packageId === p.id)).reduce((sum, p) => sum + (p.estimatedDurationMinutes || 60), 0)
         : 60;
-      setEditAvailableSlots(await bookingsAPI.getAvailableSlots(date, duration, editForm.vehicleType) || []);
+      setEditAvailableSlots(await bookingsAPI.getAvailableSlots(date, duration || 60, vt) || []);
     } catch { setEditAvailableSlots([]); }
     finally { setEditSlotsLoading(false); }
   };
 
-  const handleEditDateChange = async (newDate, booking) => {
+  const handleEditDateChange = async (newDate) => {
     setEditForm((p) => ({ ...p, scheduledDate: newDate, timeSlot: '' }));
     setEditAvailableSlots([]);
-    await loadEditSlots(newDate);
+    await loadEditSlots(newDate, editForm.packages, editForm.vehicleType, allPackages);
   };
 
   const handleEditPackageToggle = (packageId) => {
-    setEditForm((prev) => ({
-      ...prev,
-      packages: [{ packageId, quantity: 1 }],
-    }));
+    const newPackages = [{ packageId, quantity: 1 }];
+    setEditForm((prev) => ({ ...prev, packages: newPackages }));
     setEditSlotWarning(null);
     if (editForm.scheduledDate) {
-      loadEditSlots(editForm.scheduledDate);
+      loadEditSlots(editForm.scheduledDate, newPackages, editForm.vehicleType, allPackages);
     }
   };
 
@@ -260,7 +285,7 @@ function MyBookings() {
     const newType = e.target.value;
     setEditForm(prev => ({ ...prev, vehicleType: newType }));
     if (editForm.scheduledDate) {
-      loadEditSlots(editForm.scheduledDate);
+      loadEditSlots(editForm.scheduledDate, editForm.packages, newType, allPackages);
     }
   };
 
@@ -385,7 +410,7 @@ function MyBookings() {
                   <FieldLabel>Date</FieldLabel>
                   <AvailabilityCalendar
                     value={editForm.scheduledDate}
-                    onChange={(ds) => handleEditDateChange(ds, editBooking)}
+                    onChange={(ds) => handleEditDateChange(ds)}
                     originalDate={editBooking.scheduledDate ? new Date(editBooking.scheduledDate).toISOString().split('T')[0] : ''}
                   />
                 </div>
@@ -712,43 +737,103 @@ function MyBookings() {
                 </div>
               </div>
 
-              {/* Step 1 — unlock with Google review */}
-              {!(loyalty.isGoogleReviewActivated || !!localStorage.getItem('DEV_BYPASS_REVIEW')) && (
-                <div className="mb-6 rounded-xl border p-5" style={{ borderColor: 'rgba(200,169,107,0.28)', background: 'rgba(200,169,107,0.05)' }}>
-                  <div className="flex items-center gap-2 mb-2">
-                    <Star size={14} className="text-yellow-300" />
-                    <span className="text-sm font-bold" style={{ color: 'rgba(200,169,107,0.95)' }}>Unlock Your Loyalty Card</span>
-                  </div>
+               {/* Step 1 — unlock with Google review */}
+               {!(loyalty.isGoogleReviewActivated || !!localStorage.getItem('DEV_BYPASS_REVIEW')) && (
+                 <div className="mb-6 rounded-xl border p-5" style={{ borderColor: 'rgba(200,169,107,0.28)', background: 'rgba(200,169,107,0.05)' }}>
+                   <div className="flex items-center gap-2 mb-4">
+                     <Star size={14} className="text-yellow-300" />
+                     <span className="text-sm font-bold" style={{ color: 'rgba(200,169,107,0.95)' }}>Unlock Your Loyalty Card</span>
+                   </div>
 
-                  {loyalty.isGoogleReviewPending ? (
-                    /* Pending admin verification */
-                    <div className="flex items-start gap-3 mt-3 p-3 rounded-lg" style={{ background: 'rgba(200,169,107,0.08)', border: '1px solid rgba(200,169,107,0.22)' }}>
-                      <RefreshCw size={14} className="mt-0.5 shrink-0" style={{ color: 'rgba(200,169,107,0.8)' }} />
-                      <div>
-                        <p className="text-xs font-semibold" style={{ color: 'rgba(200,169,107,0.95)' }}>Review submitted — pending verification</p>
-                        <p className="text-xs text-[var(--muted-color)] mt-0.5">Our team will verify your Google review and activate your loyalty card within 24 hours.</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <p className="text-xs text-[var(--muted-color)] mb-4 leading-relaxed">
-                        Leave a quick Google review to activate your loyalty card. Every {loyalty.programs?.[0]?.triggerBookings ?? 3} completed washes earns you a free one.
-                      </p>
-                      <button
-                        onClick={openGoogleReview}
-                        disabled={activatingLoyalty}
-                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition disabled:opacity-60"
-                        style={{ background: 'rgba(200,169,107,0.9)', color: '#0a0a0a' }}>
-                        {activatingLoyalty
-                          ? <><RefreshCw size={14} className="animate-spin" /> Submitting…</>
-                          : <><Star size={14} style={{ fill: '#0a0a0a' }} /> Rate on Google</>}
-                      </button>
-                    </>
-                  )}
-                </div>
-              )}
+                   {loyalty.isGoogleReviewPending || reviewStep >= 3 ? (
+                     /* Pending admin verification */
+                     <div className="flex items-start gap-3 mt-3 p-3 rounded-lg" style={{ background: 'rgba(200,169,107,0.08)', border: '1px solid rgba(200,169,107,0.22)' }}>
+                       <RefreshCw size={14} className="mt-0.5 shrink-0" style={{ color: 'rgba(200,169,107,0.8)' }} />
+                       <div>
+                         <p className="text-xs font-semibold" style={{ color: 'rgba(200,169,107,0.95)' }}>Review submitted — pending verification</p>
+                         <p className="text-xs text-[var(--muted-color)] mt-0.5">Our team will verify your Google review and activate your loyalty card within 24 hours.</p>
+                       </div>
+                     </div>
+                   ) : (
+                      <>
+                        <p className="text-xs text-[var(--muted-color)] mb-4 leading-relaxed">
+                          Every {loyalty.programs?.[0]?.triggerBookings ?? 3} completed washes earns you a free one.
+                        </p>
 
-              {/* Step 2 — stamp cards */}
+                        {/* Reminder BEFORE opening review */}
+                        <div className="mb-3 p-3 rounded-lg border" style={{ background: 'rgba(239,68,68,0.08)', borderColor: 'rgba(239,68,68,0.3)' }}>
+                          <p className="text-[11px] font-semibold" style={{ color: 'rgba(239,68,68,0.9)' }}>Don't forget to take a screenshot AFTER posting your review!</p>
+                          <p className="text-[10px] mt-1" style={{ color: 'rgba(239,68,68,0.7)' }}>You'll need it for verification in Step 2.</p>
+                        </div>
+
+                        {/* Step 1: Open Google Review */}
+                        <div className="mb-3 p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(200,169,107,0.15)' }}>
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold" style={{ background: 'rgba(200,169,107,0.9)', color: '#0a0a0a' }}>1</span>
+                            <span className="text-xs font-bold" style={{ color: 'rgba(200,169,107,0.9)' }}>Leave a Google Review</span>
+                          </div>
+                          <p className="text-[11px] text-[var(--muted-color)] mb-3 ml-7">Click below to open Google Reviews in a new tab. Leave a review and return here.</p>
+                          <button
+                            onClick={openGoogleReview}
+                            className="ml-7 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition"
+                            style={{ background: 'rgba(200,169,107,0.9)', color: '#0a0a0a' }}>
+                            <Star size={12} style={{ fill: '#0a0a0a' }} /> Open Google Review
+                          </button>
+                        </div>
+
+                        {/* Step 2: Upload screenshot */}
+                        {reviewStep >= 2 && (
+                          <div className="mb-3 p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(200,169,107,0.15)' }}>
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold" style={{ background: 'rgba(200,169,107,0.9)', color: '#0a0a0a' }}>2</span>
+                              <span className="text-xs font-bold" style={{ color: 'rgba(200,169,107,0.9)' }}>Upload Screenshot</span>
+                            </div>
+                            <p className="text-[11px] text-[var(--muted-color)] mb-3 ml-7">Upload the screenshot of your posted review for verification.</p>
+                            <div className="ml-7">
+                              {screenshotPreview ? (
+                                <div className="mb-3">
+                                  <img src={screenshotPreview} alt="Review screenshot" className="rounded-lg max-h-40 border border-[var(--border-color)]" />
+                                  <button
+                                    onClick={() => { setScreenshotPreview(null); setScreenshotFile(null); }}
+                                    className="text-[10px] mt-1 underline"
+                                    style={{ color: 'rgba(200,169,107,0.7)' }}>
+                                    Remove and retake
+                                  </button>
+                                </div>
+                              ) : (
+                                <label className="flex items-center gap-2 px-4 py-3 rounded-lg border-2 border-dashed cursor-pointer transition hover:border-[rgba(200,169,107,0.4)]" style={{ borderColor: 'rgba(200,169,107,0.2)' }}>
+                                  <Upload size={16} style={{ color: 'rgba(200,169,107,0.7)' }} />
+                                  <span className="text-xs" style={{ color: 'rgba(200,169,107,0.7)' }}>Click to upload screenshot</span>
+                                  <input type="file" accept="image/*" onChange={handleScreenshotChange} className="hidden" />
+                                </label>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Step 3: Submit */}
+                        {reviewStep >= 2 && screenshotFile && (
+                          <div className="p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(200,169,107,0.15)' }}>
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold" style={{ background: 'rgba(200,169,107,0.9)', color: '#0a0a0a' }}>3</span>
+                              <span className="text-xs font-bold" style={{ color: 'rgba(200,169,107,0.9)' }}>Submit for Verification</span>
+                            </div>
+                            <p className="text-[11px] text-[var(--muted-color)] mb-3 ml-7">Your screenshot is ready. Click below to complete.</p>
+                            <button
+                              onClick={submitReviewWithScreenshot}
+                              disabled={uploadingScreenshot}
+                              className="ml-7 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition disabled:opacity-60"
+                              style={{ background: 'rgba(200,169,107,0.9)', color: '#0a0a0a' }}>
+                              {uploadingScreenshot ? <><RefreshCw size={12} className="animate-spin" /> Submitting…</> : 'Submit for Verification'}
+                            </button>
+                          </div>
+                        )}
+                      </>
+                   )}
+                 </div>
+               )}
+
+               {/* Step 2 — stamp cards */}
               {(loyalty.isGoogleReviewActivated || !!localStorage.getItem('DEV_BYPASS_REVIEW')) && (
                 loyalty.programs?.length > 0 ? (
                   <div className="space-y-4 mb-4">

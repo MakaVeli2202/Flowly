@@ -139,7 +139,7 @@ function Login() {
       else if (from && from !== '/login') navigate(from, { replace: true });
       else                            navigate('/', { replace: true });
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed. Please try again.');
+      setError(err.response?.data?.message || err.message || 'Login failed. Please try again.');
     } finally { setLoading(false); }
   };
 

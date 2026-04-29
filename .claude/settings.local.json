@@ -67,7 +67,9 @@
       "Bash(grep -B2 \"^\\\\s*\\\\[HttpPost.*create-payment\\\\|^\\\\s*\\\\[HttpPost\\\\]\\\\s*$\" \"e:\\\\VS-Code\\\\Glanz\\\\Glanz-WebApp\\\\Glanz.API\\\\Controllers\\\\BookingsController.cs\")",
       "Bash(grep -E \"\\\\.\\(cs|json\\)$\")",
       "Bash(xargs -I {} basename {})",
-      "Bash(xargs -I {} bash -c 'echo \"=== $\\(basename {}\\) ===\" && head -30 {}')"
+      "Bash(xargs -I {} bash -c 'echo \"=== $\\(basename {}\\) ===\" && head -30 {}')",
+      "Bash(npx expo *)",
+      "Bash(npx vite *)"
     ]
   }
 }

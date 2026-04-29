@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Glanz.API.Data;
 using Glanz.API.Models;
+using Glanz.API.Services;
 using System.Security.Claims;
 using System.ComponentModel.DataAnnotations;
 
@@ -29,11 +30,13 @@ namespace Glanz.API.Controllers
     {
         private readonly AppDbContext _context;
         private readonly ILogger<LocationController> _logger;
+        private readonly IRealtimeService _realtime;
 
-        public LocationController(AppDbContext context, ILogger<LocationController> logger)
+        public LocationController(AppDbContext context, ILogger<LocationController> logger, IRealtimeService realtime)
         {
-            _context = context;
-            _logger = logger;
+            _context  = context;
+            _logger   = logger;
+            _realtime = realtime;
         }
 
         [HttpPost("update")]
@@ -82,6 +85,11 @@ namespace Glanz.API.Controllers
             }
 
             await _context.SaveChangesAsync();
+
+            // Also broadcast via WebSocket for clients that have an active SignalR connection.
+            // Workers using the WebSocket path call GlanzHub.UpdateAdminLocation directly,
+            // but this HTTP fallback ensures the map stays current for non-WS callers.
+            await _realtime.BroadcastAdminLocationAsync(userId.Value, dto.Latitude, dto.Longitude);
 
             return Ok(new { message = "Location updated", locationId = location.Id });
         }

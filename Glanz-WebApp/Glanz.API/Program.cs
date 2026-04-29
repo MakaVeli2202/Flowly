@@ -5,6 +5,7 @@ using System.Text;
 using System.Data.Common;
 using Glanz.API.Data;
 using Glanz.API.Services;
+using Glanz.API.Hubs;
 using Glanz.API.Filters;
 using Glanz.API.Validators;
 using Glanz.API.DTOs;
@@ -185,6 +186,19 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = jwtSettings["Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey!))
     };
+    // SignalR WebSocket connections cannot send Authorization headers;
+    // the client passes the JWT via query-string ?access_token=...
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Query["access_token"];
+            var path = context.HttpContext.Request.Path;
+            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs"))
+                context.Token = accessToken;
+            return Task.CompletedTask;
+        }
+    };
 });
 
 builder.Services.AddAuthorization();
@@ -193,8 +207,16 @@ builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IExpoPushService, ExpoPushService>();
 builder.Services.AddScoped<IAdminNotificationService, AdminNotificationService>();
 builder.Services.AddScoped<IPricingService, PricingService>();
+builder.Services.AddScoped<IRealtimeService, RealtimeService>();
 // Phase 3: background maintenance — cleans expired slot reservations + flags late bookings
 builder.Services.AddHostedService<BookingMaintenanceService>();
+
+// SignalR — real-time WebSocket layer
+builder.Services.AddSignalR(options =>
+{
+    options.EnableDetailedErrors = builder.Environment.IsDevelopment();
+    options.MaximumReceiveMessageSize = 32 * 1024; // 32 KB
+});
 
 var app = builder.Build();
 
@@ -271,6 +293,7 @@ app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHub<GlanzHub>("/hubs/glanz");
 
 app.Run();
 

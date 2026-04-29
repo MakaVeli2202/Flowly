@@ -1,7 +1,7 @@
 // ─── NotificationsScreen.js ───────────────────────────────────────────────────
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator, AppState, RefreshControl,
+  ActivityIndicator, RefreshControl,
   ScrollView, StyleSheet, Text, TouchableOpacity, View, Vibration,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -11,11 +11,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import { notificationsAPI } from '../api/notifications';
 import { offersAPI } from '../api/offers';
-import { subscribeToNotifications } from '../api/signalr';
+import { subscribeToNotifications } from '../api/notificationBus';
 import { theme } from '../theme/theme';
 import { formatDateTime } from '../utils/dateUtils';
 
-const POLL_INTERVAL = 60000;
 const PAGE_SIZE = 20;
 const TYPE_CONFIG = {
   // Booking lifecycle
@@ -138,6 +137,10 @@ export default function NotificationsScreen() {
     }
   }, [isAdmin, limit]);
 
+  // Stable ref so subscribeToNotifications always calls the latest loadData without resubscribing
+  const _loadRef = useRef(loadData);
+  _loadRef.current = loadData;
+
   useFocusEffect(
     useCallback(() => {
       let isMounted = true;
@@ -147,22 +150,18 @@ export default function NotificationsScreen() {
         if (isMounted) setLoading(false);
       };
       run();
-      // AuthContext owns the SignalR connection — subscribe via EventBus
+
       const unsubNotif = subscribeToNotifications(() => {
         Vibration.vibrate([0, 80, 60, 80]);
-        loadData();
+        _loadRef.current();
       });
-      const intervalId  = setInterval(() => loadData(), POLL_INTERVAL);
-      const appStateSub = AppState.addEventListener('change', (state) => {
-        if (state === 'active') loadData();
-      });
+
       return () => {
         isMounted = false;
         unsubNotif();
-        clearInterval(intervalId);
-        appStateSub.remove();
       };
-    }, [loadData])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
   );
 
   const onRefresh = useCallback(async () => {

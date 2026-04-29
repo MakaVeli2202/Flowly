@@ -17,7 +17,7 @@ import { useAuth } from '../../context/AuthContext';
  * [Authorize(Roles = "Admin")] attribute on the backend controller action.
  */
 function ProtectedRoute({ children, requireAdmin = false, requireCustomer = false }) {
-  const { isAuthenticated, isAdmin, isWorker, loading } = useAuth();
+  const { isAuthenticated, isAdmin, isEmployee, loading } = useAuth();
 
   if (loading) {
     return (
@@ -35,7 +35,7 @@ function ProtectedRoute({ children, requireAdmin = false, requireCustomer = fals
     return <Navigate to="/" replace />;
   }
 
-  if (requireCustomer && !isAdmin && isWorker) {
+  if (requireCustomer && !isAdmin && isEmployee) {
     return <Navigate to="/" replace />;
   }
 

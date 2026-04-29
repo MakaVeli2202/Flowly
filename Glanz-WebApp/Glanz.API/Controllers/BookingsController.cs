@@ -1876,12 +1876,20 @@ namespace Glanz.API.Controllers
                     if (isSameDay && slotStartTime < nowLocal.TimeOfDay + TimeSpan.FromMinutes(workerTravelBuffer))
                         continue;
 
-                    // 12b. At least one worker must be able to cover this slot.
-                    var hasWorkerCoverage = availableWorkers.Any(w => WorkerCanTakeSlot(w, startSlot));
-                    if (!hasWorkerCoverage)
+                    // 12b. Count workers that are actually free for this slot (assigned-booking conflicts only).
+                    var freeWorkerCount = availableWorkers.Count(w => WorkerCanTakeSlot(w, startSlot));
+                    if (freeWorkerCount == 0)
                         continue;
 
-                    // 12e. Manual-assign mode: require at least one free worker in the pool.
+                    // 12c. Each unassigned booking will consume one free worker when auto-assigned.
+                    //      Subtract their demand from the free-worker pool.
+                    var unassignedConflicts = sameDayUnassignedBookings.Count(b =>
+                        HasWorkerTimeConflict(new List<Booking> { b }, startSlot, slotDuration, workerTravelBuffer));
+
+                    if (freeWorkerCount <= unassignedConflicts)
+                        continue;
+
+                    // 12e. Manual-assign mode: require at least one free worker after unassigned demand.
                     if (!autoAssignEnabled)
                     {
                         var eligibleWorkersForSlot = availableWorkers
@@ -1899,7 +1907,7 @@ namespace Glanz.API.Controllers
                             .ToHashSet();
 
                         var freePool = eligibleWorkersForSlot.Count(w => !busyWorkerIds.Contains(w.Id));
-                        if (freePool == 0)
+                        if (freePool <= unassignedConflicts)
                             continue;
                     }
 
@@ -5427,7 +5435,8 @@ namespace Glanz.API.Controllers
 
             var workerIds = availableWorkers.Select(w => w.Id).ToList();
             var dayEnd = date.AddDays(1);
-            var sameDayBookings = await _context.Bookings
+
+            var sameDayWorkerBookings = await _context.Bookings
                 .Where(b => b.Id != excludeBookingId
                     && b.AssignedWorkerId.HasValue
                     && workerIds.Contains(b.AssignedWorkerId.Value)
@@ -5437,14 +5446,23 @@ namespace Glanz.API.Controllers
                 .Include(b => b.BookingItems).ThenInclude(bi => bi.Package)
                 .ToListAsync();
 
-            var bookingsByWorker = sameDayBookings
+            var sameDayUnassignedBookings = await _context.Bookings
+                .Where(b => b.Id != excludeBookingId
+                    && !b.AssignedWorkerId.HasValue
+                    && b.ScheduledDate >= date && b.ScheduledDate < dayEnd
+                    && b.Status != BookingStatus.Cancelled
+                    && b.Status != BookingStatus.Completed)
+                .Include(b => b.BookingItems).ThenInclude(bi => bi.Package)
+                .ToListAsync();
+
+            var bookingsByWorker = sameDayWorkerBookings
                 .GroupBy(b => b.AssignedWorkerId!.Value)
                 .ToDictionary(g => g.Key, g => g.ToList());
 
             var result = new List<string>();
             foreach (var startSlot in BuildCandidateStartSlots(durationMinutes, dayOfWeek.ToString()))
             {
-                var anyFree = availableWorkers.Any(worker =>
+                var freeWorkerCount = availableWorkers.Count(worker =>
                 {
                     var (ss, se) = GetWorkerShiftForDay(worker, dayOfWeek);
                     if (!TimeSlotInWorkerShift(startSlot, durationMinutes, ss, se, workerTravelBuffer))
@@ -5452,7 +5470,13 @@ namespace Glanz.API.Controllers
                     var wb = bookingsByWorker.TryGetValue(worker.Id, out var assigned) ? assigned : new List<Booking>();
                     return !HasWorkerTimeConflict(wb, startSlot, durationMinutes, workerTravelBuffer);
                 });
-                if (anyFree) result.Add(startSlot);
+
+                if (freeWorkerCount == 0) continue;
+
+                var unassignedConflicts = sameDayUnassignedBookings.Count(b =>
+                    HasWorkerTimeConflict(new List<Booking> { b }, startSlot, durationMinutes, workerTravelBuffer));
+
+                if (freeWorkerCount > unassignedConflicts) result.Add(startSlot);
             }
             return result;
         }

@@ -11,6 +11,7 @@ import { bookingsAPI } from '../api/bookings';
 import { authAPI } from '../api/auth';
 import { useScrollHeader } from '../hooks/useScrollHeader';
 import { theme } from '../theme/theme';
+import realtimeService from '../api/realtimeService';
 
 const PADDING = 20;
 const DAYS_OF_WEEK = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
@@ -493,6 +494,31 @@ export default function WorkerManagementScreen() {
               </View>
             </ScrollView>
 
+            {/* ── Admin Control ───────────────────────────── */}
+            <TouchableOpacity
+              style={m.forceStopBtn}
+              onPress={() => {
+                Alert.alert(
+                  'Force Stop Worker',
+                  `Stop all live tracking for ${selectedWorker?.firstName} ${selectedWorker?.lastName}?`,
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    {
+                      text: 'Force Stop',
+                      style: 'destructive',
+                      onPress: () => {
+                        realtimeService.forceStopWorker(selectedWorker.id);
+                      },
+                    },
+                  ]
+                );
+              }}
+              activeOpacity={0.75}
+            >
+              <Ionicons name="stop-circle-outline" size={15} color="#F87171" />
+              <Text style={m.forceStopText}>Force Stop Tracking</Text>
+            </TouchableOpacity>
+
             {/* ── Actions ─────────────────────────────────── */}
             <View style={m.actions}>
               <TouchableOpacity
@@ -649,6 +675,8 @@ const m = StyleSheet.create({
   actions:       { flexDirection: 'row', gap: 10, paddingHorizontal: 18, paddingVertical: 14, borderTopWidth: 1, borderTopColor: theme.colors.border },
   cancelBtn:     { flex: 1, borderWidth: 1, borderColor: theme.colors.border, borderRadius: 13, paddingVertical: 13, alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.04)' },
   cancelBtnText: { color: theme.colors.text, fontWeight: '700', fontSize: 14 },
+  forceStopBtn:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 8, marginBottom: 4, paddingVertical: 11, borderRadius: 12, backgroundColor: 'rgba(248,113,113,0.1)', borderWidth: 1, borderColor: 'rgba(248,113,113,0.25)' },
+  forceStopText: { color: '#F87171', fontWeight: '700', fontSize: 13 },
 
   /* Save button — gradient fill */
   saveBtnWrap:     { flex: 2, borderRadius: 13, overflow: 'hidden' },

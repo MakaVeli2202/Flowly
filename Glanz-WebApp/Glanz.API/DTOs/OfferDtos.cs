@@ -167,5 +167,6 @@ namespace Glanz.API.DTOs
         public string UserEmail { get; set; } = string.Empty;
         public DateTime PendingAt { get; set; }
         public int CompletedBookings { get; set; }
+        public string? ScreenshotUrl { get; set; }
     }
 }

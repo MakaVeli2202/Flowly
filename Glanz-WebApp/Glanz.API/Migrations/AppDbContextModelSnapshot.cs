@@ -1285,6 +1285,10 @@ namespace Glanz.API.Migrations
                     b.Property<DateTime?>("LoyaltyReviewPendingAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("LoyaltyReviewScreenshotUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
                     b.Property<string>("OtherAddress")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");

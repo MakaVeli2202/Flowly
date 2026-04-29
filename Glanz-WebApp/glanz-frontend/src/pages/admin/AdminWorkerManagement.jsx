@@ -5,6 +5,7 @@ import { authAPI } from '../../api/auth';
 import { Skeleton } from '../../components/shared/Skeleton';
 import { EmptyState } from '../../components/shared/EmptyState';
 import { useLanguage } from '../../context/LanguageContext';
+import { forceStopWorker } from '../../api/realtimeService';
 
 const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const SHIFTS = [
@@ -162,6 +163,18 @@ export default function WorkerManagement() {
                   </div>
                 </div>
               </div>
+
+              <button
+                onClick={() => {
+                  if (window.confirm(`Force-stop live tracking for ${worker.name}?`)) {
+                    forceStopWorker(worker.id);
+                  }
+                }}
+                className="mt-2 text-xs text-red-400 hover:text-red-300 flex items-center gap-1 opacity-70 hover:opacity-100 transition-opacity"
+              >
+                <XCircle size={12} />
+                Force Stop Tracking
+              </button>
 
               <button
                 onClick={() => setEditWorker(worker)}

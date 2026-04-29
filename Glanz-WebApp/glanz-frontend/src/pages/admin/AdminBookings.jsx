@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { formatQAR } from '../../utils/currency';
 import { statusColors as statusConfig, paymentStatusColors as paymentStatusConfig, getStatusConfig } from '../../utils/statusConfig';
-import { usePolling } from '../../hooks/usePolling';
+import { subscribeToNotifications } from '../../api/notificationBus';
 
 const VEHICLE_TYPES = ['Motorcycle', 'Sedan', 'SUV', 'Pickup'];
 
@@ -244,9 +244,9 @@ function AdminBookings() {
     return () => window.removeEventListener('highlight-booking', onHL);
   }, []);
 
-  // Background polling — 30 s silent refresh + re-trigger on focus / visibility
+  // Refresh booking list on any incoming WebSocket notification (job changes trigger notifications)
   const silentRefresh = useCallback(() => fetchBookings({ showLoader: false }), []);
-  usePolling(silentRefresh, 30_000);
+  useEffect(() => subscribeToNotifications(silentRefresh), [silentRefresh]);
 
   /* ── Worker helpers ────────────────────────────────────── */
   const handleAssignWorker = async (bookingId, workerId) => {

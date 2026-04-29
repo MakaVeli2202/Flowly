@@ -16,7 +16,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   View, Text, StyleSheet, ScrollView,
   TouchableOpacity, ActivityIndicator,
-  RefreshControl, AppState, Animated,
+  RefreshControl, Animated,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -24,7 +24,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { bookingsAPI } from '../api/bookings';
 import { authAPI } from '../api/auth';
 import { reportsAPI } from '../api/reports';
-import { onConnectionStatus, offConnectionStatus, subscribeToNotifications } from '../api/signalr';
+import { subscribeToNotifications } from '../api/notificationBus';
 import { formatQAR } from '../utils/currency';
 import { theme } from '../theme/theme';
 import StatsCard from '../components/StatsCard';
@@ -155,8 +155,6 @@ export default function AdminDashboardScreen({ navigation }) {
   const [loading,         setLoading]         = useState(true);
   const [refreshing,      setRefreshing]      = useState(false);
   const [lastRefreshed,   setLastRefreshed]   = useState(null);
-  // 'connected' | 'reconnecting' | 'disconnected' — drives the live-updates pill
-  const [signalRStatus,   setSignalRStatus]   = useState('connected');
 
   // ── Data loading ────────────────────────────────────────────────────────────
   const loadAll = useCallback(async () => {
@@ -178,19 +176,8 @@ export default function AdminDashboardScreen({ navigation }) {
     run();
   }, [loadAll]);
 
-  useEffect(() => {
-    const id  = setInterval(() => loadAll(), 30000);
-    const sub = AppState.addEventListener('change', (s) => { if (s === 'active') loadAll(); });
-    return () => { clearInterval(id); sub.remove(); };
-  }, [loadAll]);
 
   const onRefresh = async () => { setRefreshing(true); await loadAll(); setRefreshing(false); };
-
-  // ── SignalR connection status ────────────────────────────────────────────────
-  useEffect(() => {
-    onConnectionStatus(setSignalRStatus);
-    return () => offConnectionStatus(setSignalRStatus);
-  }, []);
 
   // ── Real-time booking event listener ────────────────────────────────────────
   useEffect(() => {
@@ -199,9 +186,7 @@ export default function AdminDashboardScreen({ navigation }) {
       'JobStarted', 'JobCompleted', 'BookingReassigned', 'BookingClaimed', 'BookingUnassigned',
     ]);
     const onNotif = (notif) => {
-      if (BOOKING_EVENTS.has(notif?.type)) {
-        loadAll();
-      }
+      if (BOOKING_EVENTS.has(notif?.type)) loadAll();
     };
     return subscribeToNotifications(onNotif);
   }, [loadAll]);
@@ -454,26 +439,6 @@ export default function AdminDashboardScreen({ navigation }) {
         </View>
       </View>
       <SpectrumLine />
-
-      {/* ── SignalR connection status pill ─────────────────────────────────────── */}
-      {signalRStatus !== 'connected' && (
-        <View style={[
-          s.connPill,
-          signalRStatus === 'reconnecting' ? s.connPillWarn : s.connPillError,
-        ]}>
-          <Ionicons
-            name={signalRStatus === 'reconnecting' ? 'sync-outline' : 'cloud-offline-outline'}
-            size={12}
-            color={signalRStatus === 'reconnecting' ? '#FBBF24' : '#F87171'}
-          />
-          <Text style={[
-            s.connPillText,
-            { color: signalRStatus === 'reconnecting' ? '#FBBF24' : '#F87171' },
-          ]}>
-            {signalRStatus === 'reconnecting' ? 'Reconnecting… Live updates paused' : 'Live updates offline — pull to refresh'}
-          </Text>
-        </View>
-      )}
 
       {/* ── Scrollable body ────────────────────────────────────────────────────── */}
       <ScrollView
@@ -924,28 +889,6 @@ const s = StyleSheet.create({
 
   scrollBody: {
     paddingTop: 8,
-  },
-
-  /* SignalR connection status pill */
-  connPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderBottomWidth: 1,
-  },
-  connPillWarn: {
-    backgroundColor: 'rgba(251,191,36,0.08)',
-    borderBottomColor: 'rgba(251,191,36,0.18)',
-  },
-  connPillError: {
-    backgroundColor: 'rgba(248,113,113,0.08)',
-    borderBottomColor: 'rgba(248,113,113,0.18)',
-  },
-  connPillText: {
-    fontSize: 11,
-    fontWeight: '600',
   },
 
   /* Section wrapper */

@@ -2,9 +2,11 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from '
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { secureGet, secureSet, secureMultiRemove } from '../utils/secureStorage';
 import { authAPI } from '../api/auth';
-import { startNotificationConnection, stopNotificationConnection } from '../api/signalr';
 import { registerForPushNotificationsAsync } from '../utils/pushNotifications';
 import { setUnauthorizedHandler } from '../api/axios';
+import { cacheManager } from '../core/cacheManager';
+import realtimeService from '../api/realtimeService';
+import { startNotificationConnection, stopNotificationConnection } from '../api/notificationBus';
 
 async function syncPushToken() {
   try {
@@ -73,8 +75,13 @@ export function AuthProvider({ children }) {
           }
         }
 
+        // Connect WebSocket hub for real-time features
+        const activeToken = await secureGet('token');
+        if (activeToken) {
+          realtimeService.connect(activeToken).catch(() => {});
+          startNotificationConnection();
+        }
         syncPushToken();
-        startNotificationConnection().catch(() => {});
       } finally {
         setLoading(false);
       }
@@ -89,8 +96,9 @@ export function AuthProvider({ children }) {
     await AsyncStorage.setItem('user', JSON.stringify(res.user));
     setToken(res.token);
     setUser(res.user);
+    await realtimeService.connect(res.token);
+    startNotificationConnection();
     syncPushToken();
-    startNotificationConnection().catch(() => {});
     return res;
   };
 
@@ -101,8 +109,9 @@ export function AuthProvider({ children }) {
     await AsyncStorage.setItem('user', JSON.stringify(res.user));
     setToken(res.token);
     setUser(res.user);
+    await realtimeService.connect(res.token);
+    startNotificationConnection();
     syncPushToken();
-    startNotificationConnection().catch(() => {});
     return res;
   };
 
@@ -131,13 +140,15 @@ export function AuthProvider({ children }) {
 
   const logout = async () => {
     setUnauthorizedHandler(null); // prevent 401 loop during cleanup
-    await stopNotificationConnection();
+    stopNotificationConnection();
+    await realtimeService.disconnect();
     try { await authAPI.clearPushToken(); } catch { /* non-critical */ }
     try { await authAPI.logout(); } catch { /* best-effort server-side revoke */ }
     await secureMultiRemove(['token', 'refreshToken']);
     await AsyncStorage.removeItem('user');
     setToken(null);
     setUser(null);
+    cacheManager.clear();
   };
 
   // Wire up the axios 401 interceptor to trigger logout automatically

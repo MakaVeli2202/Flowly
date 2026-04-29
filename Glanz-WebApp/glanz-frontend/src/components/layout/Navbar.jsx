@@ -4,7 +4,8 @@ import { Menu, X, Droplet, LogOut, LayoutDashboard, Sun, Moon, Bell, CheckCheck,
 import { useAuth } from '../../context/AuthContext';
 import { BUSINESS } from '../../config/business';
 import { notificationsAPI } from '../../api/notifications';
-import { onConnectionStateChange, subscribeToNotifications } from '../../api/signalr';
+import { subscribeToNotifications } from '../../api/notificationBus';
+import { useRealtimeStatus } from '../../hooks/useRealtimeStatus';
 import { useLanguage, ADMIN_LABEL_KEYS, LANGUAGES } from '../../context/LanguageContext';
 
 const Play = ({ size, className }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}><path d="M8 5v14l11-7z"/></svg>;
@@ -132,13 +133,12 @@ function Navbar({ theme, onToggleTheme }) {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [notificationsLoading, setNotificationsLoading] = useState(false);
-  // 'connected' | 'reconnecting' | 'disconnected'
-  const [connState, setConnState] = useState('disconnected');
   const [currentTime, setCurrentTime] = useState(new Date());
   const adminMenuRef = useRef(null);
   const notificationsRef = useRef(null);
   const langMenuRef = useRef(null);
-  const { user, isAuthenticated, isAdmin, logout } = useAuth();
+    const { user, isAuthenticated, isAdmin, isEmployee, logout } = useAuth();
+  const wsStatus = useRealtimeStatus();
   const navigate = useNavigate();
   const location = useLocation();
   // Close dropdowns when clicking outside
@@ -193,13 +193,10 @@ function Navbar({ theme, onToggleTheme }) {
     if (!isAuthenticated) {
       setNotifications([]);
       setUnreadCount(0);
-      setConnState('disconnected');
       return;
     }
 
     loadNotificationSummary();
-
-    const unsubState = onConnectionStateChange(setConnState);
 
     // AuthContext owns start/stop lifecycle — Navbar only subscribes to events
     const onNotif = () => {
@@ -207,24 +204,7 @@ function Navbar({ theme, onToggleTheme }) {
       playNotificationSound();
     };
 
-    const unsubNotif = subscribeToNotifications(onNotif);
-
-    const intervalId = window.setInterval(loadNotificationSummary, 60000);
-    const onFocus = () => loadNotificationSummary();
-    const onVisibilityChange = () => {
-      if (document.visibilityState === 'visible') loadNotificationSummary();
-    };
-
-    window.addEventListener('focus', onFocus);
-    document.addEventListener('visibilitychange', onVisibilityChange);
-
-    return () => {
-      unsubState();
-      unsubNotif();
-      window.clearInterval(intervalId);
-      window.removeEventListener('focus', onFocus);
-      document.removeEventListener('visibilitychange', onVisibilityChange);
-    };
+    return subscribeToNotifications(onNotif);
   }, [isAuthenticated, loadNotificationSummary]);
 
   useEffect(() => {
@@ -268,6 +248,23 @@ function Navbar({ theme, onToggleTheme }) {
       setShowNotifications(false);
       handleMarkNotificationRead(notification.id);
       navigate('/my-bookings');
+      return;
+    }
+
+    if (type === 'LoyaltyReviewRequested') {
+      setShowNotifications(false);
+      handleMarkNotificationRead(notification.id);
+      const target = '/admin/offers?tab=loyalty';
+      if (location.pathname === '/admin/offers') {
+        // Already on offers page — refresh data
+        window.dispatchEvent(new CustomEvent('refresh-offers-data'));
+        // Update tab if needed
+        const url = new URL(window.location);
+        url.searchParams.set('tab', 'loyalty');
+        navigate(`${url.pathname}${url.search}`, { replace: true });
+      } else {
+        navigate(target);
+      }
       return;
     }
 
@@ -360,8 +357,8 @@ function Navbar({ theme, onToggleTheme }) {
               </>
             )}
 
-            {/* Customer Nav Links */}
-            {!isAdmin && (
+            {/* Customer Nav Links — hide from employees */}
+            {!isAdmin && !isEmployee && (
               <>
                 {CUSTOMER_LINKS.map(({ to, label }) => (
                   <Link key={to} to={to} className="text-[var(--muted-color)] hover:text-[var(--text-color)] transition-colors font-medium text-sm tracking-tight">
@@ -414,6 +411,31 @@ function Navbar({ theme, onToggleTheme }) {
                 <span className="text-amber-400/60">{currentTime.toLocaleDateString()}</span>
               </div>
 
+              {/* WebSocket status dot — only shown when not connected */}
+              {isAuthenticated && wsStatus !== 'connected' && (
+                <div
+                  title={wsStatus === 'reconnecting' ? 'Reconnecting...' : 'Disconnected'}
+                  className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-bold"
+                  style={{
+                    backgroundColor: wsStatus === 'reconnecting' ? 'rgba(251,191,36,0.12)' : 'rgba(248,113,113,0.12)',
+                    border: `1px solid ${wsStatus === 'reconnecting' ? 'rgba(251,191,36,0.35)' : 'rgba(248,113,113,0.35)'}`,
+                    color: wsStatus === 'reconnecting' ? '#FBBF24' : '#F87171',
+                  }}
+                >
+                  <span
+                    className={wsStatus === 'reconnecting' ? 'animate-pulse' : ''}
+                    style={{
+                      display: 'inline-block',
+                      width: 7,
+                      height: 7,
+                      borderRadius: '50%',
+                      backgroundColor: wsStatus === 'reconnecting' ? '#FBBF24' : '#F87171',
+                    }}
+                  />
+                  {wsStatus === 'reconnecting' ? 'Reconnecting' : 'Offline'}
+                </div>
+              )}
+
               {/* Theme Toggle */}
               <button
                 type="button"
@@ -440,10 +462,6 @@ function Navbar({ theme, onToggleTheme }) {
                           {unreadCount > 9 ? '9+' : unreadCount}
                         </span>
                       )}
-                      {/* Connection state dot */}
-                      {connState === 'reconnecting' && (
-                        <span className="absolute bottom-0.5 right-0.5 w-2 h-2 rounded-full bg-amber-400 animate-pulse" title="Reconnecting…" />
-                      )}
                     </button>
 
                     {/* Notifications Dropdown */}
@@ -453,12 +471,6 @@ function Navbar({ theme, onToggleTheme }) {
                         <div className="flex items-center justify-between gap-3 px-4 pt-4 pb-3 border-b border-[var(--border-color)]/30 flex-shrink-0">
                           <div className="flex items-center gap-2">
                             <p className="text-sm font-bold text-[var(--text-color)] tracking-tight">{t('notifications')}</p>
-                            {connState === 'reconnecting' && (
-                              <span className="text-[10px] font-semibold text-amber-400 bg-amber-400/10 px-1.5 py-0.5 rounded-full">{t('reconnecting')}</span>
-                            )}
-                            {connState === 'connected' && (
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0" title="Live" />
-                            )}
                           </div>
                           <div className="flex items-center gap-3">
                             {unreadCount > 0 && (
@@ -542,11 +554,13 @@ function Navbar({ theme, onToggleTheme }) {
                     )}
                   </div>
 
-                  {/* Profile & Logout */}
+                  {/* Profile & Logout — hide profile from employees */}
                   <div className="flex items-center gap-4 pl-4">
-                    <Link to="/profile" className="text-[var(--muted-color)] hover:text-[var(--text-color)] transition-colors font-medium text-sm tracking-tight">
-                      {user?.firstName || t('profile')}
-                    </Link>
+                    {!isEmployee && (
+                      <Link to="/profile" className="text-[var(--muted-color)] hover:text-[var(--text-color)] transition-colors font-medium text-sm tracking-tight">
+                        {user?.firstName || t('profile')}
+                      </Link>
+                    )}
                     <button
                       onClick={handleLogout}
                       className="p-2 rounded-lg hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 transition-all"

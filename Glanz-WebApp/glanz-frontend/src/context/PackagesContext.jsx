@@ -12,11 +12,13 @@ export function PackagesProvider({ children }) {
   const lastFetchRef = useRef(0);
   const packagesCountRef = useRef(0);
   const inFlightRef = useRef(null);
+  const packagesRef = useRef(packages);
+  packagesRef.current = packages; // keep ref in sync
 
   const fetchPackages = useCallback(async (force = false) => {
     const now = Date.now();
     if (!force && packagesCountRef.current > 0 && now - lastFetchRef.current < CACHE_TTL) {
-      return packages;
+      return packagesRef.current;
     }
     if (inFlightRef.current) return inFlightRef.current;
 
@@ -27,6 +29,7 @@ export function PackagesProvider({ children }) {
         const data = await packagesAPI.getAll();
         const safeData = Array.isArray(data) ? data : [];
         setPackages(safeData);
+        packagesRef.current = safeData;
         packagesCountRef.current = safeData.length;
         lastFetchRef.current = Date.now();
         return safeData;
@@ -41,7 +44,7 @@ export function PackagesProvider({ children }) {
 
     inFlightRef.current = request;
     return request;
-  }, [packages]);
+  }, []);
 
   return (
     <PackagesContext.Provider value={{ packages, packagesLoading, packagesError, fetchPackages }}>

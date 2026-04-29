@@ -32,8 +32,14 @@ export const offersAPI = {
     return response.data;
   }),
 
-  activateGoogleReviewLoyalty: async () => withRetry(async () => {
-    const response = await apiClient.post('/Offers/loyalty/activate-google-review');
+  activateGoogleReviewLoyalty: async (screenshotFile) => withRetry(async () => {
+    const formData = new FormData();
+    if (screenshotFile) {
+      formData.append('screenshot', screenshotFile);
+    }
+    const response = await apiClient.post('/Offers/loyalty/activate-google-review', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
     return response.data;
   }),
 

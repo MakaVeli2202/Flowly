@@ -1,16 +1,18 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { NavigationContainer, DarkTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import {
-  View, Text, StyleSheet, TouchableOpacity, Image, AppState, Dimensions,
+  View, Text, StyleSheet, TouchableOpacity, Image, Dimensions,
 } from 'react-native';
 import { DrawerContentScrollView } from '@react-navigation/drawer';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import { theme } from '../theme/theme';
 import { notificationsAPI } from '../api/notifications';
-import { subscribeToNotifications, startNotificationConnection } from '../api/signalr';
+import { subscribeToNotifications } from '../api/notificationBus';
+import { useLocationTracking } from '../hooks/useLocationTracking';
+import realtimeService from '../api/realtimeService';
 import { API_BASE_URL } from '../config/api';
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
@@ -47,6 +49,32 @@ import AdminSubscriptionBookingsScreen from '../screens/AdminSubscriptionBooking
 const Stack  = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
 const { width } = Dimensions.get('window');
+
+/**
+ * Mounts invisibly for workers only.
+ * Starts admin location tracking on login (no bookingId required).
+ * Stops tracking on logout or admin ForceStop/RevokeTracking command.
+ */
+function WorkerLocationBridge() {
+  const { startTracking, stopTracking } = useLocationTracking();
+  const stopRef = useRef(stopTracking);
+  useEffect(() => { stopRef.current = stopTracking; });
+
+  useEffect(() => {
+    startTracking(); // always-on admin stream — no bookingId needed
+
+    const unsubForce  = realtimeService.onForceStop(() => { stopRef.current(); });
+    const unsubRevoke = realtimeService.onRevokeTracking(() => { stopRef.current(); });
+
+    return () => {
+      stopRef.current();
+      unsubForce();
+      unsubRevoke();
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return null;
+}
 
 // ── Start fully transparent — each screen fills it in via useScrollHeader ──────
 const SHARED_HEADER_OPTIONS = {
@@ -172,23 +200,11 @@ function AdminDrawer() {
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
-    let isMounted = true;
-    const load = async () => {
-      try {
-        const count = await notificationsAPI.getUnreadCount();
-        if (isMounted) setUnreadCount(Number(count || 0));
-      } catch { if (isMounted) setUnreadCount(0); }
-    };
-    load();
-    const interval  = setInterval(load, 30000);
-    const appSub    = AppState.addEventListener('change', (s) => { if (s === 'active') load(); });
-    const unsubNotif = subscribeToNotifications(() => load());
-    return () => {
-      isMounted = false;
-      clearInterval(interval);
-      appSub.remove();
-      unsubNotif();
-    };
+    const refresh = () => notificationsAPI.getUnreadCount()
+      .then(count => setUnreadCount(Number(count || 0)))
+      .catch(() => {});
+    refresh();
+    return subscribeToNotifications(refresh);
   }, []);
 
   return (
@@ -331,26 +347,11 @@ function CustomerDrawer() {
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
-    let isMounted = true;
-    const load = async () => {
-      try {
-        const count = await notificationsAPI.getUnreadCount();
-        if (isMounted) setUnreadCount(Number(count || 0));
-      } catch {
-        if (isMounted) setUnreadCount(0);
-      }
-    };
-    load();
-    const interval   = setInterval(load, 30000);
-    const appSub     = AppState.addEventListener('change', (s) => { if (s === 'active') load(); });
-    const unsubNotif = subscribeToNotifications(() => load());
-
-    return () => {
-      isMounted = false;
-      clearInterval(interval);
-      appSub.remove();
-      unsubNotif();
-    };
+    const refresh = () => notificationsAPI.getUnreadCount()
+      .then(count => setUnreadCount(Number(count || 0)))
+      .catch(() => {});
+    refresh();
+    return subscribeToNotifications(refresh);
   }, []);
 
   return (
@@ -439,24 +440,11 @@ function AdminStack() {
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
-    let isMounted = true;
-    const load = async () => {
-      try {
-        const count = await notificationsAPI.getUnreadCount();
-        if (isMounted) setUnreadCount(Number(count || 0));
-      } catch { if (isMounted) setUnreadCount(0); }
-    };
-    load();
-    const interval = setInterval(load, 30000);
-    const appSub   = AppState.addEventListener('change', (s) => { if (s === 'active') load(); });
-    startNotificationConnection().catch(() => {});
-    const unsubNotif = subscribeToNotifications(() => load());
-    return () => {
-      isMounted = false;
-      clearInterval(interval);
-      appSub.remove();
-      unsubNotif();
-    };
+    const refresh = () => notificationsAPI.getUnreadCount()
+      .then(count => setUnreadCount(Number(count || 0)))
+      .catch(() => {});
+    refresh();
+    return subscribeToNotifications(refresh);
   }, []);
 
   return (
@@ -513,15 +501,18 @@ function WorkerStack() {
 export default function AppNavigator({ navigationRef }) {
   const { isAuthenticated, isAdmin, isWorker } = useAuth();
   return (
-    <NavigationContainer theme={navTheme} ref={navigationRef}>
-      {isAuthenticated
-        ? isAdmin
-          ? <AdminStack />
-          : isWorker
-            ? <WorkerStack />
-            : <CustomerStack />
-        : <AuthStack />}
-    </NavigationContainer>
+    <>
+      {isWorker && isAuthenticated && <WorkerLocationBridge />}
+      <NavigationContainer theme={navTheme} ref={navigationRef}>
+        {isAuthenticated
+          ? isAdmin
+            ? <AdminStack />
+            : isWorker
+              ? <WorkerStack />
+              : <CustomerStack />
+          : <AuthStack />}
+      </NavigationContainer>
+    </>
   );
 }
 

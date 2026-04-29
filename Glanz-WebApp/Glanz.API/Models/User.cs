@@ -61,6 +61,9 @@ namespace Glanz.API.Models
         public DateTime? LoyaltyGoogleReviewActivatedAt { get; set; }
 
         [StringLength(500)]
+        public string? LoyaltyReviewScreenshotUrl { get; set; }
+
+        [StringLength(500)]
         public string? ExpoPushToken { get; set; }
 
         [StringLength(200)]

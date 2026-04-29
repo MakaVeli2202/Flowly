@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  ActivityIndicator, RefreshControl, AppState, Alert,
+  ActivityIndicator, RefreshControl, Alert,
   Modal, TextInput, Image, Linking,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -13,6 +13,8 @@ import { authAPI } from '../api/auth';
 import { servicesAPI } from '../api/services';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
+import { subscribeToNotifications } from '../api/notificationBus';
+import realtimeService from '../api/realtimeService';
 import { formatQAR } from '../utils/currency';
 import { canTransition } from '../utils/bookingStateMachine';
 import { theme } from '../theme/theme';
@@ -343,9 +345,7 @@ export default function AdminJobsScreen({ route, navigation }) {
   const onRefresh = async () => { setRefreshing(true); await loadBookings(); setRefreshing(false); };
 
   useEffect(() => {
-    const id  = setInterval(() => loadBookings(), 30000);
-    const sub = AppState.addEventListener('change', (s) => { if (s === 'active') loadBookings(); });
-    return () => { clearInterval(id); sub.remove(); };
+    return subscribeToNotifications(() => { loadBookings(); });
   }, [loadBookings]);
 
   useEffect(() => {
@@ -749,6 +749,8 @@ export default function AdminJobsScreen({ route, navigation }) {
         setStartedAtByBooking((p) => ({ ...p, [bookingId]: p[bookingId] || (Number.isFinite(startedAtMs) ? startedAtMs : Date.now()) }));
         setPausedAtByBooking((p)        => ({ ...p, [bookingId]: null }));
         setAccumulatedPausedByBooking((p) => ({ ...p, [bookingId]: 0  }));
+        // Stop customer-visible tracking — job is now In Progress
+        await realtimeService.stopCustomerStream(bookingId);
         await loadBookings();
       } catch (err) { setError(err?.response?.data?.message || 'Failed to start job.'); }
       finally { setUpdatingId(null); endAction(key); }
@@ -772,6 +774,8 @@ export default function AdminJobsScreen({ route, navigation }) {
     try {
       setUpdatingId(bookingId);
       await bookingsAPI.markOnMyWay(bookingId);
+      // Start customer-visible location stream — worker is En Route
+      await realtimeService.startCustomerStream(bookingId);
       await loadBookings();
     } catch (err) { setError(err?.response?.data?.message || 'Failed to notify customer.'); }
     finally { setUpdatingId(null); endAction(key); }

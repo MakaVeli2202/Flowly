@@ -3,7 +3,7 @@ import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { bookingsAPI } from '../../api/bookings';
 import { packagesAPI } from '../../api/packages';
 import { authAPI } from '../../api/auth';
-import { subscribeToNotifications } from '../../api/signalr';
+import { subscribeToNotifications } from '../../api/notificationBus';
 import {
   Calendar, Clock, User, Mail, Phone, Package,
   Edit2, X, Check, AlertCircle, Car, CheckCircle, Wrench, ArrowLeft, ChevronDown,

@@ -190,7 +190,7 @@ namespace Glanz.API.Controllers
 
         [Authorize]
         [HttpPost("loyalty/activate-google-review")]
-        public async Task<ActionResult> ActivateGoogleReviewLoyalty()
+        public async Task<ActionResult> ActivateGoogleReviewLoyalty(IFormFile? screenshot)
         {
             var userId = GetUserId();
             if (!userId.HasValue) return Unauthorized();
@@ -211,6 +211,39 @@ namespace Glanz.API.Controllers
             var isNew = !user.LoyaltyReviewPendingAt.HasValue;
             user.LoyaltyReviewPendingAt ??= DateTime.UtcNow;
             user.UpdatedAt = DateTime.UtcNow;
+
+            // Save screenshot if provided
+            if (screenshot != null && screenshot.Length > 0)
+            {
+                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
+                var extension = Path.GetExtension(screenshot.FileName)?.ToLowerInvariant() ?? "";
+                if (!allowedExtensions.Contains(extension))
+                    extension = ".jpg";
+
+                var uploadsRoot = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "loyalty-reviews");
+                Directory.CreateDirectory(uploadsRoot);
+
+                // Delete old screenshot if exists
+                if (!string.IsNullOrWhiteSpace(user.LoyaltyReviewScreenshotUrl)
+                    && user.LoyaltyReviewScreenshotUrl.StartsWith("/uploads/loyalty-reviews/", StringComparison.OrdinalIgnoreCase))
+                {
+                    var oldFileName = Path.GetFileName(user.LoyaltyReviewScreenshotUrl);
+                    var oldPath = Path.Combine(uploadsRoot, oldFileName);
+                    if (System.IO.File.Exists(oldPath))
+                        System.IO.File.Delete(oldPath);
+                }
+
+                var fileName = $"review-{user.Id}-{Guid.NewGuid():N}{extension}";
+                var filePath = Path.Combine(uploadsRoot, fileName);
+
+                await using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await screenshot.CopyToAsync(stream);
+                }
+
+                user.LoyaltyReviewScreenshotUrl = $"/uploads/loyalty-reviews/{fileName}";
+            }
+
             await _context.SaveChangesAsync();
 
             if (isNew)
@@ -258,6 +291,7 @@ namespace Glanz.API.Controllers
                 UserEmail        = u.Email,
                 PendingAt        = u.LoyaltyReviewPendingAt!.Value,
                 CompletedBookings = bookingCounts.TryGetValue(u.Id, out var c) ? c : 0,
+                ScreenshotUrl    = u.LoyaltyReviewScreenshotUrl,
             });
 
             return Ok(result);

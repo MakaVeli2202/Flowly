@@ -10,9 +10,8 @@ import {
   ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts';
 import { reportsAPI } from '../../api/reports';
-import { subscribeToNotifications } from '../../api/signalr';
+import { subscribeToNotifications } from '../../api/notificationBus';
 import { formatQAR, formatCompactQAR as formatCompactCurrency } from '../../utils/currency';
-import { usePolling } from '../../hooks/usePolling';
 
 const CHART_COLORS = ['#c8a96b', '#0ea5a0', '#3b82f6', '#f59e0b', '#8b5cf6', '#ef4444'];
 
@@ -248,12 +247,6 @@ function AdminDashboard() {
     };
     return subscribeToNotifications(onNotif);
   }, []);
-
-  // 60 s fallback poll — catches updates missed between notification polls.
-  const silentSummaryRefresh = useCallback(() => {
-    reportsAPI.getDashboardSummary().then(d => { if (d) setSummary(d); }).catch(() => {});
-  }, []);
-  usePolling(silentSummaryRefresh, 60_000);
 
   /* ── Derived data (logic unchanged) ─────────────────────── */
   const revenueTrendData = useMemo(() => (

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { offersAPI } from '../../api/offers';
 import {
   Plus, Edit2, Trash2, Ticket, AlertCircle, CheckCircle,
@@ -7,6 +8,14 @@ import {
   ToggleLeft, ToggleRight, Info, ArrowUpDown, Send, ShieldCheck, ShieldX,
 } from 'lucide-react';
 import AppModal from '../../components/shared/AppModal';
+
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5289/api';
+const toAbsoluteImageUrl = (value) => {
+  if (!value) return '';
+  if (value.startsWith('http://') || value.startsWith('https://')) return value;
+  const apiOrigin = apiBaseUrl.endsWith('/api') ? apiBaseUrl.slice(0, -4) : apiBaseUrl;
+  return `${apiOrigin}${value.startsWith('/') ? value : `/${value}`}`;
+};
 
 /* ─── Constants ──────────────────────────────────────────────────────────── */
 const DISCOUNT_TYPES = ['Percentage', 'FixedAmount', 'FreeBooking'];
@@ -676,6 +685,9 @@ const TABS = [
 ];
 
 export default function AdminOffers() {
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab = searchParams.get('tab') || 'offers';
   const [offers,          setOffers]         = useState([]);
   const [userCoupons,     setUserCoupons]    = useState([]);
   const [loyaltyProgress,  setLoyaltyProgress]  = useState([]);
@@ -684,7 +696,7 @@ export default function AdminOffers() {
   const [loading,         setLoading]        = useState(true);
   const [toast,           setToast]          = useState('');
   const [toastErr,        setToastErr]       = useState('');
-  const [tab,             setTab]            = useState('offers');
+  const [tab,             setTab]            = useState(initialTab);
   const [formType,        setFormType]       = useState(null); // null | 'promo' | 'loyalty'
   const [editingOffer,    setEditingOffer]   = useState(null);
   const [search,          setSearch]         = useState('');
@@ -695,6 +707,7 @@ export default function AdminOffers() {
   const [selected,      setSelected]      = useState(new Set());
   const [giveOfferId,   setGiveOfferId]   = useState('');
   const [giving,        setGiving]        = useState(false);
+  const [giveSearch,    setGiveSearch]    = useState('');
 
   const showToast = useCallback((msg, isErr = false) => {
     if (isErr) setToastErr(msg); else setToast(msg);
@@ -750,6 +763,18 @@ export default function AdminOffers() {
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
+  useEffect(() => {
+    const handler = () => fetchAll();
+    window.addEventListener('refresh-offers-data', handler);
+    return () => window.removeEventListener('refresh-offers-data', handler);
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (tab !== 'offers') params.set('tab', tab);
+    setSearchParams(params, { replace: true });
+  }, [tab, setSearchParams]);
+
   const promoCodes   = useMemo(() => offers.filter(o => !o.isLoyaltyProgram), [offers]);
   const loyaltyOffers = useMemo(() => offers.filter(o => o.isLoyaltyProgram), [offers]);
 
@@ -766,12 +791,19 @@ export default function AdminOffers() {
   const availableCoupons = useMemo(() => userCoupons.filter(c => !c.isRedeemed && !isExpired(c.expiresAt)), [userCoupons]);
   const redeemedCoupons  = useMemo(() => userCoupons.filter(c => c.isRedeemed), [userCoupons]);
 
-  const sortedProgress = useMemo(() => {
-    const arr = [...loyaltyProgress];
-    if (giveSort === 'bookings')    return arr.sort((a, b) => b.completedBookingsCount - a.completedBookingsCount);
-    if (giveSort === 'memberSince') return arr.sort((a, b) => new Date(a.memberSince) - new Date(b.memberSince));
-    return arr;
-  }, [loyaltyProgress, giveSort]);
+   const sortedProgress = useMemo(() => {
+     let arr = [...loyaltyProgress];
+     if (giveSearch.trim()) {
+       const q = giveSearch.toLowerCase();
+       arr = arr.filter(u =>
+         u.userName?.toLowerCase().includes(q) ||
+         u.userEmail?.toLowerCase().includes(q)
+       );
+     }
+     if (giveSort === 'bookings')    return arr.sort((a, b) => b.completedBookingsCount - a.completedBookingsCount);
+     if (giveSort === 'memberSince') return arr.sort((a, b) => new Date(a.memberSince) - new Date(b.memberSince));
+     return arr;
+   }, [loyaltyProgress, giveSort, giveSearch]);
 
   const handleDelete = (id, name) => {
     showConfirm(
@@ -1041,43 +1073,53 @@ export default function AdminOffers() {
                     <ShieldCheck size={16} style={{ color: 'rgba(200,169,107,0.5)' }} />
                     <span className="text-xs text-[var(--muted-color)]">No pending review requests.</span>
                   </div>
-                ) : (
-                  <div className="space-y-2">
-                    {pendingReviews.map(r => (
-                      <div key={r.userId} className="glass-card px-4 py-3 flex items-center gap-3">
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-[var(--heading-color)] truncate">{r.userName}</p>
-                          <p className="text-xs text-[var(--muted-color)] truncate">{r.userEmail}</p>
-                          <p className="text-[10px] mt-0.5" style={{ color: 'rgba(200,169,107,0.65)' }}>
-                            {r.completedBookings} completed wash{r.completedBookings !== 1 ? 'es' : ''} · submitted {new Date(r.pendingAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          <button
-                            onClick={() => handleApproveReview(r.userId, r.userName)}
-                            disabled={reviewWorking === r.userId}
-                            title="Approve — activate loyalty counter"
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition disabled:opacity-50"
-                            style={{ background: 'rgba(34,197,94,0.15)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.3)' }}>
-                            {reviewWorking === r.userId
-                              ? <RefreshCw size={12} className="animate-spin" />
-                              : <ShieldCheck size={12} />}
-                            Approve
-                          </button>
-                          <button
-                            onClick={() => handleRejectReview(r.userId, r.userName)}
-                            disabled={reviewWorking === r.userId}
-                            title="Reject — reset the request"
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition disabled:opacity-50"
-                            style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.25)' }}>
-                            <ShieldX size={12} />
-                            Reject
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                 ) : (
+                   <div className="space-y-2">
+                     {pendingReviews.map(r => (
+                       <div key={r.userId} className="glass-card px-4 py-3">
+                         <div className="flex items-center gap-3 mb-3">
+                           <div className="flex-1 min-w-0">
+                             <p className="text-sm font-semibold text-[var(--heading-color)] truncate">{r.userName}</p>
+                             <p className="text-xs text-[var(--muted-color)] truncate">{r.userEmail}</p>
+                             <p className="text-[10px] mt-0.5" style={{ color: 'rgba(200,169,107,0.65)' }}>
+                               {r.completedBookings} completed wash{r.completedBookings !== 1 ? 'es' : ''} · submitted {new Date(r.pendingAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                             </p>
+                           </div>
+                         </div>
+
+                          {/* Screenshot preview */}
+                          {r.screenshotUrl && (
+                            <div className="mb-3 rounded-lg overflow-hidden border" style={{ borderColor: 'rgba(200,169,107,0.2)' }}>
+                              <img src={toAbsoluteImageUrl(r.screenshotUrl)} alt="Review screenshot" className="w-full max-h-48 object-contain bg-black/20" />
+                            </div>
+                          )}
+
+                         <div className="flex items-center gap-2 shrink-0">
+                           <button
+                             onClick={() => handleApproveReview(r.userId, r.userName)}
+                             disabled={reviewWorking === r.userId}
+                             title="Approve — activate loyalty counter"
+                             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition disabled:opacity-50"
+                             style={{ background: 'rgba(34,197,94,0.15)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.3)' }}>
+                             {reviewWorking === r.userId
+                               ? <RefreshCw size={12} className="animate-spin" />
+                               : <ShieldCheck size={12} />}
+                             Approve
+                           </button>
+                           <button
+                             onClick={() => handleRejectReview(r.userId, r.userName)}
+                             disabled={reviewWorking === r.userId}
+                             title="Reject — reset the request"
+                             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition disabled:opacity-50"
+                             style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.25)' }}>
+                             <ShieldX size={12} />
+                             Reject
+                           </button>
+                         </div>
+                       </div>
+                     ))}
+                   </div>
+                 )}
               </div>
 
               {/* Customer progress */}
@@ -1117,22 +1159,33 @@ export default function AdminOffers() {
                   </select>
                 </div>
 
-                {/* Sort */}
-                <div className="min-w-[160px]">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)] mb-1.5">Sort By</p>
-                  <div className="flex rounded-xl border border-[var(--border-color)] overflow-hidden text-xs font-semibold">
-                    <button
-                      onClick={() => setGiveSort('bookings')}
-                      className={`flex-1 px-3 py-2.5 flex items-center justify-center gap-1.5 transition ${giveSort === 'bookings' ? 'bg-primary text-[var(--ink)]' : 'text-[var(--muted-color)] hover:bg-white/5'}`}>
-                      <TrendingUp size={12} /> Washes
-                    </button>
-                    <button
-                      onClick={() => setGiveSort('memberSince')}
-                      className={`flex-1 px-3 py-2.5 flex items-center justify-center gap-1.5 transition ${giveSort === 'memberSince' ? 'bg-primary text-[var(--ink)]' : 'text-[var(--muted-color)] hover:bg-white/5'}`}>
-                      <Clock size={12} /> Oldest
-                    </button>
+                  {/* Search */}
+                  <div className="min-w-[200px]">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)] mb-1.5">Search by Name or Email</p>
+                    <input
+                      value={giveSearch}
+                      onChange={e => setGiveSearch(e.target.value)}
+                      placeholder="Type to filter customers..."
+                      className="w-full px-3 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--surface-bg)] text-[var(--text-color)] text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition"
+                    />
                   </div>
-                </div>
+
+                 {/* Sort */}
+                 <div className="min-w-[160px]">
+                   <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)] mb-1.5">Sort By</p>
+                   <div className="flex rounded-xl border border-[var(--border-color)] overflow-hidden text-xs font-semibold">
+                     <button
+                       onClick={() => setGiveSort('bookings')}
+                       className={`flex-1 px-3 py-2.5 flex items-center justify-center gap-1.5 transition ${giveSort === 'bookings' ? 'bg-primary text-[var(--ink)]' : 'text-[var(--muted-color)] hover:bg-white/5'}`}>
+                       <TrendingUp size={12} /> Washes
+                     </button>
+                     <button
+                       onClick={() => setGiveSort('memberSince')}
+                       className={`flex-1 px-3 py-2.5 flex items-center justify-center gap-1.5 transition ${giveSort === 'memberSince' ? 'bg-primary text-[var(--ink)]' : 'text-[var(--muted-color)] hover:bg-white/5'}`}>
+                       <Clock size={12} /> Oldest
+                     </button>
+                   </div>
+                 </div>
 
                 {/* Select all / none */}
                 <div className="flex gap-2">

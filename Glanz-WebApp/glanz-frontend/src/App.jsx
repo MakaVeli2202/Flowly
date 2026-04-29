@@ -192,7 +192,7 @@ function AppRoutes() {
           </ProtectedRoute>
         } />
         <Route path="/profile" element={
-          <ProtectedRoute><Profile /></ProtectedRoute>
+          <ProtectedRoute requireCustomer><Profile /></ProtectedRoute>
         } />
 
         {/* ── Admin (lazy) — note: function calls, not JSX components ── */}

@@ -1,48 +1,27 @@
 import apiClient from './axios';
+import { withRetry } from '../utils/retry';
+import { cacheManager } from '../core/cacheManager';
 
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-const isRetryableError = (err) => {
-  const status = err?.response?.status;
-  // Retry on network timeouts (no status) and server errors (5xx)
-  if (!status) return true;
-  return status >= 500;
-};
-
-const MAX_RETRY_DELAY_MS = 2000;
-
-const withRetry = async (requestFn, maxAttempts = 2) => {
-  let lastError;
-
-  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-    try {
-      return await requestFn();
-    } catch (err) {
-      lastError = err;
-
-      if (!isRetryableError(err) || attempt >= maxAttempts) {
-        throw err;
-      }
-
-      const backoff = Math.min(300 * attempt, MAX_RETRY_DELAY_MS);
-      await delay(backoff);
-    }
-  }
-
-  throw lastError;
-};
+const CACHE_TTL  = 30_000;
+const CACHE_KEY  = 'bookings';
+const invalidate = () => cacheManager.invalidate(CACHE_KEY);
 
 export const bookingsAPI = {
-    pauseJob: async (id, reason) => withRetry(async () => (
-      await apiClient.post(`/Bookings/${id}/pause`, { reason })
-    ).data),
-  resumeJob: async (id) => withRetry(async () => (
-    await apiClient.post(`/Bookings/${id}/resume`)
-  ).data),
-  create: async (data) => withRetry(async () => (await apiClient.post('/Bookings', data)).data),
-  getMyBookings: async () => (await apiClient.get('/Bookings')).data,
-  getWorkerBookings: async () => (await apiClient.get('/Bookings/Employee')).data,
-  getAll: async () => (await apiClient.get('/Bookings/all')).data,
+    pauseJob: async (id, reason) => withRetry(async () => {
+      const r = (await apiClient.post(`/Bookings/${id}/pause`, { reason })).data;
+      invalidate(); return r;
+    }),
+  resumeJob: async (id) => withRetry(async () => {
+    const r = (await apiClient.post(`/Bookings/${id}/resume`)).data;
+    invalidate(); return r;
+  }),
+  create: async (data) => withRetry(async () => {
+    const r = (await apiClient.post('/Bookings', data)).data;
+    invalidate(); return r;
+  }),
+  getMyBookings: async () => cacheManager.fetch(`${CACHE_KEY}:mine`, () => apiClient.get('/Bookings').then((r) => r.data), CACHE_TTL),
+  getWorkerBookings: async () => cacheManager.fetch(`${CACHE_KEY}:worker`, () => apiClient.get('/Bookings/Employee').then((r) => r.data), CACHE_TTL),
+  getAll: async () => cacheManager.fetch(`${CACHE_KEY}:all`, () => apiClient.get('/Bookings/all').then((r) => r.data), CACHE_TTL),
   seedDemoWorkload: async () => (await apiClient.post('/Bookings/seed-demo-workload')).data,
   getByBookingNumber: async (bookingNumber) => (await apiClient.get(`/Bookings/${bookingNumber}`)).data,
   getCalendarAvailability: async (from, to) => (await apiClient.get('/Bookings/availability-calendar', { params: { from, to } })).data,
@@ -70,19 +49,20 @@ export const bookingsAPI = {
   extendBooking: async (id, additionalMinutes) => withRetry(async () => (
     await apiClient.post(`/Bookings/${id}/extend`, { additionalMinutes })
   ).data),
-  claim: async (id) => withRetry(async () => (await apiClient.post(`/Bookings/${id}/claim`)).data),
-  markArrived: async (id) => withRetry(async () => (await apiClient.post(`/Bookings/${id}/arrived`)).data),
-  markOnMyWay: async (id) => withRetry(async () => (await apiClient.post(`/Bookings/${id}/on-my-way`)).data),
-  markRunningLate: async (id, delayMinutes, reason) => withRetry(async () => (
-    await apiClient.post(`/Bookings/${id}/running-late`, { delayMinutes, reason })
-  ).data),
-  startJob: async (id) => withRetry(async () => (await apiClient.post(`/Bookings/${id}/start`)).data),
-  finishJob: async (id) => withRetry(async () => (await apiClient.post(`/Bookings/${id}/finish`)).data),
+  claim: async (id) => withRetry(async () => { const r = (await apiClient.post(`/Bookings/${id}/claim`)).data; invalidate(); return r; }),
+  markArrived: async (id) => withRetry(async () => { const r = (await apiClient.post(`/Bookings/${id}/arrived`)).data; invalidate(); return r; }),
+  markOnMyWay: async (id) => withRetry(async () => { const r = (await apiClient.post(`/Bookings/${id}/on-my-way`)).data; invalidate(); return r; }),
+  markRunningLate: async (id, delayMinutes, reason) => withRetry(async () => {
+    const r = (await apiClient.post(`/Bookings/${id}/running-late`, { delayMinutes, reason })).data;
+    invalidate(); return r;
+  }),
+  startJob: async (id) => withRetry(async () => { const r = (await apiClient.post(`/Bookings/${id}/start`)).data; invalidate(); return r; }),
+  finishJob: async (id) => withRetry(async () => { const r = (await apiClient.post(`/Bookings/${id}/finish`)).data; invalidate(); return r; }),
   updateChecklistItem: async (bookingId, checklistItemId, isCompleted) => (
     await apiClient.put(`/Bookings/${bookingId}/checklist/${checklistItemId}`, { isCompleted })
   ).data,
-  updateStatus: async (id, status) => withRetry(async () => (await apiClient.put(`/Bookings/${id}/status`, { status })).data),
-  assignWorker: async (bookingId, workerId) => withRetry(async () => (await apiClient.post('/Bookings/assign-worker', { bookingId, workerId })).data),
+  updateStatus: async (id, status) => withRetry(async () => { const r = (await apiClient.put(`/Bookings/${id}/status`, { status })).data; invalidate(); return r; }),
+  assignWorker: async (bookingId, workerId) => withRetry(async () => { const r = (await apiClient.post('/Bookings/assign-worker', { bookingId, workerId })).data; invalidate(); return r; }),
   markWorkerAbsent: async (dto) => withRetry(async () => (await apiClient.post('/Bookings/worker-absence', dto)).data),
   requestCancellation: async (id, reason) => withRetry(async () => (await apiClient.post(`/Bookings/${id}/request-cancellation`, { reason })).data),
   requestReschedule: async (id, dto) => withRetry(async () => (await apiClient.post(`/Bookings/${id}/request-reschedule`, dto)).data),
@@ -90,7 +70,7 @@ export const bookingsAPI = {
   rejectRescheduleRequest: async (id) => (await apiClient.post(`/Bookings/${id}/reject-reschedule-request`)).data,
   adminEdit: async (id, dto) => (await apiClient.put(`/Bookings/${id}/admin-edit`, dto)).data,
   getCancellationFee: async (id) => (await apiClient.get(`/Bookings/${id}/cancellation-fee`)).data,
-  cancel: async (id) => withRetry(async () => (await apiClient.delete(`/Bookings/${id}`)).data),
+  cancel: async (id) => withRetry(async () => { const r = (await apiClient.delete(`/Bookings/${id}`)).data; invalidate(); return r; }),
   addService: async (bookingId, serviceId, quantity = 1) => withRetry(async () => (
     await apiClient.post(`/Bookings/${bookingId}/add-service`, { serviceId, quantity })
   ).data),
