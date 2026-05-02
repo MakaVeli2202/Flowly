@@ -112,8 +112,30 @@ export default function HomeScreen({ navigation }) {
   const [expandedPackageId, setExpandedPackageId] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [reviewsLoading, setReviewsLoading] = useState(true);
+  const reviewsScrollRef = React.useRef(null);
+  const reviewsIndexRef = React.useRef(0);
+
+  const REVIEW_CARD_WIDTH = 252;
 
   useEffect(() => { fetchPackages(); fetchReviews(); }, []);
+
+  useEffect(() => {
+    reviewsIndexRef.current = 0;
+    reviewsScrollRef.current?.scrollTo({ x: 0, animated: false });
+
+    if (reviewsLoading || reviews.length <= 1) return undefined;
+
+    const iv = setInterval(() => {
+      const nextIdx = reviewsIndexRef.current >= reviews.length - 1
+        ? 0
+        : reviewsIndexRef.current + 1;
+
+      reviewsIndexRef.current = nextIdx;
+      reviewsScrollRef.current?.scrollTo({ x: nextIdx * REVIEW_CARD_WIDTH, animated: true });
+    }, 4500);
+
+    return () => clearInterval(iv);
+  }, [reviewsLoading, reviews.length]);
 
   const fetchReviews = async () => {
     try {
@@ -258,47 +280,6 @@ export default function HomeScreen({ navigation }) {
         ))}
       </ScrollView>
 
-      {/* ── Reviews ──────────────────────────────────────── */}
-      <View style={s.sectionHeader}>
-        <View style={s.sectionTitleGroup}>
-          <LinearGradient colors={['transparent', G(0.80)]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={s.sectionAccentBar} />
-          <Text style={s.sectionTitle}>What Our Clients Say</Text>
-        </View>
-        <Text style={s.sectionAction}>Based on {reviews.length}+ reviews</Text>
-      </View>
-      {reviewsLoading ? (
-        <View style={s.loader}><ActivityIndicator color={theme.colors.primary} size="small" /></View>
-      ) : reviews.length === 0 ? (
-        <View style={s.emptyCard}>
-          <Text style={s.emptyText}>No reviews yet</Text>
-        </View>
-      ) : (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.reviewsScroll}>
-          <View style={s.reviewsRow}>
-            {reviews.map((review) => (
-              <View key={review.id} style={s.reviewCard}>
-                <PrismLeftBar />
-                <View style={s.reviewHeader}>
-                  <View style={s.reviewAvatar}>
-                    <Text style={s.reviewAvatarText}>{review.fallbackInitials || review.author?.[0]}</Text>
-                  </View>
-                  <View style={s.reviewInfo}>
-                    <Text style={s.reviewAuthor}>{review.author}</Text>
-                    <Text style={s.reviewDate}>{review.date}</Text>
-                  </View>
-                </View>
-                <View style={s.reviewStars}>
-                  {[...Array(review.rating || 5)].map((_, i) => (
-                    <Ionicons key={i} name="star" size={12} color="#FBBF24" />
-                  ))}
-                </View>
-                <Text style={s.reviewText} numberOfLines={3}>{review.text}</Text>
-              </View>
-            ))}
-          </View>
-        </ScrollView>
-      )}
-
       {/* ── Featured Packages ───────────────────────────── */}
       <SectionHeader
         title={t('home.packages.title')}
@@ -440,6 +421,53 @@ export default function HomeScreen({ navigation }) {
           </PressableScale>
         ))}
       </Animated.View>
+
+      {/* ── Reviews (moved to end) ───────────────────────── */}
+      <View style={[s.sectionHeader, { marginTop: 14 }]}>
+        <View style={s.sectionTitleGroup}>
+          <LinearGradient colors={['transparent', G(0.80)]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={s.sectionAccentBar} />
+          <Text style={s.sectionTitle}>What Our Clients Say</Text>
+        </View>
+        <Text style={s.sectionAction}>Based on {reviews.length}+ reviews</Text>
+      </View>
+      {reviewsLoading ? (
+        <View style={s.loader}><ActivityIndicator color={theme.colors.primary} size="small" /></View>
+      ) : reviews.length === 0 ? (
+        <View style={s.emptyCard}>
+          <Text style={s.emptyText}>No reviews yet</Text>
+        </View>
+      ) : (
+        <ScrollView
+          ref={reviewsScrollRef}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={s.reviewsScroll}
+          contentContainerStyle={{ paddingRight: PADDING }}
+        >
+          <View style={s.reviewsRow}>
+            {reviews.map((review) => (
+              <View key={review.id} style={s.reviewCard}>
+                <PrismLeftBar />
+                <View style={s.reviewHeader}>
+                  <View style={s.reviewAvatar}>
+                    <Text style={s.reviewAvatarText}>{review.fallbackInitials || review.author?.[0]}</Text>
+                  </View>
+                  <View style={s.reviewInfo}>
+                    <Text style={s.reviewAuthor}>{review.author}</Text>
+                    <Text style={s.reviewDate}>{review.date}</Text>
+                  </View>
+                </View>
+                <View style={s.reviewStars}>
+                  {[...Array(review.rating || 5)].map((_, i) => (
+                    <Ionicons key={i} name="star" size={12} color="#FBBF24" />
+                  ))}
+                </View>
+                <Text style={s.reviewText} numberOfLines={3}>{review.text}</Text>
+              </View>
+            ))}
+          </View>
+        </ScrollView>
+      )}
     </ScrollView>
   );
 }
@@ -620,7 +648,7 @@ const s = StyleSheet.create({
   quickLabel: { color: theme.colors.text, fontSize: 12, fontWeight: '700', textAlign: 'center' },
   /* Reviews */
   reviewsScroll: { marginBottom: 16 },
-  reviewsRow: { paddingRight: PADDING, gap: 12 },
+  reviewsRow: { flexDirection: 'row', gap: 12 },
   reviewCard: {
     width: 240, borderWidth: 1, borderColor: theme.colors.border,
     borderRadius: 16, backgroundColor: 'rgba(19,27,37,0.70)',

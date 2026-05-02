@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { getSiteContent } from '../../config/siteContent';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { statsAPI } from '../../api/stats';
 import { packagesAPI } from '../../api/packages';
 import { servicesAPI } from '../../api/services';
@@ -17,6 +18,7 @@ import SEO from '../../components/shared/SEO';
 import { getBusiness } from '../../config/business';
 import { Skeleton, CardSkeleton, BookingCardSkeleton } from '../../components/shared/Skeleton';
 import { EmptyState } from '../../components/shared/EmptyState';
+import { TiltCard } from '../../components/shared/TiltCard';
 
 function buildLocalBusinessLd() {
   const biz = getBusiness();
@@ -43,26 +45,29 @@ function buildLocalBusinessLd() {
 gsap.registerPlugin(ScrollTrigger);
 
 /* ── Reviews API ─────────────────────────────────────────── */
+const FALLBACK_REVIEWS = [
+  { id: 1, author: 'jack stoker', avatar: 'https://lh3.googleusercontent.com/a-/ALV-UjUZTLRAS10KNOwUGa7UlniVgxZBSd6CeXLZ4wNTZ7u1eSh3RSPowQ=w80-h80-c-rp-mo-ba3-br100', fallbackInitials: 'JS', rating: 5, date: '6 days ago', text: 'Noah and Bert are the bomb! They came out and made my car look better than when I first bought it! I would use these guys again and again!' },
+  { id: 2, author: 'Jaden Reynolds', avatar: 'https://lh3.googleusercontent.com/a-/ALV-UjVl-8iYeGys1-Y_sH4qLenRZxbAinRyVbKEQeYn5v2822Exyi6JKw=w80-h80-c-rp-mo-br100', fallbackInitials: 'JR', rating: 5, date: '1 week ago', text: 'Thank you Bert and Noah for working with me on 2 separate days in getting the vehicle cleaned. Everything turned out great and CLEAN 🧼.' },
+  { id: 3, author: "Drew D'Armond", avatar: 'https://lh3.googleusercontent.com/a-/ALV-UjWpnP-klxJ73HEyajqUTqrYEjd959PIK6e3wubBHv3wP7foWvY=w80-h80-c-rp-mo-br100', fallbackInitials: 'DA', rating: 5, date: '2 weeks ago', text: 'Thorough and meticulous interior cleaning. Looks fantastic, thanks!' },
+  { id: 4, author: 'Kamryn Schoeffler', avatar: 'https://lh3.googleusercontent.com/a-/ALV-UjXhLt0wpdvhkSrLyfbmQ_BAvVtKIWReScZ7ehGJmaPxdBs6wzbU=w80-h80-c-rp-mo-br100', fallbackInitials: 'KS', rating: 5, date: '1 month ago', text: 'Excellent service, would use again!' },
+  { id: 5, author: 'Troy', avatar: 'https://lh3.googleusercontent.com/a/ACg8ocJ_n0-jYhV2tl1ULCdEsCuCX0cR3UJwKrTwdFZI9gdjlcjp5Os=w80-h80-c-rp-mo-br100', fallbackInitials: 'T', rating: 5, date: '1 month ago', text: 'Did an amazing job, quick and fast.. truck looks great.' },
+  { id: 6, author: 'William Norman', avatar: 'https://lh3.googleusercontent.com/a-/ALV-UjU8jMgWZJRu14ZpU2BTHxn96M4jMjRTs23yrc21lNaUC1zoJTWP=w80-h80-c-rp-mo-ba3-br100', fallbackInitials: 'WN', rating: 5, date: '1 month ago', text: "Now I have the cleanest 2002 Honda Pilot. My friends were making fun of me for spending $400 to clean a $3000 car, but who's laughing now?!" },
+  { id: 7, author: 'Paul Panzica', avatar: 'https://lh3.googleusercontent.com/a-/ALV-UjUCaTaheLP3shn7yc2CytvkpiMShGId4Cei2FEsKrDIDP_E8q0=w80-h80-c-rp-mo-br100', fallbackInitials: 'PP', rating: 5, date: '1 month ago', text: 'Great service, quick, courteous and responsive. Full 1 year coat applied and shining on my Lucid and Tesla.' },
+  { id: 8, author: 'Tim Bosworth', avatar: 'https://lh3.googleusercontent.com/a-/ALV-UjVLZ1e0HzRTYCdgSnv4zj6N9FY-4kBHVsRQr6dwAO5aCv0HFeBG=w80-h80-c-rp-mo-br100', fallbackInitials: 'TB', rating: 5, date: '1 month ago', text: 'Easy to book with, fast response, and really worked with my schedule. The guys showed up on time and did an amazing job!' },
+  { id: 9, author: 'Sean Gregg', avatar: 'https://lh3.googleusercontent.com/a-/ALV-UjWh_GK5UQ55wa0CVx1irt1q29HXCLlBSxCXu81hoSWF4N03ei4c=w80-h80-c-rp-mo-br100', fallbackInitials: 'SG', rating: 5, date: '1 month ago', text: 'The detailers did a very good job. They got my truck looking like I bought it yesterday.' },
+];
+
 const reviewsAPI = {
   getPublic: async () => {
     try {
       const response = await fetch('/api/reviews/public');
       if (!response.ok) throw new Error('Failed to fetch reviews');
       const data = await response.json();
-      return data.reviews || [];
+      const apiReviews = Array.isArray(data?.reviews) ? data.reviews : [];
+      return apiReviews.length > 0 ? apiReviews : FALLBACK_REVIEWS;
     } catch (error) {
       console.error('Failed to fetch reviews:', error);
-      return [
-        { id: 1, author: 'jack stoker', avatar: 'https://lh3.googleusercontent.com/a-/ALV-UjUZTLRAS10KNOwUGa7UlniVgxZBSd6CeXLZ4wNTZ7u1eSh3RSPowQ=w80-h80-c-rp-mo-ba3-br100', fallbackInitials: 'JS', rating: 5, date: '6 days ago', text: 'Noah and Bert are the bomb! They came out and made my car look better than when I first bought it! I would use these guys again and again!' },
-        { id: 2, author: 'Jaden Reynolds', avatar: 'https://lh3.googleusercontent.com/a-/ALV-UjVl-8iYeGys1-Y_sH4qLenRZxbAinRyVbKEQeYn5v2822Exyi6JKw=w80-h80-c-rp-mo-br100', fallbackInitials: 'JR', rating: 5, date: '1 week ago', text: 'Thank you Bert and Noah for working with me on 2 separate days in getting the vehicle cleaned. Everything turned out great and CLEAN 🧼.' },
-        { id: 3, author: "Drew D'Armond", avatar: 'https://lh3.googleusercontent.com/a-/ALV-UjWpnP-klxJ73HEyajqUTqrYEjd959PIK6e3wubBHv3wP7foWvY=w80-h80-c-rp-mo-br100', fallbackInitials: 'DA', rating: 5, date: '2 weeks ago', text: 'Thorough and meticulous interior cleaning. Looks fantastic, thanks!' },
-        { id: 4, author: 'Kamryn Schoeffler', avatar: 'https://lh3.googleusercontent.com/a-/ALV-UjXhLt0wpdvhkSrLyfbmQ_BAvVtKIWReScZ7ehGJmaPxdBs6wzbU=w80-h80-c-rp-mo-br100', fallbackInitials: 'KS', rating: 5, date: '1 month ago', text: 'Excellent service, would use again!' },
-        { id: 5, author: 'Troy', avatar: 'https://lh3.googleusercontent.com/a/ACg8ocJ_n0-jYhV2tl1ULCdEsCuCX0cR3UJwKrTwdFZI9gdjlcjp5Os=w80-h80-c-rp-mo-br100', fallbackInitials: 'T', rating: 5, date: '1 month ago', text: 'Did an amazing job, quick and fast.. truck looks great.' },
-        { id: 6, author: 'William Norman', avatar: 'https://lh3.googleusercontent.com/a-/ALV-UjU8jMgWZJRu14ZpU2BTHxn96M4jMjRTs23yrc21lNaUC1zoJTWP=w80-h80-c-rp-mo-ba3-br100', fallbackInitials: 'WN', rating: 5, date: '1 month ago', text: "Now I have the cleanest 2002 Honda Pilot. My friends were making fun of me for spending $400 to clean a $3000 car, but who's laughing now?!" },
-        { id: 7, author: 'Paul Panzica', avatar: 'https://lh3.googleusercontent.com/a-/ALV-UjUCaTaheLP3shn7yc2CytvkpiMShGId4Cei2FEsKrDIDP_E8q0=w80-h80-c-rp-mo-br100', fallbackInitials: 'PP', rating: 5, date: '1 month ago', text: 'Great service, quick, courteous and responsive. Full 1 year coat applied and shining on my Lucid and Tesla.' },
-        { id: 8, author: 'Tim Bosworth', avatar: 'https://lh3.googleusercontent.com/a-/ALV-UjVLZ1e0HzRTYCdgSnv4zj6N9FY-4kBHVsRQr6dwAO5aCv0HFeBG=w80-h80-c-rp-mo-br100', fallbackInitials: 'TB', rating: 5, date: '1 month ago', text: 'Easy to book with, fast response, and really worked with my schedule. The guys showed up on time and did an amazing job!' },
-        { id: 9, author: 'Sean Gregg', avatar: 'https://lh3.googleusercontent.com/a-/ALV-UjWh_GK5UQ55wa0CVx1irt1q29HXCLlBSxCXu81hoSWF4N03ei4c=w80-h80-c-rp-mo-br100', fallbackInitials: 'SG', rating: 5, date: '1 month ago', text: 'The detailers did a very good job. They got my truck looking like I bought it yesterday.' },
-      ];
+      return FALLBACK_REVIEWS;
     }
   },
 };
@@ -479,11 +484,88 @@ const PAGE_BG = `
   linear-gradient(160deg, var(--surface-bg) 0%, var(--surface-bg-alt) 52%, var(--surface-bg) 100%)
 `.trim();
 
+const HOME_UI_BY_LANG = {
+  en: {
+    ourServices: 'Our Services',
+    sectionLabel: 'Full-Service Detailing',
+    sectionTitle: 'Exterior & Interior Care',
+    sectionDescription: 'We bring professional-grade detailing to your driveway. Scroll to explore every service we offer.',
+    scrollToExplore: 'Scroll to explore',
+    moreServices: 'more services',
+    viewAllDetails: 'View all details',
+    whatsIncluded: "What's Included",
+    bookNow: 'Book Now',
+  },
+  ar: {
+    ourServices: 'خدماتنا',
+    sectionLabel: 'تلميع متكامل',
+    sectionTitle: 'عناية خارجية وداخلية',
+    sectionDescription: 'نقدم تلميعاً احترافياً لسيارتك في موقعك. مرر لاستعراض جميع الخدمات.',
+    scrollToExplore: 'مرر للاستكشاف',
+    moreServices: 'خدمات إضافية',
+    viewAllDetails: 'عرض كل التفاصيل',
+    whatsIncluded: 'ما الذي تتضمنه الخدمة',
+    bookNow: 'احجز الآن',
+  },
+  de: {
+    ourServices: 'Unsere Services',
+    sectionLabel: 'Full-Service Detailing',
+    sectionTitle: 'Aussen- und Innenpflege',
+    sectionDescription: 'Wir bringen professionelle Fahrzeugpflege direkt zu Ihnen. Scrollen Sie, um alle Services zu sehen.',
+    scrollToExplore: 'Zum Entdecken scrollen',
+    moreServices: 'weitere Services',
+    viewAllDetails: 'Alle Details anzeigen',
+    whatsIncluded: 'Was enthalten ist',
+    bookNow: 'Jetzt buchen',
+  },
+};
+
+const normalizeLangCode = (lang) => (lang || 'en').toLowerCase().split('-')[0];
+
+const pickLocalizedField = (item, baseKey, lang) => {
+  if (!item || typeof item !== 'object') return '';
+
+  const langCode = normalizeLangCode(lang);
+  const suffix = langCode.charAt(0).toUpperCase() + langCode.slice(1);
+
+  const candidates = [
+    `${baseKey}${suffix}`,
+    `${baseKey}_${langCode}`,
+    `${baseKey}${langCode.toUpperCase()}`,
+    `${baseKey}Localized`,
+  ];
+
+  for (const key of candidates) {
+    const value = item[key];
+    if (typeof value === 'string' && value.trim()) return value;
+  }
+
+  const raw = item[baseKey];
+  if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+    const value = raw[langCode] ?? raw.en;
+    if (typeof value === 'string' && value.trim()) return value;
+  }
+
+  const translations = item.translations || item.translation || item.localizations;
+  if (Array.isArray(translations)) {
+    const row = translations.find((t) => normalizeLangCode(t?.language || t?.lang || t?.code) === langCode)
+      || translations.find((t) => normalizeLangCode(t?.language || t?.lang || t?.code) === 'en');
+    if (row) {
+      const fromRow = row[baseKey] || row[baseKey.toLowerCase()] || row.value || row.text;
+      if (typeof fromRow === 'string' && fromRow.trim()) return fromRow;
+    }
+  }
+
+  return typeof raw === 'string' ? raw : '';
+};
+
 /* ════════════════════════════════════════════════════════════
    HOME PAGE
 ════════════════════════════════════════════════════════════ */
 function Home() {
-  const { homePageContent } = getSiteContent();
+  const { lang } = useLanguage();
+  const ui = HOME_UI_BY_LANG[normalizeLangCode(lang)] || HOME_UI_BY_LANG.en;
+  const { homePageContent } = getSiteContent(lang);
   const { isAdmin } = useAuth();
   const navigate = useNavigate();
   const primaryCtaTarget   = isAdmin ? '/admin/bookings' : '/booking';
@@ -544,7 +626,7 @@ function Home() {
     const fetchMap = {
       stats: () => statsAPI.getPublic(),
       reviews: () => reviewsAPI.getPublic(),
-      packages: () => packagesAPI.getAll().then(data => data.filter(p => p.isActive)),
+      packages: () => packagesAPI.getAll(lang).then(data => data.filter(p => p.isActive)),
     };
     
     fetchMap[type]()
@@ -565,13 +647,13 @@ function Home() {
     Promise.allSettled([
       statsAPI.getPublic().then(data => { setStats(data || {}); return data; }).catch(() => {}),
       reviewsAPI.getPublic().then(data => { setReviews(Array.isArray(data) ? data : []); return data; }).catch(() => []),
-      packagesAPI.getAll().then(data => {
+      packagesAPI.getAll(lang).then(data => {
         const active = (data || []).filter(p => p.isActive);
         packageCountRef.current = active.length || SERVICE_HIGHLIGHTS.length;
         setPackages(active);
         return active;
       }).catch(() => []),
-      servicesAPI.getAll().then(data => {
+      servicesAPI.getAll(lang).then(data => {
         const active = (data || []).filter(s => s.isActive !== false);
         setServices(active);
         return active;
@@ -584,7 +666,7 @@ function Home() {
         console.error('Home page data fetch error:', err);
         setLoading({ stats: false, reviews: false, packages: false });
       });
-  }, []);
+  }, [lang]);
 
   // Reload service areas when admin updates business config
   useEffect(() => {
@@ -829,10 +911,15 @@ function Home() {
   // Service highlights: live from API; falls back to hardcoded while loading
   const serviceHighlights = packages.length > 0
     ? packages.map(pkg => ({
-        title:    pkg.name,
-        description: pkg.description || '',
-        features: pkg.services?.map(s => s.serviceName) || [],
-        cta:  'Book Now',
+        title: pickLocalizedField(pkg, 'name', lang) || pkg.name,
+        description: pickLocalizedField(pkg, 'description', lang) || pkg.description || '',
+        features: pkg.services?.map(s => (
+          pickLocalizedField(s, 'serviceName', lang)
+          || pickLocalizedField(s, 'name', lang)
+          || s.serviceName
+          || s.name
+        )).filter(Boolean) || [],
+        cta: ui.bookNow,
         link: '/booking',
         pkg,
       }))
@@ -1047,13 +1134,14 @@ function Home() {
       <section
         ref={serviceSectionRef}
         className="hidden md:block relative"
-        style={{ background: PAGE_BG }}
+        style={{ background: PAGE_BG, direction: 'ltr' }}
+        dir="ltr"
       >
         {/* Sticky inner: browser positions this before any paint */}
         <div className="sticky top-0 h-screen flex items-center overflow-hidden" style={{ background: PAGE_BG }}>
           <div className="absolute top-10 left-12 z-30 flex items-center gap-3">
             <span className="h-px w-8" style={{ background: 'linear-gradient(90deg, transparent, #c8a96b)' }} />
-            <p className="uppercase tracking-[0.28em] text-primary text-[0.65rem] font-semibold">Our Services</p>
+            <p className="uppercase tracking-[0.28em] text-primary text-[0.65rem] font-semibold">{ui.ourServices}</p>
           </div>
           <div className="absolute top-10 right-12 z-30">
             <p ref={cardCounterRef} className="text-[var(--muted-color)] text-xs font-mono tracking-[0.18em]">01 / 02</p>
@@ -1065,23 +1153,23 @@ function Home() {
             style={{ paddingLeft: '10vw', paddingRight: '10vw', width: 'max-content' }}
           >
             <div className="w-[36vw] max-w-[500px] flex-shrink-0 flex flex-col justify-center pr-8">
-              <p className="text-[0.62rem] font-bold tracking-[0.28em] uppercase text-primary mb-5">Full-Service Detailing</p>
+              <p className="text-[0.62rem] font-bold tracking-[0.28em] uppercase text-primary mb-5">{ui.sectionLabel}</p>
               <h2 className="premium-heading text-4xl lg:text-5xl font-bold text-[var(--heading-color)] leading-[0.95] mb-6">
-                Exterior &amp; Interior Care
+                {ui.sectionTitle}
               </h2>
               <p className="text-[var(--muted-color)] text-base leading-relaxed mb-8">
-                We bring professional-grade detailing to your driveway. Scroll to explore every service we offer.
+                {ui.sectionDescription}
               </p>
               <div className="flex items-center gap-2 text-[var(--muted-color)]">
                 <ArrowRight size={14} className="text-primary" style={{ animation: 'pulse 2s ease-in-out infinite' }} />
-                <span className="text-xs tracking-[0.18em] uppercase font-semibold">Scroll to explore</span>
+                <span className="text-xs tracking-[0.18em] uppercase font-semibold">{ui.scrollToExplore}</span>
               </div>
             </div>
 
             {serviceHighlights.map((service, index) => {
               const accent = CARD_ACCENTS[index % CARD_ACCENTS.length];
               return (
-              <div
+              <TiltCard
                 key={service.title}
                 className="service-h-card glass-card prism-glass flex-shrink-0 flex flex-col justify-between relative overflow-hidden"
                 style={{ width: '500px', height: '540px', padding: '40px' }}
@@ -1123,7 +1211,7 @@ function Home() {
                       className="flex items-center gap-1.5 text-xs text-primary hover:opacity-70 transition-opacity mb-5"
                     >
                       <ChevronRight size={12} />
-                      +{service.features.length - 4} more services
+                      +{service.features.length - 4} {ui.moreServices}
                     </button>
                   )}
                   <div className="flex items-center gap-3 mt-auto">
@@ -1137,11 +1225,11 @@ function Home() {
                       onClick={() => setExpandedService(service)}
                       className="text-xs text-[var(--muted-color)] hover:text-primary transition-colors underline underline-offset-2"
                     >
-                      View all details
+                      {ui.viewAllDetails}
                     </button>
                   </div>
                 </div>
-              </div>
+              </TiltCard>
               );
             })}
 
@@ -1165,7 +1253,7 @@ function Home() {
       <section className="md:hidden py-8">
         <div className="container mx-auto px-4">
           {serviceHighlights.map((service, index) => (
-            <div key={service.title} className="mb-20 last:mb-0 flex flex-col gap-10">
+            <div key={service.title} className="mb-20 last:mb-0 flex flex-col gap-10" dir="ltr" style={{ direction: 'ltr' }}>
               <div className="flex-1">
                 <h2 className="premium-heading text-3xl font-bold text-[var(--heading-color)] mb-6">{service.title}</h2>
                 <p className="text-base text-[var(--muted-color)] leading-relaxed mb-8">{service.description}</p>
@@ -1174,18 +1262,18 @@ function Home() {
                   className="premium-btn inline-flex items-center gap-2"
                 >{service.cta}<ArrowRight size={18} /></button>
               </div>
-              <div className="glass-card p-7 relative overflow-hidden">
+               <TiltCard className="glass-card p-7 relative overflow-hidden">
                 <div className="lq-bar" /><div className="lq-top" /><div className="lq-r1" /><div className="lq-r3" />
                 <div className="prism-ray" style={{ left: '20%', width: '35%', animation: `prism-ray-sweep ${11 + index * 3}s ease-in-out ${index * 2.5}s infinite` }} />
-                <p className="text-[0.62rem] font-bold tracking-[0.22em] uppercase text-primary mb-5 relative z-10">What's Included</p>
+                <p className="text-[0.62rem] font-bold tracking-[0.22em] uppercase text-primary mb-5 relative z-10">{ui.whatsIncluded}</p>
                 <ul className="space-y-3.5 relative z-10">
                   {service.features.map(feat => (
                     <li key={feat} className="flex items-center gap-3 text-sm text-[var(--text-color)]">
                       <CheckCircle2 size={14} className="text-primary flex-shrink-0" style={{ opacity: 0.8 }} /><span>{feat}</span>
                     </li>
                   ))}
-                </ul>
-              </div>
+                 </ul>
+               </TiltCard>
             </div>
           ))}
         </div>

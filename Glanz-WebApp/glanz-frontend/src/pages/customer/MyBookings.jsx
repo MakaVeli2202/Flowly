@@ -18,6 +18,7 @@ import { usePolling } from '../../hooks/usePolling';
 import { Skeleton, CardSkeleton } from '../../components/shared/Skeleton';
 import { EmptyState } from '../../components/shared/EmptyState';
 import { useSettings } from '../../context/SettingsContext';
+import { useLanguage } from '../../context/LanguageContext';
 
 const VEHICLE_TYPES = ['Motorcycle', 'Sedan', 'SUV', 'Pickup'];
 
@@ -54,6 +55,7 @@ function DarkInput({ className = '', ...props }) {
 function MyBookings() {
   const navigate = useNavigate();
   const { settings } = useSettings();
+  const { lang } = useLanguage();
 
   const [bookings,           setBookings]           = useState([]);
   const [loading,            setLoading]            = useState(true);
@@ -246,7 +248,7 @@ function MyBookings() {
 
     let loadedPackages = allPackages;
     if (allPackages.length === 0) {
-      try { loadedPackages = await packagesAPI.getAll() || []; setAllPackages(loadedPackages); } catch {}
+      try { loadedPackages = await packagesAPI.getAll(lang) || []; setAllPackages(loadedPackages); } catch {}
     }
     await loadEditSlots(initDate, initPackages, initVehicleType, loadedPackages);
   };

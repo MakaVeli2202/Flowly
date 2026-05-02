@@ -175,6 +175,7 @@ export function LanguageProvider({ children }) {
     document.documentElement.lang = lang;
     document.documentElement.dir = langDef.dir;
     localStorage.setItem('lang', lang);
+    window.dispatchEvent(new CustomEvent('app-language-changed', { detail: { lang } }));
   }, [lang]);
 
   const t = (key) => translations[lang]?.[key] ?? translations.en[key] ?? key;

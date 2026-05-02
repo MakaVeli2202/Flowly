@@ -6,6 +6,7 @@ import { offersAPI } from '../../api/offers';
 import { subscriptionsAPI } from '../../api/subscriptions';
 import { useAuth } from '../../context/AuthContext';
 import { usePackages } from '../../context/PackagesContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { useSettings } from '../../context/SettingsContext';
 import { ArrowRight, Shield, CheckCircle, Clock, MapPin, Star, CreditCard } from 'lucide-react';
 import { Elements, useStripe, useElements } from '@stripe/react-stripe-js';
@@ -22,7 +23,8 @@ import BookingSidebar             from './booking/BookingSidebar';
 /* ── BookingForm (orchestrator) ─────────────────────────────────────────── */
 function BookingForm({ stripe, elements, isStripeMode }) {
   const features = useFeatures();
-  const { bookingPageConfig } = getSiteContent();
+  const { lang } = useLanguage();
+  const { bookingPageConfig } = getSiteContent(lang);
   const timeSlots      = bookingPageConfig.timeSlots || [];
   const minBookingDate = toLocalIsoDate(bookingPageConfig.earliestBookingOffsetDays ?? 0);
   const navigate  = useNavigate();
@@ -117,7 +119,7 @@ function BookingForm({ stripe, elements, isStripeMode }) {
   useEffect(() => {
     if (initialized.current) return;
     initialized.current = true;
-    fetchPackagesCtx().then((data) => {
+    fetchPackagesCtx(lang).then((data) => {
       if (Array.isArray(data) && data.length > 0) {
         setSelectedPackages((prev) => (prev.length > 0 ? prev : [{ packageId: data[0].id, quantity: 1 }]));
       }
@@ -138,7 +140,11 @@ function BookingForm({ stripe, elements, isStripeMode }) {
       }));
     }
     if (preSelected) setSelectedPackages([{ packageId: preSelected.id, quantity: 1 }]);
-  }, [location]);
+  }, [location, fetchPackagesCtx, lang]);
+
+  useEffect(() => {
+    fetchPackagesCtx(lang);
+  }, [fetchPackagesCtx, lang]);
 
   useEffect(() => {
     if (user && canAutofillCustomerData) {

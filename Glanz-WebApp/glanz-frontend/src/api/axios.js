@@ -23,7 +23,17 @@ export function setAuthToken(token) {
 }
 
 apiClient.interceptors.request.use(
-  (config) => config,
+  (config) => {
+    const storedLang = localStorage.getItem('lang');
+    const browserLang = navigator.language?.split('-')[0];
+    const lang = storedLang || browserLang || 'en';
+
+    config.headers = config.headers || {};
+    config.headers['Accept-Language'] = lang;
+    config.headers['X-Language'] = lang;
+
+    return config;
+  },
   (error) => Promise.reject(error)
 );
 

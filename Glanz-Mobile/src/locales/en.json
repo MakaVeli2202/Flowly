@@ -260,5 +260,118 @@
       "callCustomer":        "Call Customer",
       "maps":                "Maps"
     }
+  },
+  "navigation": {
+    "group": "Navigation",
+    "signOut": "Sign Out",
+    "active": "Active",
+    "userFallback": "User",
+    "auth": {
+      "createAccount": "Create Account"
+    },
+    "customer": {
+      "confirmation": "Confirmation",
+      "bookSession": "Book Session",
+      "mySubscription": "My Subscription",
+      "checkout": "Checkout",
+      "liveTracking": "Live Tracking",
+      "items": {
+        "Home": "Home",
+        "Notifications": "Notifications",
+        "Packages": "Packages",
+        "Subscriptions": "Subscriptions",
+        "Booking": "Book Now",
+        "My Bookings": "My Bookings",
+        "Assistant": "AI Assistant",
+        "Profile": "Profile"
+      }
+    },
+    "worker": {
+      "salesKit": "Sales Kit"
+    },
+    "admin": {
+      "role": "Admin",
+      "panel": "Admin Panel",
+      "createBooking": "Create Booking",
+      "todayJobs": "Today's Jobs",
+      "allJobs": "All Jobs",
+      "createWorker": "Create Worker",
+      "workerManagement": "Worker Management",
+      "manageStaff": "Manage Staff",
+      "offersDiscounts": "Offers & Discounts",
+      "items": {
+        "Admin Home": "Dashboard",
+        "Today Jobs": "Today's Dispatch",
+        "All Jobs": "All Jobs",
+        "Admin Reports": "Reports",
+        "Admin Products": "Products",
+        "Admin Services": "Services",
+        "Admin Packages": "Packages",
+        "Admin Offers": "Offers",
+        "Admin Subscriptions": "Subscriptions",
+        "Worker Management": "Workers",
+        "Admin Staff": "Manage Staff",
+        "Create Worker": "Add Worker",
+        "Admin Notifications": "Notifications",
+        "System Settings": "System Settings",
+        "Admin Job Positions": "Job Positions",
+        "Admin Content": "Content",
+        "Sub Bookings": "Sub Bookings"
+      }
+    }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "inbox": "INBOX",
+    "subAdmin": "System alerts and booking updates.",
+    "subCustomer": "Arrival alerts, running-late notices, offers and rewards.",
+    "total": "Total",
+    "unread": "Unread",
+    "offers": "Offers",
+    "updating": "Updating...",
+    "markAllRead": "Mark all read",
+    "availableOffers": "Available Offers",
+    "noActiveOffers": "No active offers",
+    "noActiveOffersBody": "Special offers assigned to you will appear here.",
+    "code": "Code",
+    "assigned": "Assigned",
+    "expires": "Expires",
+    "recentAlerts": "Recent Alerts",
+    "noneYet": "No notifications yet",
+    "noneAdminBody": "System and booking alerts will appear here.",
+    "noneCustomerBody": "When your detailer sends updates or a reward is assigned, it will show here.",
+    "bookingRef": "Booking #{{bookingId}}",
+    "saving": "Saving...",
+    "markRead": "Mark as read",
+    "loadMore": "Load more",
+    "errors": {
+      "load": "Failed to load notifications.",
+      "markRead": "Failed to mark as read.",
+      "markAllRead": "Failed to mark all as read."
+    },
+    "types": {
+      "default": "Notification",
+      "NewBooking": "New Booking",
+      "BookingConfirmed": "Booking Confirmed",
+      "BookingCancelled": "Booking Cancelled",
+      "BookingStatusChanged": "Booking Update",
+      "BookingReassigned": "Worker Reassigned",
+      "BookingAssigned": "Worker Assigned",
+      "BookingClaimed": "Worker Assigned",
+      "BookingUnassigned": "Worker Unassigned",
+      "CancellationRequested": "Cancellation Request",
+      "RescheduleRequested": "Reschedule Request",
+      "WorkerArrived": "Detailer Arrived",
+      "WorkerRunningLate": "Detailer Running Late",
+      "JobStarted": "Service Started",
+      "JobPaused": "Service Paused",
+      "JobResumed": "Service Resumed",
+      "JobCompleted": "Service Completed",
+      "ServiceAdded": "Service Added",
+      "SpecialOffer": "Special Offer",
+      "OfferAssigned": "New Offer",
+      "LoyaltyReward": "Loyalty Reward",
+      "LowStock": "Low Stock Alert"
+    }
   }
 }

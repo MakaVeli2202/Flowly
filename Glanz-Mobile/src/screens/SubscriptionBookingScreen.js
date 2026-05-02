@@ -11,6 +11,7 @@ import { subscriptionsAPI } from '../api/subscriptions';
 import { packagesAPI } from '../api/packages';
 import { formatQAR } from '../utils/currency';
 import { theme } from '../theme/theme';
+import { useTranslation } from 'react-i18next';
 
 const PADDING = 20;
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -62,6 +63,7 @@ function StepDot({ n, active, done }) {
 }
 
 export default function SubscriptionBookingScreen() {
+  const { i18n } = useTranslation();
   const navigation = useNavigation();
   const [step, setStep] = useState(1);
   const [sub, setSub] = useState(null);
@@ -81,7 +83,7 @@ export default function SubscriptionBookingScreen() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(null);
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => { loadData(); }, [i18n.language]);
 
   useEffect(() => {
     if (step === 2) loadAvailability(calMonth, calYear);
@@ -92,7 +94,7 @@ export default function SubscriptionBookingScreen() {
       setLoading(true);
       const [mySubRes, pkgsRes] = await Promise.all([
         subscriptionsAPI.getMy().catch(() => null),
-        packagesAPI.getAll(),
+        packagesAPI.getAll(i18n.language),
       ]);
       setSub(mySubRes ?? null);
       const active = (pkgsRes || []).filter(p => p.isActive);

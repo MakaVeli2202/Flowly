@@ -2,13 +2,17 @@ import apiClient from './axios';
 import { withRetry } from '../utils/retry';
 
 export const servicesAPI = {
-  getAll: async () => withRetry(async () => {
-    const response = await apiClient.get('/Services');
+  getAll: async (lang) => withRetry(async () => {
+    const response = await apiClient.get('/Services', {
+      params: lang ? { lang } : undefined,
+    });
     return response.data;
   }),
 
-  getById: async (id) => withRetry(async () => {
-    const response = await apiClient.get(`/Services/${id}`);
+  getById: async (id, lang) => withRetry(async () => {
+    const response = await apiClient.get(`/Services/${id}`, {
+      params: lang ? { lang } : undefined,
+    });
     return response.data;
   }),
 

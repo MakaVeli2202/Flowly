@@ -2,8 +2,10 @@ import apiClient from './axios';
 import { withRetry } from '../utils/retry';
 
 export const packagesAPI = {
-  getAll: async () => withRetry(async () => {
-    const response = await apiClient.get('/Packages');
+  getAll: async (lang) => withRetry(async () => {
+    const response = await apiClient.get('/Packages', {
+      params: lang ? { lang } : undefined,
+    });
     return response.data;
   }),
 
@@ -12,8 +14,10 @@ export const packagesAPI = {
     return response.data;
   }),
 
-  getById: async (id) => withRetry(async () => {
-    const response = await apiClient.get(`/Packages/${id}`);
+  getById: async (id, lang) => withRetry(async () => {
+    const response = await apiClient.get(`/Packages/${id}`, {
+      params: lang ? { lang } : undefined,
+    });
     return response.data;
   }),
 

@@ -260,5 +260,118 @@
       "callCustomer":        "الاتصال بالعميل",
       "maps":                "الخرائط"
     }
+  },
+  "navigation": {
+    "group": "التنقل",
+    "signOut": "تسجيل الخروج",
+    "active": "نشط",
+    "userFallback": "مستخدم",
+    "auth": {
+      "createAccount": "إنشاء حساب"
+    },
+    "customer": {
+      "confirmation": "تأكيد",
+      "bookSession": "حجز جلسة",
+      "mySubscription": "اشتراكي",
+      "checkout": "الدفع",
+      "liveTracking": "تتبع مباشر",
+      "items": {
+        "Home": "الرئيسية",
+        "Notifications": "الإشعارات",
+        "Packages": "الباقات",
+        "Subscriptions": "الاشتراكات",
+        "Booking": "احجز الآن",
+        "My Bookings": "حجوزاتي",
+        "Assistant": "المساعد الذكي",
+        "Profile": "الملف الشخصي"
+      }
+    },
+    "worker": {
+      "salesKit": "حقيبة المبيعات"
+    },
+    "admin": {
+      "role": "مشرف",
+      "panel": "لوحة المشرف",
+      "createBooking": "إنشاء حجز",
+      "todayJobs": "مهام اليوم",
+      "allJobs": "كل المهام",
+      "createWorker": "إنشاء عامل",
+      "workerManagement": "إدارة العمال",
+      "manageStaff": "إدارة الموظفين",
+      "offersDiscounts": "العروض والخصومات",
+      "items": {
+        "Admin Home": "لوحة التحكم",
+        "Today Jobs": "توزيع اليوم",
+        "All Jobs": "كل المهام",
+        "Admin Reports": "التقارير",
+        "Admin Products": "المنتجات",
+        "Admin Services": "الخدمات",
+        "Admin Packages": "الباقات",
+        "Admin Offers": "العروض",
+        "Admin Subscriptions": "الاشتراكات",
+        "Worker Management": "العمال",
+        "Admin Staff": "إدارة الموظفين",
+        "Create Worker": "إضافة عامل",
+        "Admin Notifications": "الإشعارات",
+        "System Settings": "إعدادات النظام",
+        "Admin Job Positions": "الوظائف",
+        "Admin Content": "المحتوى",
+        "Sub Bookings": "حجوزات الاشتراك"
+      }
+    }
+  },
+  "notifications": {
+    "title": "الإشعارات",
+    "inbox": "الوارد",
+    "subAdmin": "تنبيهات النظام وتحديثات الحجوزات.",
+    "subCustomer": "تنبيهات الوصول، إشعارات التأخير، العروض والمكافآت.",
+    "total": "الإجمالي",
+    "unread": "غير مقروء",
+    "offers": "العروض",
+    "updating": "جارٍ التحديث...",
+    "markAllRead": "تحديد الكل كمقروء",
+    "availableOffers": "العروض المتاحة",
+    "noActiveOffers": "لا توجد عروض نشطة",
+    "noActiveOffersBody": "ستظهر هنا العروض الخاصة المخصصة لك.",
+    "code": "الكود",
+    "assigned": "تم الإسناد",
+    "expires": "ينتهي",
+    "recentAlerts": "آخر التنبيهات",
+    "noneYet": "لا توجد إشعارات بعد",
+    "noneAdminBody": "ستظهر هنا تنبيهات النظام والحجوزات.",
+    "noneCustomerBody": "عند إرسال تحديث من العامل أو تخصيص مكافأة، سيظهر هنا.",
+    "bookingRef": "الحجز #{{bookingId}}",
+    "saving": "جارٍ الحفظ...",
+    "markRead": "تحديد كمقروء",
+    "loadMore": "تحميل المزيد",
+    "errors": {
+      "load": "فشل تحميل الإشعارات.",
+      "markRead": "فشل تحديد الإشعار كمقروء.",
+      "markAllRead": "فشل تحديد جميع الإشعارات كمقروءة."
+    },
+    "types": {
+      "default": "إشعار",
+      "NewBooking": "حجز جديد",
+      "BookingConfirmed": "تم تأكيد الحجز",
+      "BookingCancelled": "تم إلغاء الحجز",
+      "BookingStatusChanged": "تحديث الحجز",
+      "BookingReassigned": "إعادة تعيين عامل",
+      "BookingAssigned": "تم تعيين عامل",
+      "BookingClaimed": "تم تعيين عامل",
+      "BookingUnassigned": "إلغاء تعيين عامل",
+      "CancellationRequested": "طلب إلغاء",
+      "RescheduleRequested": "طلب إعادة جدولة",
+      "WorkerArrived": "وصل العامل",
+      "WorkerRunningLate": "العامل متأخر",
+      "JobStarted": "بدأت الخدمة",
+      "JobPaused": "تم إيقاف الخدمة مؤقتاً",
+      "JobResumed": "تم استئناف الخدمة",
+      "JobCompleted": "اكتملت الخدمة",
+      "ServiceAdded": "تمت إضافة خدمة",
+      "SpecialOffer": "عرض خاص",
+      "OfferAssigned": "عرض جديد",
+      "LoyaltyReward": "مكافأة ولاء",
+      "LowStock": "تنبيه انخفاض المخزون"
+    }
   }
 }

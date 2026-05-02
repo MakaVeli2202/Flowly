@@ -260,5 +260,118 @@
       "callCustomer":        "Kunde anrufen",
       "maps":                "Karte"
     }
+  },
+  "navigation": {
+    "group": "Navigation",
+    "signOut": "Abmelden",
+    "active": "Aktiv",
+    "userFallback": "Benutzer",
+    "auth": {
+      "createAccount": "Konto erstellen"
+    },
+    "customer": {
+      "confirmation": "Bestaetigung",
+      "bookSession": "Sitzung buchen",
+      "mySubscription": "Mein Abo",
+      "checkout": "Kasse",
+      "liveTracking": "Live-Tracking",
+      "items": {
+        "Home": "Startseite",
+        "Notifications": "Benachrichtigungen",
+        "Packages": "Pakete",
+        "Subscriptions": "Abonnements",
+        "Booking": "Jetzt buchen",
+        "My Bookings": "Meine Buchungen",
+        "Assistant": "KI-Assistent",
+        "Profile": "Profil"
+      }
+    },
+    "worker": {
+      "salesKit": "Verkaufskit"
+    },
+    "admin": {
+      "role": "Admin",
+      "panel": "Admin-Bereich",
+      "createBooking": "Buchung erstellen",
+      "todayJobs": "Heutige Auftraege",
+      "allJobs": "Alle Auftraege",
+      "createWorker": "Mitarbeiter erstellen",
+      "workerManagement": "Mitarbeiterverwaltung",
+      "manageStaff": "Team verwalten",
+      "offersDiscounts": "Angebote & Rabatte",
+      "items": {
+        "Admin Home": "Dashboard",
+        "Today Jobs": "Heutige Disposition",
+        "All Jobs": "Alle Auftraege",
+        "Admin Reports": "Berichte",
+        "Admin Products": "Produkte",
+        "Admin Services": "Services",
+        "Admin Packages": "Pakete",
+        "Admin Offers": "Angebote",
+        "Admin Subscriptions": "Abonnements",
+        "Worker Management": "Mitarbeiter",
+        "Admin Staff": "Team verwalten",
+        "Create Worker": "Mitarbeiter hinzufuegen",
+        "Admin Notifications": "Benachrichtigungen",
+        "System Settings": "Systemeinstellungen",
+        "Admin Job Positions": "Stellen",
+        "Admin Content": "Inhalte",
+        "Sub Bookings": "Abo-Buchungen"
+      }
+    }
+  },
+  "notifications": {
+    "title": "Benachrichtigungen",
+    "inbox": "POSTFACH",
+    "subAdmin": "Systemhinweise und Buchungsupdates.",
+    "subCustomer": "Ankunftshinweise, Verspaetungsmeldungen, Angebote und Belohnungen.",
+    "total": "Gesamt",
+    "unread": "Ungelesen",
+    "offers": "Angebote",
+    "updating": "Aktualisiere...",
+    "markAllRead": "Alle als gelesen markieren",
+    "availableOffers": "Verfuegbare Angebote",
+    "noActiveOffers": "Keine aktiven Angebote",
+    "noActiveOffersBody": "Dir zugewiesene Sonderangebote erscheinen hier.",
+    "code": "Code",
+    "assigned": "Zugewiesen",
+    "expires": "Gueltig bis",
+    "recentAlerts": "Aktuelle Hinweise",
+    "noneYet": "Noch keine Benachrichtigungen",
+    "noneAdminBody": "System- und Buchungshinweise erscheinen hier.",
+    "noneCustomerBody": "Wenn dein Aufbereiter Updates sendet oder eine Belohnung zugewiesen wird, erscheint sie hier.",
+    "bookingRef": "Buchung #{{bookingId}}",
+    "saving": "Speichere...",
+    "markRead": "Als gelesen markieren",
+    "loadMore": "Mehr laden",
+    "errors": {
+      "load": "Benachrichtigungen konnten nicht geladen werden.",
+      "markRead": "Benachrichtigung konnte nicht als gelesen markiert werden.",
+      "markAllRead": "Alle Benachrichtigungen konnten nicht als gelesen markiert werden."
+    },
+    "types": {
+      "default": "Benachrichtigung",
+      "NewBooking": "Neue Buchung",
+      "BookingConfirmed": "Buchung bestaetigt",
+      "BookingCancelled": "Buchung storniert",
+      "BookingStatusChanged": "Buchungsupdate",
+      "BookingReassigned": "Mitarbeiter neu zugewiesen",
+      "BookingAssigned": "Mitarbeiter zugewiesen",
+      "BookingClaimed": "Mitarbeiter zugewiesen",
+      "BookingUnassigned": "Mitarbeiter entfernt",
+      "CancellationRequested": "Stornoanfrage",
+      "RescheduleRequested": "Umbuchungsanfrage",
+      "WorkerArrived": "Aufbereiter angekommen",
+      "WorkerRunningLate": "Aufbereiter verspaetet sich",
+      "JobStarted": "Service gestartet",
+      "JobPaused": "Service pausiert",
+      "JobResumed": "Service fortgesetzt",
+      "JobCompleted": "Service abgeschlossen",
+      "ServiceAdded": "Service hinzugefuegt",
+      "SpecialOffer": "Sonderangebot",
+      "OfferAssigned": "Neues Angebot",
+      "LoyaltyReward": "Treuebonus",
+      "LowStock": "Niedriger Lagerbestand"
+    }
   }
 }

@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Glanz.API.Data;
 using Glanz.API.Models;
 using Glanz.API.DTOs;
+using Glanz.API.Services;
 
 namespace Glanz.API.Controllers
 {
@@ -13,10 +14,30 @@ namespace Glanz.API.Controllers
     public class ServicesController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly ILocalizationTextResolver _localizationTextResolver;
+        private readonly IAutoTranslationService _autoTranslationService;
 
-        public ServicesController(AppDbContext context)
+        public ServicesController(
+            AppDbContext context,
+            ILocalizationTextResolver localizationTextResolver,
+            IAutoTranslationService autoTranslationService)
         {
             _context = context;
+            _localizationTextResolver = localizationTextResolver;
+            _autoTranslationService = autoTranslationService;
+        }
+
+        private string ResolveRequestedLanguage()
+        {
+            var queryLang = Request.Query["lang"].FirstOrDefault();
+            if (!string.IsNullOrWhiteSpace(queryLang))
+                return queryLang;
+
+            var header = Request.Headers["Accept-Language"].FirstOrDefault()
+                         ?? Request.Headers["X-Language"].FirstOrDefault();
+            if (string.IsNullOrWhiteSpace(header)) return "en";
+
+            return header.Split(',')[0].Split('-')[0].Trim().ToLowerInvariant();
         }
 
         [HttpGet]
@@ -25,17 +46,24 @@ namespace Glanz.API.Controllers
         {
             try
             {
+                var lang = ResolveRequestedLanguage();
                 var services = await _context.Services
                     .Where(s => s.IsActive)
                     .Include(s => s.ServiceProducts)
                     .ThenInclude(sp => sp.Product)
                     .ToListAsync();
 
+                var serviceTextMap = await _localizationTextResolver.GetServiceTextsAsync(lang, HttpContext.RequestAborted);
+
                 var serviceDtos = services.Select(s => new ServiceDto
                 {
                     Id = s.Id,
-                    Name = s.Name,
-                    Description = s.Description,
+                    Name = serviceTextMap.TryGetValue(s.Id, out var serviceText)
+                        ? (serviceText.Name ?? s.Name)
+                        : s.Name,
+                    Description = serviceTextMap.TryGetValue(s.Id, out serviceText)
+                        ? (serviceText.Description ?? s.Description)
+                        : s.Description,
                     DefaultDurationMinutes = s.DefaultDurationMinutes,
                     IsActive = s.IsActive,
                     EstimatedCost = s.ServiceProducts.Sum(sp => sp.QuantityUsed * sp.Product.CostPerUnit),
@@ -66,6 +94,7 @@ namespace Glanz.API.Controllers
         {
             try
             {
+                var lang = ResolveRequestedLanguage();
                 var service = await _context.Services
                     .Include(s => s.ServiceProducts)
                     .ThenInclude(sp => sp.Product)
@@ -76,11 +105,17 @@ namespace Glanz.API.Controllers
                     return NotFound(new { message = "Service not found" });
                 }
 
+                var serviceTextMap = await _localizationTextResolver.GetServiceTextsAsync(lang, HttpContext.RequestAborted);
+
                 var serviceDto = new ServiceDto
                 {
                     Id = service.Id,
-                    Name = service.Name,
-                    Description = service.Description,
+                    Name = serviceTextMap.TryGetValue(service.Id, out var serviceText)
+                        ? (serviceText.Name ?? service.Name)
+                        : service.Name,
+                    Description = serviceTextMap.TryGetValue(service.Id, out serviceText)
+                        ? (serviceText.Description ?? service.Description)
+                        : service.Description,
                     DefaultDurationMinutes = service.DefaultDurationMinutes,
                     IsActive = service.IsActive,
                     EstimatedCost = service.ServiceProducts.Sum(sp => sp.QuantityUsed * sp.Product.CostPerUnit),
@@ -133,6 +168,18 @@ namespace Glanz.API.Controllers
 
                 _context.Services.Add(service);
                 await _context.SaveChangesAsync();
+                try
+                {
+                    await _autoTranslationService.EnsureServiceTranslationsAsync(
+                        service.Id,
+                        service.Name,
+                        service.Description,
+                        HttpContext.RequestAborted);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Auto-translation failed for service {service.Id}: {ex.Message}");
+                }
 
                 // Add service products
                 foreach (var productDto in dto.Products)
@@ -223,6 +270,18 @@ namespace Glanz.API.Controllers
                 service.UpdatedAt = DateTime.UtcNow;
 
                 await _context.SaveChangesAsync();
+                try
+                {
+                    await _autoTranslationService.EnsureServiceTranslationsAsync(
+                        service.Id,
+                        service.Name,
+                        service.Description,
+                        HttpContext.RequestAborted);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Auto-translation failed for service {service.Id}: {ex.Message}");
+                }
 
                 return Ok(new { message = "Service updated successfully" });
             }

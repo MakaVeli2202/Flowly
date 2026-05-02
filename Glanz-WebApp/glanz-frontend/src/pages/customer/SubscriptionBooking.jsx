@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { subscriptionsAPI } from '../../api/subscriptions';
 import { packagesAPI } from '../../api/packages';
+import { useLanguage } from '../../context/LanguageContext';
 import { formatQAR } from '../../utils/currency';
 import { Skeleton } from '../../components/shared/Skeleton';
 import { EmptyState } from '../../components/shared/EmptyState';
@@ -29,6 +30,7 @@ function StepDot({ n, active, done }) {
 
 export default function SubscriptionBooking() {
   const navigate = useNavigate();
+  const { lang } = useLanguage();
   const [step, setStep] = useState(1);
   const [sub, setSub] = useState(null);
   const [packages, setPackages] = useState([]);
@@ -53,7 +55,7 @@ export default function SubscriptionBooking() {
       try {
         const [mySubRes, pkgsRes] = await Promise.all([
           subscriptionsAPI.getMy().catch(() => null),
-          packagesAPI.getAll(),
+          packagesAPI.getAll(lang),
         ]);
         setSub(mySubRes ?? null);
         const active = (pkgsRes || []).filter(p => p.isActive);
@@ -65,7 +67,7 @@ export default function SubscriptionBooking() {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [lang]);
 
   useEffect(() => {
     if (step === 2) loadAvailability(calMonth, calYear);
@@ -148,7 +150,7 @@ export default function SubscriptionBooking() {
     try {
       const [mySubRes, pkgsRes] = await Promise.all([
         subscriptionsAPI.getMy().catch(() => null),
-        packagesAPI.getAll(),
+        packagesAPI.getAll(lang),
       ]);
       setSub(mySubRes ?? null);
       const active = (pkgsRes || []).filter(p => p.isActive);

@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Glanz.API.Data;
 using Glanz.API.Models;
 using Glanz.API.DTOs;
+using Glanz.API.Services;
 
 namespace Glanz.API.Controllers
 {
@@ -12,10 +13,30 @@ namespace Glanz.API.Controllers
     public class PackagesController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly ILocalizationTextResolver _localizationTextResolver;
+        private readonly IAutoTranslationService _autoTranslationService;
 
-        public PackagesController(AppDbContext context)
+        public PackagesController(
+            AppDbContext context,
+            ILocalizationTextResolver localizationTextResolver,
+            IAutoTranslationService autoTranslationService)
         {
             _context = context;
+            _localizationTextResolver = localizationTextResolver;
+            _autoTranslationService = autoTranslationService;
+        }
+
+        private string ResolveRequestedLanguage()
+        {
+            var queryLang = Request.Query["lang"].FirstOrDefault();
+            if (!string.IsNullOrWhiteSpace(queryLang))
+                return queryLang;
+
+            var header = Request.Headers["Accept-Language"].FirstOrDefault()
+                         ?? Request.Headers["X-Language"].FirstOrDefault();
+            if (string.IsNullOrWhiteSpace(header)) return "en";
+
+            return header.Split(',')[0].Split('-')[0].Trim().ToLowerInvariant();
         }
 
         [HttpGet]
@@ -23,6 +44,7 @@ namespace Glanz.API.Controllers
         {
             try
             {
+                var lang = ResolveRequestedLanguage();
                 var packages = await _context.Packages
                     .Where(p => p.IsActive)
                     .Include(p => p.PackageServices)
@@ -30,6 +52,9 @@ namespace Glanz.API.Controllers
                             .ThenInclude(s => s.ServiceProducts)
                                 .ThenInclude(sp => sp.Product)
                     .ToListAsync();
+
+                var packageTextMap = await _localizationTextResolver.GetPackageTextsAsync(lang, HttpContext.RequestAborted);
+                var serviceTextMap = await _localizationTextResolver.GetServiceTextsAsync(lang, HttpContext.RequestAborted);
 
                 var packageDtos = packages.Select(p => 
                 {
@@ -43,8 +68,12 @@ namespace Glanz.API.Controllers
                     return new PackageDto
                     {
                         Id = p.Id,
-                        Name = p.Name,
-                        Description = p.Description,
+                        Name = packageTextMap.TryGetValue(p.Id, out var packageText)
+                            ? (packageText.Name ?? p.Name)
+                            : p.Name,
+                        Description = packageTextMap.TryGetValue(p.Id, out packageText)
+                            ? (packageText.Description ?? p.Description)
+                            : p.Description,
                         Price = p.Price,
                         Tier = p.Tier,
                         EstimatedDurationMinutes = p.EstimatedDurationMinutes,
@@ -56,8 +85,12 @@ namespace Glanz.API.Controllers
                         Services = p.PackageServices.Select(ps => new PackageServiceDetailDto
                         {
                             ServiceId = ps.ServiceId,
-                            ServiceName = ps.Service.Name,
-                            ServiceDescription = ps.Service.Description,
+                            ServiceName = serviceTextMap.TryGetValue(ps.ServiceId, out var serviceText)
+                                ? (serviceText.Name ?? ps.Service.Name)
+                                : ps.Service.Name,
+                            ServiceDescription = serviceTextMap.TryGetValue(ps.ServiceId, out serviceText)
+                                ? (serviceText.Description ?? ps.Service.Description)
+                                : ps.Service.Description,
                             DurationMinutes = ps.Service.DefaultDurationMinutes,
                             ServiceCost = ps.Service.ServiceProducts.Sum(sp => sp.QuantityUsed * sp.Product.CostPerUnit)
                         }).ToList(),
@@ -79,6 +112,7 @@ namespace Glanz.API.Controllers
         {
             try
             {
+                var lang = ResolveRequestedLanguage();
                 var package = await _context.Packages
                     .Include(p => p.PackageServices)
                         .ThenInclude(ps => ps.Service)
@@ -98,11 +132,18 @@ namespace Glanz.API.Controllers
                 var profit = package.Price - estimatedCost;
                 var profitMargin = package.Price > 0 ? (profit / package.Price) * 100 : 0;
 
+                var packageTextMap = await _localizationTextResolver.GetPackageTextsAsync(lang, HttpContext.RequestAborted);
+                var serviceTextMap = await _localizationTextResolver.GetServiceTextsAsync(lang, HttpContext.RequestAborted);
+
                 var packageDto = new PackageDto
                 {
                     Id = package.Id,
-                    Name = package.Name,
-                    Description = package.Description,
+                    Name = packageTextMap.TryGetValue(package.Id, out var packageText)
+                        ? (packageText.Name ?? package.Name)
+                        : package.Name,
+                    Description = packageTextMap.TryGetValue(package.Id, out packageText)
+                        ? (packageText.Description ?? package.Description)
+                        : package.Description,
                     Price = package.Price,
                     Tier = package.Tier,
                     EstimatedDurationMinutes = package.EstimatedDurationMinutes,
@@ -114,8 +155,12 @@ namespace Glanz.API.Controllers
                     Services = package.PackageServices.Select(ps => new PackageServiceDetailDto
                     {
                         ServiceId = ps.ServiceId,
-                        ServiceName = ps.Service.Name,
-                        ServiceDescription = ps.Service.Description,
+                        ServiceName = serviceTextMap.TryGetValue(ps.ServiceId, out var serviceText)
+                            ? (serviceText.Name ?? ps.Service.Name)
+                            : ps.Service.Name,
+                        ServiceDescription = serviceTextMap.TryGetValue(ps.ServiceId, out serviceText)
+                            ? (serviceText.Description ?? ps.Service.Description)
+                            : ps.Service.Description,
                         DurationMinutes = ps.Service.DefaultDurationMinutes,
                         ServiceCost = ps.Service.ServiceProducts.Sum(sp => sp.QuantityUsed * sp.Product.CostPerUnit)
                     }).ToList(),
@@ -169,6 +214,18 @@ namespace Glanz.API.Controllers
 
                 _context.Packages.Add(package);
                 await _context.SaveChangesAsync();
+                try
+                {
+                    await _autoTranslationService.EnsurePackageTranslationsAsync(
+                        package.Id,
+                        package.Name,
+                        package.Description,
+                        HttpContext.RequestAborted);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Auto-translation failed for package {package.Id}: {ex.Message}");
+                }
 
                 // Add package services
                 foreach (var serviceId in dto.ServiceIds)
@@ -274,6 +331,18 @@ namespace Glanz.API.Controllers
                 package.UpdatedAt = DateTime.UtcNow;
 
                 await _context.SaveChangesAsync();
+                try
+                {
+                    await _autoTranslationService.EnsurePackageTranslationsAsync(
+                        package.Id,
+                        package.Name,
+                        package.Description,
+                        HttpContext.RequestAborted);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Auto-translation failed for package {package.Id}: {ex.Message}");
+                }
 
                 return Ok(new { message = "Package updated successfully" });
             }
@@ -318,12 +387,16 @@ namespace Glanz.API.Controllers
         {
             try
             {
+                var lang = ResolveRequestedLanguage();
                 var packages = await _context.Packages
                     .Include(p => p.PackageServices)
                         .ThenInclude(ps => ps.Service)
                             .ThenInclude(s => s.ServiceProducts)
                                 .ThenInclude(sp => sp.Product)
                     .ToListAsync();
+
+                var packageTextMap = await _localizationTextResolver.GetPackageTextsAsync(lang, HttpContext.RequestAborted);
+                var serviceTextMap = await _localizationTextResolver.GetServiceTextsAsync(lang, HttpContext.RequestAborted);
 
                 var packageDtos = packages.Select(p =>
                 {
@@ -337,8 +410,12 @@ namespace Glanz.API.Controllers
                     return new PackageDto
                     {
                         Id = p.Id,
-                        Name = p.Name,
-                        Description = p.Description,
+                        Name = packageTextMap.TryGetValue(p.Id, out var packageText)
+                            ? (packageText.Name ?? p.Name)
+                            : p.Name,
+                        Description = packageTextMap.TryGetValue(p.Id, out packageText)
+                            ? (packageText.Description ?? p.Description)
+                            : p.Description,
                         Price = p.Price,
                         Tier = p.Tier,
                         EstimatedDurationMinutes = p.EstimatedDurationMinutes,
@@ -350,8 +427,12 @@ namespace Glanz.API.Controllers
                         Services = p.PackageServices.Select(ps => new PackageServiceDetailDto
                         {
                             ServiceId = ps.ServiceId,
-                            ServiceName = ps.Service.Name,
-                            ServiceDescription = ps.Service.Description,
+                            ServiceName = serviceTextMap.TryGetValue(ps.ServiceId, out var serviceText)
+                                ? (serviceText.Name ?? ps.Service.Name)
+                                : ps.Service.Name,
+                            ServiceDescription = serviceTextMap.TryGetValue(ps.ServiceId, out serviceText)
+                                ? (serviceText.Description ?? ps.Service.Description)
+                                : ps.Service.Description,
                             DurationMinutes = ps.Service.DefaultDurationMinutes,
                             ServiceCost = ps.Service.ServiceProducts.Sum(sp => sp.QuantityUsed * sp.Product.CostPerUnit)
                         }).ToList(),

@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useRef, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { packagesAPI } from '../api/packages';
 
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
@@ -9,42 +9,67 @@ export function PackagesProvider({ children }) {
   const [packages, setPackages] = useState([]);
   const [packagesLoading, setPackagesLoading] = useState(true);
   const [packagesError, setPackagesError] = useState('');
-  const lastFetchRef = useRef(0);
-  const packagesCountRef = useRef(0);
-  const inFlightRef = useRef(null);
-  const packagesRef = useRef(packages);
-  packagesRef.current = packages; // keep ref in sync
+  const packagesByLangRef = useRef({});
+  const lastFetchByLangRef = useRef({});
+  const inFlightByLangRef = useRef({});
+  const currentLangRef = useRef(localStorage.getItem('lang') || navigator.language?.split('-')[0] || 'en');
 
-  const fetchPackages = useCallback(async (force = false) => {
+  const fetchPackages = useCallback(async (langCode, force = false) => {
+    const lang = langCode || currentLangRef.current || localStorage.getItem('lang') || 'en';
+    currentLangRef.current = lang;
+
     const now = Date.now();
-    if (!force && packagesCountRef.current > 0 && now - lastFetchRef.current < CACHE_TTL) {
-      return packagesRef.current;
+    const cached = packagesByLangRef.current[lang];
+    const lastFetch = lastFetchByLangRef.current[lang] || 0;
+
+    if (!force && Array.isArray(cached) && now - lastFetch < CACHE_TTL) {
+      setPackages(cached);
+      setPackagesLoading(false);
+      return cached;
     }
-    if (inFlightRef.current) return inFlightRef.current;
+    if (inFlightByLangRef.current[lang]) return inFlightByLangRef.current[lang];
 
     const request = (async () => {
       setPackagesLoading(true);
       setPackagesError('');
       try {
-        const data = await packagesAPI.getAll();
+        const data = await packagesAPI.getAll(lang);
         const safeData = Array.isArray(data) ? data : [];
-        setPackages(safeData);
-        packagesRef.current = safeData;
-        packagesCountRef.current = safeData.length;
-        lastFetchRef.current = Date.now();
+        packagesByLangRef.current[lang] = safeData;
+        lastFetchByLangRef.current[lang] = Date.now();
+        if (currentLangRef.current === lang) {
+          setPackages(safeData);
+        }
         return safeData;
       } catch (err) {
-        setPackagesError(err?.response?.data?.message || 'Failed to load packages.');
+        if (currentLangRef.current === lang) {
+          setPackagesError(err?.response?.data?.message || 'Failed to load packages.');
+        }
         return [];
       } finally {
-        setPackagesLoading(false);
-        inFlightRef.current = null;
+        if (currentLangRef.current === lang) {
+          setPackagesLoading(false);
+        }
+        delete inFlightByLangRef.current[lang];
       }
     })();
 
-    inFlightRef.current = request;
+    inFlightByLangRef.current[lang] = request;
     return request;
   }, []);
+
+  useEffect(() => {
+    const onLanguageChanged = (event) => {
+      const nextLang = event?.detail?.lang || localStorage.getItem('lang') || 'en';
+      currentLangRef.current = nextLang;
+      fetchPackages(nextLang);
+    };
+
+    window.addEventListener('app-language-changed', onLanguageChanged);
+    fetchPackages(currentLangRef.current);
+
+    return () => window.removeEventListener('app-language-changed', onLanguageChanged);
+  }, [fetchPackages]);
 
   return (
     <PackagesContext.Provider value={{ packages, packagesLoading, packagesError, fetchPackages }}>

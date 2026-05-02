@@ -5,7 +5,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as Notifications from 'expo-notifications';
 import { StripeProvider } from '@stripe/stripe-react-native';
 import AppNavigator from './src/navigation/AppNavigator';
@@ -16,6 +16,7 @@ import { SettingsProvider } from './src/context/SettingsContext';
 import ErrorBoundary from './src/components/ErrorBoundary';
 import { theme } from './src/theme/theme';
 import { configureForegroundNotifications, setupAndroidChannel } from './src/utils/pushNotifications';
+import { initLanguage } from './src/i18n/i18n';
 
 // Configure foreground notification display (banner + sound)
 configureForegroundNotifications();
@@ -106,6 +107,33 @@ function Root() {
 // ─── App ──────────────────────────────────────────────────────────────────────
 
 export default function App() {
+  const [languageReady, setLanguageReady] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    initLanguage()
+      .catch(() => {})
+      .finally(() => {
+        if (mounted) setLanguageReady(true);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  if (!languageReady) {
+    return (
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <SafeAreaProvider>
+          <View style={ls.root}>
+            <ActivityIndicator size="small" color={theme.colors.primary} />
+          </View>
+        </SafeAreaProvider>
+      </GestureHandlerRootView>
+    );
+  }
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>

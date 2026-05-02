@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { AlertCircle, CheckCircle } from 'lucide-react';
 
-/* ── Prismatic CSS injected once by the page ──────────────────────────────── */
+/* ── Prismatic CSS injected once by the page ─────────────────────────────── */
 export const PRISM_CSS = `
 @keyframes holo-sweep {
   0%   { background-position: 0% 50%; }
@@ -19,15 +19,15 @@ export const PRISM_CSS = `
   66%      { transform: translate(-12px,12px) rotate(240deg); opacity: 0.38; }
 }
 @keyframes cta-rainbow-glow {
-  0%,100% { box-shadow: 0 0 0 1.5px rgba(255,80,80,.5),  0 0 28px rgba(255,165,0,.2), 0 0 55px rgba(0,255,100,.15), 0 0 90px rgba(0,100,255,.1); }
-  25%      { box-shadow: 0 0 0 1.5px rgba(255,210,0,.5),  0 0 28px rgba(0,255,150,.2), 0 0 55px rgba(0,150,255,.15), 0 0 90px rgba(200,0,255,.1); }
-  50%      { box-shadow: 0 0 0 1.5px rgba(0,200,255,.5),  0 0 28px rgba(160,0,255,.2), 0 0 55px rgba(255,0,100,.15), 0 0 90px rgba(255,220,0,.1); }
-  75%      { box-shadow: 0 0 0 1.5px rgba(0,255,120,.5),  0 0 28px rgba(255,0,100,.2), 0 0 55px rgba(255,210,0,.15), 0 0 90px rgba(0,255,150,.1); }
+  0%,100% { box-shadow: 0 0 0 1.5px rgba(255,80,80,.5),  0 0 28px rgba(255,165,0,.2), 0 0 55px rgba(0,255,100,.15); }
+  25%      { box-shadow: 0 0 0 1.5px rgba(255,210,0,.5),  0 0 28px rgba(0,255,150,.2), 0 0 55px rgba(255,0,100,.15); }
+  50%      { box-shadow: 0 0 0 1.5px rgba(0,200,255,.5),  0 0 28px rgba(160,0,255,.2), 0 0 55px rgba(255,210,0,.15); }
+  75%      { box-shadow: 0 0 0 1.5px rgba(0,255,120,.5),  0 0 28px rgba(255,0,100,.2), 0 0 55px rgba(255,210,0,.15); }
 }
 @keyframes prism-card-glow {
   0%,100% { box-shadow: 0 0 0 1px rgba(255,100,80,.4),  0 0 20px rgba(255,165,0,.16), 0 0 44px rgba(0,255,100,.12); }
   33%      { box-shadow: 0 0 0 1px rgba(0,160,255,.4),   0 0 20px rgba(160,0,255,.16), 0 0 44px rgba(255,0,100,.12); }
-  66%      { box-shadow: 0 0 0 1px rgba(0,255,150,.4),   0 0 20px rgba(255,255,0,.16),  0 0 44px rgba(0,100,255,.12); }
+  66%      { box-shadow: 0 0 0 1px rgba(0,255,150,.4),   0 0 20px rgba(255,255,0,.16), 0 0 44px rgba(0,100,255,.12); }
 }
 .prism-cursor-blob {
   position: fixed; pointer-events: none; z-index: 0;
@@ -39,8 +39,7 @@ export const PRISM_CSS = `
   transform: skewX(-18deg);
   background: linear-gradient(90deg,
     transparent 0%, rgba(255,55,55,.055) 15%, rgba(255,200,0,.08) 30%,
-    rgba(0,255,145,.07) 50%, rgba(0,145,255,.07) 70%,
-    rgba(195,0,255,.05) 85%, transparent 100%);
+    rgba(0,255,145,.07) 50%, rgba(0,145,255,.07) 70%, rgba(195,0,255,.05) 85%, transparent 100%);
 }
 .prism-glass { position: relative; overflow: hidden; transition: box-shadow 0.45s ease; }
 .prism-glass::after {
@@ -55,7 +54,7 @@ export const PRISM_CSS = `
 .prism-glass:hover::after { opacity: 1; }
 .prism-glass:hover        { animation: prism-card-glow 4s ease-in-out infinite; }
 .pkg-selected-glow { animation: prism-card-glow 4s ease-in-out infinite; }
-.cta-prism-glow { animation: cta-rainbow-glow 5s ease-in-out infinite; }
+.cta-prism-glow  { animation: cta-rainbow-glow 5s ease-in-out infinite; }
 .spectrum-line {
   height: 1.5px;
   background: linear-gradient(90deg,
@@ -76,14 +75,10 @@ export function PrismaticCursorOrb() {
     let curX = mouseX, curY = mouseY, rafId;
     const onMove = (e) => { mouseX = e.clientX; mouseY = e.clientY; };
     const tick = () => {
-      curX += (mouseX - curX) * 0.09;
-      curY += (mouseY - curY) * 0.09;
+      curX += (mouseX - curX) * 0.09; curY += (mouseY - curY) * 0.09;
       const hue = (mouseX / window.innerWidth) * 360;
-      el.style.transform  = `translate3d(${curX}px, ${curY}px, 0)`;
-      el.style.background = `conic-gradient(from ${hue}deg,
-        rgba(255,0,80,.23), rgba(255,160,0,.21), rgba(255,255,0,.18),
-        rgba(0,255,100,.21), rgba(0,160,255,.23), rgba(160,0,255,.21),
-        rgba(255,0,80,.23))`;
+      el.style.transform  = `translate3d(${curX}px,${curY}px,0)`;
+      el.style.background = `conic-gradient(from ${hue}deg,rgba(255,0,80,.23),rgba(255,160,0,.21),rgba(255,255,0,.18),rgba(0,255,100,.21),rgba(0,160,255,.23),rgba(160,0,255,.21),rgba(255,0,80,.23))`;
       rafId = requestAnimationFrame(tick);
     };
     rafId = requestAnimationFrame(tick);
@@ -93,13 +88,15 @@ export function PrismaticCursorOrb() {
   return <div ref={ref} className="prism-cursor-blob" style={{ width: 500, height: 500, top: '-250px', left: '-250px' }} />;
 }
 
-/* ── Section heading ──────────────────────────────────────────────────────── */
+/* ── Section heading ─────────────────────────────────────────────────── */
 export function SectionHeading({ icon: Icon, children, step }) {
   return (
     <div className="flex items-center gap-3 mb-6">
       {step !== undefined && (
-        <span className="text-[0.58rem] font-bold tracking-[0.2em] flex-shrink-0"
-          style={{ color: 'var(--muted-color)', opacity: 0.45 }}>
+        <span
+          className="text-[0.58rem] font-bold tracking-[0.2em] flex-shrink-0"
+          style={{ color: 'var(--muted-color)', opacity: 0.45 }}
+        >
           {String(step).padStart(2, '0')}
         </span>
       )}
@@ -109,13 +106,15 @@ export function SectionHeading({ icon: Icon, children, step }) {
         </div>
       )}
       <h2 className="text-lg font-bold text-[var(--heading-color)] tracking-tight">{children}</h2>
-      <span className="flex-1 h-px ml-1 hidden sm:block"
-        style={{ background: 'linear-gradient(90deg, rgba(200,169,107,0.18), transparent)' }} />
+      <span
+        className="flex-1 h-px ml-1 hidden sm:block"
+        style={{ background: 'linear-gradient(90deg, rgba(200,169,107,0.18), transparent)' }}
+      />
     </div>
   );
 }
 
-/* ── Status banner ────────────────────────────────────────────────────────── */
+/* ── Status banner ─────────────────────────────────────────────────── */
 export function StatusBanner({ type, message }) {
   const isError = type === 'error';
   return (
@@ -139,7 +138,7 @@ export const DAY_CELL_CLS = {
   full:      'bg-red-500/10  border-red-500/30   text-red-400   cursor-not-allowed opacity-50',
 };
 
-/* ── Availability helpers ─────────────────────────────────────────────────── */
+/* ── Availability helpers ───────────────────────────────────────────── */
 export const deriveStatusFromCapacity = ({ freeSlots, totalSlots, utilizationPercent }) => {
   const free  = Number(freeSlots);
   const total = Number(totalSlots);
@@ -153,21 +152,30 @@ export const deriveStatusFromCapacity = ({ freeSlots, totalSlots, utilizationPer
 };
 
 export const normalizeStatusKey = (rawStatus, fallbackMetrics = {}) => {
-  if (typeof rawStatus === 'string') {
-    const key = rawStatus.trim().toLowerCase();
-    if (['available', 'medium', 'full'].includes(key)) return key;
-    if (/^\d+$/.test(rawStatus.trim())) {
-      return ['available', 'medium', 'full'][Number(rawStatus.trim())] || deriveStatusFromCapacity(fallbackMetrics);
-    }
-    return deriveStatusFromCapacity(fallbackMetrics);
-  }
+  // Handle null/undefined
+  if (rawStatus === null || rawStatus === undefined) return deriveStatusFromCapacity(fallbackMetrics);
+  // Handle number (0=available, 1=medium, 2=full)
   if (typeof rawStatus === 'number') {
     return ['available', 'medium', 'full'][rawStatus] || deriveStatusFromCapacity(fallbackMetrics);
   }
+  // Handle string
+  if (typeof rawStatus === 'string') {
+    const key = rawStatus.trim().toLowerCase();
+    // Direct match (already normalized)
+    if (['available', 'medium', 'full'].includes(key)) return key;
+    // Handle numeric strings ("0", "1", "2")
+    if (/^\d+$/.test(key)) {
+      return ['available', 'medium', 'full'][Number(key)] || deriveStatusFromCapacity(fallbackMetrics);
+    }
+    // Handle PascalCase from backend ("Available", "Medium", "Full")
+    const mapped = { available: 'available', medium: 'medium', full: 'full' }[key];
+    if (mapped) return mapped;
+  }
+  // Fallback to capacity calculation
   return deriveStatusFromCapacity(fallbackMetrics);
 };
 
-/* ── Time / duration helpers ──────────────────────────────────────────────── */
+/* ── Time / duration helpers ──────────────────────────────────────── */
 export function formatDuration(minutes) {
   const safe = Math.max(0, Math.floor(minutes));
   const h = Math.floor(safe / 60);

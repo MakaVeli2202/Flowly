@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { API_BASE_URL } from '../config/api';
 import { secureGet, secureSet } from '../utils/secureStorage';
+import i18n from '../i18n/i18n';
 
 // ── Unauthorized handler (wired by AuthContext) ───────────────────────────────
 let _onUnauthorized = null;
@@ -21,6 +22,11 @@ apiClient.interceptors.request.use(async (config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
+  const currentLang = (i18n.language || 'en').split('-')[0].toLowerCase();
+  config.headers['Accept-Language'] = currentLang;
+  config.headers['X-Language'] = currentLang;
+
   return config;
 });
 

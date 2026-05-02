@@ -16,6 +16,7 @@ import { TouchableOpacity } from 'react-native';
 import { useScrollHeader } from '../hooks/useScrollHeader';
 import { formatQAR } from '../utils/currency';
 import { theme } from '../theme/theme';
+import { useTranslation } from 'react-i18next';
 
 const PADDING = 20;
 
@@ -122,6 +123,7 @@ const SectionLabel = ({ children, icon }) => (
    SCREEN
 ══════════════════════════════════════════════════════════ */
 export default function WorkerSalesScreen() {
+  const { i18n } = useTranslation();
   const headerHeight = useHeaderHeight();
   const scrollHeader = useScrollHeader();
   const settings     = useSettings();
@@ -144,8 +146,8 @@ export default function WorkerSalesScreen() {
       setError('');
       const [offersData, packagesData, servicesData] = await Promise.all([
         offersAPI.getAll(),
-        packagesAPI.getAll(),
-        servicesAPI.getAll(),
+        packagesAPI.getAll(i18n.language),
+        servicesAPI.getAll(i18n.language),
       ]);
       setOffers(offersData    || []);
       setPackages(packagesData || []);
@@ -156,7 +158,7 @@ export default function WorkerSalesScreen() {
   useEffect(() => {
     const run = async () => { setLoading(true); await load(); setLoading(false); };
     run();
-  }, []);
+  }, [i18n.language]);
 
   // Load worker's own bookings for schedule conflict detection (advisory — fails silently)
   useEffect(() => {

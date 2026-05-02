@@ -5,6 +5,7 @@ import { formatQAR } from '../../utils/currency';
 import { getSiteContent } from '../../config/siteContent';
 import { useAuth } from '../../context/AuthContext';
 import { usePackages } from '../../context/PackagesContext';
+import { useLanguage } from '../../context/LanguageContext';
 import SEO from '../../components/shared/SEO';
 import { Skeleton, CardSkeleton } from '../../components/shared/Skeleton';
 import { EmptyState } from '../../components/shared/EmptyState';
@@ -32,15 +33,55 @@ const tierConfig = {
   },
 };
 
+const ALL_TIER_KEY = '__all__';
+
+const normalizeLangCode = (lang) => (lang || 'en').toLowerCase().split('-')[0];
+
+const pickLocalizedField = (item, baseKey, lang) => {
+  if (!item || typeof item !== 'object') return '';
+
+  const langCode = normalizeLangCode(lang);
+  const suffix = langCode.charAt(0).toUpperCase() + langCode.slice(1);
+  const candidates = [
+    `${baseKey}${suffix}`,
+    `${baseKey}_${langCode}`,
+    `${baseKey}${langCode.toUpperCase()}`,
+    `${baseKey}Localized`,
+  ];
+
+  for (const key of candidates) {
+    const value = item[key];
+    if (typeof value === 'string' && value.trim()) return value;
+  }
+
+  const raw = item[baseKey];
+  if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+    const value = raw[langCode] ?? raw.en;
+    if (typeof value === 'string' && value.trim()) return value;
+  }
+
+  const translations = item.translations || item.translation || item.localizations;
+  if (Array.isArray(translations)) {
+    const row = translations.find((t) => normalizeLangCode(t?.language || t?.lang || t?.code) === langCode)
+      || translations.find((t) => normalizeLangCode(t?.language || t?.lang || t?.code) === 'en');
+    if (row) {
+      const fromRow = row[baseKey] || row[baseKey.toLowerCase()] || row.value || row.text;
+      if (typeof fromRow === 'string' && fromRow.trim()) return fromRow;
+    }
+  }
+
+  return typeof raw === 'string' ? raw : '';
+};
+
 /* ── Service expandable component ──────────────────────────── */
-function ServicesList({ services = [], maxVisible = 4, isExpanded, onToggle }) {
+function ServicesList({ services = [], maxVisible = 4, isExpanded, onToggle, labels, lang }) {
   if (!services || services.length === 0) {
     return (
       <div className="mb-6 flex-1">
         <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--muted-color)] mb-3 font-semibold">
-          Services Included
+          {labels.servicesIncluded}
         </p>
-        <p className="text-sm text-[var(--muted-color)]">No services listed</p>
+        <p className="text-sm text-[var(--muted-color)]">{labels.noServicesListed}</p>
       </div>
     );
   }
@@ -51,7 +92,7 @@ function ServicesList({ services = [], maxVisible = 4, isExpanded, onToggle }) {
   return (
     <div className="mb-6 flex-1">
       <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--muted-color)] mb-3 font-semibold">
-        Services Included
+        {labels.servicesIncluded}
       </p>
       <div className="space-y-1.5 max-h-[500px] overflow-hidden transition-all duration-300">
         {visibleServices.map((service, i) => (
@@ -60,7 +101,13 @@ function ServicesList({ services = [], maxVisible = 4, isExpanded, onToggle }) {
             className="flex items-start gap-2 text-sm text-[var(--text-color)]"
           >
             <Check size={14} className="text-secondary mt-0.5 flex-shrink-0" />
-            <span>{service?.serviceName || service?.name || 'Service'}</span>
+            <span>{
+              pickLocalizedField(service, 'serviceName', lang)
+              || pickLocalizedField(service, 'name', lang)
+              || service?.serviceName
+              || service?.name
+              || labels.serviceFallback
+            }</span>
           </li>
         ))}
       </div>
@@ -73,7 +120,7 @@ function ServicesList({ services = [], maxVisible = 4, isExpanded, onToggle }) {
             size={14}
             className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}
           />
-          {isExpanded ? 'Show Less' : `+ ${services.length - maxVisible} More`}
+          {isExpanded ? labels.showLess : `+ ${services.length - maxVisible} ${labels.more}`}
         </button>
       )}
     </div>
@@ -81,29 +128,89 @@ function ServicesList({ services = [], maxVisible = 4, isExpanded, onToggle }) {
 }
 
 function Packages() {
-  const { packagesPageContent } = getSiteContent();
+  const { lang } = useLanguage();
+  const { packagesPageContent } = getSiteContent(lang);
   const { isAdmin } = useAuth();
   const { packages = [], packagesLoading: loading, packagesError: error, fetchPackages } = usePackages();
   const navigate = useNavigate();
 
-  const [selectedTier, setSelectedTier] = useState('All');
+  const [selectedTier, setSelectedTier] = useState(ALL_TIER_KEY);
   const [expandedPackageId, setExpandedPackageId] = useState(null);
 
+  const labelsByLang = {
+    en: {
+      servicesIncluded: 'Services Included',
+      noServicesListed: 'No services listed',
+      serviceFallback: 'Service',
+      showLess: 'Show Less',
+      more: 'More',
+      failedToLoadPackages: 'Failed to load packages',
+      tryAgain: 'Try Again',
+      noPackagesAvailable: 'No packages available',
+      checkBackSoon: 'Check back soon for our detailing packages.',
+      premiumAutoCare: 'Premium Auto Care',
+      noPackagesForTier: 'No packages found for',
+      tierSuffix: 'tier',
+      minutesShort: 'min',
+      startingAt: 'Starting at',
+      createCustomerBooking: 'Create Customer Booking',
+      bookNow: 'Book Now',
+    },
+    ar: {
+      servicesIncluded: 'الخدمات المشمولة',
+      noServicesListed: 'لا توجد خدمات مدرجة',
+      serviceFallback: 'خدمة',
+      showLess: 'عرض أقل',
+      more: 'المزيد',
+      failedToLoadPackages: 'فشل تحميل الباقات',
+      tryAgain: 'حاول مرة أخرى',
+      noPackagesAvailable: 'لا توجد باقات متاحة',
+      checkBackSoon: 'تحقق لاحقاً للاطلاع على باقاتنا.',
+      premiumAutoCare: 'عناية سيارات فاخرة',
+      noPackagesForTier: 'لا توجد باقات في الفئة',
+      tierSuffix: '',
+      minutesShort: 'دقيقة',
+      startingAt: 'ابتداءً من',
+      createCustomerBooking: 'إنشاء حجز للعميل',
+      bookNow: 'احجز الآن',
+    },
+    de: {
+      servicesIncluded: 'Enthaltene Services',
+      noServicesListed: 'Keine Services aufgefuehrt',
+      serviceFallback: 'Service',
+      showLess: 'Weniger anzeigen',
+      more: 'mehr',
+      failedToLoadPackages: 'Pakete konnten nicht geladen werden',
+      tryAgain: 'Erneut versuchen',
+      noPackagesAvailable: 'Keine Pakete verfuegbar',
+      checkBackSoon: 'Schauen Sie bald wieder vorbei fuer neue Pakete.',
+      premiumAutoCare: 'Premium Fahrzeugpflege',
+      noPackagesForTier: 'Keine Pakete in der Kategorie',
+      tierSuffix: '',
+      minutesShort: 'Min',
+      startingAt: 'Ab',
+      createCustomerBooking: 'Kundenbuchung erstellen',
+      bookNow: 'Jetzt buchen',
+    },
+  };
+
+  const ui = labelsByLang[lang] || labelsByLang.en;
+
   useEffect(() => {
-    fetchPackages();
-  }, [fetchPackages]);
+    fetchPackages(lang);
+  }, [fetchPackages, lang]);
 
   // Get unique tiers from packages
   const tiers = useMemo(() => {
     const uniqueTiers = [...new Set(packages.map(p => p.tier).filter(Boolean))];
-    return ['All', ...uniqueTiers];
+    return [ALL_TIER_KEY, ...uniqueTiers];
   }, [packages]);
 
   // Filter packages - MEMOIZED with dependencies
   const filteredPackages = useMemo(() => {
     if (!packages || packages.length === 0) return [];
 
-    if (selectedTier === 'All') {
+    if (selectedTier === ALL_TIER_KEY) {
       return packages;
     }
 
@@ -153,10 +260,10 @@ function Packages() {
       <div className="min-h-screen" style={{ background: 'var(--surface-bg)' }}>
         <EmptyState
           icon="alert"
-          title="Failed to load packages"
+          title={ui.failedToLoadPackages}
           description={error}
-          actionLabel="Try Again"
-          onAction={() => fetchPackages(true)}
+          actionLabel={ui.tryAgain}
+          onAction={() => fetchPackages(lang, true)}
         />
       </div>
     );
@@ -167,8 +274,8 @@ function Packages() {
       <div className="min-h-screen" style={{ background: 'var(--surface-bg)' }}>
         <EmptyState
           icon="package"
-          title="No packages available"
-          description="Check back soon for our detailing packages."
+          title={ui.noPackagesAvailable}
+          description={ui.checkBackSoon}
         />
       </div>
     );
@@ -218,7 +325,7 @@ function Packages() {
               {/* Eyebrow badge */}
               <div className="flex items-center justify-center gap-3 mb-5">
                 <span className="h-px w-10" style={{ background: 'linear-gradient(90deg, transparent, #c8a96b)' }} />
-                <p className="uppercase tracking-[0.28em] text-primary text-[0.68rem] font-bold whitespace-nowrap">Premium Auto Care</p>
+                <p className="uppercase tracking-[0.28em] text-primary text-[0.68rem] font-bold whitespace-nowrap">{ui.premiumAutoCare}</p>
                 <span className="h-px w-10" style={{ background: 'linear-gradient(90deg, #c8a96b, transparent)' }} />
               </div>
               <h1 className="premium-heading text-5xl md:text-6xl font-bold mb-5 text-[var(--heading-color)]">
@@ -248,7 +355,7 @@ function Packages() {
                   : 'border-[var(--border-color)] bg-[var(--cta-soft-bg)] text-[var(--text-color)] hover:border-primary/50 hover:bg-[var(--cta-soft-hover-bg)]'
               }`}
             >
-              {tier}
+              {tier === ALL_TIER_KEY ? packagesPageContent.allTierLabel : tier}
             </button>
           ))}
         </div>
@@ -261,7 +368,9 @@ function Packages() {
             <div className="glass-card text-center py-20 relative overflow-hidden">
               <div className="prism-ray" style={{ left: '30%', width: '40%', animation: 'prism-ray-sweep 12s ease-in-out infinite' }} />
               <p className="text-[var(--muted-color)] text-lg relative z-10">
-                {packages.length === 0 ? 'No packages available' : `No packages found for ${selectedTier} tier`}
+                {packages.length === 0
+                  ? ui.noPackagesAvailable
+                  : `${ui.noPackagesForTier} ${selectedTier} ${ui.tierSuffix}`.trim()}
               </p>
             </div>
           ) : (
@@ -271,6 +380,8 @@ function Packages() {
                 const TierIcon = config.Icon;
                 const isExpanded = expandedPackageId === pkg.id;
                 const accentGrad = TIER_ACCENT[pkg.tier] || TIER_ACCENT.Standard;
+                const packageName = pickLocalizedField(pkg, 'name', lang) || pkg.name;
+                const packageDescription = pickLocalizedField(pkg, 'description', lang) || pkg.description;
 
                 return (
                   <div
@@ -293,7 +404,7 @@ function Packages() {
                     <div className="relative h-48 overflow-hidden">
                       <img
                         src={pkg.imageUrl || 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=400'}
-                        alt={pkg.name}
+                        alt={packageName}
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/20 to-transparent" />
@@ -310,17 +421,17 @@ function Packages() {
 
                     {/* Content */}
                     <div className="p-6 flex flex-col flex-1 relative z-10">
-                      <h3 className="premium-heading text-xl font-bold mb-2 text-[var(--heading-color)]">{pkg.name}</h3>
-                      <p className="text-[var(--muted-color)] text-sm mb-5 leading-relaxed line-clamp-2">{pkg.description}</p>
+                      <h3 className="premium-heading text-xl font-bold mb-2 text-[var(--heading-color)]">{packageName}</h3>
+                      <p className="text-[var(--muted-color)] text-sm mb-5 leading-relaxed line-clamp-2">{packageDescription}</p>
 
                       {/* Duration + Price */}
                       <div className="flex items-center justify-between mb-5 pb-5 border-b border-[var(--border-color)]">
                         <div className="flex items-center gap-1.5 text-[var(--muted-color)] text-sm">
                           <Clock size={14} />
-                          <span>{pkg.estimatedDurationMinutes} min</span>
+                          <span>{pkg.estimatedDurationMinutes} {ui.minutesShort}</span>
                         </div>
                         <div className="text-right">
-                          <p className="text-[0.6rem] uppercase tracking-[0.18em] text-[var(--muted-color)] font-semibold mb-0.5">Starting at</p>
+                          <p className="text-[0.6rem] uppercase tracking-[0.18em] text-[var(--muted-color)] font-semibold mb-0.5">{ui.startingAt}</p>
                           <span className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                             {formatQAR(pkg.price)}
                           </span>
@@ -333,10 +444,12 @@ function Packages() {
                         maxVisible={4}
                         isExpanded={isExpanded}
                         onToggle={() => togglePackageExpand(pkg.id)}
+                        labels={ui}
+                        lang={lang}
                       />
 
                       <button onClick={() => handleBookNow(pkg)} className="premium-btn w-full mt-auto">
-                        {isAdmin ? 'Create Customer Booking' : 'Book Now'}
+                        {isAdmin ? ui.createCustomerBooking : ui.bookNow}
                         <ArrowRight size={17} />
                       </button>
                     </div>

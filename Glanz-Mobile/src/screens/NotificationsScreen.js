@@ -8,6 +8,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { notificationsAPI } from '../api/notifications';
 import { offersAPI } from '../api/offers';
@@ -18,33 +19,33 @@ import { formatDateTime } from '../utils/dateUtils';
 const PAGE_SIZE = 20;
 const TYPE_CONFIG = {
   // Booking lifecycle
-  NewBooking:            { label: 'New Booking',          icon: 'calendar',         color: theme.colors.primary },
-  BookingConfirmed:      { label: 'Booking Confirmed',    icon: 'checkmark-circle', color: '#10B981' },
-  BookingCancelled:      { label: 'Booking Cancelled',    icon: 'close-circle',     color: '#EF4444' },
-  BookingStatusChanged:  { label: 'Booking Update',       icon: 'information-circle',color: '#60A5FA' },
-  BookingReassigned:     { label: 'Worker Reassigned',    icon: 'swap-horizontal',  color: '#F59E0B' },
-  BookingAssigned:       { label: 'Worker Assigned',      icon: 'person-add',       color: '#10B981' },
-  BookingClaimed:        { label: 'Worker Assigned',      icon: 'person-add',       color: '#10B981' },
-  BookingUnassigned:     { label: 'Worker Unassigned',    icon: 'person-remove',    color: '#F59E0B' },
-  CancellationRequested: { label: 'Cancellation Request', icon: 'alert-circle',     color: '#EF4444' },
-  RescheduleRequested:   { label: 'Reschedule Request',   icon: 'calendar-outline', color: '#F59E0B' },
+  NewBooking:            { labelKey: 'notifications.types.NewBooking',            icon: 'calendar',         color: theme.colors.primary },
+  BookingConfirmed:      { labelKey: 'notifications.types.BookingConfirmed',      icon: 'checkmark-circle', color: '#10B981' },
+  BookingCancelled:      { labelKey: 'notifications.types.BookingCancelled',      icon: 'close-circle',     color: '#EF4444' },
+  BookingStatusChanged:  { labelKey: 'notifications.types.BookingStatusChanged',  icon: 'information-circle',color: '#60A5FA' },
+  BookingReassigned:     { labelKey: 'notifications.types.BookingReassigned',     icon: 'swap-horizontal',  color: '#F59E0B' },
+  BookingAssigned:       { labelKey: 'notifications.types.BookingAssigned',       icon: 'person-add',       color: '#10B981' },
+  BookingClaimed:        { labelKey: 'notifications.types.BookingClaimed',        icon: 'person-add',       color: '#10B981' },
+  BookingUnassigned:     { labelKey: 'notifications.types.BookingUnassigned',     icon: 'person-remove',    color: '#F59E0B' },
+  CancellationRequested: { labelKey: 'notifications.types.CancellationRequested', icon: 'alert-circle',     color: '#EF4444' },
+  RescheduleRequested:   { labelKey: 'notifications.types.RescheduleRequested',   icon: 'calendar-outline', color: '#F59E0B' },
   // Worker updates
-  WorkerArrived:         { label: 'Detailer Arrived',     icon: 'car',              color: '#10B981' },
-  WorkerRunningLate:     { label: 'Detailer Running Late',icon: 'time',             color: '#F59E0B' },
+  WorkerArrived:         { labelKey: 'notifications.types.WorkerArrived',         icon: 'car',              color: '#10B981' },
+  WorkerRunningLate:     { labelKey: 'notifications.types.WorkerRunningLate',     icon: 'time',             color: '#F59E0B' },
   // Job status
-  JobStarted:            { label: 'Service Started',      icon: 'play-circle',      color: theme.colors.primary },
-  JobPaused:             { label: 'Service Paused',       icon: 'pause-circle',     color: '#94A3B8' },
-  JobResumed:            { label: 'Service Resumed',      icon: 'refresh-circle',   color: theme.colors.primary },
-  JobCompleted:          { label: 'Service Completed',    icon: 'checkmark-circle', color: '#10B981' },
-  ServiceAdded:          { label: 'Service Added',        icon: 'add-circle',       color: '#10B981' },
+  JobStarted:            { labelKey: 'notifications.types.JobStarted',            icon: 'play-circle',      color: theme.colors.primary },
+  JobPaused:             { labelKey: 'notifications.types.JobPaused',             icon: 'pause-circle',     color: '#94A3B8' },
+  JobResumed:            { labelKey: 'notifications.types.JobResumed',            icon: 'refresh-circle',   color: theme.colors.primary },
+  JobCompleted:          { labelKey: 'notifications.types.JobCompleted',          icon: 'checkmark-circle', color: '#10B981' },
+  ServiceAdded:          { labelKey: 'notifications.types.ServiceAdded',          icon: 'add-circle',       color: '#10B981' },
   // Offers & rewards
-  SpecialOffer:          { label: 'Special Offer',        icon: 'pricetag',         color: '#F59E0B' },
-  OfferAssigned:         { label: 'New Offer',            icon: 'gift',             color: '#F59E0B' },
-  LoyaltyReward:         { label: 'Loyalty Reward',       icon: 'star',             color: theme.colors.primary },
+  SpecialOffer:          { labelKey: 'notifications.types.SpecialOffer',          icon: 'pricetag',         color: '#F59E0B' },
+  OfferAssigned:         { labelKey: 'notifications.types.OfferAssigned',         icon: 'gift',             color: '#F59E0B' },
+  LoyaltyReward:         { labelKey: 'notifications.types.LoyaltyReward',         icon: 'star',             color: theme.colors.primary },
   // Admin only
-  LowStock:              { label: 'Low Stock Alert',      icon: 'warning',          color: '#EF4444' },
+  LowStock:              { labelKey: 'notifications.types.LowStock',              icon: 'warning',          color: '#EF4444' },
 };
-const FALLBACK_CONFIG = { label: 'Notification', icon: 'notifications', color: theme.colors.primary };
+const FALLBACK_CONFIG = { labelKey: 'notifications.types.default', icon: 'notifications', color: theme.colors.primary };
 const shouldShowBookingReference = (type) => type !== 'JobPaused' && type !== 'JobResumed';
 
 /* ── Palette ─────────────────────────────────────────────── */
@@ -107,6 +108,7 @@ const EmptyState = ({ icon, title, body }) => (
    SCREEN
 ══════════════════════════════════════════════════════════ */
 export default function NotificationsScreen() {
+  const { t } = useTranslation();
   const { isAdmin } = useAuth();
   const navigation = useNavigation();
   const headerHeight = useHeaderHeight();
@@ -133,7 +135,7 @@ export default function NotificationsScreen() {
       setCoupons(couponData || []);
       setHasMore(items.length >= fetchLimit);
     } catch (err) {
-      setError(err?.response?.data?.message || 'Failed to load notifications.');
+      setError(err?.response?.data?.message || t('notifications.errors.load'));
     }
   }, [isAdmin, limit]);
 
@@ -188,7 +190,7 @@ export default function NotificationsScreen() {
         prev.map((item) => (item.id === id ? { ...item, isRead: true } : item))
       );
     } catch (err) {
-      setError(err?.response?.data?.message || 'Failed to mark as read.');
+      setError(err?.response?.data?.message || t('notifications.errors.markRead'));
     } finally { setMarkingId(null); }
   };
 
@@ -198,7 +200,7 @@ export default function NotificationsScreen() {
       await notificationsAPI.markAllRead();
       setNotifications((prev) => prev.map((item) => ({ ...item, isRead: true })));
     } catch (err) {
-      setError(err?.response?.data?.message || 'Failed to mark all as read.');
+      setError(err?.response?.data?.message || t('notifications.errors.markAllRead'));
     } finally { setMarkingId(null); }
   };
 
@@ -247,18 +249,18 @@ export default function NotificationsScreen() {
               style={s.eyebrowLine}
             />
             <Ionicons name="notifications-outline" size={10} color={theme.colors.primary} />
-            <Text style={s.eyebrowText}>INBOX</Text>
+            <Text style={s.eyebrowText}>{t('notifications.inbox')}</Text>
             <LinearGradient
               colors={[G(0.70), 'transparent']}
               start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
               style={s.eyebrowLine}
             />
           </View>
-          <Text style={s.heading}>Notifications</Text>
+          <Text style={s.heading}>{t('notifications.title')}</Text>
           <Text style={s.sub}>
             {isAdmin
-              ? 'System alerts and booking updates.'
-              : 'Arrival alerts, running-late notices, offers and rewards.'}
+              ? t('notifications.subAdmin')
+              : t('notifications.subCustomer')}
           </Text>
           <SpectrumLine style={{ marginTop: 12 }} />
         </View>
@@ -302,21 +304,21 @@ export default function NotificationsScreen() {
         />
         <View style={s.statItem}>
           <Text style={s.statNumber}>{notifications.length}</Text>
-          <Text style={s.statLabel}>Total</Text>
+          <Text style={s.statLabel}>{t('notifications.total')}</Text>
         </View>
         <View style={s.statDivider} />
         <View style={s.statItem}>
           <Text style={[s.statNumber, unreadCount > 0 && { color: theme.colors.primary }]}>
             {unreadCount}
           </Text>
-          <Text style={s.statLabel}>Unread</Text>
+          <Text style={s.statLabel}>{t('notifications.unread')}</Text>
         </View>
         {!isAdmin && (
           <>
             <View style={s.statDivider} />
             <View style={s.statItem}>
               <Text style={s.statNumber}>{coupons.length}</Text>
-              <Text style={s.statLabel}>Offers</Text>
+              <Text style={s.statLabel}>{t('notifications.offers')}</Text>
             </View>
           </>
         )}
@@ -327,7 +329,7 @@ export default function NotificationsScreen() {
         >
           <Ionicons name="checkmark-done" size={13} color={theme.colors.primary} />
           <Text style={s.markAllText}>
-            {markingId === 'all' ? 'Updating…' : 'Mark all read'}
+            {markingId === 'all' ? t('notifications.updating') : t('notifications.markAllRead')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -346,13 +348,13 @@ export default function NotificationsScreen() {
           />
           <View style={s.cardHeader}>
             <Ionicons name="pricetag" size={18} color={theme.colors.primary} />
-            <Text style={s.cardTitle}>Available Offers</Text>
+            <Text style={s.cardTitle}>{t('notifications.availableOffers')}</Text>
           </View>
           {coupons.length === 0 ? (
             <EmptyState
               icon="pricetag-outline"
-              title="No active offers"
-              body="Special offers assigned to you will appear here."
+              title={t('notifications.noActiveOffers')}
+              body={t('notifications.noActiveOffersBody')}
             />
           ) : (
             coupons.map((coupon) => (
@@ -374,18 +376,18 @@ export default function NotificationsScreen() {
                   <View style={{ flex: 1 }}>
                     <Text style={s.offerName}>{coupon.offerName}</Text>
                     <View style={s.offerCodeRow}>
-                      <Text style={s.offerCodeLabel}>Code</Text>
+                      <Text style={s.offerCodeLabel}>{t('notifications.code')}</Text>
                       <Text style={s.offerCode}>{coupon.personalCode}</Text>
                     </View>
                   </View>
                 </View>
                 <View style={s.offerMeta}>
                   <Text style={s.offerMetaText}>
-                    Assigned {formatDateTime(coupon.assignedAt)}
+                    {t('notifications.assigned')} {formatDateTime(coupon.assignedAt)}
                   </Text>
                   {coupon.expiresAt && (
                     <Text style={[s.offerMetaText, s.offerExpiry]}>
-                      Expires {formatDateTime(coupon.expiresAt)}
+                      {t('notifications.expires')} {formatDateTime(coupon.expiresAt)}
                     </Text>
                   )}
                 </View>
@@ -408,16 +410,16 @@ export default function NotificationsScreen() {
         />
         <View style={s.cardHeader}>
           <Ionicons name="notifications" size={18} color={theme.colors.primary} />
-          <Text style={s.cardTitle}>Recent Alerts</Text>
+          <Text style={s.cardTitle}>{t('notifications.recentAlerts')}</Text>
         </View>
         {notifications.length === 0 ? (
           <EmptyState
             icon="notifications-outline"
-            title="No notifications yet"
+            title={t('notifications.noneYet')}
             body={
               isAdmin
-                ? 'System and booking alerts will appear here.'
-                : 'When your detailer sends updates or a reward is assigned, it will show here.'
+                ? t('notifications.noneAdminBody')
+                : t('notifications.noneCustomerBody')
             }
           />
         ) : (
@@ -438,7 +440,7 @@ export default function NotificationsScreen() {
                         <View style={[s.notifIconBox, { backgroundColor: `${cfg.color}18` }]}>
                           <Ionicons name={cfg.icon} size={14} color={cfg.color} />
                         </View>
-                        <Text style={[s.notifType, { color: cfg.color }]}>{cfg.label}</Text>
+                        <Text style={[s.notifType, { color: cfg.color }]}>{t(cfg.labelKey)}</Text>
                         {!n.isRead && <View style={s.unreadDot} />}
                         <Text style={s.notifTime}>{formatDateTime(n.createdAt)}</Text>
                       </View>
@@ -446,7 +448,7 @@ export default function NotificationsScreen() {
                       {n.bookingId && shouldShowBookingReference(n.type) && (
                         <View style={s.bookingRef}>
                           <Ionicons name="bookmark-outline" size={11} color={theme.colors.textMuted} />
-                          <Text style={s.bookingRefText}>Booking #{n.bookingId}</Text>
+                          <Text style={s.bookingRefText}>{t('notifications.bookingRef', { bookingId: n.bookingId })}</Text>
                         </View>
                       )}
                       {!n.isRead && (
@@ -458,7 +460,7 @@ export default function NotificationsScreen() {
                         >
                           <Ionicons name="checkmark" size={12} color={theme.colors.primary} />
                           <Text style={s.readBtnText}>
-                            {markingId === n.id ? 'Saving…' : 'Mark as read'}
+                            {markingId === n.id ? t('notifications.saving') : t('notifications.markRead')}
                           </Text>
                         </TouchableOpacity>
                       )}
@@ -479,7 +481,7 @@ export default function NotificationsScreen() {
                   : (
                     <>
                       <Ionicons name="chevron-down-circle-outline" size={15} color={theme.colors.primary} />
-                      <Text style={s.loadMoreText}>Load more</Text>
+                      <Text style={s.loadMoreText}>{t('notifications.loadMore')}</Text>
                     </>
                   )}
               </TouchableOpacity>

@@ -7,6 +7,7 @@ import {
 } from 'react-native';
 import { DrawerContentScrollView } from '@react-navigation/drawer';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { theme } from '../theme/theme';
 import { notificationsAPI } from '../api/notifications';
@@ -137,6 +138,7 @@ function resolveAvatarUrl(value) {
 }
 
 function AdminDrawerContent({ state, navigation }) {
+  const { t } = useTranslation();
   const { user, logout } = useAuth();
   const avatarUrl = resolveAvatarUrl(user?.profileImageUrl);
   const fullName  = `${user?.firstName || ''} ${user?.lastName || ''}`.trim();
@@ -160,14 +162,15 @@ function AdminDrawerContent({ state, navigation }) {
         <Text style={d.email} numberOfLines={1}>{user?.email || ''}</Text>
         <View style={[d.statusBadge, { backgroundColor: 'rgba(200,169,107,0.12)', borderColor: 'rgba(200,169,107,0.22)' }]}>
           <View style={[d.statusDot, { backgroundColor: theme.colors.primary }]} />
-          <Text style={[d.statusText, { color: theme.colors.primary }]}>Admin</Text>
+          <Text style={[d.statusText, { color: theme.colors.primary }]}>{t('navigation.admin.role')}</Text>
         </View>
       </View>
       <View style={d.headerSep} />
       <DrawerContentScrollView style={d.scroll} contentContainerStyle={d.scrollInner} showsVerticalScrollIndicator={false}>
-        <Text style={d.groupLabel}>Admin Panel</Text>
+        <Text style={d.groupLabel}>{t('navigation.admin.panel')}</Text>
         {ADMIN_DRAWER_ITEMS.map((item) => {
           const focused = state.routeNames[state.index] === item.name;
+          const label = t(`navigation.admin.items.${item.name}`, { defaultValue: item.label });
           return (
             <TouchableOpacity
               key={item.name}
@@ -179,7 +182,7 @@ function AdminDrawerContent({ state, navigation }) {
               <View style={[d.iconBox, focused && d.iconBoxActive]}>
                 <Ionicons name={focused ? item.iconFilled : item.icon} size={18} color={focused ? theme.colors.primary : theme.colors.textMuted} />
               </View>
-              <Text style={[d.itemLabel, focused && d.itemLabelActive]}>{item.label}</Text>
+              <Text style={[d.itemLabel, focused && d.itemLabelActive]}>{label}</Text>
               {focused && <Ionicons name="chevron-forward" size={13} color={theme.colors.primary} style={{ opacity: 0.45 }} />}
             </TouchableOpacity>
           );
@@ -189,7 +192,7 @@ function AdminDrawerContent({ state, navigation }) {
         <View style={d.footerSep} />
         <TouchableOpacity style={d.logoutBtn} onPress={() => { logout(); navigation.closeDrawer(); }} activeOpacity={0.65}>
           <View style={d.logoutIconBox}><Ionicons name="log-out-outline" size={16} color="#FCA5A5" /></View>
-          <Text style={d.logoutText}>Sign Out</Text>
+          <Text style={d.logoutText}>{t('navigation.signOut')}</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -251,6 +254,7 @@ function AdminDrawer() {
 }
 
 function CustomerDrawerContent({ state, navigation, unreadCount }) {
+  const { t } = useTranslation();
   const { user, logout } = useAuth();
   const avatarUrl = resolveAvatarUrl(user?.profileImageUrl);
   const fullName  = `${user?.firstName || ''} ${user?.lastName || ''}`.trim();
@@ -278,11 +282,11 @@ function CustomerDrawerContent({ state, navigation, unreadCount }) {
             </View>
           )}
         </View>
-        <Text style={d.name} numberOfLines={1}>{fullName || 'User'}</Text>
+        <Text style={d.name} numberOfLines={1}>{fullName || t('navigation.userFallback')}</Text>
         <Text style={d.email} numberOfLines={1}>{user?.email || ''}</Text>
         <View style={d.statusBadge}>
           <View style={d.statusDot} />
-          <Text style={d.statusText}>Active</Text>
+          <Text style={d.statusText}>{t('navigation.active')}</Text>
         </View>
       </View>
 
@@ -293,10 +297,11 @@ function CustomerDrawerContent({ state, navigation, unreadCount }) {
         contentContainerStyle={d.scrollInner}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={d.groupLabel}>Navigation</Text>
+        <Text style={d.groupLabel}>{t('navigation.group')}</Text>
         {DRAWER_ITEMS.map((item) => {
           const focused       = state.routeNames[state.index] === item.name;
           const hasNotifBadge = item.name === 'Notifications' && unreadCount > 0;
+          const label = t(`navigation.customer.items.${item.name}`, { defaultValue: item.label });
           return (
             <TouchableOpacity
               key={item.name}
@@ -312,7 +317,7 @@ function CustomerDrawerContent({ state, navigation, unreadCount }) {
                   color={focused ? theme.colors.primary : theme.colors.textMuted}
                 />
               </View>
-              <Text style={[d.itemLabel, focused && d.itemLabelActive]}>{item.label}</Text>
+              <Text style={[d.itemLabel, focused && d.itemLabelActive]}>{label}</Text>
               {hasNotifBadge && (
                 <View style={d.badge}>
                   <Text style={d.badgeText}>{unreadCount > 99 ? '99+' : unreadCount}</Text>
@@ -336,7 +341,7 @@ function CustomerDrawerContent({ state, navigation, unreadCount }) {
           <View style={d.logoutIconBox}>
             <Ionicons name="log-out-outline" size={16} color="#FCA5A5" />
           </View>
-          <Text style={d.logoutText}>Sign Out</Text>
+          <Text style={d.logoutText}>{t('navigation.signOut')}</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -344,6 +349,7 @@ function CustomerDrawerContent({ state, navigation, unreadCount }) {
 }
 
 function CustomerDrawer() {
+  const { t } = useTranslation();
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
@@ -402,41 +408,44 @@ function CustomerDrawer() {
         sceneContainerStyle:     { backgroundColor: theme.colors.bg },
       })}
     >
-      <Drawer.Screen name="Home"          component={HomeScreen}          options={{ title: 'Home'         }} />
-      <Drawer.Screen name="Packages"      component={PackagesScreen}      options={{ title: 'Packages'     }} />
-      <Drawer.Screen name="Subscriptions" component={SubscriptionPlansScreen} options={{ title: 'Subscriptions' }} />
-      <Drawer.Screen name="Booking"       component={BookingScreen}       options={{ title: 'Book Now'     }} />
-      <Drawer.Screen name="My Bookings"   component={MyBookingsScreen}    options={{ title: 'My Bookings'  }} />
-      <Drawer.Screen name="Assistant"     component={ChatbotScreen}       options={{ title: 'AI Assistant' }} />
-      <Drawer.Screen name="Profile"       component={ProfileScreen}       options={{ title: 'Profile'      }} />
+      <Drawer.Screen name="Home"          component={HomeScreen}          options={{ title: t('navigation.customer.items.Home')         }} />
+      <Drawer.Screen name="Packages"      component={PackagesScreen}      options={{ title: t('navigation.customer.items.Packages')     }} />
+      <Drawer.Screen name="Subscriptions" component={SubscriptionPlansScreen} options={{ title: t('navigation.customer.items.Subscriptions') }} />
+      <Drawer.Screen name="Booking"       component={BookingScreen}       options={{ title: t('navigation.customer.items.Booking')     }} />
+      <Drawer.Screen name="My Bookings"   component={MyBookingsScreen}    options={{ title: t('navigation.customer.items.My Bookings')  }} />
+      <Drawer.Screen name="Assistant"     component={ChatbotScreen}       options={{ title: t('navigation.customer.items.Assistant') }} />
+      <Drawer.Screen name="Profile"       component={ProfileScreen}       options={{ title: t('navigation.customer.items.Profile')      }} />
     </Drawer.Navigator>
   );
 }
 
 function AuthStack() {
+  const { t } = useTranslation();
   return (
     <Stack.Navigator screenOptions={SHARED_HEADER_OPTIONS}>
       <Stack.Screen name="Login"    component={LoginScreen}    options={{ headerShown: false }}       />
-      <Stack.Screen name="Register" component={RegisterScreen} options={{ title: 'Create Account' }} />
+      <Stack.Screen name="Register" component={RegisterScreen} options={{ title: t('navigation.auth.createAccount') }} />
     </Stack.Navigator>
   );
 }
 
 function CustomerStack() {
+  const { t } = useTranslation();
   return (
     <Stack.Navigator screenOptions={SHARED_HEADER_OPTIONS}>
       <Stack.Screen name="Main"                    component={CustomerDrawer}            options={{ headerShown: false }}     />
-      <Stack.Screen name="Notifications"           component={NotificationsScreen}       options={{ title: 'Notifications', headerRight: () => null }} />
-      <Stack.Screen name="Booking Confirmation"     component={BookingConfirmationScreen} options={{ title: 'Confirmation' }} />
-      <Stack.Screen name="SubscriptionBooking"    component={SubscriptionBookingScreen}  options={{ title: 'Book Session' }} />
-      <Stack.Screen name="MySubscription"         component={MySubscriptionScreen}       options={{ title: 'My Subscription' }} />
-      <Stack.Screen name="SubscriptionCheckout"    component={SubscriptionCheckoutScreen} options={{ title: 'Checkout' }} />
-      <Stack.Screen name="Live Tracking"           component={LiveWorkerMapScreen}        options={{ title: 'Live Tracking' }} />
+      <Stack.Screen name="Notifications"           component={NotificationsScreen}       options={{ title: t('notifications.title'), headerRight: () => null }} />
+      <Stack.Screen name="Booking Confirmation"     component={BookingConfirmationScreen} options={{ title: t('navigation.customer.confirmation') }} />
+      <Stack.Screen name="SubscriptionBooking"    component={SubscriptionBookingScreen}  options={{ title: t('navigation.customer.bookSession') }} />
+      <Stack.Screen name="MySubscription"         component={MySubscriptionScreen}       options={{ title: t('navigation.customer.mySubscription') }} />
+      <Stack.Screen name="SubscriptionCheckout"    component={SubscriptionCheckoutScreen} options={{ title: t('navigation.customer.checkout') }} />
+      <Stack.Screen name="Live Tracking"           component={LiveWorkerMapScreen}        options={{ title: t('navigation.customer.liveTracking') }} />
     </Stack.Navigator>
   );
 }
 
 function AdminStack() {
+  const { t } = useTranslation();
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
@@ -466,34 +475,35 @@ function AdminStack() {
       ),
     })}>
       <Stack.Screen name="Main"                 component={AdminDrawer}               options={{ headerShown: false }}                                        />
-      <Stack.Screen name="Create Booking"       component={BookingScreen}             options={{ title: 'Create Booking' }}                                   />
-      <Stack.Screen name="Today Jobs"           component={AdminJobsScreen}           initialParams={{ mode: 'today' }} options={{ title: "Today's Jobs" }}   />
-      <Stack.Screen name="All Jobs"             component={AdminJobsScreen}           initialParams={{ mode: 'all' }}   options={{ title: 'All Jobs' }}        />
-      <Stack.Screen name="Booking Confirmation" component={BookingConfirmationScreen} options={{ title: 'Confirmation' }}                                      />
-      <Stack.Screen name="Admin Notifications"  component={NotificationsScreen}       options={{ title: 'Notifications', headerRight: () => null }}            />
-      <Stack.Screen name="Create Worker"        component={CreateWorkerScreen}        options={{ title: 'Create Worker' }}                                     />
-      <Stack.Screen name="Worker Management"    component={WorkerManagementScreen}    options={{ title: 'Worker Management' }}                                 />
-      <Stack.Screen name="Admin Staff"          component={AdminStaffScreen}          options={{ title: 'Manage Staff' }}                                   />
-      <Stack.Screen name="Admin Products"      component={AdminProductsScreen}       options={{ title: 'Products' }}                                          />
-      <Stack.Screen name="Admin Services"      component={AdminServicesScreen}       options={{ title: 'Services' }}                                          />
-      <Stack.Screen name="Admin Packages"      component={AdminPackagesScreen}       options={{ title: 'Packages' }}                                          />
-      <Stack.Screen name="Admin Offers"        component={AdminOffersScreen}         options={{ title: 'Offers & Discounts' }}                                />
-      <Stack.Screen name="Admin Reports"       component={AdminReportsScreen}        options={{ title: 'Reports' }}                                           />
-      <Stack.Screen name="Admin Subscriptions" component={AdminSubscriptionsScreen}  options={{ title: 'Subscriptions' }}                                     />
-      <Stack.Screen name="System Settings"     component={AdminSystemSettingsScreen} options={{ title: 'System Settings' }}                                   />
-      <Stack.Screen name="Admin Job Positions"  component={AdminJobPositionsScreen}  options={{ title: 'Job Positions' }}                                    />
-      <Stack.Screen name="Admin Content"     component={AdminContentScreen}        options={{ title: 'Content' }}                                          />
-      <Stack.Screen name="Sub Bookings"     component={AdminSubscriptionBookingsScreen} options={{ title: 'Sub Bookings' }}                                />
+      <Stack.Screen name="Create Booking"       component={BookingScreen}             options={{ title: t('navigation.admin.createBooking') }}                                   />
+      <Stack.Screen name="Today Jobs"           component={AdminJobsScreen}           initialParams={{ mode: 'today' }} options={{ title: t('navigation.admin.todayJobs') }}   />
+      <Stack.Screen name="All Jobs"             component={AdminJobsScreen}           initialParams={{ mode: 'all' }}   options={{ title: t('navigation.admin.allJobs') }}        />
+      <Stack.Screen name="Booking Confirmation" component={BookingConfirmationScreen} options={{ title: t('navigation.customer.confirmation') }}                                      />
+      <Stack.Screen name="Admin Notifications"  component={NotificationsScreen}       options={{ title: t('notifications.title'), headerRight: () => null }}            />
+      <Stack.Screen name="Create Worker"        component={CreateWorkerScreen}        options={{ title: t('navigation.admin.createWorker') }}                                     />
+      <Stack.Screen name="Worker Management"    component={WorkerManagementScreen}    options={{ title: t('navigation.admin.workerManagement') }}                                 />
+      <Stack.Screen name="Admin Staff"          component={AdminStaffScreen}          options={{ title: t('navigation.admin.manageStaff') }}                                   />
+      <Stack.Screen name="Admin Products"      component={AdminProductsScreen}       options={{ title: t('navigation.admin.items.Admin Products') }}                                          />
+      <Stack.Screen name="Admin Services"      component={AdminServicesScreen}       options={{ title: t('navigation.admin.items.Admin Services') }}                                          />
+      <Stack.Screen name="Admin Packages"      component={AdminPackagesScreen}       options={{ title: t('navigation.admin.items.Admin Packages') }}                                          />
+      <Stack.Screen name="Admin Offers"        component={AdminOffersScreen}         options={{ title: t('navigation.admin.offersDiscounts') }}                                />
+      <Stack.Screen name="Admin Reports"       component={AdminReportsScreen}        options={{ title: t('navigation.admin.items.Admin Reports') }}                                           />
+      <Stack.Screen name="Admin Subscriptions" component={AdminSubscriptionsScreen}  options={{ title: t('navigation.admin.items.Admin Subscriptions') }}                                     />
+      <Stack.Screen name="System Settings"     component={AdminSystemSettingsScreen} options={{ title: t('navigation.admin.items.System Settings') }}                                   />
+      <Stack.Screen name="Admin Job Positions"  component={AdminJobPositionsScreen}  options={{ title: t('navigation.admin.items.Admin Job Positions') }}                                    />
+      <Stack.Screen name="Admin Content"     component={AdminContentScreen}        options={{ title: t('navigation.admin.items.Admin Content') }}                                          />
+      <Stack.Screen name="Sub Bookings"     component={AdminSubscriptionBookingsScreen} options={{ title: t('navigation.admin.items.Sub Bookings') }}                                />
     </Stack.Navigator>
   );
 }
 
 function WorkerStack() {
+  const { t } = useTranslation();
   return (
     <Stack.Navigator screenOptions={SHARED_HEADER_OPTIONS}>
       <Stack.Screen name="Today Work"     component={AdminJobsScreen}   initialParams={{ mode: 'today', roleMode: 'worker' }} options={{ headerShown: false }} />
-      <Stack.Screen name="Worker Profile" component={ProfileScreen}     options={{ title: 'Profile'   }} />
-      <Stack.Screen name="Sales Kit"      component={WorkerSalesScreen} options={{ title: 'Sales Kit' }} />
+      <Stack.Screen name="Worker Profile" component={ProfileScreen}     options={{ title: t('navigation.customer.items.Profile')   }} />
+      <Stack.Screen name="Sales Kit"      component={WorkerSalesScreen} options={{ title: t('navigation.worker.salesKit') }} />
     </Stack.Navigator>
   );
 }
