@@ -29,6 +29,7 @@ import MyBookings          from './pages/customer/MyBookings';
 import Profile             from './pages/customer/Profile';
 import Plans               from './pages/customer/Plans';
 import Careers             from './pages/customer/Careers';
+import LandingPageDemo     from './pages/LandingPageDemo';
 
 // ─── Customer pages (lazy) ────────────────────────────────────────────────────
 const MySubscription             = lazy(() => import('./pages/customer/MySubscription'));
@@ -170,6 +171,7 @@ function AppRoutes() {
         <Route path="/packages" element={<Packages />} />
         <Route path="/plans"    element={<Plans />}    />
         <Route path="/careers"  element={<Careers />}  />
+        <Route path="/landing-demo" element={<LandingPageDemo />} />
 
         {/* ── Protected customer ─────────────────────────────────────── */}
         <Route path="/booking" element={

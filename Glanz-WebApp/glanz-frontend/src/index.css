@@ -398,6 +398,25 @@ code {
   0%,100% { transform: scale(1)    translateY(0px);   opacity: 0.22; }
   40%     { transform: scale(1.10) translateY(-18px); opacity: 0.35; }
   70%     { transform: scale(0.92) translateY( 12px); opacity: 0.18; }
+
+@keyframes fadeOutLabel {
+  0% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+  70% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(0.5rem) scale(0.95);
+  }
+}
+
+.animate-fadeOut {
+  animation: fadeOutLabel 2s ease-out forwards;
+}
 }
 .bg-orb-1 { animation: orbPulse 11s ease-in-out infinite; }
 .bg-orb-2 { animation: orbPulse 15s ease-in-out infinite reverse; }
