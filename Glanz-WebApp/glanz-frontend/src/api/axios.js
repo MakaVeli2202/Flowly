@@ -83,12 +83,11 @@ apiClient.interceptors.response.use(
         flushQueue(null, newToken);
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return apiClient(originalRequest);
-      } catch (refreshError) {
-        flushQueue(refreshError, null);
-        setAuthToken(null);
-        window.location.replace('/login');
-        return Promise.reject(refreshError);
-      } finally {
+        } catch (refreshError) {
+          flushQueue(refreshError, null);
+          setAuthToken(null);
+          return Promise.reject(refreshError);
+        } finally {
         isRefreshing = false;
       }
     }

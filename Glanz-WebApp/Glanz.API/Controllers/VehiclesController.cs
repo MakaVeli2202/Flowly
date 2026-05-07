@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Glanz.API.Data;
 using Glanz.API.DTOs;
 using Glanz.API.Models;
+using Glanz.API.Services;
 using System.Security.Claims;
 
 namespace Glanz.API.Controllers
@@ -14,10 +15,12 @@ namespace Glanz.API.Controllers
     public class VehiclesController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly IObjectStorageService _objectStorage;
 
-        public VehiclesController(AppDbContext context)
+        public VehiclesController(AppDbContext context, IObjectStorageService objectStorage)
         {
             _context = context;
+            _objectStorage = objectStorage;
         }
 
         private int GetUserId() =>
@@ -177,23 +180,13 @@ namespace Glanz.API.Controllers
             if (ext is not (".jpg" or ".jpeg" or ".png" or ".webp"))
                 return BadRequest(new { message = "Only jpg, png, or webp allowed." });
 
-            var uploadsRoot = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "vehicles");
-            Directory.CreateDirectory(uploadsRoot);
-
             // Delete old image
-            if (!string.IsNullOrWhiteSpace(vehicle.ImageUrl)
-                && vehicle.ImageUrl.StartsWith("/uploads/vehicles/", StringComparison.OrdinalIgnoreCase))
-            {
-                var oldPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", vehicle.ImageUrl.TrimStart('/'));
-                if (System.IO.File.Exists(oldPath)) System.IO.File.Delete(oldPath);
-            }
+            await _objectStorage.DeleteAsync(vehicle.ImageUrl);
 
             var fileName  = $"vehicle_{userId}_{id}_{Guid.NewGuid():N}{ext}";
-            var filePath  = Path.Combine(uploadsRoot, fileName);
-            using var stream = System.IO.File.Create(filePath);
-            await file.CopyToAsync(stream);
+            var storedImage = await _objectStorage.UploadAsync(file, "vehicles", fileName);
 
-            vehicle.ImageUrl = $"/uploads/vehicles/{fileName}";
+            vehicle.ImageUrl = storedImage.PublicUrl;
             await _context.SaveChangesAsync();
             return Ok(ToDto(vehicle));
         }

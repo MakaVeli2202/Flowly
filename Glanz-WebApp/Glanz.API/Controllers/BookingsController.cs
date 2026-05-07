@@ -27,6 +27,7 @@ namespace Glanz.API.Controllers
         private readonly IAuditService _audit;
         private readonly CouponRateLimiter _couponLimiter;
         private readonly IWebHostEnvironment _env;
+        private readonly IObjectStorageService _objectStorage;
 
         public BookingsController(
             AppDbContext context,
@@ -35,7 +36,8 @@ namespace Glanz.API.Controllers
             IPricingService pricingService,
             IAuditService audit,
             CouponRateLimiter couponLimiter,
-            IWebHostEnvironment env)
+            IWebHostEnvironment env,
+            IObjectStorageService objectStorage)
         {
             _context = context;
             _configuration = configuration;
@@ -44,6 +46,7 @@ namespace Glanz.API.Controllers
             _audit = audit;
             _couponLimiter = couponLimiter;
             _env = env;
+            _objectStorage = objectStorage;
             StripeConfiguration.ApiKey = _configuration["Stripe:SecretKey"];
         }
 
@@ -5570,14 +5573,8 @@ namespace Glanz.API.Controllers
                 if (!allowed.Contains(ext))
                     return BadRequest(new { message = "Allowed formats: jpg, jpeg, png, webp" });
 
-                var folder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "booking-photos");
-                Directory.CreateDirectory(folder);
-
                 var fileName = $"{id}_{dto.PhotoType}_{DateTime.UtcNow:yyyyMMddHHmmssfff}{ext}";
-                var filePath = Path.Combine(folder, fileName);
-
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                    await file.CopyToAsync(stream);
+                var storedPhoto = await _objectStorage.UploadAsync(file, "booking-photos", fileName);
 
                 if (!Enum.TryParse<PhotoType>(dto.PhotoType, ignoreCase: true, out var photoType))
                     return BadRequest(new { message = "PhotoType must be 'Before' or 'After'" });
@@ -5586,7 +5583,7 @@ namespace Glanz.API.Controllers
                 {
                     BookingId          = id,
                     PhotoType          = photoType,
-                    ImageUrl           = $"/uploads/booking-photos/{fileName}",
+                    ImageUrl           = storedPhoto.PublicUrl,
                     Caption            = dto.Caption,
                     UploadedByWorkerId = uploaderId,
                     CreatedAt          = DateTime.UtcNow,

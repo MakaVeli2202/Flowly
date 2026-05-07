@@ -21,13 +21,45 @@ function statusColor(status) {
     default:           return { bg: 'bg-gray-400',   text: 'text-white', border: 'border-gray-500'   };
   }
 }
-const normalizeStatus = (raw) => {
-  if (typeof raw === 'string') {
-    const k = raw.toLowerCase();
-    if (k === 'available' || k === 'medium' || k === 'full') return k;
+const deriveStatusFromCapacity = ({ freeSlots, totalSlots, utilizationPercent, availableStarts, totalStartsCapacity } = {}) => {
+  const free  = Number(freeSlots ?? availableStarts);
+  const total = Number(totalSlots ?? totalStartsCapacity);
+  const util  = Number(utilizationPercent);
+
+  if (Number.isFinite(free) && free <= 0) return 'full';
+  if (Number.isFinite(util) && util >= 70) return 'medium';
+  if (Number.isFinite(total) && Number.isFinite(free) && total > 0) {
+    if (((total - free) / total) * 100 >= 70) return 'medium';
   }
-  if (typeof raw === 'number') return ['available', 'medium', 'full'][raw] || 'full';
-  return 'full';
+  return 'available';
+};
+
+const normalizeStatus = (raw, fallbackMetrics = {}) => {
+  if (raw === null || raw === undefined) return deriveStatusFromCapacity(fallbackMetrics);
+
+  if (typeof raw === 'number') {
+    return ['available', 'medium', 'full'][raw] || deriveStatusFromCapacity(fallbackMetrics);
+  }
+
+  if (typeof raw === 'string') {
+    const k = raw.trim().toLowerCase();
+    if (['available', 'medium', 'full'].includes(k)) return k;
+    if (/^\d+$/.test(k)) return ['available', 'medium', 'full'][Number(k)] || deriveStatusFromCapacity(fallbackMetrics);
+
+    const aliases = {
+      open: 'available',
+      low: 'available',
+      good: 'available',
+      normal: 'available',
+      busy: 'medium',
+      high: 'medium',
+      closed: 'full',
+      unavailable: 'full',
+    };
+    if (aliases[k]) return aliases[k];
+  }
+
+  return deriveStatusFromCapacity(fallbackMetrics);
 };
 
 /* Day-cell semantic colors — dark mode friendly */
@@ -446,7 +478,7 @@ function WorkerSchedule() {
                     if (!date) return <div key={`b-${idx}`} className="h-10" />;
                     const key      = toDateKey(date);
                     const day      = daysByKey[key];
-                    const status   = normalizeStatus(day?.status);
+                    const status   = normalizeStatus(day?.status, day);
                     const selected = key === selectedDateKey;
                     const isToday  = key === todayKey;
                     return (

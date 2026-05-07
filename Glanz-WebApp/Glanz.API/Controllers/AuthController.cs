@@ -21,6 +21,7 @@ namespace Glanz.API.Controllers
         private readonly IConfiguration _configuration;
         private readonly IWebHostEnvironment _env;
         private readonly IAuditService _audit;
+        private readonly IObjectStorageService _objectStorage;
         private static readonly string[] DefaultAvatarUrls =
         {
             "/assets/avatars/default-gulf-male-1.svg",
@@ -31,23 +32,27 @@ namespace Glanz.API.Controllers
             "/assets/avatars/default-expat-female-1.svg"
         };
 
-        public AuthController(AppDbContext context, ITokenService tokenService, IConfiguration configuration, IWebHostEnvironment env, IAuditService audit)
+        public AuthController(AppDbContext context, ITokenService tokenService, IConfiguration configuration, IWebHostEnvironment env, IAuditService audit, IObjectStorageService objectStorage)
         {
             _context = context;
             _audit = audit;
             _tokenService = tokenService;
             _configuration = configuration;
             _env = env;
+            _objectStorage = objectStorage;
         }
 
         private void SetRefreshTokenCookie(string refreshToken)
         {
             var days = int.TryParse(_configuration["JwtSettings:RefreshExpirationDays"], out var d) ? d : 30;
+            var isDev = _env.IsDevelopment();
             Response.Cookies.Append("refreshToken", refreshToken, new CookieOptions
             {
                 HttpOnly = true,
-                Secure   = !_env.IsDevelopment(),
-                SameSite = SameSiteMode.Lax,
+                Secure   = !isDev,
+                // None is required for cross-origin requests with credentials in most browsers;
+                // fallback to Lax for older clients that reject SameSite=None without Secure.
+                SameSite = isDev ? SameSiteMode.Lax : SameSiteMode.None,
                 Expires  = DateTimeOffset.UtcNow.AddDays(days),
                 Path     = "/",
             });
@@ -670,24 +675,16 @@ namespace Glanz.API.Controllers
                 if (string.IsNullOrWhiteSpace(extension) || !allowedExtensions.Contains(extension))
                     extension = ".jpg";
 
-                var uploadsRoot = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "profiles");
-                Directory.CreateDirectory(uploadsRoot);
-
                 var fileName = $"user-{userId}-{Guid.NewGuid():N}{extension}";
-                var destinationPath = Path.Combine(uploadsRoot, fileName);
-
-                await using (var stream = new FileStream(destinationPath, FileMode.Create))
-                {
-                    await image.CopyToAsync(stream);
-                }
+                var storedImage = await _objectStorage.UploadAsync(image, "profiles", fileName);
 
                 if (IsWorkerRole())
                 {
                     var staff = await _context.Staff.FindAsync(userId);
                     if (staff == null) return NotFound(new { message = "User not found" });
 
-                    DeleteOldProfileImage(uploadsRoot, staff.ProfileImageUrl);
-                    staff.ProfileImageUrl = $"/uploads/profiles/{fileName}";
+                    await DeleteOldProfileImageAsync(staff.ProfileImageUrl);
+                    staff.ProfileImageUrl = storedImage.PublicUrl;
                     staff.UpdatedAt = DateTime.UtcNow;
                     await _context.SaveChangesAsync();
                     return Ok(ToUserDtoFromStaff(staff));
@@ -696,8 +693,8 @@ namespace Glanz.API.Controllers
                 var user = await _context.Users.FindAsync(userId);
                 if (user == null) return NotFound(new { message = "User not found" });
 
-                DeleteOldProfileImage(uploadsRoot, user.ProfileImageUrl);
-                user.ProfileImageUrl = $"/uploads/profiles/{fileName}";
+                await DeleteOldProfileImageAsync(user.ProfileImageUrl);
+                user.ProfileImageUrl = storedImage.PublicUrl;
                 user.UpdatedAt = DateTime.UtcNow;
                 await _context.SaveChangesAsync();
                 return Ok(ToUserDto(user));
@@ -709,16 +706,9 @@ namespace Glanz.API.Controllers
             }
         }
 
-        private static void DeleteOldProfileImage(string uploadsRoot, string? profileImageUrl)
+        private Task DeleteOldProfileImageAsync(string? profileImageUrl)
         {
-            if (!string.IsNullOrWhiteSpace(profileImageUrl)
-                && profileImageUrl.StartsWith("/uploads/profiles/", StringComparison.OrdinalIgnoreCase))
-            {
-                var oldFileName = Path.GetFileName(profileImageUrl);
-                var oldPath = Path.Combine(uploadsRoot, oldFileName);
-                if (System.IO.File.Exists(oldPath))
-                    System.IO.File.Delete(oldPath);
-            }
+            return _objectStorage.DeleteAsync(profileImageUrl);
         }
 
         [Authorize]

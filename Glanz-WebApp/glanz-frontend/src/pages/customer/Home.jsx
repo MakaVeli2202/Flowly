@@ -18,7 +18,6 @@ import SEO from '../../components/shared/SEO';
 import { getBusiness } from '../../config/business';
 import { Skeleton, CardSkeleton, BookingCardSkeleton } from '../../components/shared/Skeleton';
 import { EmptyState } from '../../components/shared/EmptyState';
-import { TiltCard } from '../../components/shared/TiltCard';
 
 function buildLocalBusinessLd() {
   const biz = getBusiness();
@@ -122,6 +121,206 @@ const PRISM_CSS = `
   100% { transform: scale(3); opacity: 0; }
 }
 
+/* ── Adv droplets ── */
+@keyframes adv-drop-slide {
+  0% {
+    transform: translate3d(0, -24%, 0) scale(var(--drop-scale-x, 0.82), var(--drop-scale-y, 1.24));
+    opacity: 0.18;
+  }
+  10% {
+    transform: translate3d(var(--drift-a, -4px), 16%, 0) scale(calc(var(--drop-scale-x, 0.82) * 1.05), calc(var(--drop-scale-y, 1.24) * 0.98));
+    opacity: 0.9;
+  }
+  22% {
+    transform: translate3d(var(--drift-b, 6px), 88%, 0) scale(calc(var(--drop-scale-x, 0.82) * 0.98), calc(var(--drop-scale-y, 1.24) * 1.04));
+    opacity: 0.96;
+  }
+  40% {
+    transform: translate3d(var(--drift-c, -7px), 230%, 0) scale(calc(var(--drop-scale-x, 0.82) * 1.03), calc(var(--drop-scale-y, 1.24) * 0.98));
+    opacity: 0.94;
+  }
+  62% {
+    transform: translate3d(calc(var(--drift-d, 4px) * -1), 430%, 0) scale(calc(var(--drop-scale-x, 0.82) * 1.06), calc(var(--drop-scale-y, 1.24) * 0.94));
+    opacity: 0.86;
+  }
+  82% {
+    transform: translate3d(var(--drift-e, 2px), 620%, 0) scale(calc(var(--drop-scale-x, 0.82) * 0.96), calc(var(--drop-scale-y, 1.24) * 1.08));
+    opacity: 0.68;
+  }
+  100% {
+    transform: translate3d(calc(var(--drift-f, -3px) * 0.8), 860%, 0) scale(calc(var(--drop-scale-x, 0.82) * 0.92), calc(var(--drop-scale-y, 1.24) * 1.12));
+    opacity: 0.34;
+  }
+}
+@keyframes adv-drop-wobble {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1, 1); }
+  25%      { transform: translate3d(-1px, 0, 0) scale(0.98, 1.02); }
+  50%      { transform: translate3d(1.5px, 0, 0) scale(1.02, 0.99); }
+  75%      { transform: translate3d(-1px, 0, 0) scale(0.99, 1.01); }
+}
+@keyframes adv-drop-static {
+  0%, 100% {
+    opacity: 0.26;
+    transform: translate3d(0, 0, 0) scale(0.96);
+  }
+  45% {
+    opacity: 0.46;
+    transform: translate3d(1px, 2px, 0) scale(1.04);
+  }
+  70% {
+    opacity: 0.38;
+    transform: translate3d(-1px, 4px, 0) scale(1.08);
+  }
+}
+@keyframes adv-bubble-float {
+  0% {
+    transform: translate3d(0, 16px, 0) scale(0.88);
+    opacity: 0;
+  }
+  16% {
+    transform: translate3d(var(--bubble-drift-a, -4px), 4px, 0) scale(0.98);
+    opacity: 0.42;
+  }
+  44% {
+    transform: translate3d(var(--bubble-drift-b, 8px), -12px, 0) scale(1.04);
+    opacity: 0.52;
+  }
+  72% {
+    transform: translate3d(var(--bubble-drift-c, -6px), -28px, 0) scale(1.08);
+    opacity: 0.44;
+  }
+  100% {
+    transform: translate3d(var(--bubble-drift-d, 4px), -42px, 0) scale(1.14);
+    opacity: 0;
+  }
+}
+
+.adv-card__droplets {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.adv-card__droplet {
+  --drop-size: 12px;
+  --trail-length: 90px;
+  --drift-a: -4px;
+  --drift-b: 6px;
+  --drift-c: -7px;
+  --drift-d: 4px;
+  --drift-e: -2px;
+  --drift-f: 3px;
+  --drop-scale-x: 0.78;
+  --drop-scale-y: 1.42;
+  position: absolute;
+  width: var(--drop-size);
+  height: calc(var(--drop-size) * 1.32);
+  border-radius: 44% 56% 58% 42% / 22% 22% 78% 78%;
+  background:
+    radial-gradient(circle at 28% 22%, rgba(255,255,255,0.96) 0%, rgba(255,255,255,0.34) 22%, rgba(194,225,255,0.14) 50%, rgba(90,126,160,0.04) 100%),
+    linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0.04) 34%, rgba(150,190,225,0.10) 68%, rgba(12,20,28,0.05) 100%);
+  box-shadow:
+    inset 0 1px 1px rgba(255,255,255,0.52),
+    inset 0 -2px 4px rgba(12,20,28,0.12),
+    0 0 0 1px rgba(255,255,255,0.10),
+    0 10px 18px rgba(10,14,18,0.12),
+    0 0 14px rgba(210,236,255,0.12),
+    0 0 18px rgba(14,165,160,0.06);
+  mix-blend-mode: screen;
+  filter: saturate(1.14) blur(0.2px);
+  will-change: transform, opacity;
+  transform: translate3d(0, 0, 0);
+  opacity: 0;
+}
+
+.adv-card__droplet::before {
+  content: '';
+  position: absolute;
+  top: 10%;
+  left: 20%;
+  width: 34%;
+  height: 20%;
+  border-radius: 999px;
+  background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.92), rgba(255,255,255,0.14) 72%, transparent 100%);
+  filter: blur(0.5px);
+  opacity: 0.9;
+}
+
+.adv-card__droplet::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% - 2px);
+  width: calc(var(--drop-size) * 0.28);
+  height: var(--trail-length);
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: linear-gradient(180deg, transparent 0%, rgba(90,120,145,0.04) 18%, rgba(150,190,220,0.10) 52%, rgba(180,220,255,0.18) 78%, rgba(255,255,255,0.22) 100%);
+  filter: blur(1.2px);
+  opacity: 0.72;
+}
+
+.adv-card__droplet--sliding {
+  animation-name: adv-drop-slide;
+  animation-timing-function: cubic-bezier(0.22, 0.08, 0.18, 1);
+  animation-iteration-count: infinite;
+}
+
+.adv-card__droplet--sliding::after {
+  opacity: 0.78;
+}
+
+.adv-card__droplet--wobble {
+  animation-name: adv-drop-slide, adv-drop-wobble;
+  animation-timing-function: cubic-bezier(0.22, 0.08, 0.18, 1), ease-in-out;
+  animation-iteration-count: infinite, infinite;
+}
+
+.adv-card__droplet--static {
+  opacity: 0.3;
+  animation: adv-drop-static 5.6s ease-in-out infinite;
+}
+
+.adv-card__droplet--static::after {
+  display: none;
+}
+
+.adv-card__droplet--bubble {
+  --drop-scale-x: 1;
+  --drop-scale-y: 1;
+  --bubble-drift-a: -4px;
+  --bubble-drift-b: 8px;
+  --bubble-drift-c: -6px;
+  --bubble-drift-d: 4px;
+  width: var(--drop-size);
+  height: var(--drop-size);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255,255,255,0.88) 0%, rgba(255,255,255,0.18) 16%, rgba(164,214,255,0.12) 44%, rgba(236,184,255,0.09) 63%, rgba(120,155,190,0.05) 78%, transparent 100%),
+    radial-gradient(circle at 68% 72%, rgba(130,255,220,0.08), transparent 52%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,0.22),
+    inset 0 -2px 5px rgba(100,130,160,0.10),
+    0 0 12px rgba(255,255,255,0.10),
+    0 0 20px rgba(184,223,255,0.10);
+  filter: blur(0.2px) saturate(1.08);
+  animation: adv-bubble-float 8.5s ease-in-out infinite;
+}
+
+.adv-card__droplet--bubble::before {
+  top: 18%;
+  left: 20%;
+  width: 30%;
+  height: 30%;
+  opacity: 0.72;
+}
+
+.adv-card__droplet--bubble::after {
+  display: none;
+}
+
 /* ── Cursor orb ── */
 .prism-cursor-blob {
   position: fixed; pointer-events: none; z-index: 0;
@@ -204,6 +403,51 @@ const PRISM_CSS = `
     transparent 55%,
     rgba(200,169,107,0.05) 100%
   );
+}
+
+/* ── Service cards: premium liquid glass ── */
+.service-liquid-card,
+.service-liquid-card-mobile {
+  background: rgba(5, 10, 18, 0.50) !important;
+  backdrop-filter: blur(38px) saturate(215%) brightness(1.08) !important;
+  -webkit-backdrop-filter: blur(38px) saturate(215%) brightness(1.08) !important;
+  border: 1px solid rgba(255,255,255,0.14) !important;
+  box-shadow:
+    inset 0 1.5px 0 rgba(255,255,255,0.20),
+    inset 0 -1px 0 rgba(0,0,0,0.20),
+    0 0 0 0.5px rgba(200,169,107,0.24),
+    0 32px 72px rgba(0,0,0,0.52),
+    0 0 84px rgba(200,169,107,0.10),
+    0 0 66px rgba(14,165,160,0.08) !important;
+}
+
+.service-liquid-card::before,
+.service-liquid-card-mobile::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 0;
+  background: linear-gradient(
+    145deg,
+    rgba(255,255,255,0.14) 0%,
+    rgba(255,255,255,0.045) 24%,
+    transparent 56%,
+    rgba(14,165,160,0.05) 100%
+  );
+}
+
+.service-liquid-card:hover,
+.service-liquid-card-mobile:hover {
+  border-color: rgba(255,255,255,0.2) !important;
+  box-shadow:
+    inset 0 1.5px 0 rgba(255,255,255,0.22),
+    inset 0 -1px 0 rgba(0,0,0,0.22),
+    0 0 0 0.5px rgba(200,169,107,0.32),
+    0 36px 88px rgba(0,0,0,0.56),
+    0 0 104px rgba(200,169,107,0.14),
+    0 0 78px rgba(14,165,160,0.10) !important;
 }
 
 /* ── Prism ray ── */
@@ -324,6 +568,60 @@ function PrismaticCursorOrb() {
   return <div ref={ref} className="prism-cursor-blob" style={{ width: 380, height: 380, top: '-190px', left: '-190px' }} />;
 }
 
+function AdvDroplets({ dense = false }) {
+  const baseDrops = [
+    { cls: 'adv-card__droplet adv-card__droplet--sliding adv-card__droplet--wobble', left: '12%', top: '-10%', size: '12px', trail: '110px', delay: '0.2s', duration: '4.9s, 1.6s', driftA: '-5px', driftB: '7px', driftC: '-8px', driftD: '5px', driftE: '-3px', driftF: '4px', scaleX: '0.78', scaleY: '1.48' },
+    { cls: 'adv-card__droplet adv-card__droplet--sliding', left: '31%', top: '-14%', size: '10px', trail: '84px', delay: '1.4s', duration: '5.6s', driftA: '4px', driftB: '-6px', driftC: '7px', driftD: '-4px', driftE: '3px', driftF: '-2px', scaleX: '0.82', scaleY: '1.38' },
+    { cls: 'adv-card__droplet adv-card__droplet--sliding adv-card__droplet--wobble', left: '58%', top: '-8%', size: '14px', trail: '124px', delay: '0.8s', duration: '6.1s, 1.8s', driftA: '-4px', driftB: '8px', driftC: '-7px', driftD: '6px', driftE: '-4px', driftF: '5px', scaleX: '0.74', scaleY: '1.56' },
+    { cls: 'adv-card__droplet adv-card__droplet--sliding', left: '82%', top: '-12%', size: '9px', trail: '76px', delay: '2.1s', duration: '5.1s', driftA: '3px', driftB: '-5px', driftC: '6px', driftD: '-3px', driftE: '2px', driftF: '-3px', scaleX: '0.84', scaleY: '1.34' },
+    { cls: 'adv-card__droplet adv-card__droplet--static', left: '22%', top: '24%', size: '7px', trail: '0px', delay: '0s', duration: '0s', driftA: '0px', driftB: '0px', driftC: '0px', driftD: '0px', driftE: '0px', driftF: '0px', scaleX: '1', scaleY: '1' },
+    { cls: 'adv-card__droplet adv-card__droplet--static', left: '73%', top: '54%', size: '6px', trail: '0px', delay: '0s', duration: '0s', driftA: '0px', driftB: '0px', driftC: '0px', driftD: '0px', driftE: '0px', driftF: '0px', scaleX: '1', scaleY: '1' },
+    { cls: 'adv-card__droplet adv-card__droplet--bubble', left: '24%', top: '66%', size: '16px', trail: '0px', delay: '0.8s', duration: '8.8s', driftA: '0px', driftB: '0px', driftC: '0px', driftD: '0px', driftE: '0px', driftF: '0px', bubbleA: '-4px', bubbleB: '9px', bubbleC: '-7px', bubbleD: '4px', scaleX: '1', scaleY: '1' },
+    { cls: 'adv-card__droplet adv-card__droplet--bubble', left: '78%', top: '72%', size: '12px', trail: '0px', delay: '3.2s', duration: '9.6s', driftA: '0px', driftB: '0px', driftC: '0px', driftD: '0px', driftE: '0px', driftF: '0px', bubbleA: '3px', bubbleB: '-6px', bubbleC: '7px', bubbleD: '-4px', scaleX: '1', scaleY: '1' },
+  ];
+  const extraDrops = [
+    { cls: 'adv-card__droplet adv-card__droplet--sliding adv-card__droplet--wobble', left: '18%', top: '-18%', size: '15px', trail: '136px', delay: '2.7s', duration: '6.8s, 1.9s', driftA: '-6px', driftB: '9px', driftC: '-10px', driftD: '6px', driftE: '-4px', driftF: '5px', scaleX: '0.72', scaleY: '1.62' },
+    { cls: 'adv-card__droplet adv-card__droplet--sliding', left: '44%', top: '-11%', size: '11px', trail: '92px', delay: '1.9s', duration: '5.4s', driftA: '5px', driftB: '-7px', driftC: '7px', driftD: '-5px', driftE: '3px', driftF: '-3px', scaleX: '0.8', scaleY: '1.44' },
+    { cls: 'adv-card__droplet adv-card__droplet--sliding', left: '67%', top: '-16%', size: '13px', trail: '120px', delay: '3.6s', duration: '6.2s', driftA: '-4px', driftB: '6px', driftC: '-8px', driftD: '5px', driftE: '-3px', driftF: '4px', scaleX: '0.76', scaleY: '1.54' },
+    { cls: 'adv-card__droplet adv-card__droplet--static', left: '12%', top: '44%', size: '8px', trail: '0px', delay: '0s', duration: '0s', driftA: '0px', driftB: '0px', driftC: '0px', driftD: '0px', driftE: '0px', driftF: '0px', scaleX: '1', scaleY: '1' },
+    { cls: 'adv-card__droplet adv-card__droplet--bubble', left: '52%', top: '64%', size: '18px', trail: '0px', delay: '1.8s', duration: '10.4s', driftA: '0px', driftB: '0px', driftC: '0px', driftD: '0px', driftE: '0px', driftF: '0px', bubbleA: '-5px', bubbleB: '8px', bubbleC: '-6px', bubbleD: '5px', scaleX: '1', scaleY: '1' },
+    { cls: 'adv-card__droplet adv-card__droplet--bubble', left: '86%', top: '58%', size: '14px', trail: '0px', delay: '4.4s', duration: '9.2s', driftA: '0px', driftB: '0px', driftC: '0px', driftD: '0px', driftE: '0px', driftF: '0px', bubbleA: '4px', bubbleB: '-5px', bubbleC: '6px', bubbleD: '-3px', scaleX: '1', scaleY: '1' },
+  ];
+
+  const drops = dense ? [...baseDrops, ...extraDrops] : baseDrops;
+
+  return (
+    <div className="adv-card__droplets">
+      {drops.map((d, i) => (
+        <div
+          key={`${d.left}-${d.top}-${i}`}
+          className={d.cls}
+          style={{
+            left: d.left,
+            top: d.top,
+            '--drop-size': d.size,
+            '--trail-length': d.trail,
+            '--drift-a': d.driftA,
+            '--drift-b': d.driftB,
+            '--drift-c': d.driftC,
+            '--drift-d': d.driftD,
+            '--drift-e': d.driftE,
+            '--drift-f': d.driftF,
+            '--drop-scale-x': d.scaleX,
+            '--drop-scale-y': d.scaleY,
+            '--bubble-drift-a': d.bubbleA,
+            '--bubble-drift-b': d.bubbleB,
+            '--bubble-drift-c': d.bubbleC,
+            '--bubble-drift-d': d.bubbleD,
+            animationDelay: d.cls.includes('adv-card__droplet--wobble') ? `${d.delay}, ${d.delay}` : d.delay,
+            animationDuration: d.duration,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
 /* ── Review Card ──────────────────────────────────────────── */
 function ReviewCard({ review }) {
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -337,9 +635,7 @@ function ReviewCard({ review }) {
   };
   return (
     <div ref={cardRef} className="review-liquid prism-glass rounded-2xl p-6 flex flex-col h-full relative overflow-hidden" onMouseMove={onMouse}>
-      <div className="lq-bar" />
-      <div className="lq-top" />
-      <div className="lq-r1" /><div className="lq-r2" /><div className="lq-r3" />
+      <AdvDroplets />
       <span aria-hidden="true" className="absolute -top-1 right-4 text-8xl leading-none font-serif pointer-events-none select-none"
         style={{ background: 'linear-gradient(135deg,rgba(255,0,100,.18),rgba(255,165,0,.18),rgba(0,255,100,.18),rgba(0,150,255,.18))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
         &ldquo;
@@ -965,11 +1261,7 @@ function Home() {
 
         <div className="container mx-auto px-4 relative z-10 py-16 md:py-20 flex flex-col items-center">
           <div ref={heroCardRef} className="hero-glass max-w-5xl w-full mx-auto" style={{ willChange: 'transform' }}>
-            {/* Prism rays — spread wider across the bigger card */}
-            <div className="prism-ray" style={{ left: '8%',  width: '18%', animation: 'prism-ray-sweep 16s ease-in-out 0s infinite' }} />
-            <div className="prism-ray" style={{ left: '38%', width: '14%', animation: 'prism-ray-sweep 11s ease-in-out 4s infinite' }} />
-            <div className="prism-ray" style={{ left: '68%', width: '10%', animation: 'prism-ray-sweep  9s ease-in-out 8s infinite' }} />
-            <div className="prism-ray" style={{ left: '85%', width: '8%',  animation: 'prism-ray-sweep 13s ease-in-out 2s infinite' }} />
+            <AdvDroplets dense />
 
             {/* Top edge accent line */}
             <div className="absolute top-0 left-[10%] right-[10%] h-[1.5px] hero-animate hero-animate-1"
@@ -1098,10 +1390,13 @@ function Home() {
                     e.currentTarget.style.setProperty('--py', `${((e.clientY - r.top) / r.height * 100).toFixed(1)}%`);
                   }}
                 >
-                  <div className="lq-bar" />
-                  <div className="lq-top" />
-                  <div className={`lq-r${(i % 3) + 1}`} /><div className={`lq-r${(i % 3) + 2 > 3 ? 1 : (i % 3) + 2}`} />
-                  <div className="prism-ray" style={{ left: '10%', width: '80%', animation: `prism-ray-sweep ${12 + i * 3}s ease-in-out ${i * 1.5}s infinite` }} />
+                  <div className="adv-card__droplets">
+                    <div className="adv-card__droplet adv-card__droplet--sliding adv-card__droplet--wobble" style={{ left: '14%', top: '-8%', '--drop-size': '6px', '--trail-length': '40px', animationDelay: `${0.9 + i * 0.7}s, ${0.9 + i * 0.7}s`, animationDuration: `${8.2 + i * 0.8}s, 2.2s` }} />
+                    <div className="adv-card__droplet adv-card__droplet--sliding" style={{ left: '62%', top: '-6%', '--drop-size': '8px', '--trail-length': '54px', animationDelay: `${2.8 + i * 0.6}s`, animationDuration: `${9.8 + i * 0.9}s` }} />
+                    <div className="adv-card__droplet adv-card__droplet--sliding adv-card__droplet--wobble" style={{ left: '84%', top: '-10%', '--drop-size': '5px', '--trail-length': '36px', animationDelay: `${4.1 + i * 0.5}s, ${4.1 + i * 0.5}s`, animationDuration: `${10.2 + i * 0.6}s, 2.6s` }} />
+                    <div className="adv-card__droplet adv-card__droplet--static" style={{ left: '33%', top: '26%', '--drop-size': '4px', '--trail-length': '0px', animationDelay: '0s', animationDuration: '0s' }} />
+                    <div className="adv-card__droplet adv-card__droplet--static" style={{ left: '76%', top: '58%', '--drop-size': '3px', '--trail-length': '0px', animationDelay: '0s', animationDuration: '0s' }} />
+                  </div>
                   <div className="relative z-10">
                     <span className="block text-[0.6rem] font-black tracking-[0.32em] mb-5"
                       style={{ color: item.accent, opacity: 0.6 }}>
@@ -1169,9 +1464,9 @@ function Home() {
             {serviceHighlights.map((service, index) => {
               const accent = CARD_ACCENTS[index % CARD_ACCENTS.length];
               return (
-              <TiltCard
+              <div
                 key={service.title}
-                className="service-h-card glass-card prism-glass flex-shrink-0 flex flex-col justify-between relative overflow-hidden"
+                className="service-h-card service-liquid-card glass-card prism-glass flex-shrink-0 flex flex-col justify-between relative overflow-hidden"
                 style={{ width: '500px', height: '540px', padding: '40px' }}
                 onMouseMove={(e) => {
                   const r = e.currentTarget.getBoundingClientRect();
@@ -1179,11 +1474,9 @@ function Home() {
                   e.currentTarget.style.setProperty('--py', `${((e.clientY - r.top)  / r.height * 100).toFixed(1)}%`);
                 }}
               >
-                <div className="lq-top" />
-                <div className="lq-r1" /><div className="lq-r2" /><div className="lq-r3" /><div className="lq-r4" />
+                <AdvDroplets dense />
                 <div className="absolute top-0 left-0 right-0 h-[2px]"
                   style={{ background: `linear-gradient(90deg, transparent, ${accent}, ${accent === '#c8a96b' ? '#fff' : '#c8a96b'}, ${accent}, transparent)`, animation: 'liquid-shimmer 5s ease-in-out infinite', backgroundSize: '200% 100%' }} />
-                <div className="prism-ray" style={{ left: '15%', width: '30%', animation: `prism-ray-sweep ${12 + index * 4}s ease-in-out ${index * 3}s infinite` }} />
                 <span className="absolute bottom-4 right-6 font-black pointer-events-none select-none"
                   style={{ fontSize: '9rem', lineHeight: 1, color: accent, opacity: 0.045 }}>
                   {String(index + 1).padStart(2, '0')}
@@ -1229,7 +1522,7 @@ function Home() {
                     </button>
                   </div>
                 </div>
-              </TiltCard>
+              </div>
               );
             })}
 
@@ -1262,9 +1555,8 @@ function Home() {
                   className="premium-btn inline-flex items-center gap-2"
                 >{service.cta}<ArrowRight size={18} /></button>
               </div>
-               <TiltCard className="glass-card p-7 relative overflow-hidden">
-                <div className="lq-bar" /><div className="lq-top" /><div className="lq-r1" /><div className="lq-r3" />
-                <div className="prism-ray" style={{ left: '20%', width: '35%', animation: `prism-ray-sweep ${11 + index * 3}s ease-in-out ${index * 2.5}s infinite` }} />
+               <div className="service-liquid-card-mobile glass-card p-7 relative overflow-hidden">
+                <AdvDroplets />
                 <p className="text-[0.62rem] font-bold tracking-[0.22em] uppercase text-primary mb-5 relative z-10">{ui.whatsIncluded}</p>
                 <ul className="space-y-3.5 relative z-10">
                   {service.features.map(feat => (
@@ -1273,7 +1565,7 @@ function Home() {
                     </li>
                   ))}
                  </ul>
-               </TiltCard>
+                 </div>
             </div>
           ))}
         </div>
@@ -1312,9 +1604,7 @@ function Home() {
         <div className="container mx-auto px-4">
           <div ref={brandRef} className="cta-prism-glow rounded-2xl">
             <div className="glass-card p-8 md:p-12 text-center relative overflow-hidden">
-              <div className="lq-top" /><div className="lq-r1" /><div className="lq-r2" /><div className="lq-r3" /><div className="lq-r4" />
-              <div className="prism-ray" style={{ left: '8%',  width: '22%', animation: 'prism-ray-sweep 13s ease-in-out 2s infinite' }} />
-              <div className="prism-ray" style={{ left: '62%', width: '16%', animation: 'prism-ray-sweep 9s ease-in-out 6s infinite' }} />
+              <AdvDroplets dense />
               <h2 className="premium-heading text-3xl md:text-4xl font-bold text-[var(--heading-color)] mb-6 relative z-10">{BRAND_VALUE.title}</h2>
               <p className="text-base md:text-lg text-[var(--muted-color)] leading-relaxed max-w-3xl mx-auto relative z-10">{BRAND_VALUE.description}</p>
             </div>
@@ -1335,7 +1625,7 @@ function Home() {
               return (
                 <div key={feature.key}>
                   <div className="glass-card feature-card p-7 text-center h-full relative overflow-hidden">
-                    <div className="lq-bar" /><div className="lq-top" /><div className={`lq-r${(index % 3) + 1}`} />
+                    <AdvDroplets />
                     {/* Top accent line per card */}
                     <div className="absolute top-0 left-[20%] right-[20%] h-[1.5px]"
                       style={{ background: index % 2 === 0
@@ -1453,9 +1743,7 @@ function Home() {
         <div className="container mx-auto px-4">
           <div className="cta-prism-glow rounded-2xl reveal-up">
             <div className="glass-card p-8 md:p-12 text-center relative overflow-hidden">
-              <div className="lq-top" /><div className="lq-r1" /><div className="lq-r2" /><div className="lq-r3" /><div className="lq-r4" />
-              <div className="prism-ray" style={{ left: '22%', width: '22%', animation: 'prism-ray-sweep 12s ease-in-out 1s infinite' }} />
-              <div className="prism-ray" style={{ left: '68%', width: '14%', animation: 'prism-ray-sweep 8s ease-in-out 5s infinite' }} />
+              <AdvDroplets dense />
               <div className="flex items-center justify-center gap-3 mb-4">
                 <Sparkles className="text-primary" size={22} />
                 <h2 className="premium-heading text-4xl md:text-5xl font-bold text-[var(--heading-color)]">{homePageContent.curatedTitle}</h2>
@@ -1473,13 +1761,11 @@ function Home() {
         <div className="container mx-auto px-4">
           <div className="cta-prism-glow rounded-2xl reveal-up">
             <div className="glass-card p-8 md:p-12 text-center relative overflow-hidden">
-              <div className="lq-top" /><div className="lq-r1" /><div className="lq-r2" /><div className="lq-r3" /><div className="lq-r4" />
+              <AdvDroplets dense />
               {DOTS.map((d, i) => (
                 <div key={i} className="pointer-events-none absolute rounded-full"
                   style={{ top: d.top, left: d.left, right: d.right, width: d.size, height: d.size, background: d.color, animation: `${d.anim} ${6 + i}s ease-in-out ${d.delay} infinite` }} />
               ))}
-              <div className="prism-ray" style={{ left: '5%',  width: '24%', animation: 'prism-ray-sweep 13s ease-in-out 3s infinite' }} />
-              <div className="prism-ray" style={{ left: '64%', width: '19%', animation: 'prism-ray-sweep 9s ease-in-out 7s infinite' }} />
               <div className="relative z-10">
                 <div className="flex items-center justify-center gap-2 mb-5">
                   <Zap className="text-primary" size={18} />
@@ -1507,7 +1793,7 @@ function Home() {
             onClick={e => e.stopPropagation()}
             style={{ maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}
           >
-            <div className="lq-top" /><div className="lq-r1" /><div className="lq-r2" /><div className="lq-r3" />
+            <AdvDroplets />
             {/* Top accent line */}
             <div className="h-[2px] flex-shrink-0"
               style={{ background: `linear-gradient(90deg, transparent, ${CARD_ACCENTS[0]}, ${CARD_ACCENTS[1]}, transparent)` }} />

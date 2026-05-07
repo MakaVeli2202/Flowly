@@ -16,6 +16,13 @@ export const BUSINESS = {
   email: 'info@Glanz.qa',
   location: 'Doha, Qatar',
   serviceAreas: ['Doha', 'Al Rayyan', 'Al Wakrah', 'Lusail', 'Al Khor', 'Dukhan', 'Al Shahaniya'],
+  socialLinks: {
+    facebook: '',
+    twitter: '',
+    instagram: '',
+    linkedin: '',
+    youtube: '',
+  },
 };
 
 const STORAGE_KEY = 'businessConfig';
@@ -40,8 +47,8 @@ export function saveBusiness(updates) {
     const current = getBusiness();
     const merged = { ...current, ...updates };
     // Only persist the overridable fields
-    const { name, namePrefix, nameSuffix, tagline, phone, email, location, serviceAreas } = merged;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ name, namePrefix, nameSuffix, tagline, phone, email, location, serviceAreas }));
+    const { name, namePrefix, nameSuffix, tagline, phone, email, location, serviceAreas, socialLinks } = merged;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ name, namePrefix, nameSuffix, tagline, phone, email, location, serviceAreas, socialLinks }));
     window.dispatchEvent(new CustomEvent('businessConfigChanged', { detail: merged }));
     return merged;
   } catch {

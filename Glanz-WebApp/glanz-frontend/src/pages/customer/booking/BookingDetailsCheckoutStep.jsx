@@ -13,8 +13,6 @@ const CUSTOMER_FIELDS = [
   { label: 'Phone Number',  name: 'customerPhone', type: 'tel',   Icon: Phone, placeholder: '+974 3300 0000',  colSpan: 'md:col-span-2' },
 ];
 
-const ADDRESS_TYPES = ['Home', 'Work', 'Other'];
-
 const PAYMENT_METHODS = [
   { id: 'card',       label: 'Credit / Debit Card', Icon: CreditCard },
   { id: 'google_pay', label: 'Google Pay',          Icon: Shield },
@@ -91,24 +89,6 @@ function BookingDetailsCheckoutStep({
           required
           helperText={addressHelperText}
         />
-        {!isAdmin && (
-          <div className="mt-4">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-color)] mb-2">Address Type</p>
-            <div className="flex gap-2">
-              {ADDRESS_TYPES.map((type) => (
-                <button key={type} type="button"
-                  onClick={() => setFormData((prev) => ({ ...prev, addressType: type }))}
-                  className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border-2 transition-all ${
-                    formData.addressType === type
-                      ? 'border-primary bg-primary/15 text-primary'
-                      : 'border-[var(--border-color)] text-[var(--muted-color)] hover:border-primary/40'
-                  }`}>
-                  {type}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
         <div className="mt-5">
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-color)] mb-2">Special Instructions</p>
           <textarea name="specialInstructions" value={formData.specialInstructions} onChange={handleChange}

@@ -18,12 +18,14 @@ namespace Glanz.API.Controllers
         private readonly AppDbContext _context;
         private readonly IAdminNotificationService _notificationService;
         private readonly IAuditService _audit;
+        private readonly IObjectStorageService _objectStorage;
 
-        public OffersController(AppDbContext context, IAdminNotificationService notificationService, IAuditService audit)
+        public OffersController(AppDbContext context, IAdminNotificationService notificationService, IAuditService audit, IObjectStorageService objectStorage)
         {
             _context = context;
             _notificationService = notificationService;
             _audit = audit;
+            _objectStorage = objectStorage;
         }
 
         private int? GetUserId()
@@ -220,28 +222,11 @@ namespace Glanz.API.Controllers
                 if (!allowedExtensions.Contains(extension))
                     extension = ".jpg";
 
-                var uploadsRoot = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "loyalty-reviews");
-                Directory.CreateDirectory(uploadsRoot);
-
-                // Delete old screenshot if exists
-                if (!string.IsNullOrWhiteSpace(user.LoyaltyReviewScreenshotUrl)
-                    && user.LoyaltyReviewScreenshotUrl.StartsWith("/uploads/loyalty-reviews/", StringComparison.OrdinalIgnoreCase))
-                {
-                    var oldFileName = Path.GetFileName(user.LoyaltyReviewScreenshotUrl);
-                    var oldPath = Path.Combine(uploadsRoot, oldFileName);
-                    if (System.IO.File.Exists(oldPath))
-                        System.IO.File.Delete(oldPath);
-                }
+                await _objectStorage.DeleteAsync(user.LoyaltyReviewScreenshotUrl);
 
                 var fileName = $"review-{user.Id}-{Guid.NewGuid():N}{extension}";
-                var filePath = Path.Combine(uploadsRoot, fileName);
-
-                await using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    await screenshot.CopyToAsync(stream);
-                }
-
-                user.LoyaltyReviewScreenshotUrl = $"/uploads/loyalty-reviews/{fileName}";
+                var storedScreenshot = await _objectStorage.UploadAsync(screenshot, "loyalty-reviews", fileName);
+                user.LoyaltyReviewScreenshotUrl = storedScreenshot.PublicUrl;
             }
 
             await _context.SaveChangesAsync();
@@ -310,6 +295,9 @@ namespace Glanz.API.Controllers
                 return BadRequest(new { message = "No pending review request for this user." });
 
             user.LoyaltyGoogleReviewActivatedAt ??= DateTime.UtcNow;
+            user.LoyaltyReviewPendingAt = null;
+            await _objectStorage.DeleteAsync(user.LoyaltyReviewScreenshotUrl);
+            user.LoyaltyReviewScreenshotUrl = null;
             user.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
@@ -333,7 +321,9 @@ namespace Glanz.API.Controllers
             var user = await _context.Users.FindAsync(userId);
             if (user == null) return NotFound(new { message = "User not found." });
 
+            await _objectStorage.DeleteAsync(user.LoyaltyReviewScreenshotUrl);
             user.LoyaltyReviewPendingAt = null;
+            user.LoyaltyReviewScreenshotUrl = null;
             user.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 

@@ -129,18 +129,19 @@ export default function AdminSettings() {
             Saturday:  data.businessHours.saturday  || '10:00-16:00',
           });
         }
-        if (data?.businessConfig) {
-          const bc = data.businessConfig;
-          setBiz(b => ({
-            ...b,
-            ...(bc.name         && { name:         bc.name }),
-            ...(bc.tagline      && { tagline:       bc.tagline }),
-            ...(bc.phone        && { phone:         bc.phone }),
-            ...(bc.email        && { email:         bc.email }),
-            ...(bc.location     && { location:      bc.location }),
-            ...(bc.serviceAreas && { serviceAreas:  bc.serviceAreas }),
-          }));
-        }
+                if (data?.businessConfig) {
+                  const bc = data.businessConfig;
+                  setBiz(b => ({
+                    ...b,
+                    ...(bc.name         && { name:         bc.name }),
+                    ...(bc.tagline      && { tagline:       bc.tagline }),
+                    ...(bc.phone        && { phone:         bc.phone }),
+                    ...(bc.email        && { email:         bc.email }),
+                    ...(bc.location     && { location:      bc.location }),
+                    ...(bc.serviceAreas && { serviceAreas:  bc.serviceAreas }),
+                    ...(bc.socialLinks  && { socialLinks:   bc.socialLinks }),
+                  }));
+                }
       })
       .catch(() => {});
   }, []);
@@ -428,51 +429,79 @@ export default function AdminSettings() {
                     onChange={e => setBiz(b => ({ ...b, location: e.target.value }))}
                     className="field-input" placeholder="e.g. Doha, Qatar" />
                 </div>
-                <div className="sm:col-span-2">
-                  <label className="field-label">Service Areas (cities / districts)</label>
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    {(biz.serviceAreas || []).map((area, i) => (
-                      <span key={i} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold"
-                        style={{ background: 'rgba(200,169,107,.12)', color: '#c8a96b', border: '1px solid rgba(200,169,107,.28)' }}>
-                        {area}
-                        <button type="button"
-                          onClick={() => setBiz(b => ({ ...b, serviceAreas: (b.serviceAreas || []).filter((_, j) => j !== i) }))}
-                          className="text-[var(--muted-color)] hover:text-rose-400 transition-colors ml-0.5">
-                          ×
-                        </button>
-                      </span>
-                    ))}
-                    {(!biz.serviceAreas || biz.serviceAreas.length === 0) && (
-                      <span className="text-xs text-[var(--muted-color)]">No areas added</span>
-                    )}
-                  </div>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={newArea}
-                      onChange={e => setNewArea(e.target.value)}
-                      onKeyDown={e => {
-                        if (e.key === 'Enter' && newArea.trim()) {
-                          setBiz(b => ({ ...b, serviceAreas: [...(b.serviceAreas || []), newArea.trim()] }));
-                          setNewArea('');
-                        }
-                      }}
-                      placeholder="Type area name and press Enter"
-                      className="field-input flex-1"
-                    />
-                    <button type="button"
-                      onClick={() => {
-                        if (newArea.trim()) {
-                          setBiz(b => ({ ...b, serviceAreas: [...(b.serviceAreas || []), newArea.trim()] }));
-                          setNewArea('');
-                        }
-                      }}
-                      className="px-4 py-2.5 rounded-xl text-xs font-bold transition"
-                      style={{ background: 'rgba(200,169,107,.12)', color: '#c8a96b', border: '1px solid rgba(200,169,107,.28)' }}>
-                      + Add
-                    </button>
-                  </div>
-                </div>
+                 <div className="sm:col-span-2">
+                   <label className="field-label">Service Areas (cities / districts)</label>
+                   <div className="flex flex-wrap gap-2 mb-3">
+                     {(biz.serviceAreas || []).map((area, i) => (
+                       <span key={i} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold"
+                         style={{ background: 'rgba(200,169,107,.12)', color: '#c8a96b', border: '1px solid rgba(200,169,107,.28)' }}>
+                         {area}
+                         <button type="button"
+                           onClick={() => setBiz(b => ({ ...b, serviceAreas: (b.serviceAreas || []).filter((_, j) => j !== i) }))}
+                           className="text-[var(--muted-color)] hover:text-rose-400 transition-colors ml-0.5">
+                           ×
+                         </button>
+                       </span>
+                     ))}
+                     {(!biz.serviceAreas || biz.serviceAreas.length === 0) && (
+                       <span className="text-xs text-[var(--muted-color)]">No areas added</span>
+                     )}
+                   </div>
+                   <div className="flex gap-2">
+                     <input
+                       type="text"
+                       value={newArea}
+                       onChange={e => setNewArea(e.target.value)}
+                       onKeyDown={e => {
+                         if (e.key === 'Enter' && newArea.trim()) {
+                           setBiz(b => ({ ...b, serviceAreas: [...(b.serviceAreas || []), newArea.trim()] }));
+                           setNewArea('');
+                         }
+                       }}
+                       placeholder="Type area name and press Enter"
+                       className="field-input flex-1"
+                     />
+                     <button type="button"
+                       onClick={() => {
+                         if (newArea.trim()) {
+                           setBiz(b => ({ ...b, serviceAreas: [...(b.serviceAreas || []), newArea.trim()] }));
+                           setNewArea('');
+                         }
+                       }}
+                       className="px-4 py-2.5 rounded-xl text-xs font-bold transition"
+                       style={{ background: 'rgba(200,169,107,.12)', color: '#c8a96b', border: '1px solid rgba(200,169,107,.28)' }}>
+                       + Add
+                     </button>
+                   </div>
+                 </div>
+
+                 {/* Social Links */}
+                 <div className="sm:col-span-2 mt-4">
+                   <label className="field-label">Social Media Links</label>
+                   <div className="space-y-3">
+                     {[
+                       { id: 'facebook', label: 'Facebook' },
+                       { id: 'twitter', label: 'Twitter/X' },
+                       { id: 'instagram', label: 'Instagram' },
+                       { id: 'linkedin', label: 'LinkedIn' },
+                       { id: 'youtube', label: 'YouTube' },
+                     ].map(({ id, label }) => (
+                       <div key={id} className="flex items-center gap-3">
+                         <span className="w-24 text-xs font-medium text-[var(--muted-color)]">{label}</span>
+                         <input
+                           type="url"
+                           value={biz.socialLinks?.[id] || ''}
+                           onChange={e => setBiz(b => ({
+                             ...b,
+                             socialLinks: { ...(b.socialLinks || {}), [id]: e.target.value }
+                           }))}
+                           placeholder={`https://${id}.com/your-page`}
+                           className="field-input flex-1"
+                         />
+                       </div>
+                     ))}
+                   </div>
+                 </div>
               </div>
 
               <div className="cta-prism-glow rounded-xl">
@@ -482,15 +511,16 @@ export default function AdminSettings() {
                   onClick={async () => {
                     setBizSaving(true);
                     setBizError('');
-                    try {
-                      await settingsAPI.updateBusinessConfig({
-                        name:         biz.name,
-                        tagline:      biz.tagline,
-                        phone:        biz.phone,
-                        email:        biz.email,
-                        location:     biz.location,
-                        serviceAreas: biz.serviceAreas,
-                      });
+                try {
+                    await settingsAPI.updateBusinessConfig({
+                      name:         biz.name,
+                      tagline:      biz.tagline,
+                      phone:        biz.phone,
+                      email:        biz.email,
+                      location:     biz.location,
+                      serviceAreas: biz.serviceAreas,
+                      socialLinks:  biz.socialLinks,
+                    });
                       saveBusiness(biz);
                       setBizSaved(true);
                       setTimeout(() => setBizSaved(false), 3000);

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Data.Common;
+using Amazon.S3;
 using Glanz.API.Data;
 using Glanz.API.Services;
 using Glanz.API.Hubs;
@@ -116,6 +117,46 @@ else
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.Configure<ObjectStorageOptions>(builder.Configuration.GetSection(ObjectStorageOptions.SectionName));
+builder.Services.AddSingleton<IAmazonS3>(serviceProvider =>
+{
+    var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+    var options = configuration.GetSection(ObjectStorageOptions.SectionName).Get<ObjectStorageOptions>() ?? new ObjectStorageOptions();
+    var provider = options.Provider?.Trim();
+
+    if (!string.Equals(provider, ObjectStorageProviders.S3, StringComparison.OrdinalIgnoreCase))
+    {
+        return new AmazonS3Client(new AmazonS3Config
+        {
+            ServiceURL = "http://localhost",
+            ForcePathStyle = true,
+            UseHttp = true,
+        });
+    }
+
+    if (string.IsNullOrWhiteSpace(options.AccessKey) || string.IsNullOrWhiteSpace(options.SecretKey))
+    {
+        throw new InvalidOperationException("ObjectStorage credentials must be configured when Provider is S3.");
+    }
+
+    var s3Config = new AmazonS3Config
+    {
+        ForcePathStyle = options.UsePathStyle,
+    };
+
+    if (!string.IsNullOrWhiteSpace(options.ServiceUrl))
+    {
+        s3Config.ServiceURL = options.ServiceUrl;
+    }
+    else if (!string.IsNullOrWhiteSpace(options.Region))
+    {
+        s3Config.RegionEndpoint = Amazon.RegionEndpoint.GetBySystemName(options.Region);
+    }
+
+    return new AmazonS3Client(options.AccessKey, options.SecretKey, s3Config);
+});
+builder.Services.AddSingleton<IObjectStorageService, ObjectStorageService>();
 
 // Security & audit services
 builder.Services.AddHttpContextAccessor();

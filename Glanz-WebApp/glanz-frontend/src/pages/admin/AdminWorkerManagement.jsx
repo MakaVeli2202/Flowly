@@ -8,6 +8,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { forceStopWorker } from '../../api/realtimeService';
 
 const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const SHIFT_HOURS = ['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00','21:00'];
 const SHIFTS = [
   { label: 'Early Morning', start: '06:00', end: '14:00' },
   { label: 'Morning', start: '07:00', end: '15:00' },
@@ -16,6 +17,40 @@ const SHIFTS = [
   { label: 'Evening', start: '14:00', end: '22:00' },
   { label: 'Night', start: '20:00', end: '06:00' },
 ];
+
+function parseSchedule(worker) {
+  const workingDays = worker.workingDays
+    ? worker.workingDays.split(',').map((d) => d.trim()).filter(Boolean)
+    : ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+  const dayOverrides = {};
+  if (Array.isArray(worker.daySchedules)) {
+    for (const entry of worker.daySchedules) {
+      if (entry.day) {
+        dayOverrides[entry.day] = {
+          start: entry.shiftStart || worker.shiftStart || '09:00',
+          end: entry.shiftEnd || worker.shiftEnd || '18:00',
+        };
+      }
+    }
+  }
+
+  return {
+    workingDays,
+    shiftStart: worker.shiftStart || '09:00',
+    shiftEnd: worker.shiftEnd || '18:00',
+    dayOverrides,
+  };
+}
+
+function formatTimeRange(start, end) {
+  return `${start || '--:--'} - ${end || '--:--'}`;
+}
+
+function summarizeWorkingDays(workingDays) {
+  if (!Array.isArray(workingDays) || workingDays.length === 0) return 'No schedule';
+  return workingDays.map((day) => day.slice(0, 3)).join(', ');
+}
 
 export default function WorkerManagement() {
   const { t } = useLanguage();
@@ -52,16 +87,32 @@ export default function WorkerManagement() {
     if (!editWorker) return;
     try {
       setSaving(true);
+      const daySchedules = Object.entries(editWorker.dayOverrides || {}).map(([day, value]) => ({
+        day,
+        shiftStart: value.start,
+        shiftEnd: value.end,
+      }));
       await authAPI.updateWorkerSchedule(editWorker.id, {
-        workingDays: editWorker.workingDays,
+        workingDays: editWorker.workingDays.join(','),
         shiftStart: editWorker.shiftStart,
         shiftEnd: editWorker.shiftEnd,
+        daySchedules: daySchedules.length > 0 ? daySchedules : null,
       });
-      setWorkers(prev => prev.map(w => w.id === editWorker.id ? editWorker : w));
+      await fetchWorkers();
       setEditWorker(null);
     } catch (err) {
       alert(err?.response?.data?.message || 'Failed to save schedule.');
     } finally { setSaving(false); }
+  };
+
+  const getEffectiveShift = (day) => {
+    const override = editWorker?.dayOverrides?.[day];
+    if (override) return { ...override, custom: true };
+    return {
+      start: editWorker?.shiftStart || '09:00',
+      end: editWorker?.shiftEnd || '18:00',
+      custom: false,
+    };
   };
 
   const filteredWorkers = workers.filter(w => 
@@ -132,6 +183,11 @@ export default function WorkerManagement() {
         <div className="grid gap-4">
           {filteredWorkers.map(worker => (
             <div key={worker.id} className="glass-card rounded-xl p-4">
+              {(() => {
+                const parsed = parseSchedule(worker);
+                const customDays = Object.keys(parsed.dayOverrides);
+                return (
+                  <>
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
@@ -152,16 +208,30 @@ export default function WorkerManagement() {
               </div>
 
               <div className="mt-4 pt-4 border-t border-[var(--border-color)]/30">
-                <div className="flex items-center gap-4 text-sm">
+                <div className="flex flex-wrap items-center gap-4 text-sm">
                   <div className="flex items-center gap-2 text-[var(--muted-color)]">
                     <Clock size={14} />
-                    <span>{worker.shiftStart || '--:--'} - {worker.shiftEnd || '--:--'}</span>
+                    <span>{formatTimeRange(parsed.shiftStart, parsed.shiftEnd)}</span>
                   </div>
                   <div className="flex items-center gap-2 text-[var(--muted-color)]">
                     <Calendar size={14} />
-                    <span>{worker.workingDays?.split(',').join(', ') || 'No schedule'}</span>
+                    <span>{summarizeWorkingDays(parsed.workingDays)}</span>
                   </div>
+                  {customDays.length > 0 && (
+                    <span className="px-2 py-1 rounded-full text-[11px] font-semibold bg-primary/15 text-primary border border-primary/25">
+                      {customDays.length} custom day{customDays.length > 1 ? 's' : ''}
+                    </span>
+                  )}
                 </div>
+                {customDays.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {customDays.map((day) => (
+                      <span key={day} className="px-2.5 py-1 rounded-lg text-[11px] bg-[var(--surface-bg)] border border-[var(--border-color)] text-[var(--muted-color)]">
+                        {day.slice(0, 3)} {formatTimeRange(parsed.dayOverrides[day].start, parsed.dayOverrides[day].end)}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <button
@@ -177,26 +247,49 @@ export default function WorkerManagement() {
               </button>
 
               <button
-                onClick={() => setEditWorker(worker)}
+                onClick={() => setEditWorker({ ...worker, ...parseSchedule(worker) })}
                 className="mt-3 text-sm text-primary hover:text-primary/80 flex items-center gap-1"
               >
                 <ChevronRight size={14} className="-rotate-90" /> Edit Schedule
               </button>
+                  </>
+                );
+              })()}
             </div>
           ))}
         </div>
 
         {editWorker && (
           <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="glass-card rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="glass-card rounded-2xl shadow-2xl max-w-3xl w-full p-6 max-h-[90vh] overflow-y-auto">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-bold text-[var(--heading-color)]">Edit Schedule</h3>
+                <div>
+                  <h3 className="text-lg font-bold text-[var(--heading-color)]">Edit Schedule</h3>
+                  <p className="text-sm text-[var(--muted-color)] mt-1">Keep preset choices. See exact times. Adjust custom hours when needed.</p>
+                </div>
                 <button onClick={() => setEditWorker(null)} className="p-2 hover:bg-white/5 rounded-lg">
                   <X size={18} className="text-[var(--muted-color)]" />
                 </button>
               </div>
 
-              <div className="space-y-4">
+              <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 mb-5">
+                <div className="grid md:grid-cols-3 gap-3 text-sm">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider text-[var(--muted-color)] mb-1">Default Shift</p>
+                    <p className="font-semibold text-[var(--heading-color)]">{formatTimeRange(editWorker.shiftStart, editWorker.shiftEnd)}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider text-[var(--muted-color)] mb-1">Working Days</p>
+                    <p className="font-semibold text-[var(--heading-color)]">{editWorker.workingDays.length}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider text-[var(--muted-color)] mb-1">Custom Days</p>
+                    <p className="font-semibold text-[var(--heading-color)]">{Object.keys(editWorker.dayOverrides || {}).length}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-5">
                 <div>
                   <label className="block text-xs uppercase tracking-wider text-[var(--muted-color)] mb-2">Working Days</label>
                   <div className="flex flex-wrap gap-2">
@@ -204,11 +297,13 @@ export default function WorkerManagement() {
                       <button
                         key={day}
                         onClick={() => {
-                          const days = editWorker.workingDays?.split(',') || [];
+                          const days = editWorker.workingDays || [];
                           const newDays = days.includes(day) ? days.filter(d => d !== day) : [...days, day];
-                          setEditWorker({ ...editWorker, workingDays: newDays.join(',') });
+                          const nextOverrides = { ...(editWorker.dayOverrides || {}) };
+                          if (!newDays.includes(day)) delete nextOverrides[day];
+                          setEditWorker({ ...editWorker, workingDays: newDays, dayOverrides: nextOverrides });
                         }}
-                        className={`px-3 py-1.5 rounded-lg text-sm ${editWorker.workingDays?.split(',').includes(day) ? 'bg-primary text-white' : 'bg-[var(--surface-bg)] text-[var(--muted-color)]'}`}
+                        className={`px-3 py-1.5 rounded-lg text-sm ${editWorker.workingDays.includes(day) ? 'bg-primary text-white' : 'bg-[var(--surface-bg)] text-[var(--muted-color)]'}`}
                       >
                         {day.slice(0, 3)}
                       </button>
@@ -217,17 +312,126 @@ export default function WorkerManagement() {
                 </div>
 
                 <div>
-                  <label className="block text-xs uppercase tracking-wider text-[var(--muted-color)] mb-2">Shift</label>
-                  <div className="grid grid-cols-2 gap-2">
+                  <label className="block text-xs uppercase tracking-wider text-[var(--muted-color)] mb-2">Shift Presets</label>
+                  <div className="grid md:grid-cols-2 gap-2">
                     {SHIFTS.map(shift => (
                       <button
                         key={shift.label}
                         onClick={() => setEditWorker({ ...editWorker, shiftStart: shift.start, shiftEnd: shift.end })}
-                        className={`px-3 py-2 rounded-lg text-sm ${editWorker.shiftStart === shift.start ? 'bg-primary text-white' : 'bg-[var(--surface-bg)] text-[var(--muted-color)]'}`}
+                        className={`px-3 py-3 rounded-xl text-left border transition ${editWorker.shiftStart === shift.start && editWorker.shiftEnd === shift.end ? 'bg-primary/15 text-white border-primary/40' : 'bg-[var(--surface-bg)] text-[var(--muted-color)] border-[var(--border-color)]'}`}
                       >
-                        {shift.label}
+                        <span className="block font-semibold text-sm">{shift.label}</span>
+                        <span className="block text-xs mt-1 opacity-80">{formatTimeRange(shift.start, shift.end)}</span>
                       </button>
                     ))}
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs uppercase tracking-wider text-[var(--muted-color)] mb-2">Custom Default Start</label>
+                    <select
+                      value={editWorker.shiftStart}
+                      onChange={(e) => setEditWorker({ ...editWorker, shiftStart: e.target.value })}
+                      className="w-full px-3 py-2.5 rounded-xl bg-[var(--surface-bg)] border border-[var(--border-color)] text-[var(--text-color)]"
+                    >
+                      {SHIFT_HOURS.map((hour) => <option key={hour} value={hour}>{hour}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs uppercase tracking-wider text-[var(--muted-color)] mb-2">Custom Default End</label>
+                    <select
+                      value={editWorker.shiftEnd}
+                      onChange={(e) => setEditWorker({ ...editWorker, shiftEnd: e.target.value })}
+                      className="w-full px-3 py-2.5 rounded-xl bg-[var(--surface-bg)] border border-[var(--border-color)] text-[var(--text-color)]"
+                    >
+                      {SHIFT_HOURS.map((hour) => <option key={hour} value={hour}>{hour}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between gap-3 mb-3">
+                    <label className="block text-xs uppercase tracking-wider text-[var(--muted-color)]">Per-Day Custom Hours</label>
+                    <span className="text-xs text-[var(--muted-color)]">Uses default shift unless overridden below</span>
+                  </div>
+
+                  <div className="space-y-3">
+                    {editWorker.workingDays.length === 0 ? (
+                      <div className="rounded-xl border border-[var(--border-color)] bg-[var(--surface-bg)] p-4 text-sm text-[var(--muted-color)]">
+                        Select working days first.
+                      </div>
+                    ) : editWorker.workingDays.map((day) => {
+                      const effective = getEffectiveShift(day);
+                      return (
+                        <div key={day} className="rounded-xl border border-[var(--border-color)] bg-[var(--surface-bg)] p-4">
+                          <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+                            <div>
+                              <p className="font-semibold text-[var(--heading-color)]">{day}</p>
+                              <p className="text-xs text-[var(--muted-color)] mt-1">
+                                {effective.custom ? `Custom hours: ${formatTimeRange(effective.start, effective.end)}` : `Using default: ${formatTimeRange(editWorker.shiftStart, editWorker.shiftEnd)}`}
+                              </p>
+                            </div>
+                            {effective.custom ? (
+                              <button
+                                onClick={() => {
+                                  const nextOverrides = { ...(editWorker.dayOverrides || {}) };
+                                  delete nextOverrides[day];
+                                  setEditWorker({ ...editWorker, dayOverrides: nextOverrides });
+                                }}
+                                className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-[var(--border-color)] text-[var(--muted-color)] hover:text-[var(--text-color)]"
+                              >
+                                Reset to Default
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => setEditWorker({
+                                  ...editWorker,
+                                  dayOverrides: {
+                                    ...(editWorker.dayOverrides || {}),
+                                    [day]: { start: editWorker.shiftStart, end: editWorker.shiftEnd },
+                                  },
+                                })}
+                                className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary/15 text-primary border border-primary/25"
+                              >
+                                Set Custom Hours
+                              </button>
+                            )}
+                          </div>
+
+                          {effective.custom && (
+                            <div className="grid md:grid-cols-2 gap-3">
+                              <select
+                                value={effective.start}
+                                onChange={(e) => setEditWorker({
+                                  ...editWorker,
+                                  dayOverrides: {
+                                    ...(editWorker.dayOverrides || {}),
+                                    [day]: { ...(editWorker.dayOverrides?.[day] || {}), start: e.target.value, end: effective.end },
+                                  },
+                                })}
+                                className="w-full px-3 py-2.5 rounded-xl bg-black/10 border border-[var(--border-color)] text-[var(--text-color)]"
+                              >
+                                {SHIFT_HOURS.map((hour) => <option key={hour} value={hour}>{hour}</option>)}
+                              </select>
+                              <select
+                                value={effective.end}
+                                onChange={(e) => setEditWorker({
+                                  ...editWorker,
+                                  dayOverrides: {
+                                    ...(editWorker.dayOverrides || {}),
+                                    [day]: { ...(editWorker.dayOverrides?.[day] || {}), start: effective.start, end: e.target.value },
+                                  },
+                                })}
+                                className="w-full px-3 py-2.5 rounded-xl bg-black/10 border border-[var(--border-color)] text-[var(--text-color)]"
+                              >
+                                {SHIFT_HOURS.map((hour) => <option key={hour} value={hour}>{hour}</option>)}
+                              </select>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               </div>

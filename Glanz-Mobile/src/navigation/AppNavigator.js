@@ -46,6 +46,16 @@ import LiveWorkerMapScreen from '../screens/LiveWorkerMapScreen';
 import AdminJobPositionsScreen from '../screens/AdminJobPositionsScreen';
 import AdminContentScreen from '../screens/AdminContentScreen';
 import AdminSubscriptionBookingsScreen from '../screens/AdminSubscriptionBookingsScreen';
+import CareersScreen from '../screens/CareersScreen';
+import AdminBookingDetailScreen from '../screens/AdminBookingDetailScreen';
+import AdminPayrollScreen from '../screens/AdminPayrollScreen';
+import AdminWorkerScheduleScreen from '../screens/AdminWorkerScheduleScreen';
+import AdminFinancialReportScreen from '../screens/AdminFinancialReportScreen';
+import AdminOperationalReportScreen from '../screens/AdminOperationalReportScreen';
+import AdminPlansScreen from '../screens/AdminPlansScreen';
+import AdminSkillsScreen from '../screens/AdminSkillsScreen';
+import AdminJobApplicationsScreen from '../screens/AdminJobApplicationsScreen';
+import AdminDevSettingsScreen from '../screens/AdminDevSettingsScreen';
 
 const Stack  = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -103,17 +113,24 @@ const ADMIN_DRAWER_ITEMS = [
   { name: 'Admin Home',          icon: 'grid-outline',          iconFilled: 'grid',          label: 'Dashboard'        },
   { name: 'Today Jobs',          icon: 'radio-outline',         iconFilled: 'radio',         label: "Today's Dispatch" },
   { name: 'All Jobs',            icon: 'briefcase-outline',     iconFilled: 'briefcase',     label: 'All Jobs'         },
-  { name: 'Admin Reports',       icon: 'bar-chart-outline',     iconFilled: 'bar-chart',     label: 'Reports'          },
+  { name: 'Financial Reports',   icon: 'bar-chart-outline',     iconFilled: 'bar-chart',     label: 'Financial'        },
+  { name: 'Operational Reports', icon: 'stats-chart-outline',    iconFilled: 'stats-chart',    label: 'Operational'     },
+  { name: 'Admin Payroll',       icon: 'cash-outline',          iconFilled: 'cash',          label: 'Payroll'          },
+  { name: 'Worker Schedule',     icon: 'calendar-outline',      iconFilled: 'calendar',      label: 'Schedule'         },
   { name: 'Admin Products',      icon: 'cube-outline',          iconFilled: 'cube',          label: 'Products'         },
   { name: 'Admin Services',      icon: 'construct-outline',     iconFilled: 'construct',     label: 'Services'         },
   { name: 'Admin Packages',      icon: 'layers-outline',        iconFilled: 'layers',        label: 'Packages'         },
   { name: 'Admin Offers',        icon: 'ticket-outline',        iconFilled: 'ticket',        label: 'Offers'           },
+  { name: 'Admin Plans',         icon: 'repeat-outline',        iconFilled: 'repeat',        label: 'Plans'            },
+  { name: 'Admin Skills',        icon: 'construct-outline',     iconFilled: 'construct',     label: 'Skills'           },
+  { name: 'Job Applications',    icon: 'document-text-outline', iconFilled: 'document-text', label: 'Applications'     },
   { name: 'Admin Subscriptions', icon: 'repeat-outline',        iconFilled: 'repeat',        label: 'Subscriptions'    },
   { name: 'Worker Management',   icon: 'people-outline',        iconFilled: 'people',        label: 'Workers'          },
   { name: 'Admin Staff',        icon: 'person-outline',         iconFilled: 'person',         label: 'Manage Staff'    },
   { name: 'Create Worker',       icon: 'person-add-outline',    iconFilled: 'person-add',    label: 'Add Worker'       },
   { name: 'Admin Notifications', icon: 'notifications-outline', iconFilled: 'notifications', label: 'Notifications'    },
   { name: 'System Settings',     icon: 'settings-outline',      iconFilled: 'settings',      label: 'System Settings'  },
+  { name: 'Dev Settings',        icon: 'code-outline',          iconFilled: 'code',          label: 'Dev Settings'     },
   { name: 'Admin Job Positions',  icon: 'briefcase-outline',      iconFilled: 'briefcase',      label: 'Job Positions'   },
   { name: 'Admin Content',     icon: 'document-text-outline', iconFilled: 'document-text', label: 'Content'        },
   { name: 'Sub Bookings',     icon: 'repeat-outline',       iconFilled: 'repeat',        label: 'Sub Bookings'    },
@@ -126,6 +143,7 @@ const DRAWER_ITEMS = [
   { name: 'Subscriptions', icon: 'repeat-outline',              iconFilled: 'repeat',              label: 'Subscriptions'},
   { name: 'Booking',       icon: 'calendar-outline',            iconFilled: 'calendar',            label: 'Book Now'     },
   { name: 'My Bookings',   icon: 'list-outline',                iconFilled: 'list',                label: 'My Bookings'  },
+  { name: 'Careers',       icon: 'briefcase-outline',           iconFilled: 'briefcase',           label: 'Careers'      },
   { name: 'Assistant',     icon: 'chatbubble-ellipses-outline', iconFilled: 'chatbubble-ellipses', label: 'AI Assistant' },
   { name: 'Profile',       icon: 'person-circle-outline',       iconFilled: 'person-circle',       label: 'Profile'      },
 ];
@@ -440,6 +458,7 @@ function CustomerStack() {
       <Stack.Screen name="MySubscription"         component={MySubscriptionScreen}       options={{ title: t('navigation.customer.mySubscription') }} />
       <Stack.Screen name="SubscriptionCheckout"    component={SubscriptionCheckoutScreen} options={{ title: t('navigation.customer.checkout') }} />
       <Stack.Screen name="Live Tracking"           component={LiveWorkerMapScreen}        options={{ title: t('navigation.customer.liveTracking') }} />
+      <Stack.Screen name="Careers"                component={CareersScreen}              options={{ title: t('careers.title', 'Careers') }} />
     </Stack.Navigator>
   );
 }
@@ -478,6 +497,7 @@ function AdminStack() {
       <Stack.Screen name="Create Booking"       component={BookingScreen}             options={{ title: t('navigation.admin.createBooking') }}                                   />
       <Stack.Screen name="Today Jobs"           component={AdminJobsScreen}           initialParams={{ mode: 'today' }} options={{ title: t('navigation.admin.todayJobs') }}   />
       <Stack.Screen name="All Jobs"             component={AdminJobsScreen}           initialParams={{ mode: 'all' }}   options={{ title: t('navigation.admin.allJobs') }}        />
+      <Stack.Screen name="Booking Detail"       component={AdminBookingDetailScreen} options={{ title: t('admin.bookingDetail.title', 'Booking Detail') }} />
       <Stack.Screen name="Booking Confirmation" component={BookingConfirmationScreen} options={{ title: t('navigation.customer.confirmation') }}                                      />
       <Stack.Screen name="Admin Notifications"  component={NotificationsScreen}       options={{ title: t('notifications.title'), headerRight: () => null }}            />
       <Stack.Screen name="Create Worker"        component={CreateWorkerScreen}        options={{ title: t('navigation.admin.createWorker') }}                                     />
@@ -488,6 +508,14 @@ function AdminStack() {
       <Stack.Screen name="Admin Packages"      component={AdminPackagesScreen}       options={{ title: t('navigation.admin.items.Admin Packages') }}                                          />
       <Stack.Screen name="Admin Offers"        component={AdminOffersScreen}         options={{ title: t('navigation.admin.offersDiscounts') }}                                />
       <Stack.Screen name="Admin Reports"       component={AdminReportsScreen}        options={{ title: t('navigation.admin.items.Admin Reports') }}                                           />
+      <Stack.Screen name="Financial Reports"   component={AdminFinancialReportScreen} options={{ title: t('admin.reports.financial', 'Financial Reports') }} />
+      <Stack.Screen name="Operational Reports" component={AdminOperationalReportScreen} options={{ title: t('admin.reports.operational', 'Operational Reports') }} />
+      <Stack.Screen name="Admin Payroll"       component={AdminPayrollScreen}        options={{ title: t('admin.payroll.title', 'Payroll') }} />
+      <Stack.Screen name="Worker Schedule"      component={AdminWorkerScheduleScreen} options={{ title: t('admin.schedule.title', 'Worker Schedule') }} />
+      <Stack.Screen name="Admin Plans"         component={AdminPlansScreen}          options={{ title: t('admin.plans.title', 'Subscription Plans') }} />
+      <Stack.Screen name="Admin Skills"         component={AdminSkillsScreen}         options={{ title: t('admin.skills.title', 'Worker Skills') }} />
+      <Stack.Screen name="Job Applications"    component={AdminJobApplicationsScreen} options={{ title: t('admin.jobApps.title', 'Job Applications') }} />
+      <Stack.Screen name="Dev Settings"         component={AdminDevSettingsScreen}    options={{ title: t('admin.devSettings.title', 'Developer Settings') }} />
       <Stack.Screen name="Admin Subscriptions" component={AdminSubscriptionsScreen}  options={{ title: t('navigation.admin.items.Admin Subscriptions') }}                                     />
       <Stack.Screen name="System Settings"     component={AdminSystemSettingsScreen} options={{ title: t('navigation.admin.items.System Settings') }}                                   />
       <Stack.Screen name="Admin Job Positions"  component={AdminJobPositionsScreen}  options={{ title: t('navigation.admin.items.Admin Job Positions') }}                                    />

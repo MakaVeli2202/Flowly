@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
 import { Clock, Car, Zap, AlertCircle } from 'lucide-react';
+import NumberFlow from '@number-flow/react';
 import { formatQAR } from '../../../utils/currency';
 import { SectionHeading } from './BookingShared';
 
@@ -27,6 +28,8 @@ function BookingVehiclePackageStep({
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   }, [setFormData]);
+
+  const selectedPackageId = selectedPackages[0]?.packageId ?? null;
 
   return (
     <>
@@ -86,9 +89,9 @@ function BookingVehiclePackageStep({
             No packages available right now. Please try again later.
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="rounded-[28px] border-2 border-[var(--border-color)] bg-white/5 p-3 shadow-md space-y-3">
             {packages.map((pkg) => {
-              const isSelected = selectedPackages.some((p) => p.packageId === pkg.id);
+              const isSelected = selectedPackageId === pkg.id;
               const adjPrice   = Math.round(pkg.price * vehicleMultiplier * 100) / 100;
               return (
                 <button
@@ -100,22 +103,18 @@ function BookingVehiclePackageStep({
                     e.currentTarget.style.setProperty('--px', `${((e.clientX - r.left) / r.width  * 100).toFixed(1)}%`);
                     e.currentTarget.style.setProperty('--py', `${((e.clientY - r.top)  / r.height * 100).toFixed(1)}%`);
                   }}
-                  className={`w-full text-left rounded-xl border-2 p-4 transition-all duration-200 relative overflow-hidden prism-glass ${
+                  className={`w-full text-left rounded-2xl border-2 p-4 transition-all duration-300 relative overflow-hidden prism-glass ${
                     isSelected
-                      ? 'border-primary bg-primary/6 pkg-selected-glow'
-                      : 'border-[var(--border-color)] hover:border-primary/40 hover:bg-white/3'
+                      ? 'border-black bg-white/15 pkg-selected-glow'
+                      : 'border-gray-400/70 hover:border-primary/40 hover:bg-white/6'
                   }`}
                 >
-                  {isSelected && (
-                    <div className="absolute inset-0 pointer-events-none"
-                      style={{ background: 'linear-gradient(135deg, rgba(200,169,107,0.07) 0%, transparent 55%)' }} />
-                  )}
                   <div className="relative flex items-start justify-between gap-4">
                     <div className="flex items-start gap-3 flex-1 min-w-0">
                       <div className={`mt-0.5 w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all ${
-                        isSelected ? 'border-primary bg-primary' : 'border-[var(--border-color)]'
+                        isSelected ? 'border-black' : 'border-slate-500'
                       }`}>
-                        {isSelected && <div className="w-2 h-2 rounded-full bg-[var(--ink)]" />}
+                        <div className="w-2.5 h-2.5 rounded-full bg-black transition-opacity duration-300" style={{ opacity: isSelected ? 1 : 0 }} />
                       </div>
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
@@ -136,7 +135,10 @@ function BookingVehiclePackageStep({
                       {vehicleMultiplier !== 1.0 && (
                         <p className="text-xs text-[var(--muted-color)] line-through">{formatQAR(pkg.price)}</p>
                       )}
-                      <p className="text-xl font-bold text-primary">{formatQAR(adjPrice)}</p>
+                      <p className="text-xl font-bold text-primary inline-flex items-center gap-1">
+                        <span>QAR</span>
+                        <NumberFlow value={adjPrice} className="text-primary font-bold" />
+                      </p>
                     </div>
                   </div>
                 </button>
