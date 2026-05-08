@@ -1,514 +1,373 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Animated,
+  ActivityIndicator,
+  FlatList,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
-import * as Location from 'expo-location';
-import MapView, { Marker, Polyline, PROVIDER_DEFAULT } from 'react-native-maps';
+import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
 import { Ionicons } from '@expo/vector-icons';
+
 import { locationAPI } from '../api/location';
-import { bookingsAPI } from '../api/bookings';
-import { addressesAPI } from '../api/addresses';
-import { theme } from '../theme/theme';
 import realtimeService from '../api/realtimeService';
+import { useRealtimeStatus } from '../hooks/useRealtimeStatus';
 
 const STATUS_COLORS = {
-  OnTheWay:   '#7C3AED',
+  OnTheWay: '#7C3AED',
   InProgress: '#C084FC',
-  Completed:  '#84CC16',
-  Cancelled:  '#F87171',
+  Confirmed: '#60A5FA',
+  Pending: '#FBBF24',
+  Completed: '#84CC16',
+  Cancelled: '#F87171',
 };
 
-const SIGNAL_STALE_MS = 30_000;
-const AVG_SPEED_KMH = 35;
-
-// Default map region — will be overridden once we have real coords
-const DEFAULT_REGION = {
-  latitude:       25.2854,
-  longitude:      51.5310,
-  latitudeDelta:  0.05,
-  longitudeDelta: 0.05,
+const DOHA_REGION = {
+  latitude: 25.2854,
+  longitude: 51.531,
+  latitudeDelta: 0.2,
+  longitudeDelta: 0.2,
 };
 
-function distanceKm(a, b) {
-  if (!a || !b) return null;
-  const toRad = (deg) => (deg * Math.PI) / 180;
-  const R = 6371;
-  const dLat = toRad(b.latitude - a.latitude);
-  const dLon = toRad(b.longitude - a.longitude);
-  const lat1 = toRad(a.latitude);
-  const lat2 = toRad(b.latitude);
-  const h = Math.sin(dLat / 2) ** 2
-    + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
-  return R * (2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h)));
+function hasValidCoordinates(lat, lng) {
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return false;
+  if (Math.abs(lat) > 90 || Math.abs(lng) > 180) return false;
+  if (Math.abs(lat) < 0.000001 && Math.abs(lng) < 0.000001) return false;
+  return true;
 }
 
-function estimateEtaMinutes(workerCoords, customerCoords) {
-  const km = distanceKm(workerCoords, customerCoords);
-  if (!km) return null;
-  const mins = Math.ceil((km / AVG_SPEED_KMH) * 60);
-  return Math.max(1, mins);
-}
+export default function LiveWorkerMapScreen() {
+  const wsStatus = useRealtimeStatus();
 
-export default function LiveWorkerMapScreen({ route, navigation }) {
-  const bookingId = route?.params?.bookingId;
-  const bookingNumber = route?.params?.bookingNumber;
+  const mapRef = useRef(null);
+  const unsubRef = useRef(null);
 
-  const [workerLocation,   setWorkerLocation]   = useState(null);
-  const [customerLocation, setCustomerLocation] = useState(null);
-  const [booking,          setBooking]          = useState(null);
-  const [loading,          setLoading]          = useState(true);
-  const [error,            setError]            = useState('');
-  const [isTrackingActive, setIsTrackingActive] = useState(false);
-  const [lastUpdate,       setLastUpdate]       = useState(null);
-  const [pathCoords,       setPathCoords]       = useState([]);  // trail of GPS points
+  const [workers, setWorkers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [selectedWorkerId, setSelectedWorkerId] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastUpdate, setLastUpdate] = useState(null);
 
-  const mapRef    = useRef(null);
-  const unsubRef  = useRef(null);
-  const pulseAnim = useRef(new Animated.Value(1)).current;
-  const initialCameraSetRef = useRef(false);
-  const customerGeoAttemptedRef = useRef(false);
+  const normalizeWorkers = useCallback((list) => {
+    return (list || [])
+      .map((w) => ({
+        ...w,
+        workerId: Number(w.workerId),
+        latitude: Number(w.latitude ?? w.lat ?? w.currentLatitude),
+        longitude: Number(w.longitude ?? w.lng ?? w.currentLongitude),
+      }))
+      .filter((w) => Number.isFinite(w.workerId));
+  }, []);
 
-  // Pulse animation for live indicator
-  useEffect(() => {
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, { toValue: 1.4, duration: 800, useNativeDriver: true }),
-        Animated.timing(pulseAnim, { toValue: 1,   duration: 800, useNativeDriver: true }),
-      ])
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [pulseAnim]);
+  const validWorkers = useMemo(() => {
+    return workers.filter((w) => hasValidCoordinates(w.latitude, w.longitude));
+  }, [workers]);
 
-  const resolveCustomerLocation = useCallback(async (bookingData) => {
-    if (customerGeoAttemptedRef.current) return;
-    customerGeoAttemptedRef.current = true;
+  const selectedWorker = useMemo(() => {
+    return workers.find((w) => w.workerId === selectedWorkerId) || null;
+  }, [workers, selectedWorkerId]);
 
-    if (!bookingData) return;
+  const fitToWorkers = useCallback((list) => {
+    const valid = (list || []).filter((w) => hasValidCoordinates(w.latitude, w.longitude));
+    if (!mapRef.current || valid.length === 0) return;
 
-    const directLat = Number(
-      bookingData.customerLatitude
-      ?? bookingData.latitude
-      ?? bookingData.lat
-      ?? bookingData.addressLatitude
-    );
-    const directLng = Number(
-      bookingData.customerLongitude
-      ?? bookingData.longitude
-      ?? bookingData.lng
-      ?? bookingData.addressLongitude
-    );
-
-    if (Number.isFinite(directLat) && Number.isFinite(directLng)) {
-      setCustomerLocation({ latitude: directLat, longitude: directLng });
+    if (valid.length === 1) {
+      mapRef.current.animateToRegion(
+        {
+          latitude: valid[0].latitude,
+          longitude: valid[0].longitude,
+          latitudeDelta: 0.015,
+          longitudeDelta: 0.015,
+        },
+        350
+      );
       return;
     }
 
-    const address = String(bookingData.customerAddress || '').trim();
-    if (!address) return;
-
-    try {
-      const rawParts = address.split(',').map((p) => p.trim()).filter(Boolean);
-      const geoQueries = [
-        address,
-        `${address}, Doha, Qatar`,
-        rawParts.slice(0, 2).join(', '),
-        `${rawParts[0] || ''}, Doha`,
-      ].filter(Boolean);
-
-      for (const q of geoQueries) {
-        const suggestions = await addressesAPI.autocomplete(q, 1);
-        const first = suggestions?.[0];
-        const lat = Number(first?.latitude ?? first?.lat);
-        const lng = Number(first?.longitude ?? first?.lng ?? first?.lon);
-        if (Number.isFinite(lat) && Number.isFinite(lng)) {
-          setCustomerLocation({ latitude: lat, longitude: lng });
-          return;
-        }
+    mapRef.current.fitToCoordinates(
+      valid.map((w) => ({ latitude: w.latitude, longitude: w.longitude })),
+      {
+        edgePadding: { top: 90, right: 70, bottom: 230, left: 70 },
+        animated: true,
       }
-
-      // Device geocoder fallback when API autocomplete cannot resolve this exact format.
-      const nativeResults = await Location.geocodeAsync(address);
-      if (nativeResults?.length > 0) {
-        const firstNative = nativeResults[0];
-        const lat = Number(firstNative?.latitude);
-        const lng = Number(firstNative?.longitude);
-        if (Number.isFinite(lat) && Number.isFinite(lng)) {
-          setCustomerLocation({ latitude: lat, longitude: lng });
-          return;
-        }
-      }
-    } catch {
-      // Non-blocking: worker stream should still render even if address geocoding fails.
-    }
+    );
   }, []);
 
-  const loadBooking = useCallback(async () => {
-    if (!bookingNumber) return;
+  const fetchWorkers = useCallback(async () => {
     try {
-      const data = await bookingsAPI.getByBookingNumber(bookingNumber);
-      setBooking(data);
-      if (!customerLocation) {
-        resolveCustomerLocation(data);
-      }
-      if (data.status === 'Completed' || data.status === 'Cancelled' || data.workerArrivedAt) {
-        setIsTrackingActive(false);
-      }
-    } catch (err) {
-      setError('Failed to load tracking data.');
-      console.warn('Failed to load booking:', err);
-    }
-  }, [bookingNumber, customerLocation, resolveCustomerLocation]);
-
-  const loadWorkerLocation = useCallback(async () => {
-    if (!bookingId) return;
-    try {
-      const location = await locationAPI.getLocation(bookingId);
-      if (location?.latitude && location?.longitude) {
-        const coords = { latitude: location.latitude, longitude: location.longitude };
-        setWorkerLocation(coords);
-        setPathCoords([coords]);
-        setLastUpdate(new Date());
-        setError('');
-        setIsTrackingActive(true);
-      }
-      if (location?.status === 'Completed' || location?.status === 'Cancelled') {
-        setIsTrackingActive(false);
-      }
-    } catch (err) {
-      if (err?.response?.status === 404) {
-        // Do not flash red error for normal "not started yet" state.
-        setIsTrackingActive(false);
-      }
-      if (err?.response?.status !== 404) console.warn('Failed to load worker location:', err);
-    }
-  }, [bookingId]);
-
-  // Initial load
-  useEffect(() => {
-    const init = async () => {
-      setLoading(true);
-      await Promise.allSettled([loadBooking(), loadWorkerLocation()]);
-      setLoading(false);
-    };
-    init();
-  }, [loadBooking, loadWorkerLocation]);
-
-  // WebSocket: subscribe to live customer location stream
-  useEffect(() => {
-    if (!bookingId) return;
-
-    const isTerminal = booking?.status === 'Completed' || booking?.status === 'Cancelled';
-    if (isTerminal) {
-      setIsTrackingActive(false);
-      return undefined;
-    }
-
-    // Always subscribe so customer still receives first update even if screen opened
-    // before worker pressed "On My Way".
-    realtimeService.subscribeToCustomerLocation(bookingId);
-
-    unsubRef.current = realtimeService.onLocationUpdate((data) => {
-      if (!data?.bookingId || String(data.bookingId) !== String(bookingId)) return;
-
-      const lat = data.latitude ?? data.lat;
-      const lng = data.longitude ?? data.lng;
-      if (!lat || !lng) return;
-
-      const coords = { latitude: lat, longitude: lng };
-      setWorkerLocation(coords);
-      setLastUpdate(new Date());
-      setIsTrackingActive(true);
+      const data = await locationAPI.getLiveWorkers();
+      const list = normalizeWorkers(data);
+      setWorkers(list);
       setError('');
-      setPathCoords((prev) => [...prev.slice(-49), coords]); // keep last 50 trail points
+      setLastUpdate(new Date());
+      fitToWorkers(list);
+    } catch (err) {
+      const status = err?.response?.status;
+      if (status === 401) {
+        setError('Session expired. Please log in again.');
+      } else if (status === 403) {
+        setError('Admin access required for live worker map.');
+      } else {
+        setError('Failed to load worker locations.');
+      }
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [fitToWorkers, normalizeWorkers]);
+
+  useEffect(() => {
+    let alive = true;
+
+    fetchWorkers().then(() => {
+      if (!alive) return;
+
+      unsubRef.current = realtimeService.onLocationUpdate((data) => {
+        if (data?.workerId == null) return;
+
+        setWorkers((prev) => {
+          const next = [...prev];
+          const idx = next.findIndex((w) => w.workerId === Number(data.workerId));
+          const existing = idx >= 0 ? next[idx] : {};
+
+          const updated = {
+            ...existing,
+            ...data,
+            workerId: Number(data.workerId),
+            latitude: Number(data.latitude ?? data.lat ?? existing.latitude),
+            longitude: Number(data.longitude ?? data.lng ?? existing.longitude),
+            timestamp: data.timestamp || new Date().toISOString(),
+          };
+
+          if (idx >= 0) next[idx] = updated;
+          else next.push(updated);
+
+          return next;
+        });
+
+        setLastUpdate(new Date());
+      });
     });
 
     return () => {
-      if (unsubRef.current) { unsubRef.current(); unsubRef.current = null; }
+      alive = false;
+      if (unsubRef.current) {
+        unsubRef.current();
+        unsubRef.current = null;
+      }
     };
-  }, [booking?.status, bookingId]);
+  }, [fetchWorkers]);
 
-  // Keep retrying while waiting so location appears as soon as worker starts stream.
   useEffect(() => {
-    if (!bookingId) return undefined;
-    if (booking?.status === 'Completed' || booking?.status === 'Cancelled') return undefined;
+    if (wsStatus === 'connected') {
+      realtimeService.subscribeToAllAdminLocations();
+      return undefined;
+    }
 
     const timer = setInterval(() => {
-      loadWorkerLocation();
-      loadBooking();
-    }, 10_000);
+      fetchWorkers();
+    }, 7000);
 
     return () => clearInterval(timer);
-  }, [booking?.status, bookingId, loadBooking, loadWorkerLocation]);
+  }, [fetchWorkers, wsStatus]);
 
-  // One-time camera setup. Keep map stable after first paint (Uber-like behavior).
-  useEffect(() => {
-    if (initialCameraSetRef.current) return;
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchWorkers();
+  }, [fetchWorkers]);
 
-    const focus = workerLocation || customerLocation;
-    if (!focus) return;
+  const openWorker = useCallback((worker) => {
+    setSelectedWorkerId(worker.workerId);
+    if (!hasValidCoordinates(worker.latitude, worker.longitude) || !mapRef.current) return;
 
-    mapRef.current?.animateToRegion({
-      ...focus,
-      latitudeDelta: 0.02,
-      longitudeDelta: 0.02,
-    }, 350);
-    initialCameraSetRef.current = true;
-  }, [customerLocation, workerLocation]);
-
-  const getStatusLabel = (status) => {
-    const map = {
-      Pending: 'Pending', Confirmed: 'Confirmed', OnTheWay: 'On The Way',
-      InProgress: 'In Progress', Completed: 'Completed', Cancelled: 'Cancelled',
-    };
-    return map[status] || status;
-  };
-
-  const statusColor = STATUS_COLORS[booking?.status] || theme.colors.primary;
-  const etaMinutes = estimateEtaMinutes(workerLocation, customerLocation);
-  const isSignalFresh = lastUpdate ? (Date.now() - lastUpdate.getTime()) <= SIGNAL_STALE_MS : false;
-  const signalLost = Boolean(workerLocation) && !isSignalFresh && booking?.status !== 'Completed' && booking?.status !== 'Cancelled';
-  const showEta = booking?.status !== 'Completed' && booking?.status !== 'Cancelled';
-
-  if (loading) {
-    return (
-      <View style={[l.container, l.center]}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
-        <Text style={l.loadingText}>Loading tracking data...</Text>
-      </View>
+    mapRef.current.animateToRegion(
+      {
+        latitude: worker.latitude,
+        longitude: worker.longitude,
+        latitudeDelta: 0.015,
+        longitudeDelta: 0.015,
+      },
+      300
     );
-  }
+  }, []);
 
   return (
-    <View style={l.container}>
-      {/* Header */}
-      <View style={l.header}>
-        <TouchableOpacity style={l.backButton} onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={20} color={theme.colors.text} />
-        </TouchableOpacity>
-        <View style={l.headerCenter}>
-          <Text style={l.headerTitle}>Live Tracking</Text>
-          <Text style={l.headerSubtitle}>{getStatusLabel(booking?.status)}</Text>
-        </View>
-        {isTrackingActive && (
-          <Animated.View style={[l.livePulse, { transform: [{ scale: pulseAnim }] }]}>
-            <View style={l.liveDot} />
-          </Animated.View>
-        )}
-      </View>
-
-      {/* Real Map */}
-      <MapView
-        ref={mapRef}
-        style={l.map}
-        provider={PROVIDER_DEFAULT}
-        initialRegion={DEFAULT_REGION}
-        showsUserLocation={false}
-        showsCompass={true}
-        showsScale={true}
-      >
-        {/* Worker marker */}
-        {workerLocation && (
-          <Marker
-            coordinate={workerLocation}
-            title="Worker"
-            description={`${getStatusLabel(booking?.status)} · Last update ${lastUpdate?.toLocaleTimeString() ?? ''}`}
-          >
-            <View style={[l.workerMarkerOuter, { borderColor: statusColor }]}> 
-              <View style={l.workerMarkerInner}> 
-                <Ionicons name="car-sport" size={16} color="#111827" />
-              </View>
-            </View>
-          </Marker>
-        )}
-
-        {/* Customer location marker */}
-        {customerLocation && (
-          <Marker
-            coordinate={customerLocation}
-            title="Your Location"
-          >
-            <View style={l.customerMarkerOuter}>
-              <View style={l.customerMarkerInner}>
-                <Ionicons name="location" size={16} color="#fff" />
-              </View>
-            </View>
-          </Marker>
-        )}
-
-        {/* GPS trail polyline */}
-        {pathCoords.length > 1 && (
-          <Polyline
-            coordinates={pathCoords}
-            strokeColor={statusColor}
-            strokeWidth={3}
-            lineDashPattern={[4, 4]}
-          />
-        )}
+    <View style={styles.root}>
+      <MapView ref={mapRef} provider={PROVIDER_DEFAULT} style={styles.map} initialRegion={DOHA_REGION}>
+        {validWorkers.map((worker) => {
+          const color = STATUS_COLORS[worker.status] || '#6B7280';
+          return (
+            <Marker
+              key={worker.workerId}
+              coordinate={{ latitude: worker.latitude, longitude: worker.longitude }}
+              pinColor={color}
+              title={worker.workerName || `Worker ${worker.workerId}`}
+              description={worker.status || 'Unknown'}
+              onPress={() => setSelectedWorkerId(worker.workerId)}
+            />
+          );
+        })}
       </MapView>
 
-      {/* Bottom card */}
-      <View style={l.bottomCard}>
-        <View style={l.workerRow}>
-          <View style={[l.workerAvatar, { backgroundColor: `${statusColor}22`, borderColor: statusColor }]}>
-            <Ionicons name="person" size={18} color={statusColor} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={l.workerName}>Your Detailer</Text>
-            <Text style={[l.workerStatus, { color: statusColor }]}>{getStatusLabel(booking?.status)}</Text>
-          </View>
-          {lastUpdate && (
-            <View style={l.lastUpdateBadge}>
-              <Ionicons name="time-outline" size={12} color={theme.colors.textMuted} />
-              <Text style={l.lastUpdateText}>{lastUpdate.toLocaleTimeString()}</Text>
-            </View>
-          )}
+      <View style={styles.topBar}>
+        <View>
+          <Text style={styles.title}>Live Worker Map</Text>
+          <Text style={styles.subtitle}>
+            {workers.length} workers · {validWorkers.length} with GPS · {wsStatus}
+          </Text>
+          {lastUpdate ? <Text style={styles.lastUpdate}>Last: {lastUpdate.toLocaleTimeString()}</Text> : null}
         </View>
-
-        {booking && (
-          <View style={l.bookingRow}>
-            <Text style={l.bookingLabel}>Booking</Text>
-            <Text style={l.bookingValue}>{booking.bookingNumber}</Text>
-          </View>
-        )}
-
-        {booking?.customerAddress && (
-          <View style={l.bookingRow}>
-            <Text style={l.bookingLabel}>Address</Text>
-            <Text style={l.bookingValue} numberOfLines={2}>{booking.customerAddress}</Text>
-          </View>
-        )}
-
-        {showEta && (
-          <View style={l.bookingRow}>
-            <Text style={l.bookingLabel}>Estimated Arrival</Text>
-            <Text style={l.bookingValue}>
-              {etaMinutes ? `~${etaMinutes} min` : (isTrackingActive ? 'Calculating...' : 'Pending signal')}
-            </Text>
-          </View>
-        )}
-
-        {booking?.status === 'Completed' && (
-          <View style={l.completedBanner}>
-            <Ionicons name="checkmark-circle" size={20} color="#84CC16" />
-            <Text style={l.completedText}>Job Completed</Text>
-          </View>
-        )}
-
-        {booking?.status === 'Cancelled' && (
-          <View style={[l.completedBanner, { backgroundColor: 'rgba(248,113,113,0.1)', borderColor: 'rgba(248,113,113,0.2)' }]}>
-            <Ionicons name="close-circle" size={20} color="#F87171" />
-            <Text style={[l.completedText, { color: '#F87171' }]}>Job Cancelled</Text>
-          </View>
-        )}
-
-        {((!workerLocation && isTrackingActive) || signalLost) && (
-          <View style={l.waitingBanner}>
-            <ActivityIndicator size="small" color={statusColor} />
-            <Text style={l.waitingText}>
-              {signalLost ? 'Signal weak. Reconnecting to detailer location...' : 'Waiting for worker location...'}
-            </Text>
-          </View>
-        )}
-
-        {error ? <Text style={l.errorText}>{error}</Text> : null}
+        <Pressable onPress={onRefresh} style={styles.refreshBtn}>
+          {refreshing ? (
+            <ActivityIndicator size="small" color="#111827" />
+          ) : (
+            <Ionicons name="refresh" size={18} color="#111827" />
+          )}
+        </Pressable>
       </View>
+
+      <View style={styles.listCard}>
+        {loading ? (
+          <View style={styles.centerWrap}>
+            <ActivityIndicator size="large" color="#c8a96b" />
+            <Text style={styles.muted}>Loading workers...</Text>
+          </View>
+        ) : workers.length === 0 ? (
+          <View style={styles.centerWrap}>
+            <Text style={styles.muted}>No active workers</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={workers}
+            keyExtractor={(item) => String(item.workerId)}
+            renderItem={({ item }) => {
+              const color = STATUS_COLORS[item.status] || '#6B7280';
+              const selected = item.workerId === selectedWorkerId;
+
+              return (
+                <Pressable style={[styles.workerRow, selected && styles.workerRowSelected]} onPress={() => openWorker(item)}>
+                  <View style={[styles.dot, { backgroundColor: color }]} />
+                  <View style={styles.workerMeta}>
+                    <Text numberOfLines={1} style={styles.workerName}>
+                      {item.workerName || `Worker ${item.workerId}`}
+                    </Text>
+                    <Text style={[styles.workerStatus, { color }]}>{item.status || 'Unknown'}</Text>
+                  </View>
+                </Pressable>
+              );
+            }}
+          />
+        )}
+      </View>
+
+      {selectedWorker && (
+        <View style={styles.detailCard}>
+          <Text style={styles.detailTitle}>{selectedWorker.workerName || `Worker ${selectedWorker.workerId}`}</Text>
+          <Text style={styles.detailLine}>Status: {selectedWorker.status || 'Unknown'}</Text>
+          <Text style={styles.detailLine}>
+            Lat/Lng: {Number.isFinite(selectedWorker.latitude) ? selectedWorker.latitude.toFixed(6) : '-'},
+            {' '}
+            {Number.isFinite(selectedWorker.longitude) ? selectedWorker.longitude.toFixed(6) : '-'}
+          </Text>
+          {selectedWorker.currentBooking?.bookingNumber ? (
+            <Text style={styles.detailLine}>Booking: {selectedWorker.currentBooking.bookingNumber}</Text>
+          ) : null}
+        </View>
+      )}
+
+      {!!error && (
+        <View style={styles.errorChip}>
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      )}
     </View>
   );
 }
 
-const l = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.colors.bg },
-  center:    { justifyContent: 'center', alignItems: 'center' },
-  loadingText: { color: theme.colors.textMuted, marginTop: 12, fontSize: 14 },
-
-  header: {
-    flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: 16, paddingVertical: 12,
-    backgroundColor: theme.colors.bg,
-    borderBottomWidth: 1, borderBottomColor: theme.colors.border,
+const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: '#0f172a' },
+  map: { ...StyleSheet.absoluteFillObject },
+  topBar: {
+    position: 'absolute',
+    top: 16,
+    left: 16,
+    right: 16,
+    borderRadius: 14,
+    backgroundColor: 'rgba(15,23,42,0.92)',
+    borderWidth: 1,
+    borderColor: 'rgba(148,163,184,0.3)',
+    padding: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
-  backButton: {
-    width: 36, height: 36, borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    alignItems: 'center', justifyContent: 'center',
+  title: { color: '#f8fafc', fontSize: 16, fontWeight: '800' },
+  subtitle: { color: '#94a3b8', marginTop: 4, fontSize: 12 },
+  lastUpdate: { color: '#94a3b8', marginTop: 2, fontSize: 11 },
+  refreshBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#c8a96b',
   },
-  headerCenter: { flex: 1, marginLeft: 12 },
-  headerTitle:  { color: theme.colors.text, fontSize: 18, fontWeight: '800' },
-  headerSubtitle: { color: theme.colors.textMuted, fontSize: 12, marginTop: 2 },
-
-  livePulse: {
-    width: 20, height: 20, borderRadius: 10,
-    backgroundColor: 'rgba(124,58,237,0.2)',
-    alignItems: 'center', justifyContent: 'center',
+  listCard: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    bottom: 16,
+    height: 210,
+    borderRadius: 14,
+    backgroundColor: 'rgba(15,23,42,0.94)',
+    borderWidth: 1,
+    borderColor: 'rgba(148,163,184,0.3)',
+    overflow: 'hidden',
   },
-  liveDot: {
-    width: 10, height: 10, borderRadius: 5, backgroundColor: '#7C3AED',
+  centerWrap: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
   },
-
-  map: { flex: 1 },
-
-  // Worker map marker
-  workerMarkerOuter: {
-    width: 44, height: 44, borderRadius: 22,
-    borderWidth: 3, borderColor: '#7C3AED',
-    backgroundColor: 'rgba(17,24,39,0.15)',
-    alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#111827', shadowOpacity: 0.6,
-    shadowOffset: { width: 0, height: 0 }, shadowRadius: 8,
-    elevation: 6,
-  },
-  workerMarkerInner: {
-    width: 28, height: 28, borderRadius: 14,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center', justifyContent: 'center',
-  },
-  // Customer marker
-  customerMarkerOuter: {
-    width: 36, height: 36, borderRadius: 18,
-    borderWidth: 3, borderColor: '#22C55E',
-    backgroundColor: 'rgba(34,197,94,0.15)',
-    alignItems: 'center', justifyContent: 'center',
-    elevation: 5,
-  },
-  customerMarkerInner: {
-    width: 22, height: 22, borderRadius: 11,
-    backgroundColor: '#22C55E',
-    alignItems: 'center', justifyContent: 'center',
-  },
-
-  // Bottom info card
-  bottomCard: {
-    backgroundColor: theme.colors.panel,
-    borderTopLeftRadius: 20, borderTopRightRadius: 20,
-    paddingHorizontal: 20, paddingTop: 16, paddingBottom: 32,
-    borderTopWidth: 1, borderTopColor: theme.colors.border,
+  muted: { color: '#94a3b8', fontSize: 13 },
+  workerRow: {
+    paddingHorizontal: 12,
+    paddingVertical: 11,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(148,163,184,0.15)',
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 10,
   },
-  workerRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  workerAvatar: {
-    width: 40, height: 40, borderRadius: 20, borderWidth: 2,
-    alignItems: 'center', justifyContent: 'center',
+  workerRowSelected: { backgroundColor: 'rgba(200,169,107,0.16)' },
+  dot: { width: 10, height: 10, borderRadius: 5 },
+  workerMeta: { flex: 1 },
+  workerName: { color: '#f8fafc', fontWeight: '700' },
+  workerStatus: { fontSize: 12, fontWeight: '700', marginTop: 2 },
+  detailCard: {
+    position: 'absolute',
+    right: 16,
+    top: 90,
+    width: 250,
+    borderRadius: 14,
+    backgroundColor: 'rgba(15,23,42,0.94)',
+    borderWidth: 1,
+    borderColor: 'rgba(148,163,184,0.3)',
+    padding: 12,
   },
-  workerName:   { color: theme.colors.text, fontSize: 15, fontWeight: '800' },
-  workerStatus: { fontSize: 12, fontWeight: '600', marginTop: 2 },
-  lastUpdateBadge: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  lastUpdateText: { color: theme.colors.textMuted, fontSize: 11 },
-
-  bookingRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  bookingLabel: { color: theme.colors.textMuted, fontSize: 13, flex: 1 },
-  bookingValue: { color: theme.colors.text, fontSize: 13, fontWeight: '600', flex: 2, textAlign: 'right' },
-
-  completedBanner: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: 'rgba(34,197,94,0.1)',
-    borderWidth: 1, borderColor: 'rgba(34,197,94,0.2)',
-    borderRadius: 12, padding: 12,
+  detailTitle: { color: '#f8fafc', fontWeight: '800', marginBottom: 8 },
+  detailLine: { color: '#cbd5e1', marginTop: 2, fontSize: 12 },
+  errorChip: {
+    position: 'absolute',
+    alignSelf: 'center',
+    top: 78,
+    backgroundColor: 'rgba(239,68,68,0.94)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
   },
-  completedText: { color: '#84CC16', fontSize: 15, fontWeight: '800' },
-
-  waitingBanner: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  waitingText:   { color: theme.colors.textMuted, fontSize: 13 },
-
-  errorText: { color: '#F87171', fontSize: 12, textAlign: 'center' },
+  errorText: { color: '#fff', fontWeight: '700', fontSize: 12 },
 });

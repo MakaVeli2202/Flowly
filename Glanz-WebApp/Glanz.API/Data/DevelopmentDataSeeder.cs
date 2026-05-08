@@ -389,6 +389,16 @@ public static class DevelopmentDataSeeder
         Dictionary<string, Package> pkg,
         DateTime now)
     {
+        static DateTime StartOfWeekUtc(DateTime utcDate, DayOfWeek weekStartsOn)
+        {
+            var date = utcDate.Date;
+            var diff = (7 + (date.DayOfWeek - weekStartsOn)) % 7;
+            return date.AddDays(-diff);
+        }
+
+        static DateTime UtcAt(DateTime day, int hour, int minute = 0)
+            => new(day.Year, day.Month, day.Day, hour, minute, 0, DateTimeKind.Utc);
+
         // Cost constants derived from ServiceProduct chain (qty Ã— costPerUnit, summed per package):
         //   Interior Detail : QAR 170.10  (services 1â€“10)
         //   Full Detail     : QAR 276.10  (services 1â€“15)
@@ -409,56 +419,62 @@ public static class DevelopmentDataSeeder
         var full     = pkg["Full Detail"];
         var exterior = pkg["Exterior Detail"];
 
+        // Keep seeded data always relevant to current date:
+        // - completed jobs in previous week (Sun-Thu)
+        // - active/pending jobs in next week (Sun-Thu)
+        var nextWeekSunday = StartOfWeekUtc(now, DayOfWeek.Sunday).AddDays(7);
+        var prevWeekSunday = nextWeekSunday.AddDays(-7);
+
         // Vehicle multipliers: Sedan=1.0, SUV=1.25
         // TotalAmount = Math.Round(package.Price * multiplier, 2)
 
         var bookingDefs = new[]
         {
-            // â”€â”€ Past week (Apr 21â€“24): Completed / Paid â€” for payroll + financial history â”€â”€
+            // â”€â”€ Previous week: Completed / Paid â€” for payroll + financial history â”€â”€
             new BookingDef(
                 "SEED-001",
-                new DateTime(2026, 4, 21, 12, 0, 0, DateTimeKind.Utc), "09:00-10:30",
+                UtcAt(prevWeekSunday.AddDays(1), 12), "09:00-10:30",
                 khalid, ahmed, interior, VehicleType.Sedan, 1.00m,
                 "Toyota", "Camry", "2022", interiorCost,
                 khalid.HomeAddress!, "Home",
                 BookingStatus.Completed, PaymentStatus.Paid,
-                new DateTime(2026, 4, 21,  9,  0, 0, DateTimeKind.Utc),
-                new DateTime(2026, 4, 21, 10, 28, 0, DateTimeKind.Utc)),
+                UtcAt(prevWeekSunday.AddDays(1), 9, 0),
+                UtcAt(prevWeekSunday.AddDays(1), 10, 28)),
 
             new BookingDef(
                 "SEED-002",
-                new DateTime(2026, 4, 22, 12, 0, 0, DateTimeKind.Utc), "10:00-13:00",
+                UtcAt(prevWeekSunday.AddDays(2), 12), "10:00-13:00",
                 fatima, sara, full, VehicleType.SUV, 1.25m,
                 "Nissan", "Patrol", "2023", fullCost,
                 fatima.WorkAddress!, "Work",
                 BookingStatus.Completed, PaymentStatus.Paid,
-                new DateTime(2026, 4, 22, 10,  0, 0, DateTimeKind.Utc),
-                new DateTime(2026, 4, 22, 12, 55, 0, DateTimeKind.Utc)),
+                UtcAt(prevWeekSunday.AddDays(2), 10, 0),
+                UtcAt(prevWeekSunday.AddDays(2), 12, 55)),
 
             new BookingDef(
                 "SEED-003",
-                new DateTime(2026, 4, 23, 12, 0, 0, DateTimeKind.Utc), "09:00-11:00",
+                UtcAt(prevWeekSunday.AddDays(3), 12), "09:00-11:00",
                 mazen, ahmed, exterior, VehicleType.Sedan, 1.00m,
                 "Honda", "Accord", "2022", exteriorCost,
                 mazen.HomeAddress!, "Home",
                 BookingStatus.Completed, PaymentStatus.Paid,
-                new DateTime(2026, 4, 23,  9,  0, 0, DateTimeKind.Utc),
-                new DateTime(2026, 4, 23, 11,  5, 0, DateTimeKind.Utc)),
+                UtcAt(prevWeekSunday.AddDays(3), 9, 0),
+                UtcAt(prevWeekSunday.AddDays(3), 11, 5)),
 
             new BookingDef(
                 "SEED-004",
-                new DateTime(2026, 4, 24, 12, 0, 0, DateTimeKind.Utc), "10:00-11:30",
+                UtcAt(prevWeekSunday.AddDays(4), 12), "10:00-11:30",
                 nora, sara, interior, VehicleType.SUV, 1.25m,
                 "Kia", "Sportage", "2024", interiorCost,
                 nora.HomeAddress!, "Home",
                 BookingStatus.Completed, PaymentStatus.Paid,
-                new DateTime(2026, 4, 24, 10,  0, 0, DateTimeKind.Utc),
-                new DateTime(2026, 4, 24, 11, 33, 0, DateTimeKind.Utc)),
+                UtcAt(prevWeekSunday.AddDays(4), 10, 0),
+                UtcAt(prevWeekSunday.AddDays(4), 11, 33)),
 
-            // â”€â”€ Upcoming week (Apr 27 â€“ May 1): Sunâ€“Thu â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+            // â”€â”€ Next week: Sunâ€“Thu â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             new BookingDef(
                 "SEED-005",
-                new DateTime(2026, 4, 27, 12, 0, 0, DateTimeKind.Utc), "09:00-10:30",
+                UtcAt(nextWeekSunday, 12), "09:00-10:30",
                 khalid, ahmed, interior, VehicleType.Sedan, 1.00m,
                 "Toyota", "Camry", "2022", interiorCost,
                 khalid.HomeAddress!, "Home",
@@ -467,7 +483,7 @@ public static class DevelopmentDataSeeder
 
             new BookingDef(
                 "SEED-006",
-                new DateTime(2026, 4, 27, 12, 0, 0, DateTimeKind.Utc), "10:00-12:00",
+                UtcAt(nextWeekSunday, 12), "10:00-12:00",
                 fatima, sara, exterior, VehicleType.SUV, 1.25m,
                 "Nissan", "Patrol", "2023", exteriorCost,
                 fatima.WorkAddress!, "Work",
@@ -476,7 +492,7 @@ public static class DevelopmentDataSeeder
 
             new BookingDef(
                 "SEED-007",
-                new DateTime(2026, 4, 28, 12, 0, 0, DateTimeKind.Utc), "09:00-12:00",
+                UtcAt(nextWeekSunday.AddDays(1), 12), "09:00-12:00",
                 omar, ahmed, full, VehicleType.SUV, 1.25m,
                 "BMW", "X5", "2021", fullCost,
                 omar.HomeAddress!, "Home",
@@ -485,7 +501,7 @@ public static class DevelopmentDataSeeder
 
             new BookingDef(
                 "SEED-008",
-                new DateTime(2026, 4, 28, 12, 0, 0, DateTimeKind.Utc), "10:00-11:30",
+                UtcAt(nextWeekSunday.AddDays(1), 12), "10:00-11:30",
                 nora, sara, interior, VehicleType.SUV, 1.25m,
                 "Kia", "Sportage", "2024", interiorCost,
                 nora.HomeAddress!, "Home",
@@ -494,7 +510,7 @@ public static class DevelopmentDataSeeder
 
             new BookingDef(
                 "SEED-009",
-                new DateTime(2026, 4, 29, 12, 0, 0, DateTimeKind.Utc), "09:00-11:00",
+                UtcAt(nextWeekSunday.AddDays(2), 12), "09:00-11:00",
                 mazen, ahmed, exterior, VehicleType.Sedan, 1.00m,
                 "Honda", "Accord", "2022", exteriorCost,
                 mazen.HomeAddress!, "Home",
@@ -503,7 +519,7 @@ public static class DevelopmentDataSeeder
 
             new BookingDef(
                 "SEED-010",
-                new DateTime(2026, 4, 29, 12, 0, 0, DateTimeKind.Utc), "10:00-13:00",
+                UtcAt(nextWeekSunday.AddDays(2), 12), "10:00-13:00",
                 khalid, sara, full, VehicleType.SUV, 1.25m,
                 "Mercedes", "GLC", "2023", fullCost,
                 khalid.HomeAddress!, "Home",
@@ -512,7 +528,7 @@ public static class DevelopmentDataSeeder
 
             new BookingDef(
                 "SEED-011",
-                new DateTime(2026, 4, 30, 12, 0, 0, DateTimeKind.Utc), "09:00-10:30",
+                UtcAt(nextWeekSunday.AddDays(3), 12), "09:00-10:30",
                 fatima, ahmed, interior, VehicleType.SUV, 1.25m,
                 "Toyota", "Land Cruiser", "2022", interiorCost,
                 fatima.HomeAddress!, "Home",
@@ -521,7 +537,7 @@ public static class DevelopmentDataSeeder
 
             new BookingDef(
                 "SEED-012",
-                new DateTime(2026, 5, 1, 12, 0, 0, DateTimeKind.Utc), "10:00-12:00",
+                UtcAt(nextWeekSunday.AddDays(4), 12), "10:00-12:00",
                 omar, sara, exterior, VehicleType.Sedan, 1.00m,
                 "Hyundai", "Elantra", "2024", exteriorCost,
                 omar.HomeAddress!, "Home",
