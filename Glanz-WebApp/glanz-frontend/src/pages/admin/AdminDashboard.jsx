@@ -410,8 +410,8 @@ function AdminDashboard() {
               {loadingCharts ? (
                 <div className="h-80 animate-pulse rounded-xl bg-white/5" />
               ) : revenueTrendData.length > 0 ? (
-                <div className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
+                <div className="h-80 w-full">
+                  <ResponsiveContainer width={800} height={320}>
                     <AreaChart data={revenueTrendData}>
                       <defs>
                         <linearGradient id="revenueFill" x1="0" y1="0" x2="0" y2="1">
@@ -451,8 +451,8 @@ function AdminDashboard() {
                 <div className="h-80 animate-pulse rounded-xl bg-white/5" />
               ) : bookingStatusData.length > 0 ? (
                 <>
-                  <div className="h-52">
-                    <ResponsiveContainer width="100%" height="100%">
+                  <div className="h-52 w-full">
+                    <ResponsiveContainer width={400} height={208}>
                       <PieChart>
                         <Pie data={bookingStatusData} dataKey="value" nameKey="name"
                           innerRadius={54} outerRadius={84} paddingAngle={3}>
@@ -506,8 +506,8 @@ function AdminDashboard() {
               {loadingCharts ? (
                 <div className="h-80 animate-pulse rounded-xl bg-white/5" />
               ) : packagePerformanceData.length > 0 ? (
-                <div className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
+                <div className="h-80 w-full">
+                  <ResponsiveContainer width={800} height={320}>
                     <BarChart data={packagePerformanceData} layout="vertical" margin={{ left: 8, right: 16 }}>
                       <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#888" strokeOpacity={0.12} />
                       <XAxis type="number" tickLine={false} axisLine={false} tick={axisTick} />

@@ -17,6 +17,7 @@ import Footer               from './components/layout/Footer';
 import ProtectedRoute       from './components/shared/ProtectedRoute';
 import ChatWidget           from './components/shared/ChatWidget';
 import RainBackground       from './components/shared/RainBackground';
+import CookieConsent        from './components/ui/CookieConsent';
 
 // ─── Customer pages (eager) ───────────────────────────────────────────────────
 import Home                from './pages/customer/Home';
@@ -29,7 +30,6 @@ import MyBookings          from './pages/customer/MyBookings';
 import Profile             from './pages/customer/Profile';
 import Plans               from './pages/customer/Plans';
 import Careers             from './pages/customer/Careers';
-import LandingPageDemo     from './pages/LandingPageDemo';
 
 // ─── Customer pages (lazy) ────────────────────────────────────────────────────
 const MySubscription             = lazy(() => import('./pages/customer/MySubscription'));
@@ -95,36 +95,38 @@ function adminRoute(path, Component) {
 
 // ─── 404 ──────────────────────────────────────────────────────────────────────
 
-function NotFound() {
-  return (
-    <div className="min-h-[80vh] flex flex-col items-center justify-center text-center px-4 relative overflow-hidden">
-      {/* Ambient orbs */}
-      <div className="absolute top-10 left-1/4 w-72 h-72 rounded-full pointer-events-none"
-        style={{ background: 'rgba(200,169,107,0.07)', filter: 'blur(80px)' }} />
-      <div className="absolute bottom-10 right-1/4 w-56 h-56 rounded-full pointer-events-none"
-        style={{ background: 'rgba(14,165,160,0.06)', filter: 'blur(70px)' }} />
-      <div className="relative z-10 glass-card prism-glass p-12 md:p-16 max-w-md w-full mx-auto overflow-hidden"
-        onMouseMove={(e) => {
-          const r = e.currentTarget.getBoundingClientRect();
-          e.currentTarget.style.setProperty('--px', `${((e.clientX - r.left) / r.width * 100).toFixed(1)}%`);
-          e.currentTarget.style.setProperty('--py', `${((e.clientY - r.top) / r.height * 100).toFixed(1)}%`);
-        }}>
-        <div className="absolute top-0 left-[10%] right-[10%] h-[1.5px]"
-          style={{ background: 'linear-gradient(90deg,transparent,#c8a96b 40%,#0ea5a0 60%,transparent)' }} />
-        <div className="prism-ray" style={{ left: '20%', width: '25%', animation: 'prism-ray-sweep 14s ease-in-out 2s infinite' }} />
-        <p className="premium-heading font-black text-primary mb-2 leading-none" style={{ fontSize: '7rem' }}>404</p>
-        <div className="spectrum-line mb-6" />
-        <h1 className="premium-heading text-2xl font-bold text-[var(--heading-color)] mb-3">Page not found</h1>
-        <p className="text-[var(--muted-color)] mb-8 text-sm leading-relaxed">
-          The page you're looking for doesn't exist or has been moved.
-        </p>
-        <Link to="/" className="premium-btn inline-flex">
-          Go Home <ArrowRight size={16} />
-        </Link>
-      </div>
-    </div>
-  );
-}
+import NotFound from './components/ui/not-found';
+
+// function NotFound() {
+//   return (
+//     <div className="min-h-[80vh] flex flex-col items-center justify-center text-center px-4 relative overflow-hidden">
+//       {/* Ambient orbs */}
+//       <div className="absolute top-10 left-1/4 w-72 h-72 rounded-full pointer-events-none"
+//         style={{ background: 'rgba(200,169,107,0.07)', filter: 'blur(80px)' }} />
+//       <div className="absolute bottom-10 right-1/4 w-56 h-56 rounded-full pointer-events-none"
+//         style={{ background: 'rgba(14,165,160,0.06)', filter: 'blur(70px)' }} />
+//       <div className="relative z-10 glass-card prism-glass p-12 md:p-16 max-w-md w-full mx-auto overflow-hidden"
+//         onMouseMove={(e) => {
+//           const r = e.currentTarget.getBoundingClientRect();
+//           e.currentTarget.style.setProperty('--px', `${((e.clientX - r.left) / r.width * 100).toFixed(1)}%`);
+//           e.currentTarget.style.setProperty('--py', `${((e.clientY - r.top) / r.height * 100).toFixed(1)}%`);
+//         }}>
+//         <div className="absolute top-0 left-[10%] right-[10%] h-[1.5px]"
+//           style={{ background: 'linear-gradient(90deg,transparent,#c8a96b 40%,#0ea5a0 60%,transparent)' }} />
+//         <div className="prism-ray" style={{ left: '20%', width: '25%', animation: 'prism-ray-sweep 14s ease-in-out 2s infinite' }} />
+//         <p className="premium-heading font-black text-primary mb-2 leading-none" style={{ fontSize: '7rem' }}>404</p>
+//         <div className="spectrum-line mb-6" />
+//         <h1 className="premium-heading text-2xl font-bold text-[var(--heading-color)] mb-3">Page not found</h1>
+//         <p className="text-[var(--muted-color)] mb-8 text-sm leading-relaxed">
+//           The page you're looking for doesn't exist or has been moved.
+//         </p>
+//         <Link to="/" className="premium-btn inline-flex">
+//           Go Home <ArrowRight size={16} />
+//         </Link>
+//       </div>
+//     </div>
+//   );
+// }
 
 // ─── Scroll to top on navigation ──────────────────────────────────────────────
 
@@ -171,7 +173,6 @@ function AppRoutes() {
         <Route path="/packages" element={<Packages />} />
         <Route path="/plans"    element={<Plans />}    />
         <Route path="/careers"  element={<Careers />}  />
-        <Route path="/landing-demo" element={<LandingPageDemo />} />
 
         {/* ── Protected customer ─────────────────────────────────────── */}
         <Route path="/booking" element={
@@ -226,8 +227,8 @@ function AppRoutes() {
           <ProtectedRoute><Suspense fallback={<AdminFallback />}><SubscriptionBooking /></Suspense></ProtectedRoute>
         } />
 
-        {/* ── Catch-all ──────────────────────────────────────────────── */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        {/* ── Catch-all 404 ──────────────────────────────────────────── */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </main>
   );
@@ -290,8 +291,9 @@ function App() {
               <Navbar theme={theme} onToggleTheme={toggleTheme} />
               <AppRoutes />
               <Footer />
-              <ChatWidget />
-            </div>
+               <ChatWidget />
+               <CookieConsent privacyHref="/privacy-policy" />
+             </div>
             </ToastProvider>
           </ErrorBoundary>
         </PackagesProvider>

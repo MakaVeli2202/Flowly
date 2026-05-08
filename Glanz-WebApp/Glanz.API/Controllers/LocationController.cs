@@ -71,7 +71,11 @@ namespace Glanz.API.Controllers
                     Longitude = dto.Longitude,
                     Timestamp = dto.Timestamp ?? DateTime.UtcNow,
                     IsActive = true,
-                    Status = booking.Status.ToString()
+                    Status = booking.WorkStartedAt.HasValue
+                        ? BookingStatus.InProgress.ToString()
+                        : booking.WorkerOnMyWayAt.HasValue
+                            ? "OnTheWay"
+                            : booking.Status.ToString()
                 };
                 _context.WorkerLocations.Add(location);
             }
@@ -81,7 +85,11 @@ namespace Glanz.API.Controllers
                 location.Longitude = dto.Longitude;
                 location.Timestamp = dto.Timestamp ?? DateTime.UtcNow;
                 location.IsActive = true;
-                location.Status = booking.Status.ToString();
+                location.Status = booking.WorkStartedAt.HasValue
+                    ? BookingStatus.InProgress.ToString()
+                    : booking.WorkerOnMyWayAt.HasValue
+                        ? "OnTheWay"
+                        : booking.Status.ToString();
             }
 
             await _context.SaveChangesAsync();
@@ -173,6 +181,10 @@ namespace Glanz.API.Controllers
                 .Select(g => g.OrderByDescending(wl => wl.Timestamp).First())
                 .ToListAsync();
 
+            activeLocations = activeLocations
+                .Where(wl => wl.Worker != null)
+                .ToList();
+
             var result = activeLocations.Select(wl => new
             {
                 workerId = wl.WorkerId,
@@ -204,6 +216,10 @@ namespace Glanz.API.Controllers
                 .GroupBy(wl => wl.WorkerId)
                 .Select(g => g.OrderByDescending(wl => wl.Timestamp).First())
                 .ToListAsync();
+
+            locations = locations
+                .Where(wl => wl.Worker != null)
+                .ToList();
 
             return Ok(locations.Select(wl => new
             {

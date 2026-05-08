@@ -1,0 +1,134 @@
+﻿
+> glanz-frontend@0.0.0 build
+> vite build
+
+[36mvite v8.0.8 [32mbuilding client environment for production...[36m[39m
+[2K
+transforming...Γ£ô 3407 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                        7.64 kB Γöé gzip:   1.89 kB
+dist/assets/hero-detailing-PFC0vpIa.mp4            2,298.11 kB
+dist/assets/RainOnGlass-BxuYoahN.mp4               8,713.28 kB
+dist/assets/LiveMapTracking-CcXJxNtP.css              14.80 kB Γöé gzip:   6.31 kB
+dist/assets/index-CtUhDtZY.css                        88.88 kB Γöé gzip:  17.85 kB
+dist/assets/check-Cax89Hf3.js                          0.11 kB Γöé gzip:   0.13 kB
+dist/assets/chevron-down-KW-fTmyz.js                   0.12 kB Γöé gzip:   0.13 kB
+dist/assets/chevron-up-izZt3A7l.js                     0.12 kB Γöé gzip:   0.13 kB
+dist/assets/chevron-left-CysCfiQU.js                   0.12 kB Γöé gzip:   0.14 kB
+dist/assets/chevron-right-JQ0X-p7S.js                  0.12 kB Γöé gzip:   0.13 kB
+dist/assets/loader-circle-O5AiRSyE.js                  0.13 kB Γöé gzip:   0.15 kB
+dist/assets/plus-C-tXBmAV.js                           0.14 kB Γöé gzip:   0.14 kB
+dist/assets/x-CNkf9VRx.js                              0.14 kB Γöé gzip:   0.14 kB
+dist/assets/arrow-left-9rgFx2R_.js                     0.16 kB Γöé gzip:   0.16 kB
+dist/assets/arrow-right-Bo1S28nV.js                    0.16 kB Γöé gzip:   0.16 kB
+dist/assets/clock-CIjfRnkv.js                          0.16 kB Γöé gzip:   0.16 kB
+dist/assets/search-BhFIhokH.js                         0.16 kB Γöé gzip:   0.16 kB
+dist/assets/trending-up-BN_t-p6A.js                    0.17 kB Γöé gzip:   0.16 kB
+dist/assets/trending-down-p8BKZwW-.js                  0.17 kB Γöé gzip:   0.16 kB
+dist/assets/circle-check-big-DOnM_Kcn.js               0.18 kB Γöé gzip:   0.17 kB
+dist/assets/user-DR7P6U2O.js                           0.19 kB Γöé gzip:   0.18 kB
+dist/assets/info-C4RLyCIW.js                           0.19 kB Γöé gzip:   0.17 kB
+dist/assets/circle-x-BbKy1b_s.js                       0.20 kB Γöé gzip:   0.17 kB
+dist/assets/credit-card-BWB4_2bs.js                    0.20 kB Γöé gzip:   0.18 kB
+dist/assets/dollar-sign-CJONBy43.js                    0.21 kB Γöé gzip:   0.18 kB
+dist/assets/briefcase-DIkdi79D.js                      0.21 kB Γöé gzip:   0.19 kB
+dist/assets/download-WlcaXCri.js                       0.22 kB Γöé gzip:   0.18 kB
+dist/assets/message-square-BY3Vivvm.js                 0.22 kB Γöé gzip:   0.19 kB
+dist/assets/pen-CFkq7N7w.js                            0.23 kB Γöé gzip:   0.20 kB
+dist/assets/circle-alert-l3iJUCZz.js                   0.24 kB Γöé gzip:   0.18 kB
+dist/assets/useRealtimeStatus-BInWgq7n.js              0.24 kB Γöé gzip:   0.20 kB
+dist/assets/calendar-BG_arnNf.js                       0.25 kB Γöé gzip:   0.20 kB
+dist/assets/retry-BDrIVdui.js                          0.25 kB Γöé gzip:   0.20 kB
+dist/assets/zap-BLo0UAdl.js                            0.25 kB Γöé gzip:   0.20 kB
+dist/assets/triangle-alert-DPholqm5.js                 0.26 kB Γöé gzip:   0.21 kB
+dist/assets/repeat-Do6EkLvs.js                         0.26 kB Γöé gzip:   0.19 kB
+dist/assets/typeof-CaXzT1TU.js                         0.27 kB Γöé gzip:   0.16 kB
+dist/assets/wallet-BI3CWXq_.js                         0.28 kB Γöé gzip:   0.20 kB
+dist/assets/bell-W3xKBVZA.js                           0.28 kB Γöé gzip:   0.23 kB
+dist/assets/wrench-Br_po3FW.js                         0.29 kB Γöé gzip:   0.23 kB
+dist/assets/users-BbHsyiM-.js                          0.30 kB Γöé gzip:   0.22 kB
+dist/assets/refresh-cw-gBCau3_h.js                     0.31 kB Γöé gzip:   0.22 kB
+dist/assets/ticket-C48ir7Zi.js                         0.31 kB Γöé gzip:   0.21 kB
+dist/assets/tag-BFPoMpX_.js                            0.32 kB Γöé gzip:   0.24 kB
+dist/assets/save-BkGvyC2V.js                           0.32 kB Γöé gzip:   0.22 kB
+dist/assets/trash-2-C8K25VY3.js                        0.32 kB Γöé gzip:   0.21 kB
+dist/assets/shopping-bag-B2xX3HKM.js                   0.33 kB Γöé gzip:   0.24 kB
+dist/assets/toggle-right-DAmqVDuB.js                   0.34 kB Γöé gzip:   0.21 kB
+dist/assets/currency-C1y-KZNI.js                       0.34 kB Γöé gzip:   0.20 kB
+dist/assets/gift-RUXa9qTS.js                           0.34 kB Γöé gzip:   0.25 kB
+dist/assets/crown-B48dxmw9.js                          0.35 kB Γöé gzip:   0.25 kB
+dist/assets/notificationBus-BCgl-fTw.js                0.36 kB Γöé gzip:   0.26 kB
+dist/assets/package-B0Odkt2C.js                        0.36 kB Γöé gzip:   0.25 kB
+dist/assets/file-text-DF6fgt4Q.js                      0.38 kB Γöé gzip:   0.24 kB
+dist/assets/car-x7I3v66C.js                            0.40 kB Γöé gzip:   0.28 kB
+dist/assets/loader-fiV3dCzH.js                         0.40 kB Γöé gzip:   0.23 kB
+dist/assets/file-pen-kYJ1KJM4.js                       0.42 kB Γöé gzip:   0.28 kB
+dist/assets/products-CSoUh95i.js                       0.42 kB Γöé gzip:   0.21 kB
+dist/assets/dateUtils-D0_O0jg0.js                      0.43 kB Γöé gzip:   0.28 kB
+dist/assets/star-Czh4fREy.js                           0.46 kB Γöé gzip:   0.29 kB
+dist/assets/phone-xgz8Bo1m.js                          0.47 kB Γöé gzip:   0.31 kB
+dist/assets/services-D1aoZtf4.js                       0.48 kB Γöé gzip:   0.23 kB
+dist/assets/settings-CptCPp4N.js                       0.48 kB Γöé gzip:   0.25 kB
+dist/assets/calendar-days-ComZoRXz.js                  0.48 kB Γöé gzip:   0.26 kB
+dist/assets/sparkles-BA3tC-WW.js                       0.48 kB Γöé gzip:   0.28 kB
+dist/assets/reports-_SJR_dJg.js                        0.53 kB Γöé gzip:   0.26 kB
+dist/assets/eye-C_UW3PDb.js                            0.62 kB Γöé gzip:   0.34 kB
+dist/assets/packages-Dzc7Thhm.js                       0.64 kB Γöé gzip:   0.27 kB
+dist/assets/cacheManager-BEuDwLcS.js                   0.68 kB Γöé gzip:   0.37 kB
+dist/assets/notifications-DcHUsczA.js                  0.70 kB Γöé gzip:   0.37 kB
+dist/assets/FeaturesContext-Dfzb9J1M.js                0.81 kB Γöé gzip:   0.53 kB
+dist/assets/business-Dp4tj6qy.js                       0.88 kB Γöé gzip:   0.48 kB
+dist/assets/settings-DqNqNkO-.js                       1.01 kB Γöé gzip:   0.45 kB
+dist/assets/preload-helper-BMI0BPTI.js                 1.19 kB Γöé gzip:   0.68 kB
+dist/assets/chunk-zsgVPwQN.js                          1.20 kB Γöé gzip:   0.66 kB
+dist/assets/offers-DjuwvmDo.js                         1.34 kB Γöé gzip:   0.46 kB
+dist/assets/auth-BmTb8I8d.js                           1.79 kB Γöé gzip:   0.57 kB
+dist/assets/statusConfig-CKWzGgu3.js                   2.10 kB Γöé gzip:   0.70 kB
+dist/assets/subscriptions-DLuLJCcv.js                  2.13 kB Γöé gzip:   0.61 kB
+dist/assets/Toast-CjDIcuiK.js                          2.41 kB Γöé gzip:   1.12 kB
+dist/assets/EmptyState-CznAPvXP.js                     3.41 kB Γöé gzip:   1.42 kB
+dist/assets/AppModal-DPxhdhPQ.js                       3.49 kB Γöé gzip:   1.36 kB
+dist/assets/bookings-7iCfQLx1.js                       4.22 kB Γöé gzip:   1.17 kB
+dist/assets/clsx-DwJNMtUJ.js                           4.31 kB Γöé gzip:   1.67 kB
+dist/assets/AvailabilityCalendar-gPTcNmvK.js           4.89 kB Γöé gzip:   1.93 kB
+dist/assets/LanguageContext-Cp7IMdLk.js                5.40 kB Γöé gzip:   2.29 kB
+dist/assets/AdminWorkerSales-Di5d9qH_.js               5.47 kB Γöé gzip:   1.73 kB
+dist/assets/siteContent-BCk7LUbq.js                    6.42 kB Γöé gzip:   2.83 kB
+dist/assets/AdminSubscriptionBookings-sQCUmgyd.js      8.13 kB Γöé gzip:   2.55 kB
+dist/assets/jsx-runtime-AJI3qbYU.js                    9.21 kB Γöé gzip:   3.62 kB
+dist/assets/AdminJobPositions-CFIC_9xL.js             11.23 kB Γöé gzip:   3.51 kB
+dist/assets/MySubscription-CQYEPImj.js                11.29 kB Γöé gzip:   2.95 kB
+dist/assets/AdminNotifications-Bkmpkzge.js            13.07 kB Γöé gzip:   4.11 kB
+dist/assets/AdminDevSettings-EifC4iHx.js              13.90 kB Γöé gzip:   4.49 kB
+dist/assets/AdminWorkerManagement-BqBRGbLQ.js         14.34 kB Γöé gzip:   3.66 kB
+dist/assets/AdminReportOperational-CiT_GpLv.js        15.26 kB Γöé gzip:   4.06 kB
+dist/assets/AdminSkills-DZ8nCKvf.js                   15.97 kB Γöé gzip:   4.58 kB
+dist/assets/AdminContent-4E30adR4.js                  17.25 kB Γöé gzip:   4.71 kB
+dist/assets/AdminReportFinancial-COAbPS9E.js          17.82 kB Γöé gzip:   4.42 kB
+dist/assets/SubscriptionBooking-DeHixRzy.js           17.93 kB Γöé gzip:   4.91 kB
+dist/assets/AdminProducts-DPnmAIdl.js                 18.02 kB Γöé gzip:   5.13 kB
+dist/assets/AdminServices-B8YGV1CL.js                 19.00 kB Γöé gzip:   5.31 kB
+dist/assets/SubscriptionCheckout-B4SqEDOs.js          19.13 kB Γöé gzip:   5.83 kB
+dist/assets/AdminWorkerSchedule-BV0UQbtZ.js           20.20 kB Γöé gzip:   5.94 kB
+dist/assets/purify.es-22i9eKsc.js                     21.05 kB Γöé gzip:   8.46 kB
+dist/assets/AdminPayroll-B_PJl7hD.js                  22.74 kB Γöé gzip:   6.21 kB
+dist/assets/AddressAutocompleteInput-B5xtzxfB.js      23.66 kB Γöé gzip:   8.51 kB
+dist/assets/AdminBookings-BpcTsB7X.js                 24.11 kB Γöé gzip:   6.94 kB
+dist/assets/AdminPackages-BlelnarC.js                 24.58 kB Γöé gzip:   6.54 kB
+dist/assets/AdminPlans-_ilR4y-q.js                    27.75 kB Γöé gzip:   6.92 kB
+dist/assets/AdminSettings-DSkpShYe.js                 38.64 kB Γöé gzip:   8.16 kB
+dist/assets/chunk-QFMPRPBF-CEekYmTn.js                41.06 kB Γöé gzip:  14.48 kB
+dist/assets/axios-BJnSkA0J.js                         42.00 kB Γöé gzip:  16.30 kB
+dist/assets/AdminStaff-AJFPNidc.js                    44.24 kB Γöé gzip:  10.38 kB
+dist/assets/AdminBookingDetail-BhrMelDx.js            45.15 kB Γöé gzip:  10.12 kB
+dist/assets/AdminOffers-Dem___Ed.js                   49.58 kB Γöé gzip:  11.45 kB
+dist/assets/realtimeService-BV5s1LNn.js               58.18 kB Γöé gzip:  14.87 kB
+dist/assets/index.es-B8m-qEiZ.js                     151.41 kB Γöé gzip:  48.88 kB
+dist/assets/LiveMapTracking-D5fFL2b1.js              161.54 kB Γöé gzip:  47.23 kB
+dist/assets/html2canvas-BwJ9lDir.js                  199.56 kB Γöé gzip:  46.78 kB
+dist/assets/AdminDashboard-CZcmAlvL.js               403.91 kB Γöé gzip: 115.88 kB
+dist/assets/reportPDF-CsfRm5qt.js                    457.59 kB Γöé gzip: 147.55 kB
+dist/assets/index-CjCBXD2H.js                        828.86 kB Γöé gzip: 249.44 kB
+
+[32mΓ£ô built in 1.93s[39m

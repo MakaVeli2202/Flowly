@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView,
   TouchableOpacity, ActivityIndicator,
@@ -6,6 +6,7 @@ import {
 import Animated, { FadeInDown, FadeInUp, ZoomIn } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { useHeaderHeight } from '@react-navigation/elements';
+import { useFocusEffect } from '@react-navigation/native';
 import { bookingsAPI } from '../api/bookings';
 import { useAuth } from '../context/AuthContext';
 import { formatQAR } from '../utils/currency';
@@ -240,15 +241,23 @@ export default function BookingConfirmationScreen({ route, navigation }) {
   const [booking, setBooking] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const data = await bookingsAPI.getByBookingNumber(bookingNumber);
-        setBooking(data);
-      } finally { setLoading(false); }
-    };
-    load();
+  const loadBooking = useCallback(async () => {
+    try {
+      const data = await bookingsAPI.getByBookingNumber(bookingNumber);
+      setBooking(data);
+    } finally { setLoading(false); }
   }, [bookingNumber]);
+
+  useEffect(() => {
+    setLoading(true);
+    loadBooking();
+  }, [loadBooking]);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadBooking();
+    }, [loadBooking])
+  );
 
   if (loading) {
     return (
@@ -275,6 +284,10 @@ export default function BookingConfirmationScreen({ route, navigation }) {
     .filter(Boolean).join(' ') || '—';
 
   const sc = getStatusContent(booking.status);
+  const canTrackWorker = Boolean(booking.workerOnMyWayAt)
+    && !booking.workerArrivedAt
+    && booking.status !== 'Completed'
+    && booking.status !== 'Cancelled';
 
   return (
     <ScrollView
@@ -411,6 +424,20 @@ export default function BookingConfirmationScreen({ route, navigation }) {
 
       {/* ── Actions ────────────────────────────────────────────── */}
       <Animated.View entering={FadeInUp.duration(420).delay(380)} style={s.actions}>
+        {canTrackWorker && (
+          <TouchableOpacity
+            style={s.trackBtn}
+            onPress={() => navigation.navigate('Live Tracking', {
+              bookingId: booking.id,
+              bookingNumber: booking.bookingNumber,
+            })}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="navigate-outline" size={16} color="#FFFFFF" />
+            <Text style={s.trackBtnText}>Track Worker</Text>
+          </TouchableOpacity>
+        )}
+
         <TouchableOpacity
           style={s.primaryBtn}
           onPress={() => navigation.navigate(
@@ -569,6 +596,12 @@ const s = StyleSheet.create({
 
   // Actions
   actions: { marginTop: 16, gap: 10 },
+  trackBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    backgroundColor: '#7C3AED',
+    borderRadius: 14, paddingVertical: 14,
+  },
+  trackBtnText: { color: '#FFFFFF', fontWeight: '800', fontSize: 15 },
   primaryBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
     backgroundColor: theme.colors.primary,

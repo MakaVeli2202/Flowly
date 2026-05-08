@@ -245,6 +245,33 @@ namespace Glanz.API.Services
             return (worker.ShiftStart ?? "09:00", worker.ShiftEnd ?? "18:00");
         }
 
+        /// <summary>
+        /// True when the current business-local time is inside the worker's configured
+        /// working day + shift window.
+        /// </summary>
+        internal static bool IsWithinWorkerWorkingWindow(Staff worker, DateTime utcNow)
+        {
+            var nowBusiness = TimeZoneInfo.ConvertTimeFromUtc(utcNow, _businessTz);
+            var dow = nowBusiness.DayOfWeek;
+
+            if (!WorkerWorksOnDay(worker.WorkingDays, dow))
+                return false;
+
+            var (shiftStart, shiftEnd) = GetWorkerShiftForDay(worker, dow);
+            if (!TimeSpan.TryParse(shiftStart, out var start) ||
+                !TimeSpan.TryParse(shiftEnd, out var end))
+                return false;
+
+            var now = nowBusiness.TimeOfDay;
+            if (end == start) return false;
+
+            // Overnight shift (e.g. 22:00 -> 06:00)
+            if (end < start)
+                return now >= start || now < end;
+
+            return now >= start && now < end;
+        }
+
         // ── Shift-fit check ──────────────────────────────────────────────────
 
         internal static bool TimeSlotFitsInShift(

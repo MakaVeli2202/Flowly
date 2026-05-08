@@ -19,9 +19,18 @@ export const bookingsAPI = {
     const r = (await apiClient.post('/Bookings', data)).data;
     invalidate(); return r;
   }),
-  getMyBookings: async () => cacheManager.fetch(`${CACHE_KEY}:mine`, () => apiClient.get('/Bookings').then((r) => r.data), CACHE_TTL),
-  getWorkerBookings: async () => cacheManager.fetch(`${CACHE_KEY}:worker`, () => apiClient.get('/Bookings/Employee').then((r) => r.data), CACHE_TTL),
-  getAll: async () => cacheManager.fetch(`${CACHE_KEY}:all`, () => apiClient.get('/Bookings/all').then((r) => r.data), CACHE_TTL),
+  getMyBookings: async (force = false) => {
+    if (force) cacheManager.remove(`${CACHE_KEY}:mine`);
+    return cacheManager.fetch(`${CACHE_KEY}:mine`, () => apiClient.get('/Bookings').then((r) => r.data), CACHE_TTL);
+  },
+  getWorkerBookings: async (force = false) => {
+    if (force) cacheManager.remove(`${CACHE_KEY}:worker`);
+    return cacheManager.fetch(`${CACHE_KEY}:worker`, () => apiClient.get('/Bookings/Employee').then((r) => r.data), CACHE_TTL);
+  },
+  getAll: async (force = false) => {
+    if (force) cacheManager.remove(`${CACHE_KEY}:all`);
+    return cacheManager.fetch(`${CACHE_KEY}:all`, () => apiClient.get('/Bookings/all').then((r) => r.data), CACHE_TTL);
+  },
   seedDemoWorkload: async () => (await apiClient.post('/Bookings/seed-demo-workload')).data,
   getByBookingNumber: async (bookingNumber) => (await apiClient.get(`/Bookings/${bookingNumber}`)).data,
   getCalendarAvailability: async (from, to) => (await apiClient.get('/Bookings/availability-calendar', { params: { from, to } })).data,

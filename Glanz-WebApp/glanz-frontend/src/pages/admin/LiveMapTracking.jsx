@@ -114,12 +114,29 @@ export default function LiveMapTracking() {
   const [lastUpdate,    setLastUpdate]    = useState(null);
   const [isRefreshing,  setIsRefreshing]  = useState(false);
 
+  const normalizeWorkers = useCallback((list) => (
+    (list || []).map((w) => ({
+      ...w,
+      workerId: Number(w.workerId),
+      latitude: Number(w.latitude),
+      longitude: Number(w.longitude),
+    })).filter((w) => Number.isFinite(w.workerId))
+  ), []);
+
+  const fitMapToWorkers = useCallback((list) => {
+    if (!leafletRef.current || selectedWorker) return;
+    const valid = (list || []).filter((w) => Number.isFinite(w.latitude) && Number.isFinite(w.longitude));
+    if (!valid.length) return;
+    const bounds = L.latLngBounds(valid.map((w) => [w.latitude, w.longitude]));
+    leafletRef.current.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
+  }, [selectedWorker]);
+
   // ── Bootstrap Leaflet map ────────────────────────────────────────────────────
   useEffect(() => {
     if (!mapRef.current || leafletRef.current) return;
 
     const map = L.map(mapRef.current, {
-      center: [24.7136, 46.6753], // Riyadh default — will pan to first worker
+      center: [25.2854, 51.5310], // Doha default — will pan to first worker
       zoom:   12,
       zoomControl: true,
     });
@@ -130,6 +147,9 @@ export default function LiveMapTracking() {
     }).addTo(map);
 
     leafletRef.current = map;
+
+    // Leaflet can render a blank/black area until size is recalculated after layout.
+    setTimeout(() => map.invalidateSize(), 50);
 
     return () => {
       map.remove();
@@ -183,32 +203,24 @@ export default function LiveMapTracking() {
   const fetchWorkers = useCallback(async () => {
     try {
       const data = await locationAPI.getLiveWorkers();
-      const list  = data || [];
+      const list  = normalizeWorkers(data);
       setWorkers(list);
       setLastUpdate(new Date());
       setError('');
-
-      // Pan map to fit all workers with valid coords
-      const valid = list.filter(w => w.latitude && w.longitude);
-      if (valid.length > 0 && leafletRef.current) {
-        const bounds = L.latLngBounds(valid.map(w => [w.latitude, w.longitude]));
-        leafletRef.current.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
-      }
+      fitMapToWorkers(list);
     } catch {
       setError('Failed to load worker locations');
     } finally {
       setLoading(false);
       setIsRefreshing(false);
     }
-  }, []);
+  }, [fitMapToWorkers, normalizeWorkers]);
 
   useEffect(() => {
     let alive = true; // guard against setting listeners after unmount
 
     fetchWorkers().then(() => {
       if (!alive) return;
-
-      realtimeService.subscribeToAllAdminLocations();
 
       unsubRef.current = realtimeService.onLocationUpdate((data) => {
         if (!data?.workerId) return;
@@ -217,9 +229,9 @@ export default function LiveMapTracking() {
           const idx = prev.findIndex((w) => w.workerId === data.workerId);
           const updated = {
             ...(idx >= 0 ? prev[idx] : {}),
-            workerId:  data.workerId,
-            latitude:  data.latitude ?? data.lat,
-            longitude: data.longitude ?? data.lng,
+            workerId:  Number(data.workerId),
+            latitude:  Number(data.latitude ?? data.lat),
+            longitude: Number(data.longitude ?? data.lng),
             timestamp: data.timestamp || new Date().toISOString(),
           };
 
@@ -241,9 +253,12 @@ export default function LiveMapTracking() {
           if (idx >= 0) {
             const next = [...prev];
             next[idx] = updated;
+            fitMapToWorkers(next);
             return next;
           }
-          return [...prev, updated];
+          const next = [...prev, updated];
+          fitMapToWorkers(next);
+          return next;
         });
 
         setLastUpdate(new Date());
@@ -254,6 +269,20 @@ export default function LiveMapTracking() {
       alive = false; // prevent .then() from registering a listener post-unmount
       if (unsubRef.current) { unsubRef.current(); unsubRef.current = null; }
     };
+  }, [fetchWorkers, fitMapToWorkers]);
+
+  // Subscribe only when websocket is connected; retry naturally on reconnects.
+  useEffect(() => {
+    if (wsStatus !== 'connected') return;
+    realtimeService.subscribeToAllAdminLocations();
+  }, [wsStatus]);
+
+  // Fallback polling keeps sidebar/counters alive even if ws drops.
+  useEffect(() => {
+    const timer = setInterval(() => {
+      fetchWorkers();
+    }, 5000);
+    return () => clearInterval(timer);
   }, [fetchWorkers]);
 
   const handleForceStop = async (workerId) => {
@@ -261,7 +290,7 @@ export default function LiveMapTracking() {
     setSelectedWorker(null);
   };
 
-  const activeWorkers = workers.filter(w => ['OnTheWay', 'InProgress', 'Confirmed'].includes(w.status));
+  const activeWorkers = workers.filter(w => ['OnTheWay', 'InProgress', 'Confirmed', 'Pending'].includes(w.status));
 
   if (loading) {
     return (

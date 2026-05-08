@@ -13,6 +13,7 @@ import { authAPI } from '../api/auth';
 import { servicesAPI } from '../api/services';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
+import { useLocationTracking } from '../hooks/useLocationTracking';
 import { subscribeToNotifications } from '../api/notificationBus';
 import realtimeService from '../api/realtimeService';
 import { formatQAR } from '../utils/currency';
@@ -25,7 +26,7 @@ import { API_BASE_URL } from '../config/api';
 const statusOptions       = ['Pending', 'Confirmed', 'InProgress', 'Completed', 'Cancelled'];
 const workerStatusOptions  = ['Pending', 'Confirmed', 'InProgress', 'Paused', 'Completed'];
 const workerArrivalCooldownMs  = 5 * 60 * 1000;
-const workerTestDayOffsetDays  = 1;
+const workerTestDayOffsetDays  = 2;
 
 const statusColors = {
   Pending:    '#FBBF24',
@@ -56,6 +57,9 @@ const isSameDay = (dateValue, compareDate = new Date(), dayOffset = 0) => {
   adjusted.setDate(adjusted.getDate() + dayOffset);
   return bookingKey === toLocalDateKey(adjusted);
 };
+
+const isWorkerTodayTestDay = (dateValue, compareDate = new Date()) =>
+  isSameDay(dateValue, compareDate, 0) || isSameDay(dateValue, compareDate, workerTestDayOffsetDays);
 
 const resolveProfileImageUrl = (value) => {
   if (!value) return null;
@@ -185,8 +189,10 @@ export default function AdminJobsScreen({ route, navigation }) {
   const roleMode   = route?.params?.roleMode || 'admin';
   const isWorkerView = roleMode === 'worker';
   const { user, logout } = useAuth();
+  const { startTracking } = useLocationTracking();
   const settings = useSettings();
   const headerHeight = useHeaderHeight(); // ← used to push content below transparent nav
+  const shouldEnsureLocalTracking = isWorkerView && user?.role !== 'Employee';
 
   // ── State ─────────────────────────────────────────────────────────────────
   const [bookings,                  setBookings]                  = useState([]);
@@ -366,9 +372,10 @@ export default function AdminJobsScreen({ route, navigation }) {
   // ── Derived: visible bookings ──────────────────────────────────────────────
   const visibleBookings = useMemo(() => {
     const sorted = [...bookings].sort((a, b) => getBookingSortValue(a) - getBookingSortValue(b));
-    const workerDayOffset = isWorkerView ? workerTestDayOffsetDays : 0;
     const base = (mode === 'today' || isWorkerView)
-      ? sorted.filter((b) => isSameDay(b.scheduledDate, new Date(), workerDayOffset))
+      ? sorted.filter((b) => isWorkerView
+          ? isWorkerTodayTestDay(b.scheduledDate, new Date())
+          : isSameDay(b.scheduledDate, new Date()))
       : sorted;
     if (!isWorkerView) return base;
     if (user?.workingDays && user?.shiftStart && user?.shiftEnd) {
@@ -763,6 +770,8 @@ export default function AdminJobsScreen({ route, navigation }) {
     try {
       setUpdatingId(bookingId);
       await bookingsAPI.markArrived(bookingId);
+      // Customer tracking must end when worker arrives.
+      await realtimeService.stopCustomerStream(bookingId);
       await loadBookings();
     } catch (err) { setError(err?.response?.data?.message || 'Failed to notify customer about arrival.'); }
     finally { setUpdatingId(null); endAction(key); }
@@ -773,9 +782,18 @@ export default function AdminJobsScreen({ route, navigation }) {
     if (!beginAction(key)) return;
     try {
       setUpdatingId(bookingId);
+      if (shouldEnsureLocalTracking) {
+        await startTracking(bookingId);
+      }
       await bookingsAPI.markOnMyWay(bookingId);
       // Start customer-visible location stream — worker is En Route
       await realtimeService.startCustomerStream(bookingId);
+      const targetBooking = bookings.find((b) => b.id === bookingId);
+      const destinationAddress = String(targetBooking?.customerAddress || '').trim();
+      if (destinationAddress) {
+        const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destinationAddress)}&travelmode=driving`;
+        await Linking.openURL(mapsUrl).catch(() => {});
+      }
       await loadBookings();
     } catch (err) { setError(err?.response?.data?.message || 'Failed to notify customer.'); }
     finally { setUpdatingId(null); endAction(key); }

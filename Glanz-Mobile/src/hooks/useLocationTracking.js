@@ -136,7 +136,7 @@ export function useLocationTracking() {
       setIsLocationSharing(true);
       setLocationError(null);
 
-      // Initial admin location send
+      // Server is authoritative for shift-hour admin tracking gates.
       await _sendAdminLocation(loc.coords.latitude, loc.coords.longitude);
 
       trackingRef.current = setInterval(async () => {
@@ -159,12 +159,14 @@ export function useLocationTracking() {
           lastSentLocRef.current = coords;
           lastSentAtRef.current  = Date.now();
 
-          // Always send to admin stream
+          // Server is authoritative for shift-hour admin tracking gates.
           await _sendAdminLocation(coords.latitude, coords.longitude);
 
-          // Also send to customer stream when it is active (En Route phase)
-          if (customerStreamRef.current && currentBookingIdRef.current) {
-            await _sendCustomerLocation(currentBookingIdRef.current, coords.latitude, coords.longitude);
+          // Also send to customer stream when worker is En Route.
+          const activeBookingId = currentBookingIdRef.current
+            || realtimeService.getActiveCustomerStreamBookingId?.();
+          if ((customerStreamRef.current || activeBookingId) && activeBookingId) {
+            await _sendCustomerLocation(activeBookingId, coords.latitude, coords.longitude);
           }
         } catch { /* silent */ }
       }, LOCATION_UPDATE_INTERVAL);

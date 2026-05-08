@@ -1044,8 +1044,10 @@ function Home() {
   /* ── GSAP — Stats ── */
   useEffect(() => {
     if (!statsRef.current || !stats || stats.length === 0) return;
+    const elements = statsRef.current.querySelectorAll('.stat-card');
+    if (elements.length === 0) return;
     const ctx = gsap.context(() => {
-      gsap.from('.stat-card', {
+      gsap.from(elements, {
         y: 60, opacity: 0, scale: 0.82, duration: 1, ease: 'power3.out', stagger: 0.15,
         scrollTrigger: {
           trigger: statsRef.current, start: 'top 80%',
@@ -1054,7 +1056,7 @@ function Home() {
       });
     }, statsRef);
     return () => ctx.revert();
-  }, []);
+  }, [stats]);
 
   /* ─────────────────────────────────────────────────────────
      GSAP — Services: horizontal pin

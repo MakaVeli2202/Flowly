@@ -32,6 +32,7 @@ const HUB_URL = `${API_BASE_URL.replace('/api', '')}/hubs/glanz`;
 let _connection = null;
 let _token      = null;
 let _connecting = false;
+let _activeCustomerStreamBookingId = null;
 
 // Fan-out listener registry
 const _listeners = {
@@ -152,6 +153,10 @@ export function getConnectionState() {
   return _connectionState;
 }
 
+export function getActiveCustomerStreamBookingId() {
+  return _activeCustomerStreamBookingId;
+}
+
 export function onConnectionStateChange(fn) {
   _listeners.StateChange.add(fn);
   return () => _listeners.StateChange.delete(fn);
@@ -208,7 +213,10 @@ export async function updateAdminLocation(latitude, longitude) {
 /** Worker presses "On My Way" — starts customer-visible stream. */
 export async function startCustomerStream(bookingId) {
   if (!isConnected()) return;
-  try { await _connection.invoke('StartCustomerStream', bookingId); } catch { /* silent */ }
+  try {
+    await _connection.invoke('StartCustomerStream', bookingId);
+    _activeCustomerStreamBookingId = bookingId;
+  } catch { /* silent */ }
 }
 
 /** Worker sends GPS position during customer-visible EN_ROUTE phase. */
@@ -223,7 +231,12 @@ export async function updateCustomerLocation(bookingId, latitude, longitude) {
 /** Worker presses "Start Job" — stops customer stream, admin stream continues. */
 export async function stopCustomerStream(bookingId) {
   if (!isConnected()) return;
-  try { await _connection.invoke('StopCustomerStream', bookingId); } catch { /* silent */ }
+  try {
+    await _connection.invoke('StopCustomerStream', bookingId);
+    if (_activeCustomerStreamBookingId === bookingId) {
+      _activeCustomerStreamBookingId = null;
+    }
+  } catch { /* silent */ }
 }
 
 // ── Required API surface (spec-compliant naming) ──────────────────────────────
@@ -264,6 +277,7 @@ const realtimeService = {
   onRevokeTracking,
   getConnectionState,
   onConnectionStateChange,
+  getActiveCustomerStreamBookingId,
   forceStopWorker,
   revokeTrackingSession,
   subscribeToJobStatus,

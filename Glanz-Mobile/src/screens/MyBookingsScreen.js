@@ -161,7 +161,7 @@ export default function MyBookingsScreen({ navigation }) {
     try {
       setError('');
       const [bookingData, loyaltyData] = await Promise.all([
-        bookingsAPI.getMyBookings(),
+        bookingsAPI.getMyBookings(true),
         offersAPI.getMyLoyalty().catch(() => null),
       ]);
       setBookings(bookingData || []);
@@ -481,6 +481,10 @@ export default function MyBookingsScreen({ navigation }) {
             const statusMessage = getStatusMessage(booking.status);
             const canBookAgain  = booking.status === 'Completed';
             const canRequest    = booking.status !== 'Completed' && booking.status !== 'Cancelled';
+            const canTrackWorker = Boolean(booking.workerOnMyWayAt)
+              && !booking.workerArrivedAt
+              && booking.status !== 'Completed'
+              && booking.status !== 'Cancelled';
             const isExpanded    = expandedBookingId === booking.id;
             const packageNames  = (booking.items || []).map(i => i.packageName).filter(Boolean).join(', ');
             const isSubscription = !!booking.isMonthlySubscription;
@@ -623,10 +627,13 @@ export default function MyBookingsScreen({ navigation }) {
                       </TouchableOpacity>
                     </View>
 
-                    {booking.status === 'InProgress' && (
+                    {canTrackWorker && (
                       <TouchableOpacity
                         style={s.bookAgainBtn}
-                        onPress={() => navigation.navigate('Live Tracking', { bookingId: booking.id })}
+                        onPress={() => navigation.navigate('Live Tracking', {
+                          bookingId: booking.id,
+                          bookingNumber: booking.bookingNumber,
+                        })}
                         activeOpacity={0.8}
                       >
                         <Ionicons name="navigate-outline" size={14} color="#7C3AED" />

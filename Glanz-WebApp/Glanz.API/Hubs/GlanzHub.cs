@@ -1,5 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
+using Glanz.API.Data;
+using Glanz.API.Models;
+using Glanz.API.Services;
 using System.Security.Claims;
 
 namespace Glanz.API.Hubs
@@ -21,10 +25,12 @@ namespace Glanz.API.Hubs
     public class GlanzHub : Hub
     {
         private readonly ILogger<GlanzHub> _logger;
+        private readonly AppDbContext _context;
 
-        public GlanzHub(ILogger<GlanzHub> logger)
+        public GlanzHub(ILogger<GlanzHub> logger, AppDbContext context)
         {
             _logger = logger;
+            _context = context;
         }
 
         // ── Connection lifecycle ──────────────────────────────────────────────
@@ -58,6 +64,58 @@ namespace Glanz.API.Hubs
         {
             var workerId = GetUserId();
             if (workerId == null) return;
+
+            var worker = await _context.Staff
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s => s.Id == workerId.Value && s.IsActive);
+
+            if (worker == null)
+                return;
+
+            // Persist latest worker position so REST-based admin live map stays populated.
+            var trackedBooking = await _context.Bookings
+                .Where(b => b.AssignedWorkerId == workerId.Value
+                         && b.Status != BookingStatus.Completed
+                         && b.Status != BookingStatus.Cancelled)
+                .OrderByDescending(b => b.WorkerOnMyWayAt ?? b.WorkStartedAt ?? b.UpdatedAt)
+                .FirstOrDefaultAsync();
+
+            trackedBooking ??= await _context.Bookings
+                .Where(b => b.AssignedWorkerId == workerId.Value)
+                .OrderByDescending(b => b.UpdatedAt)
+                .FirstOrDefaultAsync();
+
+            if (trackedBooking != null)
+            {
+                var existing = await _context.WorkerLocations
+                    .Where(wl => wl.WorkerId == workerId.Value
+                              && wl.BookingId == trackedBooking.Id
+                              && wl.IsActive)
+                    .OrderByDescending(wl => wl.Timestamp)
+                    .FirstOrDefaultAsync();
+
+                if (existing == null)
+                {
+                    existing = new WorkerLocation
+                    {
+                        WorkerId = workerId.Value,
+                        BookingId = trackedBooking.Id,
+                        IsActive = true,
+                    };
+                    _context.WorkerLocations.Add(existing);
+                }
+
+                existing.Latitude = latitude;
+                existing.Longitude = longitude;
+                existing.Timestamp = DateTime.UtcNow;
+                existing.Status = trackedBooking.WorkStartedAt.HasValue
+                    ? BookingStatus.InProgress.ToString()
+                    : trackedBooking.WorkerOnMyWayAt.HasValue
+                        ? "OnTheWay"
+                        : trackedBooking.Status.ToString();
+
+                await _context.SaveChangesAsync();
+            }
 
             var payload = new
             {

@@ -38,6 +38,13 @@ export function AuthProvider({ children }) {
 
     const initAuth = async () => {
       try {
+        // Only attempt refresh if we have an active session indicator.
+        // This prevents a 401 on /Auth/refresh when not logged in.
+        const hasSession = localStorage.getItem('glanz_session_active') === 'true';
+        if (!hasSession) {
+          setLoading(false);
+          return;
+        }
         // HttpOnly refresh-token cookie is sent automatically by the browser.
         // This silently re-issues an access token so the user stays logged in
         // across page reloads without storing anything in localStorage.
@@ -53,6 +60,7 @@ export function AuthProvider({ children }) {
         startNotificationConnection();
       } catch {
         // No valid refresh token — user must log in manually.
+        localStorage.removeItem('glanz_session_active');
         setAuthToken(null);
         setToken(null);
         setUser(null);
@@ -73,6 +81,7 @@ export function AuthProvider({ children }) {
       setUser(null);
       throw new Error('This action is not allowed with a company account. Please use the mobile app to log in as a detailer.');
     }
+    localStorage.setItem('glanz_session_active', 'true');
     persistSession(response.token, response.user);
     await realtimeService.connect(response.token);
     startNotificationConnection();
@@ -109,10 +118,11 @@ export function AuthProvider({ children }) {
     return authAPI.changePassword(passwordData);
   };
 
-  const logout = () => {
+    const logout = () => {
     stopNotificationConnection();
     realtimeService.disconnect();
     authAPI.logout();
+    localStorage.removeItem('glanz_session_active');
     setAuthToken(null);
     setToken(null);
     setUser(null);

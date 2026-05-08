@@ -75,7 +75,7 @@ export function AdminHeader({ theme, onToggleTheme }) {
   const adminMenuRef = useRef(null);
   const notificationsRef = useRef(null);
   const langMenuRef = useRef(null);
-  const { user, logout } = useAuth();
+  const { user, token, logout } = useAuth();
   const { lang, t, setLang } = useLanguage();
   const wsStatus = useRealtimeStatus();
   const navigate = useNavigate();
@@ -104,6 +104,7 @@ export function AdminHeader({ theme, onToggleTheme }) {
   }, [location.pathname]);
 
   const loadNotificationSummary = useCallback(async () => {
+    if (!token) return;
     try {
       const [count, recent] = await Promise.all([
         notificationsAPI.getUnreadCount(),
@@ -112,7 +113,7 @@ export function AdminHeader({ theme, onToggleTheme }) {
       setUnreadCount(count || 0);
       setNotifications(recent || []);
     } catch {}
-  }, []);
+  }, [token]);
 
   useEffect(() => {
     loadNotificationSummary();

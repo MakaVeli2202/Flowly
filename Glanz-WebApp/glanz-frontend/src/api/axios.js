@@ -14,11 +14,15 @@ const apiClient = axios.create({
 // ── In-memory token store (never touches localStorage) ────────────────────────
 // The access token lives only in JS heap. The HttpOnly refresh-token cookie
 // is sent automatically by the browser and is inaccessible to JS.
+let hasAuthToken = false;
+
 export function setAuthToken(token) {
   if (token) {
     apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    hasAuthToken = true;
   } else {
     delete apiClient.defaults.headers.common['Authorization'];
+    hasAuthToken = false;
   }
 }
 
@@ -62,7 +66,8 @@ apiClient.interceptors.response.use(
       error.response?.status === 401 &&
       !originalRequest._retry &&
       !isAuthPage &&
-      !isRefreshEndpoint
+      !isRefreshEndpoint &&
+      hasAuthToken  // Only attempt refresh if we were logged in
     ) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
@@ -83,11 +88,14 @@ apiClient.interceptors.response.use(
         flushQueue(null, newToken);
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return apiClient(originalRequest);
-        } catch (refreshError) {
-          flushQueue(refreshError, null);
-          setAuthToken(null);
-          return Promise.reject(refreshError);
-        } finally {
+      } catch (refreshError) {
+        flushQueue(refreshError, null);
+        setAuthToken(null);
+        if (refreshError.response?.status !== 401) {
+          console.error('Token refresh failed:', refreshError);
+        }
+        return Promise.reject(refreshError);
+      } finally {
         isRefreshing = false;
       }
     }

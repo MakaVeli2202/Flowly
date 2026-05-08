@@ -374,9 +374,13 @@ namespace Glanz.API.Controllers
                 && slotEndMinutes <= shiftEndMinutes;
         }
 
-        private static List<string>? BuildRequiredTimeSlots(string selectedTimeSlot, int totalDurationMinutes, out string error)
+        private static List<string>? BuildRequiredTimeSlots(string selectedTimeSlot, int totalDurationMinutes, out string error, string? businessDayName = null)
         {
             error = string.Empty;
+
+            var dayName = string.IsNullOrWhiteSpace(businessDayName)
+                ? TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, BusinessTimeZone).DayOfWeek.ToString()
+                : businessDayName.Trim();
 
             if (totalDurationMinutes <= 0)
             {
@@ -384,7 +388,7 @@ namespace Glanz.API.Controllers
                 return null;
             }
 
-            if (!TryGetBusinessDayBounds(out var dayStartMinutes, out var dayEndMinutes)
+            if (!TryGetBusinessDayBounds(dayName, out var dayStartMinutes, out var dayEndMinutes)
                 || !TryParseSlotStart(selectedTimeSlot, out var requestedStart))
             {
                 error = "Selected time slot is invalid.";
@@ -406,10 +410,8 @@ namespace Glanz.API.Controllers
                 return null;
             }
 
-            var nowBusiness = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, BusinessTimeZone);
-            var todayDayName = nowBusiness.DayOfWeek.ToString();
             var requiredSlots = new List<string>();
-            foreach (var slot in GetDailyTimeSlots(todayDayName))
+            foreach (var slot in GetDailyTimeSlots(dayName))
             {
                 if (!TryParseTimeSlot(slot, out var slotStart, out var slotEnd))
                 {
@@ -2065,7 +2067,8 @@ namespace Glanz.API.Controllers
                 var totalDurationMinutes = dto.Packages
                     .Sum(item => packages[item.PackageId].EstimatedDurationMinutes);
 
-                var requiredTimeSlots = BuildRequiredTimeSlots(dto.TimeSlot, totalDurationMinutes, out var availabilityError);
+                var bookingDayName = TimeZoneInfo.ConvertTimeFromUtc(scheduledBookingDate, BusinessTimeZone).DayOfWeek.ToString();
+                var requiredTimeSlots = BuildRequiredTimeSlots(dto.TimeSlot, totalDurationMinutes, out var availabilityError, bookingDayName);
                 if (requiredTimeSlots == null)
                 {
                     return BadRequest(new { message = availabilityError });
@@ -2268,7 +2271,8 @@ namespace Glanz.API.Controllers
                 var totalDurationMinutes = dto.Packages
                     .Sum(item => packages[item.PackageId].EstimatedDurationMinutes);
 
-                var requiredTimeSlots = BuildRequiredTimeSlots(dto.TimeSlot, totalDurationMinutes, out var availabilityError);
+                var bookingDayName = TimeZoneInfo.ConvertTimeFromUtc(scheduledBookingDate, BusinessTimeZone).DayOfWeek.ToString();
+                var requiredTimeSlots = BuildRequiredTimeSlots(dto.TimeSlot, totalDurationMinutes, out var availabilityError, bookingDayName);
                 if (requiredTimeSlots == null)
                 {
                     return BadRequest(new { message = availabilityError });
@@ -2607,6 +2611,7 @@ namespace Glanz.API.Controllers
                     SpecialInstructions = booking.SpecialInstructions,
                     WorkerArrivedAt = booking.WorkerArrivedAt,
                     WorkerRunningLateAt = booking.WorkerRunningLateAt,
+                    WorkerOnMyWayAt = booking.WorkerOnMyWayAt,
                     WorkStartedAt = booking.WorkStartedAt,
                     WorkCompletedAt = booking.WorkCompletedAt,
                     WorkDurationSeconds = booking.WorkDurationSeconds,
@@ -2697,6 +2702,7 @@ namespace Glanz.API.Controllers
                     VehicleType = b.VehicleType.ToString(),
                     WorkerArrivedAt = b.WorkerArrivedAt,
                     WorkerRunningLateAt = b.WorkerRunningLateAt,
+                    WorkerOnMyWayAt = b.WorkerOnMyWayAt,
                     WorkStartedAt = b.WorkStartedAt,
                     WorkCompletedAt = b.WorkCompletedAt,
                     WorkDurationSeconds = b.WorkDurationSeconds,

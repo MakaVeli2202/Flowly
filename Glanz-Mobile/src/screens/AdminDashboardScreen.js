@@ -18,13 +18,16 @@ import {
   TouchableOpacity, ActivityIndicator,
   RefreshControl, Animated,
 } from 'react-native';
+import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { bookingsAPI } from '../api/bookings';
 import { authAPI } from '../api/auth';
+import { locationAPI } from '../api/location';
 import { reportsAPI } from '../api/reports';
 import { subscribeToNotifications } from '../api/notificationBus';
+import realtimeService from '../api/realtimeService';
 import { formatQAR } from '../utils/currency';
 import { theme } from '../theme/theme';
 import StatsCard from '../components/StatsCard';
@@ -152,6 +155,7 @@ export default function AdminDashboardScreen({ navigation }) {
   const [bookings,        setBookings]        = useState([]);
   const [workers,         setWorkers]         = useState([]);
   const [dashSummary,     setDashSummary]     = useState(null);
+  const [liveWorkers,     setLiveWorkers]     = useState([]);
   const [loading,         setLoading]         = useState(true);
   const [refreshing,      setRefreshing]      = useState(false);
   const [lastRefreshed,   setLastRefreshed]   = useState(null);
@@ -159,14 +163,16 @@ export default function AdminDashboardScreen({ navigation }) {
   // ── Data loading ────────────────────────────────────────────────────────────
   const loadAll = useCallback(async () => {
     try {
-      const [bkData, wkData, summaryData] = await Promise.allSettled([
+      const [bkData, wkData, summaryData, liveData] = await Promise.allSettled([
         bookingsAPI.getAll(),
         authAPI.getWorkers(),
         reportsAPI.getDashboardSummary(),
+        locationAPI.getLiveWorkers(),
       ]);
       if (bkData.status === 'fulfilled')       setBookings(bkData.value || []);
       if (wkData.status === 'fulfilled')       setWorkers(wkData.value || []);
       if (summaryData.status === 'fulfilled')  setDashSummary(summaryData.value || null);
+      if (liveData && liveData.status === 'fulfilled') setLiveWorkers(liveData.value || []);
       setLastRefreshed(new Date());
     } catch { /* silent — individual settled failures handled above */ }
   }, []);
@@ -190,6 +196,35 @@ export default function AdminDashboardScreen({ navigation }) {
     };
     return subscribeToNotifications(onNotif);
   }, [loadAll]);
+
+  // ── Live worker map stream (admin) ─────────────────────────────────────────
+  useEffect(() => {
+    realtimeService.subscribeToAllAdminLocations();
+    const unsub = realtimeService.onLocationUpdate((payload) => {
+      const workerId = Number(payload?.workerId);
+      const latitude = Number(payload?.latitude ?? payload?.lat);
+      const longitude = Number(payload?.longitude ?? payload?.lng);
+      if (!Number.isFinite(workerId) || !Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
+
+      setLiveWorkers((prev) => {
+        const idx = prev.findIndex((w) => Number(w.workerId) === workerId);
+        const next = {
+          workerId,
+          workerName: prev[idx]?.workerName || `Worker #${workerId}`,
+          latitude,
+          longitude,
+          timestamp: payload?.timestamp || new Date().toISOString(),
+          status: payload?.status || prev[idx]?.status || 'Live',
+          currentBooking: prev[idx]?.currentBooking || null,
+        };
+        if (idx === -1) return [...prev, next];
+        const clone = [...prev];
+        clone[idx] = { ...clone[idx], ...next };
+        return clone;
+      });
+    });
+    return () => { unsub(); };
+  }, []);
 
   // ── Derived data ─────────────────────────────────────────────────────────────
   const todayKey = useMemo(() => toLocalDateKey(new Date()), []);
@@ -629,6 +664,33 @@ export default function AdminDashboardScreen({ navigation }) {
             {workers.filter((w) => w.isActive).length === 0 && (
               <Text style={s.noWorkersText}>No active workers</Text>
             )}
+
+            {liveWorkers.length > 0 && (
+              <View style={s.liveMapWrap}>
+                <Text style={s.liveMapTitle}>Live Detailer Map</Text>
+                <MapView
+                  style={s.liveMap}
+                  provider={PROVIDER_DEFAULT}
+                  initialRegion={{ latitude: 25.2854, longitude: 51.5310, latitudeDelta: 0.25, longitudeDelta: 0.25 }}
+                  showsCompass
+                >
+                  {liveWorkers.map((w) => (
+                    <Marker
+                      key={String(w.workerId)}
+                      coordinate={{ latitude: Number(w.latitude), longitude: Number(w.longitude) }}
+                      title={w.workerName || `Worker #${w.workerId}`}
+                      description={`${w.status || 'Live'} · ${new Date(w.timestamp).toLocaleTimeString()}`}
+                    >
+                      <View style={s.liveWorkerPinOuter}>
+                        <View style={s.liveWorkerPinInner}>
+                          <Ionicons name="car-sport" size={13} color="#111827" />
+                        </View>
+                      </View>
+                    </Marker>
+                  ))}
+                </MapView>
+              </View>
+            )}
           </View>
         </View>
 
@@ -1012,6 +1074,47 @@ const s = StyleSheet.create({
     fontSize: 13,
     textAlign: 'center',
     paddingVertical: 16,
+  },
+
+  liveMapWrap: {
+    marginHorizontal: 14,
+    marginBottom: 14,
+    marginTop: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    overflow: 'hidden',
+    backgroundColor: 'rgba(17,24,39,0.12)',
+  },
+  liveMapTitle: {
+    color: theme.colors.text,
+    fontSize: 12,
+    fontWeight: '800',
+    paddingHorizontal: 10,
+    paddingTop: 8,
+    paddingBottom: 6,
+  },
+  liveMap: {
+    height: 190,
+    width: '100%',
+  },
+  liveWorkerPinOuter: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    borderWidth: 2,
+    borderColor: '#111827',
+    backgroundColor: 'rgba(17,24,39,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  liveWorkerPinInner: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   /* All clear card */

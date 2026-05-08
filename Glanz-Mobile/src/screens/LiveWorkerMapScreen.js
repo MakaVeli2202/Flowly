@@ -2,10 +2,12 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Animated,
 } from 'react-native';
+import * as Location from 'expo-location';
 import MapView, { Marker, Polyline, PROVIDER_DEFAULT } from 'react-native-maps';
 import { Ionicons } from '@expo/vector-icons';
 import { locationAPI } from '../api/location';
 import { bookingsAPI } from '../api/bookings';
+import { addressesAPI } from '../api/addresses';
 import { theme } from '../theme/theme';
 import realtimeService from '../api/realtimeService';
 
@@ -16,16 +18,40 @@ const STATUS_COLORS = {
   Cancelled:  '#F87171',
 };
 
+const SIGNAL_STALE_MS = 30_000;
+const AVG_SPEED_KMH = 35;
+
 // Default map region — will be overridden once we have real coords
 const DEFAULT_REGION = {
-  latitude:       24.7136,
-  longitude:      46.6753,
+  latitude:       25.2854,
+  longitude:      51.5310,
   latitudeDelta:  0.05,
   longitudeDelta: 0.05,
 };
 
+function distanceKm(a, b) {
+  if (!a || !b) return null;
+  const toRad = (deg) => (deg * Math.PI) / 180;
+  const R = 6371;
+  const dLat = toRad(b.latitude - a.latitude);
+  const dLon = toRad(b.longitude - a.longitude);
+  const lat1 = toRad(a.latitude);
+  const lat2 = toRad(b.latitude);
+  const h = Math.sin(dLat / 2) ** 2
+    + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
+  return R * (2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h)));
+}
+
+function estimateEtaMinutes(workerCoords, customerCoords) {
+  const km = distanceKm(workerCoords, customerCoords);
+  if (!km) return null;
+  const mins = Math.ceil((km / AVG_SPEED_KMH) * 60);
+  return Math.max(1, mins);
+}
+
 export default function LiveWorkerMapScreen({ route, navigation }) {
   const bookingId = route?.params?.bookingId;
+  const bookingNumber = route?.params?.bookingNumber;
 
   const [workerLocation,   setWorkerLocation]   = useState(null);
   const [customerLocation, setCustomerLocation] = useState(null);
@@ -39,6 +65,8 @@ export default function LiveWorkerMapScreen({ route, navigation }) {
   const mapRef    = useRef(null);
   const unsubRef  = useRef(null);
   const pulseAnim = useRef(new Animated.Value(1)).current;
+  const initialCameraSetRef = useRef(false);
+  const customerGeoAttemptedRef = useRef(false);
 
   // Pulse animation for live indicator
   useEffect(() => {
@@ -52,18 +80,85 @@ export default function LiveWorkerMapScreen({ route, navigation }) {
     return () => loop.stop();
   }, [pulseAnim]);
 
-  const loadBooking = useCallback(async () => {
-    if (!bookingId) return;
+  const resolveCustomerLocation = useCallback(async (bookingData) => {
+    if (customerGeoAttemptedRef.current) return;
+    customerGeoAttemptedRef.current = true;
+
+    if (!bookingData) return;
+
+    const directLat = Number(
+      bookingData.customerLatitude
+      ?? bookingData.latitude
+      ?? bookingData.lat
+      ?? bookingData.addressLatitude
+    );
+    const directLng = Number(
+      bookingData.customerLongitude
+      ?? bookingData.longitude
+      ?? bookingData.lng
+      ?? bookingData.addressLongitude
+    );
+
+    if (Number.isFinite(directLat) && Number.isFinite(directLng)) {
+      setCustomerLocation({ latitude: directLat, longitude: directLng });
+      return;
+    }
+
+    const address = String(bookingData.customerAddress || '').trim();
+    if (!address) return;
+
     try {
-      const data = await bookingsAPI.getByBookingNumber(bookingId);
+      const rawParts = address.split(',').map((p) => p.trim()).filter(Boolean);
+      const geoQueries = [
+        address,
+        `${address}, Doha, Qatar`,
+        rawParts.slice(0, 2).join(', '),
+        `${rawParts[0] || ''}, Doha`,
+      ].filter(Boolean);
+
+      for (const q of geoQueries) {
+        const suggestions = await addressesAPI.autocomplete(q, 1);
+        const first = suggestions?.[0];
+        const lat = Number(first?.latitude ?? first?.lat);
+        const lng = Number(first?.longitude ?? first?.lng ?? first?.lon);
+        if (Number.isFinite(lat) && Number.isFinite(lng)) {
+          setCustomerLocation({ latitude: lat, longitude: lng });
+          return;
+        }
+      }
+
+      // Device geocoder fallback when API autocomplete cannot resolve this exact format.
+      const nativeResults = await Location.geocodeAsync(address);
+      if (nativeResults?.length > 0) {
+        const firstNative = nativeResults[0];
+        const lat = Number(firstNative?.latitude);
+        const lng = Number(firstNative?.longitude);
+        if (Number.isFinite(lat) && Number.isFinite(lng)) {
+          setCustomerLocation({ latitude: lat, longitude: lng });
+          return;
+        }
+      }
+    } catch {
+      // Non-blocking: worker stream should still render even if address geocoding fails.
+    }
+  }, []);
+
+  const loadBooking = useCallback(async () => {
+    if (!bookingNumber) return;
+    try {
+      const data = await bookingsAPI.getByBookingNumber(bookingNumber);
       setBooking(data);
-      if (data.status === 'Completed' || data.status === 'Cancelled') {
+      if (!customerLocation) {
+        resolveCustomerLocation(data);
+      }
+      if (data.status === 'Completed' || data.status === 'Cancelled' || data.workerArrivedAt) {
         setIsTrackingActive(false);
       }
     } catch (err) {
+      setError('Failed to load tracking data.');
       console.warn('Failed to load booking:', err);
     }
-  }, [bookingId]);
+  }, [bookingNumber, customerLocation, resolveCustomerLocation]);
 
   const loadWorkerLocation = useCallback(async () => {
     if (!bookingId) return;
@@ -74,18 +169,17 @@ export default function LiveWorkerMapScreen({ route, navigation }) {
         setWorkerLocation(coords);
         setPathCoords([coords]);
         setLastUpdate(new Date());
-
-        // Centre map on worker
-        mapRef.current?.animateToRegion({
-          ...coords,
-          latitudeDelta:  0.02,
-          longitudeDelta: 0.02,
-        }, 500);
+        setError('');
+        setIsTrackingActive(true);
       }
       if (location?.status === 'Completed' || location?.status === 'Cancelled') {
         setIsTrackingActive(false);
       }
     } catch (err) {
+      if (err?.response?.status === 404) {
+        // Do not flash red error for normal "not started yet" state.
+        setIsTrackingActive(false);
+      }
       if (err?.response?.status !== 404) console.warn('Failed to load worker location:', err);
     }
   }, [bookingId]);
@@ -94,8 +188,7 @@ export default function LiveWorkerMapScreen({ route, navigation }) {
   useEffect(() => {
     const init = async () => {
       setLoading(true);
-      await loadBooking();
-      await loadWorkerLocation();
+      await Promise.allSettled([loadBooking(), loadWorkerLocation()]);
       setLoading(false);
     };
     init();
@@ -105,33 +198,63 @@ export default function LiveWorkerMapScreen({ route, navigation }) {
   useEffect(() => {
     if (!bookingId) return;
 
-    if (booking?.status === 'OnTheWay') {
-      setIsTrackingActive(true);
-      realtimeService.subscribeToCustomerLocation(bookingId);
-
-      unsubRef.current = realtimeService.onLocationUpdate((data) => {
-        if (!data?.bookingId || String(data.bookingId) !== String(bookingId)) return;
-
-        const lat = data.latitude ?? data.lat;
-        const lng = data.longitude ?? data.lng;
-        if (!lat || !lng) return;
-
-        const coords = { latitude: lat, longitude: lng };
-        setWorkerLocation(coords);
-        setLastUpdate(new Date());
-        setPathCoords((prev) => [...prev.slice(-49), coords]); // keep last 50 trail points
-
-        // Smoothly pan map to new worker position
-        mapRef.current?.animateCamera({ center: coords }, { duration: 400 });
-      });
-    } else {
+    const isTerminal = booking?.status === 'Completed' || booking?.status === 'Cancelled';
+    if (isTerminal) {
       setIsTrackingActive(false);
+      return undefined;
     }
+
+    // Always subscribe so customer still receives first update even if screen opened
+    // before worker pressed "On My Way".
+    realtimeService.subscribeToCustomerLocation(bookingId);
+
+    unsubRef.current = realtimeService.onLocationUpdate((data) => {
+      if (!data?.bookingId || String(data.bookingId) !== String(bookingId)) return;
+
+      const lat = data.latitude ?? data.lat;
+      const lng = data.longitude ?? data.lng;
+      if (!lat || !lng) return;
+
+      const coords = { latitude: lat, longitude: lng };
+      setWorkerLocation(coords);
+      setLastUpdate(new Date());
+      setIsTrackingActive(true);
+      setError('');
+      setPathCoords((prev) => [...prev.slice(-49), coords]); // keep last 50 trail points
+    });
 
     return () => {
       if (unsubRef.current) { unsubRef.current(); unsubRef.current = null; }
     };
   }, [booking?.status, bookingId]);
+
+  // Keep retrying while waiting so location appears as soon as worker starts stream.
+  useEffect(() => {
+    if (!bookingId) return undefined;
+    if (booking?.status === 'Completed' || booking?.status === 'Cancelled') return undefined;
+
+    const timer = setInterval(() => {
+      loadWorkerLocation();
+      loadBooking();
+    }, 10_000);
+
+    return () => clearInterval(timer);
+  }, [booking?.status, bookingId, loadBooking, loadWorkerLocation]);
+
+  // One-time camera setup. Keep map stable after first paint (Uber-like behavior).
+  useEffect(() => {
+    if (initialCameraSetRef.current) return;
+
+    const focus = workerLocation || customerLocation;
+    if (!focus) return;
+
+    mapRef.current?.animateToRegion({
+      ...focus,
+      latitudeDelta: 0.02,
+      longitudeDelta: 0.02,
+    }, 350);
+    initialCameraSetRef.current = true;
+  }, [customerLocation, workerLocation]);
 
   const getStatusLabel = (status) => {
     const map = {
@@ -142,6 +265,10 @@ export default function LiveWorkerMapScreen({ route, navigation }) {
   };
 
   const statusColor = STATUS_COLORS[booking?.status] || theme.colors.primary;
+  const etaMinutes = estimateEtaMinutes(workerLocation, customerLocation);
+  const isSignalFresh = lastUpdate ? (Date.now() - lastUpdate.getTime()) <= SIGNAL_STALE_MS : false;
+  const signalLost = Boolean(workerLocation) && !isSignalFresh && booking?.status !== 'Completed' && booking?.status !== 'Cancelled';
+  const showEta = booking?.status !== 'Completed' && booking?.status !== 'Cancelled';
 
   if (loading) {
     return (
@@ -187,9 +314,9 @@ export default function LiveWorkerMapScreen({ route, navigation }) {
             title="Worker"
             description={`${getStatusLabel(booking?.status)} · Last update ${lastUpdate?.toLocaleTimeString() ?? ''}`}
           >
-            <View style={[l.workerMarkerOuter, { borderColor: statusColor }]}>
-              <View style={[l.workerMarkerInner, { backgroundColor: statusColor }]}>
-                <Ionicons name="car" size={16} color="#fff" />
+            <View style={[l.workerMarkerOuter, { borderColor: statusColor }]}> 
+              <View style={l.workerMarkerInner}> 
+                <Ionicons name="car-sport" size={16} color="#111827" />
               </View>
             </View>
           </Marker>
@@ -252,6 +379,15 @@ export default function LiveWorkerMapScreen({ route, navigation }) {
           </View>
         )}
 
+        {showEta && (
+          <View style={l.bookingRow}>
+            <Text style={l.bookingLabel}>Estimated Arrival</Text>
+            <Text style={l.bookingValue}>
+              {etaMinutes ? `~${etaMinutes} min` : (isTrackingActive ? 'Calculating...' : 'Pending signal')}
+            </Text>
+          </View>
+        )}
+
         {booking?.status === 'Completed' && (
           <View style={l.completedBanner}>
             <Ionicons name="checkmark-circle" size={20} color="#84CC16" />
@@ -266,10 +402,12 @@ export default function LiveWorkerMapScreen({ route, navigation }) {
           </View>
         )}
 
-        {!workerLocation && booking?.status === 'OnTheWay' && (
+        {((!workerLocation && isTrackingActive) || signalLost) && (
           <View style={l.waitingBanner}>
             <ActivityIndicator size="small" color={statusColor} />
-            <Text style={l.waitingText}>Waiting for worker location...</Text>
+            <Text style={l.waitingText}>
+              {signalLost ? 'Signal weak. Reconnecting to detailer location...' : 'Waiting for worker location...'}
+            </Text>
           </View>
         )}
 
@@ -314,15 +452,15 @@ const l = StyleSheet.create({
   workerMarkerOuter: {
     width: 44, height: 44, borderRadius: 22,
     borderWidth: 3, borderColor: '#7C3AED',
-    backgroundColor: 'rgba(124,58,237,0.15)',
+    backgroundColor: 'rgba(17,24,39,0.15)',
     alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#7C3AED', shadowOpacity: 0.6,
+    shadowColor: '#111827', shadowOpacity: 0.6,
     shadowOffset: { width: 0, height: 0 }, shadowRadius: 8,
     elevation: 6,
   },
   workerMarkerInner: {
     width: 28, height: 28, borderRadius: 14,
-    backgroundColor: '#7C3AED',
+    backgroundColor: '#FFFFFF',
     alignItems: 'center', justifyContent: 'center',
   },
   // Customer marker
