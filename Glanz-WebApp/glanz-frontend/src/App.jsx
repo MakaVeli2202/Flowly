@@ -15,7 +15,7 @@ import { ToastProvider }    from './components/shared/Toast';
 import Navbar               from './components/layout/Navbar';
 import Footer               from './components/layout/Footer';
 import ProtectedRoute       from './components/shared/ProtectedRoute';
-import ChatWidget           from './components/shared/ChatWidget';
+import WhatsAppWidget      from './components/shared/WhatsAppWidget';
 import RainBackground       from './components/shared/RainBackground';
 import CookieConsent        from './components/ui/CookieConsent';
 
@@ -28,6 +28,7 @@ import Booking             from './pages/customer/Booking';
 import BookingConfirmation from './pages/customer/BookingConfirmation';
 import MyBookings          from './pages/customer/MyBookings';
 import Profile             from './pages/customer/Profile';
+import Referrals           from './pages/customer/Referrals';
 import Plans               from './pages/customer/Plans';
 import Careers             from './pages/customer/Careers';
 
@@ -59,6 +60,7 @@ const AdminWorkerSales       = lazy(() => import('./pages/admin/AdminWorkerSales
 const AdminPayroll           = lazy(() => import('./pages/admin/AdminPayroll'));
 const LiveMapTracking        = lazy(() => import('./pages/admin/LiveMapTracking'));
 const AdminDevSettings       = lazy(() => import('./pages/admin/AdminDevSettings'));
+const AdminCrm               = lazy(() => import('./pages/admin/AdminCrm'));
 const SubscriptionBooking    = lazy(() => import('./pages/customer/SubscriptionBooking'));
 
 // ─── Admin fallback ───────────────────────────────────────────────────────────
@@ -184,6 +186,11 @@ function AppRoutes() {
         <Route path="/my-bookings" element={
           <ProtectedRoute requireCustomer><MyBookings /></ProtectedRoute>
         } />
+        <Route path="/referrals" element={
+          <ProtectedRoute requireCustomer>
+            <Suspense fallback={<CustomerFallback />}><Referrals /></Suspense>
+          </ProtectedRoute>
+        } />
         <Route path="/my-subscription" element={
           <ProtectedRoute requireCustomer>
             <Suspense fallback={<AdminFallback />}><MySubscription /></Suspense>
@@ -222,6 +229,7 @@ function AppRoutes() {
         {adminRoute('/admin/payroll',              AdminPayroll)}
         {adminRoute('/admin/live-map',             LiveMapTracking)}
         {adminRoute('/admin/dev-settings',         AdminDevSettings)}
+        {adminRoute('/admin/crm',                 AdminCrm)}
 
         <Route path="/subscription-booking" element={
           <ProtectedRoute><Suspense fallback={<AdminFallback />}><SubscriptionBooking /></Suspense></ProtectedRoute>
@@ -288,12 +296,11 @@ function App() {
               <div className="scroll-progress-bar" style={{ width: `${scrollProgress}%` }} aria-hidden="true" />
               <div className="pointer-events-none absolute -left-24 top-20 h-72 w-72 rounded-full bg-primary/20 blur-3xl bg-orb-1" aria-hidden="true" />
               <div className="pointer-events-none absolute right-0 top-1/3 h-80 w-80 rounded-full bg-secondary/20 blur-3xl bg-orb-2" aria-hidden="true" />
-              <Navbar theme={theme} onToggleTheme={toggleTheme} />
-              <AppRoutes />
-              <Footer />
-               <ChatWidget />
-               <CookieConsent privacyHref="/privacy-policy" />
-             </div>
+               <Navbar theme={theme} onToggleTheme={toggleTheme} />
+               <AppRoutes />
+               <Footer />
+                <WhatsAppWidget />
+              </div>
             </ToastProvider>
           </ErrorBoundary>
         </PackagesProvider>

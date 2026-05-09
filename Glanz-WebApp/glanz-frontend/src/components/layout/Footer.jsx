@@ -153,7 +153,10 @@ function Footer() {
               <li><Link to="/plans" className="text-[var(--muted-color)] hover:text-primary transition">{ui.plans}</Link></li>
               <li><Link to="/booking" className="text-[var(--muted-color)] hover:text-primary transition">{bookingLinkLabel}</Link></li>
               {isAuthenticated && !isAdmin && (
-                <li><Link to="/my-bookings" className="text-[var(--muted-color)] hover:text-primary transition">{ui.myBookings}</Link></li>
+                <>
+                  <li><Link to="/my-bookings" className="text-[var(--muted-color)] hover:text-primary transition">{ui.myBookings}</Link></li>
+                  <li><Link to="/referrals" className="text-[var(--muted-color)] hover:text-primary transition">{ui.referrals || 'Referrals'}</Link></li>
+                </>
               )}
               {isAuthenticated && isAdmin && (
                 <li><Link to="/admin/bookings" className="text-[var(--muted-color)] hover:text-primary transition">{ui.editBookings}</Link></li>

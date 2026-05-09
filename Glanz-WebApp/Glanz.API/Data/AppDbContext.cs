@@ -47,6 +47,7 @@ namespace Glanz.API.Data
         public DbSet<AuditLog> AuditLogs { get; set; }
         public DbSet<CustomerFeedback> CustomerFeedbacks { get; set; }
         public DbSet<Lead> Leads { get; set; }
+        public DbSet<Referral> Referrals { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

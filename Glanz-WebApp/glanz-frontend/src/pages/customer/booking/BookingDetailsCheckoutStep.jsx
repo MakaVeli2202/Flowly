@@ -131,6 +131,24 @@ function BookingDetailsCheckoutStep({
         </div>
       </div>
 
+      {/* ── Referral Code ──────────────────────────────────── */}
+      <div className="glass-card p-6 relative">
+        <SectionHeading icon={Gift} step={6}>Referral Code</SectionHeading>
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-color)] mb-2">Have a referral code?</p>
+          <div className="relative">
+            <User size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--muted-color)]" />
+            <input type="text" name="referralCode" value={formData.referralCode}
+              onChange={(e) => setFormData((prev) => ({ ...prev, referralCode: e.target.value.toUpperCase() }))}
+              placeholder="AHMED8K2"
+              className="w-full pl-10 pr-4 py-3 rounded-xl border border-[var(--border-color)] bg-[var(--surface-bg)] text-[var(--text-color)] text-sm placeholder:text-[var(--muted-color)] focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition tracking-widest font-mono" />
+          </div>
+          <p className="text-[11px] text-[var(--muted-color)] mt-2 leading-relaxed">
+            Use a friend's referral code to unlock exclusive discounts. Your friend earns rewards too!
+          </p>
+        </div>
+      </div>
+
       {/* ── 07 Payment ──────────────────────────────────────── */}
       <div className="glass-card p-6 relative overflow-hidden">
         <div className="prism-ray" style={{ left: '28%', width: '13%', animation: 'prism-ray-sweep 15s ease-in-out 9s infinite' }} />

@@ -87,6 +87,7 @@ function BookingForm({ stripe, elements, isStripeMode }) {
     specialInstructions: '',
     leadSource:          'Direct',
     leadSourceDetails:   '',
+    referralCode:        '',
   });
 
   // Current vehicle multiplier from backend settings
@@ -309,6 +310,7 @@ function BookingForm({ stripe, elements, isStripeMode }) {
         customerAddress:        formData.customerAddress || null,
         addressType:            isAdmin ? 'Home' : (formData.addressType || 'Home'),
         offerCode:              formData.offerCode?.trim() || null,
+        referralCode:           formData.referralCode?.trim() || null,
         vehicleMake:            formData.vehicleMake  || null,
         vehicleModel:           formData.vehicleModel || null,
         vehicleYear:            formData.vehicleYear  || null,

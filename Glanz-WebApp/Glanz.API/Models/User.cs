@@ -63,6 +63,17 @@ namespace Glanz.API.Models
         [StringLength(500)]
         public string? LoyaltyReviewScreenshotUrl { get; set; }
 
+        [StringLength(1000)]
+        public string? Tags { get; set; }
+
+        public string? Notes { get; set; }
+
+        public decimal TotalSpent { get; set; }
+
+        public DateTime? LastBookedDate { get; set; }
+
+        public int TotalBookingsCount { get; set; }
+
         [StringLength(500)]
         public string? ExpoPushToken { get; set; }
 
@@ -72,6 +83,17 @@ namespace Glanz.API.Models
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+        // Referral Program
+        [StringLength(20)]
+        public string? ReferralCode { get; set; } // Unique code like "AHMED8K2"
+
+        public decimal ReferralPoints { get; set; } // Credits earned from referrals (1 point = 1 QAR)
+
+        public int? ReferredByUserId { get; set; } // Who referred this user
+
+        [ForeignKey(nameof(ReferredByUserId))]
+        public User? ReferredByUser { get; set; }
 
         public ICollection<Booking> Bookings { get; set; } = new List<Booking>();
     }

@@ -42,6 +42,10 @@ namespace Glanz.API.DTOs
         public string? SpecialInstructions { get; set; }
         [StringLength(60)]
         public string? OfferCode { get; set; }
+
+        [StringLength(30)]
+        public string? ReferralCode { get; set; }
+
         public int? CustomerSubscriptionId { get; set; }
 
         public bool IsMonthlySubscription { get; set; } = false;
