@@ -4142,6 +4142,19 @@ namespace Glanz.API.Controllers
                 booking.UpdatedAt = DateTime.UtcNow;
                 booking.StockDeductedAt ??= DateTime.UtcNow;
 
+                // ── Update Customer Stats (CRM) ─────────────────────────────────────────
+                if (booking.UserId.HasValue)
+                {
+                    var customer = await _context.Users.FindAsync(booking.UserId.Value);
+                    if (customer != null)
+                    {
+                        customer.TotalSpent += booking.TotalAmount;
+                        customer.TotalBookingsCount += 1;
+                        customer.LastBookedDate = booking.ScheduledDate;
+                        customer.UpdatedAt = DateTime.UtcNow;
+                    }
+                }
+
                 // ── Stripe payment capture ────────────────────────────────────────────────
                 // Capture the pre-authorised Stripe PaymentIntent so the customer is charged.
                 // Production: calls Stripe CaptureAsync (real money collected).

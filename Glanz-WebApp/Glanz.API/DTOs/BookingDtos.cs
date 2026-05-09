@@ -55,6 +55,13 @@ namespace Glanz.API.DTOs
         // a duplicate if the key matches a previous request from the same customer.
         public string? IdempotencyKey { get; set; }
 
+        // Lead tracking - how did the customer find us?
+        public LeadSource LeadSource { get; set; } = LeadSource.Direct;
+        
+        // Additional lead details (UTM parameters, campaign name, etc.)
+        [StringLength(500)]
+        public string? LeadSourceDetails { get; set; }
+
         [Required]
         public List<BookingPackageDto> Packages { get; set; } = new();
     }
@@ -154,6 +161,9 @@ namespace Glanz.API.DTOs
         public string? RescheduleRequestNote { get; set; }
         public string? ReschedulePreferredDate { get; set; }
         public DateTime? RescheduleRequestedAt { get; set; }
+        // Lead tracking
+        public string LeadSource { get; set; } = "Direct";
+        public string? LeadSourceDetails { get; set; }
         public List<BookingItemDetailDto> Items { get; set; } = new();
         public List<BookingChecklistItemDto> ChecklistItems { get; set; } = new();
     }
@@ -438,6 +448,11 @@ namespace Glanz.API.DTOs
         public string FeeType { get; set; } = "Percent";
         public decimal FeeAmount { get; set; }
         public int FreeWindowHours { get; set; }
+    }
+
+    public class WhatsAppBusinessDto
+    {
+        public string? WhatsAppBusinessNumber { get; set; }
     }
 
     public class BusinessHoursDto

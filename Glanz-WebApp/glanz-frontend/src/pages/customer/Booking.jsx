@@ -85,6 +85,8 @@ function BookingForm({ stripe, elements, isStripeMode }) {
     vehicleModel:        '',
     vehicleYear:         '',
     specialInstructions: '',
+    leadSource:          'Direct',
+    leadSourceDetails:   '',
   });
 
   // Current vehicle multiplier from backend settings
@@ -158,6 +160,39 @@ function BookingForm({ stripe, elements, isStripeMode }) {
       }));
     }
   }, [user, savedAddress, normalizedPreferredAddressType, canAutofillCustomerData]);
+
+  // Auto-capture UTM parameters for lead tracking (invisible to user)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const utmSource = params.get('utm_source')?.toLowerCase() || '';
+    const utmMedium = params.get('utm_medium')?.toLowerCase() || '';
+    const utmCampaign = params.get('utm_campaign') || '';
+    
+    let leadSource = 'Direct';
+    if (utmSource.includes('google')) {
+      if (utmMedium === 'cpc' || utmMedium === 'lsa') {
+        leadSource = utmMedium === 'lsa' ? 'GoogleLSA' : 'GoogleSearch';
+      } else {
+        leadSource = 'GoogleMaps';
+      }
+    } else if (utmSource.includes('facebook') || utmSource.includes('fb')) {
+      leadSource = 'Facebook';
+    } else if (utmSource.includes('instagram')) {
+      leadSource = 'Instagram';
+    } else if (utmSource.includes('whatsapp')) {
+      leadSource = 'WhatsApp';
+    } else if (utmSource.includes('referral') || params.get('ref')) {
+      leadSource = 'Referral';
+    }
+    
+    const leadSourceDetails = [utmSource, utmMedium, utmCampaign].filter(Boolean).join(' | ');
+    
+    setFormData((prev) => ({
+      ...prev,
+      leadSource: leadSource,
+      leadSourceDetails: leadSourceDetails || prev.leadSourceDetails,
+    }));
+  }, []);
 
   useEffect(() => {
     fetchMonthAvailability(calendarMonth, totalDuration || 60);
@@ -279,6 +314,8 @@ function BookingForm({ stripe, elements, isStripeMode }) {
         vehicleYear:            formData.vehicleYear  || null,
         vehicleType:            formData.vehicleType,
         specialInstructions:    formData.specialInstructions || null,
+        leadSource:             formData.leadSource || 'Direct',
+        leadSourceDetails:      formData.leadSourceDetails || null,
         packages:               selectedPackages,
         customerSubscriptionId: (mySubscription?.isActive || mySubscription?.status === 'Active')
           ? (mySubscription.id ?? null)

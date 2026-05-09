@@ -45,6 +45,8 @@ namespace Glanz.API.Data
         public DbSet<JobApplication> JobApplications { get; set; }
         public DbSet<JobPosition> JobPositions { get; set; }
         public DbSet<AuditLog> AuditLogs { get; set; }
+        public DbSet<CustomerFeedback> CustomerFeedbacks { get; set; }
+        public DbSet<Lead> Leads { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -344,6 +346,30 @@ namespace Glanz.API.Data
 
             modelBuilder.Entity<AuditLog>()
                 .HasIndex(a => new { a.Action, a.Timestamp });
+
+            modelBuilder.Entity<CustomerFeedback>()
+                .HasIndex(cf => new { cf.UserId, cf.CreatedAt });
+
+            modelBuilder.Entity<CustomerFeedback>()
+                .HasIndex(cf => cf.BookingId);
+
+            modelBuilder.Entity<CustomerFeedback>()
+                .HasOne(cf => cf.User)
+                .WithMany()
+                .HasForeignKey(cf => cf.UserId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<CustomerFeedback>()
+                .HasOne(cf => cf.Booking)
+                .WithMany()
+                .HasForeignKey(cf => cf.BookingId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<CustomerFeedback>()
+                .HasOne(cf => cf.Worker)
+                .WithMany()
+                .HasForeignKey(cf => cf.WorkerId)
+                .OnDelete(DeleteBehavior.SetNull);
 
         }
     }

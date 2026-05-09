@@ -29,6 +29,20 @@ namespace Glanz.API.Models
         Pickup = 3
     }
 
+    public enum LeadSource
+    {
+        Direct = 0,           // Typed URL or direct
+        GoogleSearch = 1,     // Google search results
+        GoogleMaps = 2,      // Google Maps listing
+        GoogleLSA = 3,      // Google Local Services Ads
+        Facebook = 4,       // Facebook ad/post
+        Instagram = 5,      // Instagram ad/story
+        WhatsApp = 6,       // WhatsApp forward
+        Referral = 7,        // Friend/family referral
+        Returning = 8,       // Returning customer
+        Other = 9            // Other source
+    }
+
     public class Booking
     {
         [Key]
@@ -103,6 +117,11 @@ namespace Glanz.API.Models
         public VehicleType VehicleType { get; set; } = VehicleType.Sedan;
 
         public string? SpecialInstructions { get; set; }
+
+        public LeadSource LeadSource { get; set; } = LeadSource.Direct;
+
+        [StringLength(500)]
+        public string? LeadSourceDetails { get; set; } // For UTMs, campaign names, etc.
 
         [StringLength(255)]
         public string? StripePaymentIntentId { get; set; }
