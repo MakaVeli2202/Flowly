@@ -5,6 +5,7 @@ import {
 } from '../../api/bookings';
 import { packagesAPI } from '../../api/packages';
 import { offersAPI } from '../../api/offers';
+import { crmAPI } from '../../api/crm';
 import {
   Calendar, Clock, AlertCircle, CheckCircle, XCircle,
   Package, Gift, Star, Copy, Check, Edit2, X,
@@ -75,6 +76,11 @@ function MyBookings() {
   const [screenshotPreview, setScreenshotPreview]  = useState(null);
   const [uploadingScreenshot, setUploadingScreenshot] = useState(false);
   const [highlightedBookingId,setHighlightedBookingId] = useState(null);
+
+  // Feedback state
+  const [feedbackModal, setFeedbackModal] = useState(null);
+  const [feedbackData, setFeedbackData] = useState({ type: 'Review', rating: 5, comment: '', isAnonymous: false });
+  const [submittingFeedback, setSubmittingFeedback] = useState(false);
 
   // Edit modal state
   const [editBooking,        setEditBooking]        = useState(null);
@@ -223,6 +229,27 @@ function MyBookings() {
         },
       },
     });
+  };
+
+  const submitFeedback = async () => {
+    if (!feedbackModal) return;
+    setSubmittingFeedback(true);
+    try {
+      await crmAPI.submitFeedback({
+        bookingId: feedbackModal.id,
+        type: feedbackData.type,
+        rating: feedbackData.type === 'Complaint' ? null : feedbackData.rating,
+        comment: feedbackData.comment,
+        isAnonymous: feedbackData.isAnonymous,
+        workerId: feedbackModal.assignedWorkerId
+      });
+      setFeedbackModal(null);
+      setFeedbackData({ type: 'Review', rating: 5, comment: '', isAnonymous: false });
+    } catch (err) {
+      console.error('Feedback error:', err);
+    } finally {
+      setSubmittingFeedback(false);
+    }
   };
 
   const openEditModal = async (booking) => {
@@ -1078,10 +1105,16 @@ function MyBookings() {
                       )}
 
                       {booking.status === 'Completed' && (
-                        <button onClick={() => handleBookAgain(booking)}
-                          className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold premium-btn">
-                          Book Again <ArrowRight size={13} />
-                        </button>
+                        <>
+                          <button onClick={() => setFeedbackModal(booking)}
+                            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold border border-[var(--border-color)] text-[var(--text-color)] bg-[var(--surface-bg)]">
+                            <Star size={13} /> Feedback
+                          </button>
+                          <button onClick={() => handleBookAgain(booking)}
+                            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold premium-btn">
+                            Book Again <ArrowRight size={13} />
+                          </button>
+                        </>
                       )}
                     </div>
                   </div>
@@ -1105,6 +1138,52 @@ function MyBookings() {
           </div>
         )}
 
+        {feedbackModal && (
+          <div className="fixed inset-0 flex items-center justify-center p-4 z-50" style={{ background: 'rgba(0,0,0,0.7)' }}>
+            <div className="rounded-2xl p-6 w-full max-w-md" style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)' }}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold" style={{ color: 'var(--heading-color)' }}>How was your service?</h3>
+                <button onClick={() => setFeedbackModal(null)} className="p-1 rounded-lg hover:bg-[var(--surface-bg)]">
+                  <X size={20} style={{ color: 'var(--muted-color)' }} />
+                </button>
+              </div>
+              <div className="flex gap-2 mb-4">
+                {['Review', 'Complaint', 'Compliment'].map(type => (
+                  <button key={type} onClick={() => setFeedbackData({ ...feedbackData, type, rating: type === 'Complaint' ? 0 : 5 })}
+                    className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${feedbackData.type === type ? 'bg-[var(--cta-color)] text-white' : 'bg-[var(--surface-bg)]'}`}
+                    style={{ color: feedbackData.type === type ? 'white' : 'var(--text-color)', border: '1px solid var(--border-color)' }}>
+                    {type === 'Review' ? '👍 Review' : type === 'Complaint' ? '😞 Complaint' : '⭐ Compliment'}
+                  </button>
+                ))}
+              </div>
+              {feedbackData.type === 'Review' && (
+                <div className="mb-4">
+                  <p className="text-sm mb-2" style={{ color: 'var(--muted-color)' }}>Rating</p>
+                  <div className="flex gap-2">
+                    {[1,2,3,4,5].map(i => (
+                      <button key={i} onClick={() => setFeedbackData({ ...feedbackData, rating: i })} className="p-2 rounded-lg transition">
+                        <Star size={28} className={i <= feedbackData.rating ? 'text-yellow-500 fill-yellow-500' : 'text-gray-400'} />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div className="mb-4">
+                <p className="text-sm mb-2" style={{ color: 'var(--muted-color)' }}>{feedbackData.type === 'Complaint' ? 'Tell us what went wrong:' : 'Comments (optional):'}</p>
+                <textarea value={feedbackData.comment} onChange={(e) => setFeedbackData({ ...feedbackData, comment: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl h-24" style={{ background: 'var(--surface-bg)', border: '1px solid var(--border-color)', color: 'var(--text-color)' }}
+                  placeholder={feedbackData.type === 'Complaint' ? 'Please describe the issue...' : 'Any additional comments?'} />
+              </div>
+              <div className="flex items-center gap-2 mb-4">
+                <input type="checkbox" id="anonymous" checked={feedbackData.isAnonymous} onChange={(e) => setFeedbackData({ ...feedbackData, isAnonymous: e.target.checked })} className="rounded" />
+                <label htmlFor="anonymous" className="text-sm" style={{ color: 'var(--muted-color)' }}>Submit anonymously</label>
+              </div>
+              <button onClick={submitFeedback} disabled={submittingFeedback} className="w-full py-3 rounded-xl font-bold text-white bg-[var(--cta-color)] hover:opacity-90 disabled:opacity-50">
+                {submittingFeedback ? 'Submitting...' : 'Submit Feedback'}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

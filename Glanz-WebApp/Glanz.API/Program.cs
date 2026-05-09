@@ -227,8 +227,6 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = jwtSettings["Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey!))
     };
-    // SignalR WebSocket connections cannot send Authorization headers;
-    // the client passes the JWT via query-string ?access_token=...
     options.Events = new JwtBearerEvents
     {
         OnMessageReceived = context =>
@@ -239,6 +237,18 @@ builder.Services.AddAuthentication(options =>
                 context.Token = accessToken;
             return Task.CompletedTask;
         }
+    };
+})
+.AddGoogle(options =>
+{
+    options.ClientId = builder.Configuration["Authentication:Google:ClientId"] ?? "";
+    options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"] ?? "";
+    options.CallbackPath = "/api/auth/external-login-callback";
+    options.SaveTokens = true;
+    options.Events.OnAccessDenied = context =>
+    {
+        context.Response.Redirect("/");
+        return Task.CompletedTask;
     };
 });
 
@@ -253,6 +263,8 @@ builder.Services.AddScoped<ILocalizationTextResolver, LocalizationTextResolver>(
 builder.Services.AddScoped<IAutoTranslationService, AutoTranslationService>();
 // Phase 3: background maintenance — cleans expired slot reservations + flags late bookings
 builder.Services.AddHostedService<BookingMaintenanceService>();
+// Customer reminder service — sends notifications to inactive customers
+builder.Services.AddHostedService<CustomerReminderService>();
 
 // SignalR — real-time WebSocket layer
 builder.Services.AddSignalR(options =>

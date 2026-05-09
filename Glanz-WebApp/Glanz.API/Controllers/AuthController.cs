@@ -9,6 +9,8 @@ using System.Security.Claims;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Google;
 
 namespace Glanz.API.Controllers
 {
@@ -173,6 +175,83 @@ namespace Glanz.API.Controllers
         }
 
         private bool IsWorkerRole() => User.IsInRole("Employee");
+
+        [HttpGet("external-login/{provider}")]
+        public async Task ExternalLogin(string provider, [FromQuery] string? returnUrl = null)
+        {
+            var redirectUrl = Url.Action(nameof(ExternalLoginCallback), "Auth", null, Request.Scheme);
+            var properties = new AuthenticationProperties { RedirectUri = redirectUrl };
+            
+            if (provider.Equals("Google", StringComparison.OrdinalIgnoreCase))
+            {
+                await HttpContext.ChallengeAsync(GoogleDefaults.AuthenticationScheme, properties);
+            }
+            else
+            {
+                BadRequest(new { message = "Unsupported provider" });
+            }
+        }
+
+        [HttpGet("external-login-callback")]
+        public async Task<ActionResult<AuthResponseDto>> ExternalLoginCallback()
+        {
+            var authenticateResult = await HttpContext.AuthenticateAsync();
+            if (!authenticateResult.Succeeded)
+            {
+                return Unauthorized(new { message = "External authentication failed" });
+            }
+
+            var externalEmail = authenticateResult.Principal?.FindFirst(ClaimTypes.Email)?.Value;
+            var externalName = authenticateResult.Principal?.FindFirst(ClaimTypes.Name)?.Value;
+            var provider = authenticateResult.Properties?.Items?.ContainsKey(".AuthScheme") == true
+                ? authenticateResult.Properties.Items[".AuthScheme"] 
+                : "Unknown";
+
+            if (string.IsNullOrWhiteSpace(externalEmail))
+            {
+                return BadRequest(new { message = "Email not provided by external provider" });
+            }
+
+            var normalizedEmail = externalEmail.Trim().ToLowerInvariant();
+
+            // Check if user exists in Users table
+            var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == normalizedEmail);
+            
+            if (existingUser == null)
+            {
+                // Create new user from external login
+                var nameParts = (externalName ?? "Google User").Split(' ', 2);
+                existingUser = new User
+                {
+                    FirstName = nameParts.Length > 0 ? nameParts[0] : "User",
+                    LastName = nameParts.Length > 1 ? nameParts[1] : "",
+                    Email = normalizedEmail,
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword(Guid.NewGuid().ToString("N")), // Random password for external login
+                    ProfileImageUrl = GetRandomDefaultAvatarUrl(),
+                    Role = "Customer",
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+                _context.Users.Add(existingUser);
+                await _context.SaveChangesAsync();
+            }
+
+            if (!existingUser.IsActive)
+            {
+                return Unauthorized(new { message = "Account is disabled" });
+            }
+
+            var (accessToken, refreshToken) = await IssueTokensAsync(existingUser);
+            SetRefreshTokenCookie(refreshToken);
+
+            return Ok(new AuthResponseDto
+            {
+                Token = accessToken,
+                RefreshToken = refreshToken,
+                User = ToUserDto(existingUser)
+            });
+        }
 
         [HttpPost("register")]
         public async Task<ActionResult<AuthResponseDto>> Register(RegisterDto dto)

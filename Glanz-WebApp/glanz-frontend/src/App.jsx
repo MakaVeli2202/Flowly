@@ -73,6 +73,16 @@ function AdminFallback() {
   );
 }
 
+// ─── Customer fallback ───────────────────────────────────────────────────────
+
+function CustomerFallback() {
+  return (
+    <div className="min-h-[60vh] flex items-center justify-center">
+      <div className="w-10 h-10 rounded-full border-2 border-[var(--border-color)] border-t-primary animate-spin" />
+    </div>
+  );
+}
+
 // ─── Admin route factory ──────────────────────────────────────────────────────
 // ⚠️  This is a FUNCTION, not a component.
 // React Router v6 requires all <Routes> children to be <Route> elements.

@@ -31,7 +31,7 @@ import MyBookingsScreen from '../screens/MyBookingsScreen';
 import BookingConfirmationScreen from '../screens/BookingConfirmationScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import WorkerSalesScreen from '../screens/WorkerSalesScreen';
-import ChatbotScreen from '../screens/ChatbotScreen';
+import WhatsAppScreen from '../screens/WhatsAppScreen';
 import AdminProductsScreen from '../screens/AdminProductsScreen';
 import AdminServicesScreen from '../screens/AdminServicesScreen';
 import AdminPackagesScreen from '../screens/AdminPackagesScreen';
@@ -144,7 +144,7 @@ const DRAWER_ITEMS = [
   { name: 'Booking',       icon: 'calendar-outline',            iconFilled: 'calendar',            label: 'Book Now'     },
   { name: 'My Bookings',   icon: 'list-outline',                iconFilled: 'list',                label: 'My Bookings'  },
   { name: 'Careers',       icon: 'briefcase-outline',           iconFilled: 'briefcase',           label: 'Careers'      },
-  { name: 'Assistant',     icon: 'chatbubble-ellipses-outline', iconFilled: 'chatbubble-ellipses', label: 'AI Assistant' },
+  { name: 'WhatsApp',      icon: 'logo-whatsapp',               iconFilled: 'logo-whatsapp',        label: 'WhatsApp'     },
   { name: 'Profile',       icon: 'person-circle-outline',       iconFilled: 'person-circle',       label: 'Profile'      },
 ];
 
@@ -431,7 +431,7 @@ function CustomerDrawer() {
       <Drawer.Screen name="Subscriptions" component={SubscriptionPlansScreen} options={{ title: t('navigation.customer.items.Subscriptions') }} />
       <Drawer.Screen name="Booking"       component={BookingScreen}       options={{ title: t('navigation.customer.items.Booking')     }} />
       <Drawer.Screen name="My Bookings"   component={MyBookingsScreen}    options={{ title: t('navigation.customer.items.My Bookings')  }} />
-      <Drawer.Screen name="Assistant"     component={ChatbotScreen}       options={{ title: t('navigation.customer.items.Assistant') }} />
+      <Drawer.Screen name="WhatsApp"      component={WhatsAppScreen}      options={{ title: t('navigation.customer.items.WhatsApp') || 'WhatsApp' }} />
       <Drawer.Screen name="Profile"       component={ProfileScreen}       options={{ title: t('navigation.customer.items.Profile')      }} />
     </Drawer.Navigator>
   );

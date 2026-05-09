@@ -382,6 +382,58 @@ namespace Glanz.API.Migrations
                     b.ToTable("BookingPhotos");
                 });
 
+            modelBuilder.Entity("Glanz.API.Models.CustomerFeedback", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("BookingId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Comment")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsAnonymous")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsResolved")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("Rating")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ResolutionNote")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("ResolvedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("UserId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("WorkerId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BookingId");
+
+                    b.HasIndex("WorkerId");
+
+                    b.HasIndex("UserId", "CreatedAt");
+
+                    b.ToTable("CustomerFeedbacks");
+                });
+
             modelBuilder.Entity("Glanz.API.Models.JobApplication", b =>
                 {
                     b.Property<int>("Id")
@@ -1274,6 +1326,9 @@ namespace Glanz.API.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
+                    b.Property<DateTime?>("LastBookedDate")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -1288,6 +1343,9 @@ namespace Glanz.API.Migrations
                     b.Property<string>("LoyaltyReviewScreenshotUrl")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
 
                     b.Property<string>("OtherAddress")
                         .HasMaxLength(500)
@@ -1325,6 +1383,17 @@ namespace Glanz.API.Migrations
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Tags")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<int>("TotalBookingsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("TotalSpent")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -1592,6 +1661,30 @@ namespace Glanz.API.Migrations
                     b.Navigation("Booking");
 
                     b.Navigation("UploadedByWorker");
+                });
+
+            modelBuilder.Entity("Glanz.API.Models.CustomerFeedback", b =>
+                {
+                    b.HasOne("Glanz.API.Models.Booking", "Booking")
+                        .WithMany()
+                        .HasForeignKey("BookingId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Glanz.API.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Glanz.API.Models.User", "Worker")
+                        .WithMany()
+                        .HasForeignKey("WorkerId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Booking");
+
+                    b.Navigation("User");
+
+                    b.Navigation("Worker");
                 });
 
             modelBuilder.Entity("Glanz.API.Models.JobApplication", b =>

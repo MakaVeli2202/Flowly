@@ -305,6 +305,7 @@ function AdminDashboard() {
     { title: 'Operational Reports',  description: 'Booking and service statistics',                                 icon: BarChart3,   path: '/admin/reports/operational',   accent: '#6366f1' },
     { title: 'Content Editor',       description: 'Edit home, packages, and booking text/settings',                icon: FileEdit,    path: '/admin/content',               accent: '#f59e0b' },
     { title: 'Offers & Loyalty',     description: 'Manage discounts, coupons, and loyalty rewards',                icon: Ticket,      path: '/admin/offers',                accent: '#14b8a6' },
+    { title: 'CRM Dashboard',        description: 'Customer insights, segments, and feedback management',          icon: Users,      path: '/admin/crm',                  accent: '#ec4899' },
     { title: 'Manage Staff',         description: 'Add, remove, and manage your detailing team',                   icon: Wrench,      path: '/admin/staff',                 accent: '#06b6d4' },
     { title: 'Detailer Schedule',    description: 'Calendar heatmap of worker busyness and free windows',          icon: Calendar,    path: '/admin/workers/schedule',      accent: '#84cc16' },
     { title: 'Detailer Skills',      description: 'Create and assign skills to detailers for smart job matching', icon: Zap,       path: '/admin/skills',                accent: '#a855f7' },

@@ -85,7 +85,34 @@ body {
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
-#root { min-height: 100vh; }
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  background: #111827;
+}
+
+body.admin-live-map-mode .cursor-spotlight,
+body.admin-live-map-mode .noise-grain,
+body.admin-live-map-mode .bg-orb-1,
+body.admin-live-map-mode .bg-orb-2 {
+  display: none !important;
+}
+
+body.admin-live-map-mode .live-map-canvas,
+body.admin-live-map-mode .live-map-canvas .leaflet-container {
+  width: 100%;
+  height: 100%;
+  min-height: 320px;
+}
 
 /* ─────────────────────────────────────────────────────────
    5. COMPONENT CLASSES

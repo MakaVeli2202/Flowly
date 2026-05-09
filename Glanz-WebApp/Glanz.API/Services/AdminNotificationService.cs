@@ -28,6 +28,7 @@ namespace Glanz.API.Services
         Task NotifyCancellationRequestRejectedAsync(Booking booking);
         Task NotifyRescheduleRequestRejectedAsync(Booking booking);
         Task NotifyLoyaltyReviewRequestedAsync(User user);
+        Task SendPushNotificationAsync(string expoPushToken, string title, string body);
     }
        
 
@@ -424,6 +425,20 @@ namespace Glanz.API.Services
                 booking.Id,
                 booking.UserId,
                 customerMessage);
+        }
+
+        public async Task SendPushNotificationAsync(string expoPushToken, string title, string body)
+        {
+            if (string.IsNullOrEmpty(expoPushToken)) return;
+
+            try
+            {
+                await _expoPush.SendAsync(expoPushToken, title, body, new { type = "Reminder" });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[PushNotification] Failed to send: {ex.Message}");
+            }
         }
     }
 }
