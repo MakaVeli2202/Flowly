@@ -14,11 +14,25 @@ namespace Glanz.API.Controllers
     public class ReferralController : ControllerBase
     {
         private readonly AppDbContext _context;
-        private const decimal ReferralRewardAmount = 50m; // QAR 50 credit after first booking
 
         public ReferralController(AppDbContext context)
         {
             _context = context;
+        }
+
+        private async Task<decimal> GetReferralRewardAmountAsync()
+        {
+            // Try to get the reward amount from system settings
+            var setting = await _context.SystemSettings
+                .FirstOrDefaultAsync(s => s.Key == "referral.rewardAmount");
+            
+            if (setting != null && int.TryParse(setting.Value, out int rewardAmount) && rewardAmount >= 0)
+            {
+                return rewardAmount;
+            }
+            
+            // Default fallback if not set
+            return 50m;
         }
 
         private int? GetUserId()
@@ -60,6 +74,8 @@ namespace Glanz.API.Controllers
                 TotalReferrals = referrals.Count,
                 PendingReferrals = referrals.Count(r => r.Status == ReferralStatus.Pending),
                 RewardedReferrals = referrals.Count(r => r.Status == ReferralStatus.Rewarded),
+                // Unlocked if they have FirstWashCompletedAt OR they've ever completed a booking (TotalBookingsCount > 0)
+                ReferralCodeUnlocked = user.FirstWashCompletedAt.HasValue || user.TotalBookingsCount > 0,
                 Referrals = referrals.Select(r => new ReferralDto
                 {
                     Id = r.Id,
@@ -208,12 +224,13 @@ namespace Glanz.API.Controllers
             referral.Status = ReferralStatus.Active;
             referral.RewardedBookingId = bookingId;
 
-            // Give referrer their reward
+            // Give referrer their reward (using configurable amount)
+            var referralRewardAmount = await GetReferralRewardAmountAsync();
             var referrer = await _context.Users.FindAsync(referral.ReferrerId);
             if (referrer != null)
             {
-                referrer.ReferralPoints += ReferralRewardAmount;
-                referral.RewardAmount = ReferralRewardAmount;
+                referrer.ReferralPoints += referralRewardAmount;
+                referral.RewardAmount = referralRewardAmount;
                 referral.Status = ReferralStatus.Rewarded;
                 referral.RewardedAt = DateTime.UtcNow;
             }

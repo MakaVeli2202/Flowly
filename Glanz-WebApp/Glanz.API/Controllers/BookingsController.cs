@@ -28,6 +28,7 @@ namespace Glanz.API.Controllers
         private readonly CouponRateLimiter _couponLimiter;
         private readonly IWebHostEnvironment _env;
         private readonly IObjectStorageService _objectStorage;
+        private readonly IReferralService _referralService;
 
         public BookingsController(
             AppDbContext context,
@@ -37,7 +38,8 @@ namespace Glanz.API.Controllers
             IAuditService audit,
             CouponRateLimiter couponLimiter,
             IWebHostEnvironment env,
-            IObjectStorageService objectStorage)
+            IObjectStorageService objectStorage,
+            IReferralService referralService)
         {
             _context = context;
             _configuration = configuration;
@@ -47,6 +49,7 @@ namespace Glanz.API.Controllers
             _couponLimiter = couponLimiter;
             _env = env;
             _objectStorage = objectStorage;
+            _referralService = referralService;
             StripeConfiguration.ApiKey = _configuration["Stripe:SecretKey"];
         }
 
@@ -2762,6 +2765,25 @@ namespace Glanz.API.Controllers
                         return Forbid();
                 }
 
+                // Get user info for referral tracking
+                bool isFirstCompletedWash = false;
+                bool referralCodeUnlocked = false;
+                if (booking.UserId.HasValue)
+                {
+                    var user = await _context.Users.FindAsync(booking.UserId.Value);
+                    if (user != null)
+                    {
+                        // Check if this is the user's first completed wash
+                        isFirstCompletedWash = user.FirstWashCompletedAt.HasValue && 
+                            booking.WorkCompletedAt.HasValue &&
+                            user.FirstWashCompletedAt.Value.AddMinutes(-1) <= booking.WorkCompletedAt.Value &&
+                            booking.WorkCompletedAt.Value <= user.FirstWashCompletedAt.Value.AddMinutes(1);
+                        
+                        // Referral code is unlocked if user has FirstWashCompletedAt set OR has ever completed any booking
+                        referralCodeUnlocked = user.FirstWashCompletedAt.HasValue || user.TotalBookingsCount > 0;
+                    }
+                }
+
                 var bookingDto = new BookingDto
                 {
                     Id = booking.Id,
@@ -2799,6 +2821,8 @@ namespace Glanz.API.Controllers
                     RescheduleRequestNote = booking.RescheduleRequestNote,
                     ReschedulePreferredDate = booking.ReschedulePreferredDate,
                     RescheduleRequestedAt = booking.RescheduleRequestedAt,
+                    IsFirstCompletedWash = isFirstCompletedWash,
+                    ReferralCodeUnlocked = referralCodeUnlocked,
                     ChecklistItems = MapChecklistItems(booking.ChecklistItems),
                     Items = booking.BookingItems.Select(bi => new BookingItemDetailDto
                     {
@@ -3284,6 +3308,17 @@ namespace Glanz.API.Controllers
                     booking.Status == BookingStatus.Completed)
                 {
                     await IssueLoyaltyCouponsAsync(booking.UserId.Value);
+                    
+                    // Set FirstWashCompletedAt if this is user's first completed wash
+                    var user = await _context.Users.FindAsync(booking.UserId.Value);
+                    if (user != null && !user.FirstWashCompletedAt.HasValue)
+                    {
+                        user.FirstWashCompletedAt = DateTime.UtcNow;
+                        await _context.SaveChangesAsync();
+                    }
+                    
+                    // Check and process referral rewards for first completed wash
+                    await _referralService.CheckAndRewardReferralAsync(booking.Id, booking.UserId.Value);
                 }
 
                 await _adminNotificationService.NotifyBookingStatusChangedAsync(booking, previousStatus);

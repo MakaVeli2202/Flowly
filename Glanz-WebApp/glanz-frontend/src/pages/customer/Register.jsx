@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
   UserPlus, User, Mail, Lock, AlertCircle,
-  Eye, EyeOff, Shield, CheckCircle, ArrowRight, Zap, Phone, MapPin,
+  Eye, EyeOff, Shield, CheckCircle, ArrowRight, Zap, Phone, MapPin, Gift,
 } from 'lucide-react';
 import SEO from '../../components/shared/SEO';
 import AddressAutocompleteInput from '../../components/shared/AddressAutocompleteInput';
@@ -140,7 +140,7 @@ function Register() {
   const { register } = useAuth();
   const [formData, setFormData] = useState({
     firstName: '', lastName: '', email: '', password: '', confirmPassword: '',
-    phone: '', address: '',
+    phone: '', address: '', referralCode: '',
   });
   const [error,               setError]               = useState('');
   const [loading,             setLoading]             = useState(false);
@@ -177,6 +177,7 @@ function Register() {
         email: formData.email,         password: formData.password,
         phone: formData.phone.trim() || undefined,
         preferredAddress: formData.address.trim() || undefined,
+        referralCode: formData.referralCode.trim() || undefined,
       });
       if (selectedPackage)                              navigate('/booking', { state: { selectedPackage }, replace: true });
       else if (from && from !== '/register' && from !== '/login') navigate(from, { replace: true });
@@ -422,6 +423,24 @@ function Register() {
                     onChange={(v) => setFormData((prev) => ({ ...prev, address: v }))}
                     placeholder="Search your home or work address"
                   />
+                </div>
+
+                {/* Referral Code */}
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-color)] mb-2">
+                    Referral Code <span className="normal-case font-normal">(optional)</span>
+                  </label>
+                  <div className="relative">
+                    <Gift size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--muted-color)]" />
+                    <input
+                      type="text" name="referralCode" value={formData.referralCode} onChange={handleChange}
+                      placeholder="Enter friend's referral code"
+                      className="w-full pl-10 pr-4 py-3 rounded-xl border border-[var(--border-color)] bg-[var(--surface-bg)] text-[var(--text-color)] text-sm placeholder:text-[var(--muted-color)] focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition uppercase"
+                    />
+                  </div>
+                  <p className="text-[11px] text-[var(--muted-color)] mt-1.5">
+                    Have a friend who uses Glanz? Enter their referral code to get a discount!
+                  </p>
                 </div>
 
                 {/* Submit */}

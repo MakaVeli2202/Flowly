@@ -38,7 +38,7 @@ const socialIcons = {
 };
 
 function Footer() {
-  const { isAuthenticated, isAdmin } = useAuth();
+  const { user, isAuthenticated, isAdmin } = useAuth();
   const { lang } = useLanguage();
   const [business, setBusiness] = useState(getBusiness());
   const [footerServices, setFooterServices] = useState([]);
@@ -136,52 +136,71 @@ function Footer() {
       <div className="container mx-auto px-4">
         <div className="grid md:grid-cols-4 gap-8">
           
-          <div>
-            <div className="mb-4">
-              <img src="/Glanz-Logo.png" alt={business.name} className="h-12 w-auto object-contain" />
+<div>
+             <div className="mb-4">
+               <img src="/Glanz-Logo.png" alt={business.name} className="h-12 w-auto object-contain" />
+             </div>
+             <p className="text-[var(--muted-color)]">
+               {business.tagline}
+             </p>
+           </div>
+
+            <div>
+              <h3 className="text-lg font-semibold mb-4">{ui.quickLinks}</h3>
+              <ul className="space-y-2">
+                <li><Link to="/" className="text-[var(--muted-color)] hover:text-primary transition">{ui.home}</Link></li>
+                <li><Link to="/packages" className="text-[var(--muted-color)] hover:text-primary transition">{ui.packages}</Link></li>
+                <li><Link to="/plans" className="text-[var(--muted-color)] hover:text-primary transition">{ui.plans}</Link></li>
+                <li><Link to="/booking" className="text-[var(--muted-color)] hover:text-primary transition">{bookingLinkLabel}</Link></li>
+                {isAuthenticated && !isAdmin && (
+                  <>
+                    <li><Link to="/my-bookings" className="text-[var(--muted-color)] hover:text-primary transition">{ui.myBookings}</Link></li>
+                    <li className="relative">
+                      <Link to="/referrals" className="text-[var(--muted-color)] hover:text-primary transition block">
+                        My Referrals
+                        {/* Show indicator when referral code is unlocked - if has firstWashCompletedAt OR has any completed bookings */}
+                        {(user?.firstWashCompletedAt || user?.totalBookingsCount > 0) && (
+                          <span className="absolute -top-1 -right-0 h-2 w-2 bg-green-500 rounded-full" />
+                        )}
+                      </Link>
+                    </li>
+                  </>
+                )}
+                {isAuthenticated && isAdmin && (
+                  <>
+                    <li><Link to="/admin/bookings" className="text-[var(--muted-color)] hover:text-primary transition">{ui.editBookings}</Link></li>
+                    <li className="relative">
+                      <Link to="/referrals" className="text-[var(--muted-color)] hover:text-primary transition block">
+                        My Referrals
+                        {/* Show admin their own referral status if applicable */}
+                        {(user?.firstWashCompletedAt || user?.totalBookingsCount > 0) && (
+                          <span className="absolute -top-1 -right-0 h-2 w-2 bg-green-500 rounded-full" />
+                        )}
+                      </Link>
+                    </li>
+                  </>
+                )}
+                {!isAdmin && (
+                  <li>
+                    <Link to="/careers" className="text-[var(--muted-color)] hover:text-primary transition flex items-center gap-1.5">
+                      <Briefcase size={14} />
+                      {ui.openPositions}
+                    </Link>
+                  </li>
+                )}
+              </ul>
             </div>
-            <p className="text-[var(--muted-color)]">
-              {business.tagline}
-            </p>
-          </div>
 
-          <div>
-            <h3 className="text-lg font-semibold mb-4">{ui.quickLinks}</h3>
-            <ul className="space-y-2">
-              <li><Link to="/" className="text-[var(--muted-color)] hover:text-primary transition">{ui.home}</Link></li>
-              <li><Link to="/packages" className="text-[var(--muted-color)] hover:text-primary transition">{ui.packages}</Link></li>
-              <li><Link to="/plans" className="text-[var(--muted-color)] hover:text-primary transition">{ui.plans}</Link></li>
-              <li><Link to="/booking" className="text-[var(--muted-color)] hover:text-primary transition">{bookingLinkLabel}</Link></li>
-              {isAuthenticated && !isAdmin && (
-                <>
-                  <li><Link to="/my-bookings" className="text-[var(--muted-color)] hover:text-primary transition">{ui.myBookings}</Link></li>
-                  <li><Link to="/referrals" className="text-[var(--muted-color)] hover:text-primary transition">{ui.referrals || 'Referrals'}</Link></li>
-                </>
-              )}
-              {isAuthenticated && isAdmin && (
-                <li><Link to="/admin/bookings" className="text-[var(--muted-color)] hover:text-primary transition">{ui.editBookings}</Link></li>
-              )}
-              {!isAdmin && (
-                <li>
-                  <Link to="/careers" className="text-[var(--muted-color)] hover:text-primary transition flex items-center gap-1.5">
-                    <Briefcase size={14} />
-                    {ui.openPositions}
-                  </Link>
-                </li>
-              )}
-            </ul>
-          </div>
+            <div>
+              <h3 className="text-lg font-semibold mb-4">{ui.services}</h3>
+              <ul className="space-y-2 text-[var(--muted-color)]">
+                {(footerServices.length > 0 ? footerServices : ['-','-','-','-']).map((service, idx) => (
+                  <li key={`${service}-${idx}`}>{service}</li>
+                ))}
+              </ul>
+            </div>
 
-          <div>
-            <h3 className="text-lg font-semibold mb-4">{ui.services}</h3>
-            <ul className="space-y-2 text-[var(--muted-color)]">
-              {(footerServices.length > 0 ? footerServices : ['-','-','-','-']).map((service, idx) => (
-                <li key={`${service}-${idx}`}>{service}</li>
-              ))}
-            </ul>
-          </div>
-
-             <div>
+              <div>
              <h3 className="text-lg font-semibold mb-4">{ui.contact}</h3>
              <ul className="space-y-2">
                <li className="flex items-center gap-2 text-[var(--muted-color)]">

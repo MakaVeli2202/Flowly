@@ -168,6 +168,11 @@ namespace Glanz.API.DTOs
         // Lead tracking
         public string LeadSource { get; set; } = "Direct";
         public string? LeadSourceDetails { get; set; }
+
+        // Referral tracking
+        public string? ReferralCode { get; set; }
+        public bool IsFirstCompletedWash { get; set; }
+        public bool ReferralCodeUnlocked { get; set; }
         public List<BookingItemDetailDto> Items { get; set; } = new();
         public List<BookingChecklistItemDto> ChecklistItems { get; set; } = new();
     }

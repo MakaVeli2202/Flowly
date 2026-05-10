@@ -116,7 +116,7 @@ function PasswordField({ label, value, onChange, placeholder, visible, setVisibl
 ══════════════════════════════════════════════════════════ */
 export default function RegisterScreen() {
   const { register } = useAuth();
-  const [form,         setForm]        = useState({ firstName: '', lastName: '', email: '', password: '' });
+  const [form,         setForm]        = useState({ firstName: '', lastName: '', email: '', password: '', referralCode: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [loading,      setLoading]     = useState(false);
   const [error,        setError]       = useState('');
@@ -142,6 +142,7 @@ export default function RegisterScreen() {
         lastName:  form.lastName.trim(),
         email:     form.email.trim(),
         password:  form.password,
+        referralCode: form.referralCode.trim() || undefined,
       });
     } catch (err) {
       setError(err?.response?.data?.message || 'Registration failed. Please try again.');
@@ -241,6 +242,20 @@ export default function RegisterScreen() {
             visible={showPassword}
             setVisible={setShowPassword}
           />
+        </Animated.View>
+
+        {/* ── Referral Code ───────────────────────────────── */}
+        <Animated.View entering={FadeInUp.duration(400).delay(480)}>
+          <FieldInput
+            label="Referral Code"
+            value={form.referralCode}
+            onChangeText={(v) => onChange('referralCode', v.toUpperCase())}
+            placeholder="Enter friend's code (optional)"
+            autoCapitalize="characters"
+          />
+          <Text style={{ fontSize: 11, color: theme.colors.textMuted, marginTop: 6, marginBottom: 8 }}>
+            Have a friend who uses Glanz? Enter their code to get a discount!
+          </Text>
         </Animated.View>
 
         {/* ── Submit ─────────────────────────────────────── */}

@@ -196,11 +196,6 @@ function AppRoutes() {
         <Route path="/my-bookings" element={
           <ProtectedRoute requireCustomer><MyBookings /></ProtectedRoute>
         } />
-        <Route path="/referrals" element={
-          <ProtectedRoute requireCustomer>
-            <Suspense fallback={<CustomerFallback />}><Referrals /></Suspense>
-          </ProtectedRoute>
-        } />
         <Route path="/my-subscription" element={
           <ProtectedRoute requireCustomer>
             <Suspense fallback={<AdminFallback />}><MySubscription /></Suspense>
@@ -213,6 +208,9 @@ function AppRoutes() {
         } />
         <Route path="/profile" element={
           <ProtectedRoute requireCustomer><Profile /></ProtectedRoute>
+        } />
+        <Route path="/referrals" element={
+          <ProtectedRoute requireCustomer><Referrals /></ProtectedRoute>
         } />
 
         {/* ── Admin (lazy) — note: function calls, not JSX components ── */}

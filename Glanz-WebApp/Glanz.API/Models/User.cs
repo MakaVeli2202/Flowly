@@ -95,6 +95,18 @@ namespace Glanz.API.Models
         [ForeignKey(nameof(ReferredByUserId))]
         public User? ReferredByUser { get; set; }
 
+        /// <summary>
+        /// The date and time when the user completed their first wash/detail.
+        /// Used to determine eligibility for referral program.
+        /// </summary>
+        public DateTime? FirstWashCompletedAt { get; set; }
+
+        /// <summary>
+        /// Whether this user has already used a referral code.
+        /// Once used, they cannot use any other referral codes.
+        /// </summary>
+        public bool HasUsedReferralCode { get; set; }
+
         public ICollection<Booking> Bookings { get; set; } = new List<Booking>();
     }
 }

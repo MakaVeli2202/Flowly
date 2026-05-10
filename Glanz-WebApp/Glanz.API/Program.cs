@@ -261,6 +261,7 @@ builder.Services.AddScoped<IPricingService, PricingService>();
 builder.Services.AddScoped<IRealtimeService, RealtimeService>();
 builder.Services.AddScoped<ILocalizationTextResolver, LocalizationTextResolver>();
 builder.Services.AddScoped<IAutoTranslationService, AutoTranslationService>();
+builder.Services.AddScoped<IReferralService, ReferralService>();
 // Phase 3: background maintenance — cleans expired slot reservations + flags late bookings
 builder.Services.AddHostedService<BookingMaintenanceService>();
 // Customer reminder service — sends notifications to inactive customers
@@ -372,6 +373,7 @@ static async Task EnsurePostgresSchemaCompatibilityAsync(AppDbContext dbContext)
         await EnsureColumnAsync(connection, "Users", "LoyaltyGoogleReviewActivatedAt", "timestamp with time zone NULL");
         await EnsureColumnAsync(connection, "Users", "ProfileImageUrl", "character varying(1000) NULL");
         await EnsureColumnAsync(connection, "Users", "DaySchedulesJson", "text NULL");
+        await EnsureColumnAsync(connection, "Users", "FirstWashCompletedAt", "timestamp with time zone NULL");
         await EnsureColumnAsync(connection, "UserOffers", "GoogleReviewActivatedAt", "timestamp with time zone NULL");
 
         // Columns added in hand-crafted migrations that lack .Designer.cs and are not

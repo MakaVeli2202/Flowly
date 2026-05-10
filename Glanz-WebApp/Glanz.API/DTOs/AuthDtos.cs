@@ -26,6 +26,9 @@ namespace Glanz.API.DTOs
 
         [StringLength(500)]
         public string? HomeAddress { get; set; }
+
+        [StringLength(50)]
+        public string? ReferralCode { get; set; }
     }
 
     public class CreateWorkerDto
@@ -91,6 +94,15 @@ namespace Glanz.API.DTOs
         public string Role { get; set; } = string.Empty;
         public bool IsActive { get; set; }
         public DateTime CreatedAt { get; set; }
+        /// <summary>
+        /// The date and time when the user completed their first wash/detail.
+        /// Used to determine eligibility for referral program.
+        /// </summary>
+        public DateTime? FirstWashCompletedAt { get; set; }
+        /// <summary>
+        /// Total completed bookings count - used to determine if referral code should be unlocked
+        /// </summary>
+        public int TotalBookingsCount { get; set; }
         // Worker schedule
         public string WorkingDays { get; set; } = "Monday,Tuesday,Wednesday,Thursday,Friday";
         public string ShiftStart { get; set; } = "09:00";

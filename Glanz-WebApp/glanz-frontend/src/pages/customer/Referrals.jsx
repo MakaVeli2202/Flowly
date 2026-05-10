@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { referralAPI } from '../../api/referral';
-import { Copy, Share2, Gift, Users, CheckCircle, Clock, Award, ArrowLeft } from 'lucide-react';
+import { Copy, Share2, Gift, Users, CheckCircle, Clock, Award, ArrowLeft, Lock, Sparkles } from 'lucide-react';
 
 export default function Referrals() {
   const { user, isAuthenticated } = useAuth();
@@ -14,6 +14,8 @@ export default function Referrals() {
   const [referralData, setReferralData] = useState(null);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState('');
+
+  const isUnlocked = referralData?.referralCodeUnlocked;
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -107,7 +109,8 @@ export default function Referrals() {
           <div className="p-4 rounded-lg bg-red-500/20 text-red-500 mb-4">{error}</div>
         )}
 
-        {/* Your Code Card */}
+        {/* Your Code Card - Unlocked State */}
+        {isUnlocked ? (
         <div className="p-6 rounded-2xl mb-6" style={{ 
           background: 'linear-gradient(135deg, var(--cta-color) 0%, #9a7b4f 100%)',
           color: 'white'
@@ -123,8 +126,8 @@ export default function Referrals() {
             </div>
             <p className="text-sm opacity-80">
               {lang === 'ar' 
-                ? 'شارك هذا الكود مع أصدقائك واحصل على نقاط عند إتمام أول حجز' 
-                : 'Share this code with friends and earn points after their first booking'}
+                ? 'شارك هذا الكود مع أصدقائك واحصل على مكافأة عند إتمام أول حجز لهم' 
+                : 'Share this code with friends and earn rewards after their first booking'}
             </p>
           </div>
 
@@ -145,6 +148,47 @@ export default function Referrals() {
             </button>
           </div>
         </div>
+        ) : (
+        /* Locked State */
+        <div className="p-6 rounded-2xl mb-6" style={{ 
+          background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+          color: 'white'
+        }}>
+          <div className="flex items-center gap-2 mb-4">
+            <Lock size={24} />
+            <span className="font-semibold">{lang === 'ar' ? 'كود الإحالة مقفل' : 'Referral Code Locked'}</span>
+          </div>
+          
+          <div className="text-center mb-6">
+            <div className="text-5xl font-bold tracking-wider mb-4">
+              <Sparkles className="inline mr-2" />
+            </div>
+            <p className="text-sm opacity-90 mb-4">
+              {lang === 'ar' 
+                ? 'أكمل أول خدمة لك لكسب كود الإحالة الخاص بك!' 
+                : 'Complete your first service to unlock your referral code!'}
+            </p>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white/20">
+              <Gift size={16} />
+              <span className="text-sm">
+                {lang === 'ar' 
+                  ? 'احصل على مكافأة عند إحالة الأصدقاء'
+                  : 'Earn rewards when you refer friends'}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            <Link 
+              to="/booking"
+              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-white text-[#6366f1] font-semibold hover:bg-white/90 transition text-center"
+            >
+              <Sparkles size={18} />
+              {lang === 'ar' ? 'احجز الآن' : 'Book Now'}
+            </Link>
+          </div>
+        </div>
+        )}
 
         {/* Stats */}
         <div className="grid grid-cols-3 gap-4 mb-6">

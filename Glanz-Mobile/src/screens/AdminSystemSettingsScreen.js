@@ -22,6 +22,7 @@ export default function AdminSystemSettingsScreen() {
   const [bufferMin, setBufferMin] = useState('30');
   const [travelBuffer, setTravelBuffer] = useState('30');
   const [reminderBefore, setReminderBefore] = useState('5');
+  const [referralReward, setReferralReward] = useState('50');
 
   // ── Load current settings ──────────────────────────────────────────────────
   useEffect(() => {
@@ -38,6 +39,12 @@ export default function AdminSystemSettingsScreen() {
         if (data?.workerReminderBeforeTravelMinutes != null) {
           setReminderBefore(String(data.workerReminderBeforeTravelMinutes));
         }
+        // Load referral reward from businessConfig
+        if (data?.businessConfig?.referralRewardAmount != null) {
+          setReferralReward(String(data.businessConfig.referralRewardAmount));
+        } else if (data?.referralRewardAmount != null) {
+          setReferralReward(String(data.referralRewardAmount));
+        }
       } catch {
         setError('Failed to load system settings.');
       } finally {
@@ -52,7 +59,11 @@ export default function AdminSystemSettingsScreen() {
     const buffer = Number(bufferMin);
     const travel = Number(travelBuffer);
     const reminder = Number(reminderBefore);
+    const referral = Number(referralReward);
 
+    if (!Number.isFinite(referral) || referral < 0 || referral > 500) {
+      setError('Referral reward must be between 0 and 500 QAR.'); return;
+    }
     if (!Number.isFinite(buffer) || buffer < 0 || buffer > 240) {
       setError('Booking buffer must be between 0 and 240 minutes.'); return;
     }
@@ -68,8 +79,9 @@ export default function AdminSystemSettingsScreen() {
         defaultBufferMinutes: buffer,
         workerTravelBufferMinutes: travel,
         workerReminderBeforeTravelMinutes: reminder,
+        referralRewardAmount: referral,
       });
-      setSuccess(`Saved: Buffer ${buffer}m, Travel ${travel}m, Reminder ${reminder}m before leaving.`);
+      setSuccess(`Saved: Buffer ${buffer}m, Travel ${travel}m, Reminder ${reminder}m, Referral ${referral} QAR.`);
     } catch (err) {
       setError(err?.response?.data?.message || 'Failed to save settings.');
     } finally {
@@ -248,6 +260,44 @@ export default function AdminSystemSettingsScreen() {
               onPress={() => { setReminderBefore(String(min)); setError(''); setSuccess(''); }}
             >
               <Text style={[s.presetText, reminderBefore === String(min) && s.presetTextActive]}>{min}m</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+
+      {/* ── Referral Reward Settings ────────────────────────────────── */}
+      <View style={s.card}>
+        <View style={s.sectionRow}>
+          <Ionicons name="gift-outline" size={16} color={theme.colors.primary} />
+          <Text style={s.sectionTitle}>Referral Program Reward</Text>
+        </View>
+        <Text style={s.description}>
+          Amount in QAR that the referrer receives after their referred friend completes their first service.
+        </Text>
+        <Text style={s.fieldLabel}>Reward Amount (QAR)</Text>
+        <TextInput
+          style={s.input}
+          value={referralReward}
+          keyboardType="number-pad"
+          placeholder="e.g. 50"
+          placeholderTextColor={theme.colors.textMuted}
+          onChangeText={(v) => {
+            const clean = v.replace(/[^0-9]/g, '');
+            setReferralReward(clean);
+            setError(''); setSuccess('');
+          }}
+        />
+        <Text style={s.fieldLabel}>Quick Presets</Text>
+        <View style={s.presetRow}>
+          {[0, 25, 50, 100, 200].map((min) => (
+            <TouchableOpacity
+              key={min}
+              style={[s.preset, referralReward === String(min) && s.presetActive]}
+              onPress={() => { setReferralReward(String(min)); setError(''); setSuccess(''); }}
+            >
+              <Text style={[s.presetText, referralReward === String(min) && s.presetTextActive]}>
+                {min === 0 ? 'Off' : `${min} QAR`}
+              </Text>
             </TouchableOpacity>
           ))}
         </View>

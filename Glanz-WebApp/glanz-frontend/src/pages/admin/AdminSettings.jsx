@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { settingsAPI } from '../../api/settings';
 import { authAPI } from '../../api/auth';
 import { formatQAR } from '../../utils/currency';
-import { Settings, Shield, CheckCircle, AlertCircle, Save, Building2, Clock, MessageSquare, DollarSign } from 'lucide-react';
+import { Settings, Shield, CheckCircle, AlertCircle, Save, Building2, Clock, MessageSquare, DollarSign, Gift } from 'lucide-react';
 import { getBusiness, saveBusiness } from '../../config/business';
 
 /* PRISM_CSS — identical to ManageServices */
@@ -85,6 +85,12 @@ export default function AdminSettings() {
   const [discountSaved,    setDiscountSaved]    = useState(false);
   const [discountError,    setDiscountError]    = useState('');
 
+  // Referral reward state
+  const [referralReward,   setReferralReward]   = useState(50);
+  const [referralSaving,   setReferralSaving]   = useState(false);
+  const [referralSaved,    setReferralSaved]    = useState(false);
+  const [referralError,    setReferralError]    = useState('');
+
   // Pay slip settings state
   const [paySlip, setPaySlip] = useState({ companyName: 'Glanz', companyLogo: '', companyAddress: '', companyPhone: '', companyEmail: '', footerText: '' });
   const [paySlipLoading, setPaySlipLoading] = useState(true);
@@ -118,6 +124,7 @@ export default function AdminSettings() {
         setWorkerTravelMinutes(data?.booking?.workerTravelBufferMinutes ?? data?.workerTravelBufferMinutes ?? 30);
         setDiscountPct(data?.subscriptionDiscountPercent ?? 10);
         setSmsEnabled(data?.sms?.followUpEnabled ?? false);
+        setReferralReward(data?.referralRewardAmount ?? 50);
         if (data?.businessHours) {
           setBusinessHours({
             Sunday:    data.businessHours.sunday    || '09:00-18:00',
@@ -217,6 +224,20 @@ export default function AdminSettings() {
       setTimeout(() => setDiscountSaved(false), 3000);
     } catch (err) { setDiscountError(err?.response?.data?.message || 'Failed to save discount.'); }
     finally { setDiscountSaving(false); }
+  };
+
+  const handleSaveReferralReward = async () => {
+    const v = Number(referralReward);
+    if (!Number.isFinite(v) || v < 0 || v > 500) {
+      setReferralError('Referral reward must be between 0 and 500 QAR.'); return;
+    }
+    try {
+      setReferralSaving(true); setReferralError('');
+      await settingsAPI.updateSystemSettings({ ReferralRewardAmount: v });
+      setReferralSaved(true);
+      setTimeout(() => setReferralSaved(false), 3000);
+    } catch (err) { setReferralError(err?.response?.data?.message || 'Failed to save referral reward.'); }
+    finally { setReferralSaving(false); }
   };
 
   const handleSaveBusinessHours = async () => {
@@ -734,6 +755,73 @@ export default function AdminSettings() {
                   className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition disabled:opacity-60"
                   style={{ background:'rgba(245,158,11,.15)', border:'1px solid rgba(245,158,11,.35)', color:'#fbbf24' }}>
                   {discountSaving ? 'Saving…' : discountSaved ? <><CheckCircle size={14} /> Saved</> : <><Save size={14} /> Save Discount</>}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Referral Reward Settings card ── */}
+          <div className="glass-card relative overflow-hidden card-stagger">
+            <div className="absolute top-0 left-0 right-0 h-[2px]"
+              style={{ background:'linear-gradient(90deg,transparent,#8b5cf6 38%,#ec4899 62%,transparent)' }} />
+            <div className="absolute top-0 left-0 w-[3px] h-full"
+              style={{ background:'linear-gradient(180deg,#8b5cf6 0%,#8b5cf644 60%,transparent 100%)' }} />
+            <div className="prism-ray" style={{ left:'60%', width:'14%', animation:'prism-ray-sweep 19s ease-in-out 2s infinite' }} />
+
+            <div className="p-7">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center"
+                  style={{ background:'rgba(139,92,246,.12)', border:'1px solid rgba(139,92,246,.24)' }}>
+                  <Gift size={14} style={{ color:'#8b5cf6' }} />
+                </div>
+                <h2 className="premium-heading text-xl font-bold text-[var(--heading-color)]">Referral Reward Settings</h2>
+              </div>
+              <p className="text-sm text-[var(--muted-color)] mb-5 ml-11">
+                Set the reward amount given to referrers when their referred friend completes their first booking. Valid range: 0–500 QAR.
+              </p>
+              <div className="mb-5"><div className="spectrum-line" /></div>
+
+              {referralError && (
+                <div className="flex items-start gap-3 rounded-xl border border-rose-500/25 bg-rose-500/8 px-4 py-3 mb-5">
+                  <AlertCircle size={14} className="text-rose-400 flex-shrink-0 mt-0.5" />
+                  <p className="text-rose-300 text-sm font-semibold">{referralError}</p>
+                </div>
+              )}
+
+              <div className="mb-5">
+                <label className="field-label">Reward Amount (QAR)</label>
+                <p className="text-xs text-[var(--muted-color)] mb-3">
+                  When a referred customer completes their first booking, the referrer receives this amount as credit.
+                </p>
+                <div className="flex gap-2 mb-3">
+                  {[25, 50, 75, 100].map(v => (
+                    <button key={v} type="button" onClick={() => setReferralReward(v)}
+                      className="flex-1 py-2 rounded-xl text-xs font-bold border transition"
+                      style={referralReward === v
+                        ? { background:'rgba(139,92,246,.14)', borderColor:'rgba(139,92,246,.50)', color:'#a78bfa' }
+                        : { borderColor:'var(--border-color)', color:'var(--muted-color)' }}>
+                      {v} QAR
+                    </button>
+                  ))}
+                </div>
+                <input type="number" min={0} max={500} step={5} value={referralReward}
+                  onChange={e => setReferralReward(Math.min(500, Math.max(0, parseFloat(e.target.value) || 0)))}
+                  className="field-input" />
+              </div>
+
+              <div className="rounded-xl border p-4 mb-6"
+                style={{ background:'rgba(139,92,246,.07)', borderColor:'rgba(139,92,246,.25)' }}>
+                <p className="text-sm text-[var(--text-color)]">
+                  This reward is given to the <strong>referrer</strong> after their friend's first <strong>completed</strong> booking.
+                  The referred friend can still use the referral code during booking.
+                </p>
+              </div>
+
+              <div className="cta-prism-glow rounded-xl" style={{ boxShadow:'0 0 0 1.5px rgba(139,92,246,.40)' }}>
+                <button type="button" onClick={handleSaveReferralReward} disabled={referralSaving}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition disabled:opacity-60"
+                  style={{ background:'rgba(139,92,246,.15)', border:'1px solid rgba(139,92,246,.35)', color:'#a78bfa' }}>
+                  {referralSaving ? 'Saving…' : referralSaved ? <><CheckCircle size={14} /> Saved</> : <><Save size={14} /> Save Referral Reward</>}
                 </button>
               </div>
             </div>

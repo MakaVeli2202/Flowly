@@ -28,27 +28,29 @@ namespace Glanz.API.Controllers
         private const string SmsFollowUpKey       = "sms.followUpEnabled";
         private const string BusinessHoursKey     = "booking.businessHours";
         private const string BusinessConfigKey    = "business.config";
+        private const string ReferralRewardKey    = "referral.rewardAmount";
 
         private static readonly Dictionary<string, (string Start, string End)> DefaultBusinessHours = new()
-        {
-            { "Sunday",    ("09:00", "18:00") },
-            { "Monday",    ("09:00", "18:00") },
-            { "Tuesday",   ("09:00", "18:00") },
-            { "Wednesday", ("09:00", "18:00") },
-            { "Thursday",  ("09:00", "18:00") },
-            { "Friday",    ("00:00", "00:00") },
-            { "Saturday",  ("10:00", "16:00") },
-        };
+    {
+        { "Sunday",    ("09:00", "18:00") },
+        { "Monday",    ("09:00", "18:00") },
+        { "Tuesday",   ("09:00", "18:00") },
+        { "Wednesday", ("09:00", "18:00") },
+        { "Thursday",  ("09:00", "18:00") },
+        { "Friday",    ("00:00", "00:00") },
+        { "Saturday",  ("10:00", "16:00") },
+    };
 
-        // Safe in-code defaults — used when the SystemSettings row is absent.
-        private static readonly object DefaultVehicleMultipliers = new
-        {
-            Motorcycle = 0.8,
-            Sedan      = 1.0,
-            SUV        = 1.25,
-            Pickup     = 1.5,
-        };
-        private const int DefaultWorkerTravelMinutes = 30;
+    // Safe in-code defaults — used when the SystemSettings row is absent.
+    private static readonly object DefaultVehicleMultipliers = new
+    {
+        Motorcycle = 0.8,
+        Sedan      = 1.0,
+        SUV        = 1.25,
+        Pickup     = 1.5,
+    };
+    private const int DefaultWorkerTravelMinutes = 30;
+    private const int DefaultReferralRewardAmount = 50; // Default 50 QAR reward
 
         private static readonly JsonSerializerOptions _jsonOpts =
             new() { PropertyNameCaseInsensitive = true };
@@ -148,6 +150,14 @@ namespace Glanz.API.Controllers
                 catch { /* Corrupt JSON — fall back to defaults. */ }
             }
 
+            // Get referral reward amount
+            int referralRewardAmount = DefaultReferralRewardAmount;
+            var rewardRaw = GetVal(ReferralRewardKey);
+            if (!string.IsNullOrWhiteSpace(rewardRaw) && int.TryParse(rewardRaw, out var parsedReward) && parsedReward >= 0)
+            {
+                referralRewardAmount = parsedReward;
+            }
+
             return Ok(new
             {
                 pricing = new { vehicleMultipliers },
@@ -156,6 +166,7 @@ namespace Glanz.API.Controllers
                 subscriptionDiscountPercent,
                 businessHours,
                 businessConfig,
+                referralRewardAmount, // Add referral reward to response
             });
         }
 
@@ -186,6 +197,14 @@ namespace Glanz.API.Controllers
 
             if (dto.SmsFollowUpEnabled.HasValue)
                 updates.Add((SmsFollowUpKey, dto.SmsFollowUpEnabled.Value.ToString()));
+
+            // Handle referral reward amount
+            if (dto.ReferralRewardAmount.HasValue)
+            {
+                if (dto.ReferralRewardAmount.Value < 0 || dto.ReferralRewardAmount.Value > 500) // Max 500 QAR reasonable limit
+                    return BadRequest(new { message = "referralRewardAmount must be between 0 and 500." });
+                updates.Add((ReferralRewardKey, dto.ReferralRewardAmount.Value.ToString()));
+            }
 
             if (dto.BusinessHours != null)
             {
@@ -232,6 +251,7 @@ namespace Glanz.API.Controllers
         public int?              WorkerTravelBufferMinutes   { get; set; }
         public decimal?          SubscriptionDiscountPercent { get; set; }
         public bool?             SmsFollowUpEnabled          { get; set; }
+        public int?              ReferralRewardAmount        { get; set; } // Referral reward in QAR
         public BusinessHoursPerDayDto? BusinessHours         { get; set; }
         public BusinessConfigDto?      BusinessConfig        { get; set; }
     }

@@ -3,10 +3,12 @@ import { useParams, Link } from 'react-router-dom';
 import {
   CheckCircle, CheckCheck, XCircle, Clock, Calendar,
   Mail, Phone, Car, ArrowRight, MapPin, FileText,
-  Sparkles, RefreshCw, Hourglass, AlertCircle,
+  Sparkles, RefreshCw, Hourglass, AlertCircle, Gift, Copy, Share2,
 } from 'lucide-react';
 import { bookingsAPI } from '../../api/bookings';
+import { referralAPI } from '../../api/referral';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { formatQAR } from '../../utils/currency';
 import { Skeleton } from '../../components/shared/Skeleton';
 import { EmptyState } from '../../components/shared/EmptyState';
@@ -360,13 +362,53 @@ function getStatusContent(status) {
 function BookingConfirmation() {
   const { bookingNumber } = useParams();
   const { isAdmin }       = useAuth();
+  const { lang }          = useLanguage();
   const [booking, setBooking] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showReferralPopup, setShowReferralPopup] = useState(false);
+  const [referralCode, setReferralCode] = useState('');
+  const [copied, setCopied] = useState(false);
+
+  const copyCode = async () => {
+    try {
+      await navigator.clipboard.writeText(referralCode);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Copy failed:', err);
+    }
+  };
+
+  const shareCode = () => {
+    const text = `Use my referral code ${referralCode} for exclusive discounts on Glanz car detailing services!`;
+    if (navigator.share) {
+      navigator.share({
+        title: 'Glanz Referral',
+        text: text,
+        url: window.location.origin + '/book'
+      });
+    } else {
+      copyCode();
+    }
+  };
 
   useEffect(() => {
     bookingsAPI.getByBookingNumber(bookingNumber)
-      .then((data) => setBooking(data))
+      .then((data) => {
+        setBooking(data);
+        // Show referral unlock popup if this was the user's first completed wash
+        if (data?.isFirstCompletedWash && data?.referralCodeUnlocked) {
+          referralAPI.getMyCode()
+            .then(codeData => {
+              if (codeData?.referralCode) {
+                setReferralCode(codeData.referralCode);
+                setShowReferralPopup(true);
+              }
+            })
+            .catch(() => {});
+        }
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [bookingNumber]);
@@ -730,6 +772,69 @@ function BookingConfirmation() {
           </div>
         </div>
       </div>
+
+      {/* Referral Unlock Popup */}
+      {showReferralPopup && referralCode && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowReferralPopup(false)} />
+          <div className="relative w-full max-w-md p-6 rounded-2xl animate-in fade-in zoom-in-95 duration-300"
+            style={{ 
+              background: 'linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%)',
+              color: 'white'
+            }}>
+            <button 
+              onClick={() => setShowReferralPopup(false)}
+              className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white"
+            >
+              ×
+            </button>
+            
+            <div className="text-center">
+              <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center mx-auto mb-4">
+                <Sparkles size={32} />
+              </div>
+              
+              <h2 className="text-2xl font-bold mb-2">
+                {lang === 'ar' ? 'تهانينا! لقد فتحت كود الإحالة!' : 'Congratulations! You unlocked your referral code!'}
+              </h2>
+              <p className="text-white/80 mb-4">
+                {lang === 'ar' 
+                  ? 'شارك هذا الكود مع أصدقائك واحصل على مكافأة عند إتمام أول حجز لهم'
+                  : 'Share this code with friends and earn rewards when they complete their first booking'}
+              </p>
+              
+              <div className="bg-white/20 rounded-xl p-4 mb-6">
+                <div className="text-3xl font-bold tracking-wider">{referralCode}</div>
+              </div>
+              
+              <div className="flex gap-3">
+                <button 
+                  onClick={copyCode}
+                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-white text-[#8b5cf6] font-semibold hover:bg-white/90 transition"
+                >
+                  <Copy size={18} />
+                  {copied ? (lang === 'ar' ? 'تم!' : 'Copied!') : (lang === 'ar' ? 'نسخ' : 'Copy')}
+                </button>
+                <button 
+                  onClick={shareCode}
+                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-white/20 text-white font-semibold hover:bg-white/30 transition"
+                >
+                  <Share2 size={18} />
+                  {lang === 'ar' ? 'مشاركة' : 'Share'}
+                </button>
+              </div>
+              
+              <Link 
+                to="/referrals"
+                onClick={() => setShowReferralPopup(false)}
+                className="block mt-4 text-sm text-white/70 hover:text-white underline"
+              >
+                {lang === 'ar' ? 'عرض صفحة الإحالة' : 'View referral page'}
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

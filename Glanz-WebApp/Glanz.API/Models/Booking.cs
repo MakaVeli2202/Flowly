@@ -123,6 +123,9 @@ namespace Glanz.API.Models
         [StringLength(500)]
         public string? LeadSourceDetails { get; set; } // For UTMs, campaign names, etc.
 
+        [StringLength(30)]
+        public string? ReferralCode { get; set; } // Referral code used for this booking
+
         [StringLength(255)]
         public string? StripePaymentIntentId { get; set; }
 

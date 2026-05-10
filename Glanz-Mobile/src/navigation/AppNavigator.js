@@ -42,6 +42,7 @@ import AdminSystemSettingsScreen from '../screens/AdminSystemSettingsScreen';
 import SubscriptionBookingScreen from '../screens/SubscriptionBookingScreen';
 import MySubscriptionScreen from '../screens/MySubscriptionScreen';
 import SubscriptionCheckoutScreen from '../screens/SubscriptionCheckoutScreen';
+import ReferralScreen from '../screens/ReferralScreen';
 import LiveWorkerMapScreen from '../screens/LiveWorkerMapScreen';
 import AdminJobPositionsScreen from '../screens/AdminJobPositionsScreen';
 import AdminContentScreen from '../screens/AdminContentScreen';
@@ -459,6 +460,7 @@ function CustomerStack() {
       <Stack.Screen name="SubscriptionCheckout"    component={SubscriptionCheckoutScreen} options={{ title: t('navigation.customer.checkout') }} />
       <Stack.Screen name="Live Tracking"           component={LiveWorkerMapScreen}        options={{ title: t('navigation.customer.liveTracking') }} />
       <Stack.Screen name="Careers"                component={CareersScreen}              options={{ title: t('careers.title', 'Careers') }} />
+      <Stack.Screen name="Referrals"             component={ReferralScreen}             options={{ title: 'Referrals' }} />
     </Stack.Navigator>
   );
 }

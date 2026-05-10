@@ -148,6 +148,8 @@ namespace Glanz.API.Controllers
                 Role = user.Role,
                 IsActive = user.IsActive,
                 CreatedAt = user.CreatedAt,
+                FirstWashCompletedAt = user.FirstWashCompletedAt,
+                TotalBookingsCount = user.TotalBookingsCount,
             };
         }
 
@@ -284,8 +286,21 @@ namespace Glanz.API.Controllers
                     Role = "Customer",
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
+                    UpdatedAt = DateTime.UtcNow,
                 };
+
+                // Process referral code if provided
+                if (!string.IsNullOrWhiteSpace(dto.ReferralCode))
+                {
+                    var code = dto.ReferralCode.Trim().ToUpperInvariant();
+                    var referrer = await _context.Users
+                        .FirstOrDefaultAsync(u => u.ReferralCode != null && u.ReferralCode.ToUpper() == code);
+                    
+                    if (referrer != null && referrer.Id != user.Id)
+                    {
+                        user.ReferredByUserId = referrer.Id;
+                    }
+                }
 
                 _context.Users.Add(user);
                 await _context.SaveChangesAsync();

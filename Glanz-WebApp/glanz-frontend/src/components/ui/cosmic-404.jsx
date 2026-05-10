@@ -1,3 +1,5 @@
+"use client";
+
 import createGlobe from "cobe";
 import { useCallback, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
@@ -27,7 +29,7 @@ const GLOBE_CONFIG = {
 export function Globe({ className, config = GLOBE_CONFIG }) {
   const canvasRef = useRef(null);
   const phiRef = useRef(0);
-  const widthRef = useRef(0);
+  const widthRef = useRef(200);
 
   const onRender = useCallback((state) => {
     phiRef.current += 0.005; 
@@ -41,7 +43,7 @@ export function Globe({ className, config = GLOBE_CONFIG }) {
     if (!canvas) return;
 
     const handleResize = () => {
-      widthRef.current = canvas.offsetWidth;
+      widthRef.current = canvas.offsetWidth || 200;
     };
 
     handleResize();
@@ -53,6 +55,7 @@ export function Globe({ className, config = GLOBE_CONFIG }) {
       height: widthRef.current * 2,
       onRender,
     });
+
    
 
     return () => {

@@ -26,6 +26,7 @@ namespace Glanz.API.DTOs
         public int TotalReferrals { get; set; }
         public int PendingReferrals { get; set; }
         public int RewardedReferrals { get; set; }
+        public bool ReferralCodeUnlocked { get; set; }
         public List<ReferralDto> Referrals { get; set; } = new();
     }
 
