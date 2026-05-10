@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Glanz.API.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260510065658_AddHasUsedReferralCode")]
-    partial class AddHasUsedReferralCode
+    [Migration("20260510080309_AddHasUsedReferralCodeOnly")]
+    partial class AddHasUsedReferralCodeOnly
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

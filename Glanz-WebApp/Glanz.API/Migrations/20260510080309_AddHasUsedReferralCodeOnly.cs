@@ -6,17 +6,11 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Glanz.API.Migrations
 {
     /// <inheritdoc />
-    public partial class AddHasUsedReferralCode : Migration
+    public partial class AddHasUsedReferralCodeOnly : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<DateTime>(
-                name: "FirstWashCompletedAt",
-                table: "Users",
-                type: "timestamp with time zone",
-                nullable: true);
-
             migrationBuilder.AddColumn<bool>(
                 name: "HasUsedReferralCode",
                 table: "Users",
@@ -28,10 +22,6 @@ namespace Glanz.API.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "FirstWashCompletedAt",
-                table: "Users");
-
             migrationBuilder.DropColumn(
                 name: "HasUsedReferralCode",
                 table: "Users");
