@@ -292,6 +292,15 @@ namespace Glanz.API.Controllers
                 // Process referral code if provided
                 if (!string.IsNullOrWhiteSpace(dto.ReferralCode))
                 {
+                    // Check if this email already has used a referral code in the past
+                    var existingUserWithReferral = await _context.Users
+                        .FirstOrDefaultAsync(u => u.Email.ToLower() == normalizedEmail && u.HasUsedReferralCode);
+                    
+                    if (existingUserWithReferral != null)
+                    {
+                        return BadRequest(new { message = "You have already used a referral code. Each customer can only use one referral code." });
+                    }
+
                     var code = dto.ReferralCode.Trim().ToUpperInvariant();
                     var referrer = await _context.Users
                         .FirstOrDefaultAsync(u => u.ReferralCode != null && u.ReferralCode.ToUpper() == code);
@@ -299,6 +308,7 @@ namespace Glanz.API.Controllers
                     if (referrer != null && referrer.Id != user.Id)
                     {
                         user.ReferredByUserId = referrer.Id;
+                        user.HasUsedReferralCode = true; // Mark as used - cannot use another code
                     }
                 }
 

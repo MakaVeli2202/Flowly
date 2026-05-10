@@ -143,6 +143,7 @@ namespace Glanz.API.Controllers
             };
 
             user.ReferredByUserId = referrer.Id;
+            user.HasUsedReferralCode = true; // Mark as used - can never use another code
             _context.Referrals.Add(referral);
             await _context.SaveChangesAsync();
 
