@@ -7,6 +7,7 @@ import { useAuth } from '../../context/AuthContext';
 import { notificationsAPI } from '../../api/notifications';
 import { subscribeToNotifications } from '../../api/notificationBus';
 import { useLanguage, LANGUAGES } from '../../context/LanguageContext';
+import { getBusiness } from '../../config/business';
 
 const CUSTOMER_LINKS = [
   { to: '/',           label: 'Home',     icon: Home     },
@@ -18,6 +19,7 @@ export function CustomerNavbar({ theme, onToggleTheme }) {
   const [isOpen, setIsOpen] = useState(false);
   const [headerShapeClass, setHeaderShapeClass] = useState('rounded-full');
   const shapeTimeoutRef = useRef(null);
+  const business = getBusiness();
   const { lang, t, setLang } = useLanguage();
   const { user, isAuthenticated, isEmployee, logout } = useAuth();
   const [notifications, setNotifications] = useState([]);
@@ -129,7 +131,11 @@ export function CustomerNavbar({ theme, onToggleTheme }) {
     <>
       {/* Fixed Logo - Top Left Corner */}
       <Link to="/" className="fixed top-6 left-6 z-50 hover:opacity-80 transition-opacity">
-        <img src="/Glanz-Logo.png" alt="Glanz" className="h-10 w-auto object-contain" />
+        {business.logo ? (
+          <img src={business.logo} alt={business.name} className="h-10 w-auto object-contain" />
+        ) : (
+          <span className="text-2xl font-bold text-white">{business.name}</span>
+        )}
       </Link>
 
       {/* Navbar */}

@@ -1988,6 +1988,20 @@ namespace Glanz.API.Controllers
 
                 var subscriptionDiscount = subscription?.Plan?.DiscountPercent ?? 0m;
 
+                // Check for referral discount for referred user (first booking discount)
+                decimal referralDiscount = 0m;
+                if (bookingUserId.HasValue)
+                {
+                    var (referralDiscountPercent, _) = await _referralService.GetReferralDiscountForUserAsync(bookingUserId.Value);
+                    if (referralDiscountPercent.HasValue && referralDiscountPercent.Value > 0)
+                    {
+                        referralDiscount = referralDiscountPercent.Value;
+                    }
+                }
+
+                // Combine subscription and referral discounts
+                var combinedDiscountPercent = subscriptionDiscount + referralDiscount;
+
                 // Build item list for pricing service
                 var items = dto.Packages
                     .Select(p => new PackagePricingItem(p.PackageId, packages[p.PackageId].Price, p.Quantity))
@@ -2005,7 +2019,7 @@ namespace Glanz.API.Controllers
                 var pricing = await _pricingService.CalculateAsync(
                     items,
                     dto.VehicleType,
-                    subscriptionDiscount,
+                    combinedDiscountPercent,
                     offerResult?.Offer,
                     offerResult?.AppliedCode);
 
@@ -2148,6 +2162,20 @@ namespace Glanz.API.Controllers
 
                 var subscriptionDiscount = applicableSubscription.Subscription?.Plan?.DiscountPercent ?? 0m;
 
+                // Check for referral discount for referred user (first booking discount)
+                decimal referralDiscount = 0m;
+                if (userId.HasValue)
+                {
+                    var (referralDiscountPercent, _) = await _referralService.GetReferralDiscountForUserAsync(userId.Value);
+                    if (referralDiscountPercent.HasValue && referralDiscountPercent.Value > 0)
+                    {
+                        referralDiscount = referralDiscountPercent.Value;
+                    }
+                }
+
+                // Combine subscription and referral discounts
+                var combinedDiscountPercent = subscriptionDiscount + referralDiscount;
+
                 var pricingItems = dto.Packages
                     .Select(p => new PackagePricingItem(p.PackageId, packages[p.PackageId].Price, p.Quantity))
                     .ToList();
@@ -2175,6 +2203,18 @@ namespace Glanz.API.Controllers
 
                 var finalAmount   = pricing.FinalAmount;
                 var discountAmount = pricing.TotalDiscountAmount;
+
+                // Apply Referral Points only if customer chooses to use them
+                if (dto.UseReferralPoints && userId.HasValue && finalAmount > 0)
+                {
+                    var user = await _context.Users.FindAsync(userId.Value);
+                    if (user != null && user.ReferralPoints > 0)
+                    {
+                        var pointsUsed = Math.Min(finalAmount, user.ReferralPoints);
+                        finalAmount = finalAmount - pointsUsed;
+                        discountAmount = discountAmount + pointsUsed;
+                    }
+                }
 
                 // Create Stripe Payment Intent
                 var paymentIntentService = new PaymentIntentService();
@@ -2374,6 +2414,20 @@ namespace Glanz.API.Controllers
 
                 var subscriptionDiscount = applicableSubscription.Subscription?.Plan?.DiscountPercent ?? 0m;
 
+                // Check for referral discount for referred user (first booking discount)
+                decimal referralDiscount = 0m;
+                if (userId.HasValue)
+                {
+                    var (referralDiscountPercent, _) = await _referralService.GetReferralDiscountForUserAsync(userId.Value);
+                    if (referralDiscountPercent.HasValue && referralDiscountPercent.Value > 0)
+                    {
+                        referralDiscount = referralDiscountPercent.Value;
+                    }
+                }
+
+                // Combine subscription and referral discounts (both are percentage-based)
+                var combinedDiscountPercent = subscriptionDiscount + referralDiscount;
+
                 var pricingItems = bookingItemsRaw
                     .Select(r => new PackagePricingItem(r.PackageId, r.BasePrice, r.Quantity))
                     .ToList();
@@ -2400,12 +2454,29 @@ namespace Glanz.API.Controllers
                 var pricing = await _pricingService.CalculateAsync(
                     pricingItems,
                     dto.VehicleType,
-                    subscriptionDiscount,
+                    combinedDiscountPercent,
                     offerResolution.Result?.Offer,
                     offerResolution.Result?.AppliedCode);
 
                 var finalAmount    = pricing.FinalAmount;
                 var discountAmount = pricing.TotalDiscountAmount;
+
+                // ── Apply Referral Points only if customer chooses to use them ──
+                decimal referralPointsUsed = 0;
+                if (dto.UseReferralPoints && userId.HasValue && finalAmount > 0)
+                {
+                    var user = await _context.Users.FindAsync(userId.Value);
+                    if (user != null && user.ReferralPoints > 0)
+                    {
+                        // Use up to the final amount or all points, whichever is less
+                        referralPointsUsed = Math.Min(finalAmount, user.ReferralPoints);
+                        if (referralPointsUsed > 0)
+                        {
+                            finalAmount = finalAmount - referralPointsUsed;
+                            discountAmount = discountAmount + referralPointsUsed;
+                        }
+                    }
+                }
 
                 // ── Stripe amount safety gate ────────────────────────────────────────
                 // If a PaymentIntent was created (payments feature ON), verify its amount
@@ -2566,6 +2637,17 @@ namespace Glanz.API.Controllers
 
                     await _context.SaveChangesAsync();
                     await bookingTransaction.CommitAsync();
+
+                    // Deduct used referral points
+                    if (userId.HasValue && referralPointsUsed > 0)
+                    {
+                        var userForDeduction = await _context.Users.FindAsync(userId.Value);
+                        if (userForDeduction != null && userForDeduction.ReferralPoints >= referralPointsUsed)
+                        {
+                            userForDeduction.ReferralPoints -= referralPointsUsed;
+                            await _context.SaveChangesAsync();
+                        }
+                    }
                 }
 
                 await _adminNotificationService.NotifyNewBookingAsync(booking);

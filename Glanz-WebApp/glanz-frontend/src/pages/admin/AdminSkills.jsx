@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { authAPI } from '../../api/auth';
 import { Zap, Plus, Trash2, Save, CheckCircle, AlertCircle, X, User } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
 
 const STORAGE_KEY_SKILLS = 'adminSkills';
 
@@ -78,6 +79,7 @@ function PrismaticCursorOrb() {
 }
 
 export default function AdminSkills() {
+  const { t } = useLanguage();
   const [skills,        setSkills]        = useState(loadSkills);
   const [workerSkills,  setWorkerSkills]  = useState(loadWorkerSkills);
   const [workers,       setWorkers]       = useState([]);
@@ -161,7 +163,7 @@ export default function AdminSkills() {
           <div>
             <div className="flex items-center gap-3 mb-2">
               <span className="h-px w-7" style={{ background: 'linear-gradient(90deg,transparent,#a855f7)' }} />
-              <p className="text-[.60rem] font-bold uppercase tracking-[.26em]" style={{ color:'#a855f7' }}>Admin Panel</p>
+              <p className="text-[.60rem] font-bold uppercase tracking-[.26em]" style={{ color:'#a855f7' }}>{t('adminPanel')}</p>
               <span className="h-px w-7" style={{ background: 'linear-gradient(90deg,#a855f7,transparent)' }} />
             </div>
             <div className="flex items-center gap-3 mb-1.5">

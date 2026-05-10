@@ -8,6 +8,7 @@ import { notificationsAPI } from '../../api/notifications';
 import { subscribeToNotifications } from '../../api/notificationBus';
 import { useLanguage, ADMIN_LABEL_KEYS, LANGUAGES } from '../../context/LanguageContext';
 import { useRealtimeStatus } from '../../hooks/useRealtimeStatus';
+import { getBusiness } from '../../config/business';
 
 const ADMIN_LINKS = [
   { to: '/admin',                      label: 'Dashboard',   icon: LayoutDashboard },
@@ -76,6 +77,7 @@ export function AdminHeader({ theme, onToggleTheme }) {
   const notificationsRef = useRef(null);
   const langMenuRef = useRef(null);
   const { user, token, logout } = useAuth();
+  const business = getBusiness();
   const { lang, t, setLang } = useLanguage();
   const wsStatus = useRealtimeStatus();
   const navigate = useNavigate();
@@ -172,7 +174,11 @@ export function AdminHeader({ theme, onToggleTheme }) {
       <div className="flex items-center justify-between w-full mx-auto max-w-7xl">
         {/* Logo */}
         <Link to="/admin" className="flex items-center hover:opacity-80 transition-opacity">
-          <img src="/Glanz-Logo.png" alt="Glanz" className="h-10 w-auto object-contain" />
+          {business.logo ? (
+            <img src={business.logo} alt={business.name} className="h-10 w-auto object-contain" />
+          ) : (
+            <span className="text-2xl font-bold text-white">{business.name}</span>
+          )}
         </Link>
 
         {/* Desktop Nav */}
@@ -303,7 +309,7 @@ export function AdminHeader({ theme, onToggleTheme }) {
             {showNotifications && (
               <div className="absolute right-0 top-full mt-3 w-96 rounded-xl border border-gray-800 bg-[#0d1117] shadow-2xl z-50 flex flex-col max-h-[28rem]">
                 <div className="flex items-center justify-between gap-3 px-4 pt-4 pb-3 border-b border-gray-800">
-                  <p className="text-sm font-bold text-white">Notifications</p>
+                  <p className="text-sm font-bold text-white">{t('notifications')}</p>
                   {unreadCount > 0 && (
                     <button
                       type="button"
@@ -311,16 +317,16 @@ export function AdminHeader({ theme, onToggleTheme }) {
                       className="flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary/80"
                     >
                       <CheckCheck size={13} />
-                      Mark all read
+                      {t('markAllRead')}
                     </button>
                   )}
                 </div>
                 <div className="overflow-y-auto flex-1 px-3 py-2 space-y-1">
                   {notificationsLoading && (
-                    <p className="text-sm text-gray-400 text-center py-6">Loading...</p>
+                    <p className="text-sm text-gray-400 text-center py-6">{t('loading')}</p>
                   )}
                   {!notificationsLoading && notifications.length === 0 && (
-                    <p className="text-sm text-gray-400 text-center py-6">No notifications</p>
+                    <p className="text-sm text-gray-400 text-center py-6">{t('noNotifications')}</p>
                   )}
                   {!notificationsLoading && notifications.map((notif) => {
                     const config = NOTIF_CONFIG[notif.type] || { icon: Bell, color: 'text-gray-400 bg-gray-700', label: 'Notification' };

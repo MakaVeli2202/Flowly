@@ -88,6 +88,7 @@ function BookingForm({ stripe, elements, isStripeMode }) {
     leadSource:          'Direct',
     leadSourceDetails:   '',
     referralCode:        '',
+    useReferralPoints:   true, // Default: use points
   });
 
   // Current vehicle multiplier from backend settings
@@ -455,6 +456,7 @@ function BookingForm({ stripe, elements, isStripeMode }) {
                   setPaymentMethod={setPaymentMethod}
                   quote={quote}
                   totalAmount={totalAmount}
+                  userReferralPoints={user?.referralPoints || 0}
                 />
 
                 {/* ── Submit ── */}

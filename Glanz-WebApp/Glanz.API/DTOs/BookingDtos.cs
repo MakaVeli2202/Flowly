@@ -59,6 +59,9 @@ namespace Glanz.API.DTOs
         // a duplicate if the key matches a previous request from the same customer.
         public string? IdempotencyKey { get; set; }
 
+        // Optional: customer can choose to use referral points or save them
+        public bool UseReferralPoints { get; set; } = true; // Default: use points
+
         // Lead tracking - how did the customer find us?
         public LeadSource LeadSource { get; set; } = LeadSource.Direct;
         

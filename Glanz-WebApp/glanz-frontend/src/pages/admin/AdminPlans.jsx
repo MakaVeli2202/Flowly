@@ -4,6 +4,7 @@ import {
   Zap, Star, Crown, ChevronDown, ChevronUp, GripVertical,
 } from 'lucide-react';
 import { subscriptionsAPI } from '../../api/subscriptions';
+import { useLanguage } from '../../context/LanguageContext';
 import { packagesAPI } from '../../api/packages';
 import { formatQAR } from '../../utils/currency';
 import AppModal from '../../components/shared/AppModal';
@@ -131,6 +132,7 @@ function planToForm(p) {
    ADMIN PLANS PAGE
 ════════════════════════════════════════════════════════════ */
 function AdminPlans() {
+  const { t } = useLanguage();
   const [loading,   setLoading]   = useState(true);
   const [saving,    setSaving]    = useState(false);
   const [plans,     setPlans]     = useState([]);
@@ -295,7 +297,7 @@ function AdminPlans() {
             <div>
               <div className="flex items-center gap-3 mb-2">
                 <span className="h-px w-7" style={{ background: 'linear-gradient(90deg,transparent,#c8a96b)' }} />
-                <p className="text-[0.60rem] font-bold uppercase tracking-[0.26em] text-primary">Admin Panel</p>
+                <p className="text-[0.60rem] font-bold uppercase tracking-[0.26em] text-primary">{t('adminPanel')}</p>
                 <span className="h-px w-7" style={{ background: 'linear-gradient(90deg,#c8a96b,transparent)' }} />
               </div>
               <div className="flex items-center gap-3 mb-1.5">

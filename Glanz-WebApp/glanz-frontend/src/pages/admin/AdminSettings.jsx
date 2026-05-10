@@ -5,6 +5,7 @@ import { authAPI } from '../../api/auth';
 import { formatQAR } from '../../utils/currency';
 import { Settings, Shield, CheckCircle, AlertCircle, Save, Building2, Clock, MessageSquare, DollarSign, Gift } from 'lucide-react';
 import { getBusiness, saveBusiness } from '../../config/business';
+import { useLanguage } from '../../context/LanguageContext';
 
 /* PRISM_CSS — identical to ManageServices */
 const PRISM_CSS = `
@@ -54,6 +55,7 @@ function Toggle({ checked, onClick }) {
 }
 
 export default function AdminSettings() {
+  const { t } = useLanguage();
   const [policy, setPolicy] = useState({ feeEnabled:false, feeType:'Percent', feeAmount:20, freeWindowHours:24 });
   const [loading, setLoading] = useState(true);
   const [saving,  setSaving]  = useState(false);
@@ -91,12 +93,20 @@ export default function AdminSettings() {
   const [referralSaved,    setReferralSaved]    = useState(false);
   const [referralError,    setReferralError]    = useState('');
 
-  // Pay slip settings state
-  const [paySlip, setPaySlip] = useState({ companyName: 'Glanz', companyLogo: '', companyAddress: '', companyPhone: '', companyEmail: '', footerText: '' });
-  const [paySlipLoading, setPaySlipLoading] = useState(true);
-  const [paySlipSaving, setPaySlipSaving] = useState(false);
-  const [paySlipSaved, setPaySlipSaved] = useState(false);
-  const [paySlipError, setPaySlipError] = useState('');
+  // Referral discount for referred user state
+  const [referralDiscountPct, setReferralDiscountPct] = useState(0);
+  const [referralDiscountSaving, setReferralDiscountSaving] = useState(false);
+  const [referralDiscountSaved, setReferralDiscountSaved] = useState(false);
+  const [referralDiscountError, setReferralDiscountError] = useState('');
+
+  // Referral required bookings for referrer reward
+  const [referralRequiredBookings, setReferralRequiredBookings] = useState(1);
+
+  // Vehicle multipliers state
+  const [vehicleMultipliers, setVehicleMultipliers] = useState({ motorcycle: 0.8, sedan: 1.0, suv: 1.25, pickup: 1.5 });
+  const [multipliersSaving, setMultipliersSaving] = useState(false);
+  const [multipliersSaved, setMultipliersSaved] = useState(false);
+  const [multipliersError, setMultipliersError] = useState('');
 
   // Business hours state
   const defaultBusinessHours = {
@@ -125,6 +135,17 @@ export default function AdminSettings() {
         setDiscountPct(data?.subscriptionDiscountPercent ?? 10);
         setSmsEnabled(data?.sms?.followUpEnabled ?? false);
         setReferralReward(data?.referralRewardAmount ?? 50);
+        setReferralDiscountPct(data?.referralDiscountPercent ?? 0);
+        setReferralRequiredBookings(data?.referralRequiredBookings ?? 1);
+        if (data?.pricing?.vehicleMultipliers) {
+          const vm = data.pricing.vehicleMultipliers;
+          setVehicleMultipliers({
+            motorcycle: vm.Motorcycle ?? 0.8,
+            sedan: vm.Sedan ?? 1.0,
+            suv: vm.SUV ?? 1.25,
+            pickup: vm.Pickup ?? 1.5,
+          });
+        }
         if (data?.businessHours) {
           setBusinessHours({
             Sunday:    data.businessHours.sunday    || '09:00-18:00',
@@ -152,30 +173,6 @@ export default function AdminSettings() {
       })
       .catch(() => {});
   }, []);
-
-  useEffect(() => {
-    authAPI.getPaySlipSettings()
-      .then(data => setPaySlip({
-        companyName: data?.companyName || 'Glanz',
-        companyLogo: data?.companyLogo || '',
-        companyAddress: data?.companyAddress || '',
-        companyPhone: data?.companyPhone || '',
-        companyEmail: data?.companyEmail || '',
-        footerText: data?.footerText || ''
-      }))
-      .catch(() => {})
-      .finally(() => setPaySlipLoading(false));
-  }, []);
-
-  const handleSavePaySlip = async () => {
-    try {
-      setPaySlipSaving(true); setPaySlipError('');
-      await authAPI.updatePaySlipSettings(paySlip);
-      setPaySlipSaved(true);
-      setTimeout(() => setPaySlipSaved(false), 3000);
-    } catch (err) { setPaySlipError(err?.response?.data?.message || 'Failed to save pay slip settings.'); }
-    finally { setPaySlipSaving(false); }
-  };
 
   const handleSave = async () => {
     try {
@@ -240,6 +237,37 @@ export default function AdminSettings() {
     finally { setReferralSaving(false); }
   };
 
+  const handleSaveReferralDiscount = async () => {
+    const v = Number(referralDiscountPct);
+    if (!Number.isFinite(v) || v < 0 || v > 100) {
+      setReferralDiscountError('Referral discount must be between 0 and 100 percent.'); return;
+    }
+    try {
+      setReferralDiscountSaving(true); setReferralDiscountError('');
+      await settingsAPI.updateSystemSettings({ ReferralDiscountPercent: v });
+      setReferralDiscountSaved(true);
+      setTimeout(() => setReferralDiscountSaved(false), 3000);
+    } catch (err) { setReferralDiscountError(err?.response?.data?.message || 'Failed to save referral discount.'); }
+    finally { setReferralDiscountSaving(false); }
+  };
+
+  const handleSaveVehicleMultipliers = async () => {
+    const vm = vehicleMultipliers;
+    const valid = [vm.motorcycle, vm.sedan, vm.suv, vm.pickup].every(v => Number.isFinite(v) && v >= 0 && v <= 5);
+    if (!valid) {
+      setMultipliersError('Each multiplier must be between 0 and 5.'); return;
+    }
+    try {
+      setMultipliersSaving(true); setMultipliersError('');
+      await settingsAPI.updateSystemSettings({
+        VehicleMultipliers: { Motorcycle: vm.motorcycle, Sedan: vm.sedan, SUV: vm.suv, Pickup: vm.pickup }
+      });
+      setMultipliersSaved(true);
+      setTimeout(() => setMultipliersSaved(false), 3000);
+    } catch (err) { setMultipliersError(err?.response?.data?.message || 'Failed to save vehicle multipliers.'); }
+    finally { setMultipliersSaving(false); }
+  };
+
   const handleSaveBusinessHours = async () => {
     try {
       setBizHoursSaving(true); setBizHoursError('');
@@ -279,7 +307,7 @@ export default function AdminSettings() {
           <div>
             <div className="flex items-center gap-3 mb-2">
               <span className="h-px w-7" style={{ background:'linear-gradient(90deg,transparent,#c8a96b)' }} />
-              <p className="text-[.60rem] font-bold uppercase tracking-[.26em] text-primary">Admin Panel</p>
+              <p className="text-[.60rem] font-bold uppercase tracking-[.26em] text-primary">{t('adminPanel')}</p>
               <span className="h-px w-7" style={{ background:'linear-gradient(90deg,#c8a96b,transparent)' }} />
             </div>
             <div className="flex items-center gap-3 mb-1.5">
@@ -420,6 +448,18 @@ export default function AdminSettings() {
               )}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+                <div className="sm:col-span-2">
+                  <label className="field-label">Logo URL</label>
+                  <input type="url" value={biz.logo || ''}
+                    onChange={e => setBiz(b => ({ ...b, logo: e.target.value }))}
+                    className="field-input" placeholder="https://example.com/logo.png" />
+                  <p className="text-xs text-[var(--muted-color)] mt-1">Used in navbar, footer, payslips, and emails</p>
+                  {biz.logo && (
+                    <div className="mt-2 p-2 rounded-lg border border-[var(--border-color)] inline-block">
+                      <img src={biz.logo} alt="Logo preview" className="h-12 object-contain" />
+                    </div>
+                  )}
+                </div>
                 <div>
                   <label className="field-label">Business Name</label>
                   <input type="text" value={biz.name}
@@ -535,6 +575,7 @@ export default function AdminSettings() {
                 try {
                     await settingsAPI.updateBusinessConfig({
                       name:         biz.name,
+                      logo:         biz.logo,
                       tagline:      biz.tagline,
                       phone:        biz.phone,
                       email:        biz.email,
@@ -760,10 +801,10 @@ export default function AdminSettings() {
             </div>
           </div>
 
-          {/* ── Referral Reward Settings card ── */}
+          {/* ── Referral Settings card (Reward + Discount) ── */}
           <div className="glass-card relative overflow-hidden card-stagger">
             <div className="absolute top-0 left-0 right-0 h-[2px]"
-              style={{ background:'linear-gradient(90deg,transparent,#8b5cf6 38%,#ec4899 62%,transparent)' }} />
+              style={{ background:'linear-gradient(90deg,transparent,#8b5cf6 38%,#f97316 62%,transparent)' }} />
             <div className="absolute top-0 left-0 w-[3px] h-full"
               style={{ background:'linear-gradient(180deg,#8b5cf6 0%,#8b5cf644 60%,transparent 100%)' }} />
             <div className="prism-ray" style={{ left:'60%', width:'14%', animation:'prism-ray-sweep 19s ease-in-out 2s infinite' }} />
@@ -774,31 +815,94 @@ export default function AdminSettings() {
                   style={{ background:'rgba(139,92,246,.12)', border:'1px solid rgba(139,92,246,.24)' }}>
                   <Gift size={14} style={{ color:'#8b5cf6' }} />
                 </div>
-                <h2 className="premium-heading text-xl font-bold text-[var(--heading-color)]">Referral Reward Settings</h2>
+                <h2 className="premium-heading text-xl font-bold text-[var(--heading-color)]">Referral Settings</h2>
               </div>
               <p className="text-sm text-[var(--muted-color)] mb-5 ml-11">
-                Set the reward amount given to referrers when their referred friend completes their first booking. Valid range: 0–500 QAR.
+                Configure referral rewards for the referrer and discount for the referred user.
               </p>
               <div className="mb-5"><div className="spectrum-line" /></div>
 
-              {referralError && (
+              {(referralError || referralDiscountError) && (
                 <div className="flex items-start gap-3 rounded-xl border border-rose-500/25 bg-rose-500/8 px-4 py-3 mb-5">
                   <AlertCircle size={14} className="text-rose-400 flex-shrink-0 mt-0.5" />
-                  <p className="text-rose-300 text-sm font-semibold">{referralError}</p>
+                  <p className="text-rose-300 text-sm font-semibold">{referralError || referralDiscountError}</p>
                 </div>
               )}
 
-              <div className="mb-5">
-                <label className="field-label">Reward Amount (QAR)</label>
-                <p className="text-xs text-[var(--muted-color)] mb-3">
-                  When a referred customer completes their first booking, the referrer receives this amount as credit.
+              {/* ── Referral Discount for Referred User ── */}
+              <div className="mb-6 p-5 rounded-xl border"
+                style={{ background:'rgba(249,115,22,.06)', borderColor:'rgba(249,115,22,.20)' }}>
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-5 h-5 rounded flex items-center justify-center"
+                    style={{ background:'rgba(249,115,22,.15)' }}>
+                    <Gift size={10} style={{ color:'#fb923c' }} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-[var(--heading-color)]">Referred User Discount</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color:'#fb923c' }}>First booking only</p>
+                  </div>
+                </div>
+                <p className="text-xs text-[var(--muted-color)] mb-4 mt-2">
+                  Discount applied to the referred user's first completed booking.
+                </p>
+                <div className="flex gap-2 mb-3">
+                  {[0, 5, 10, 15, 20, 25].map(v => (
+                    <button key={v} type="button" onClick={() => setReferralDiscountPct(v)}
+                      className="flex-1 py-1.5 rounded-xl text-xs font-bold border transition"
+                      style={referralDiscountPct === v
+                        ? { background:'rgba(249,115,22,.18)', borderColor:'rgba(249,115,22,.55)', color:'#fb923c' }
+                        : { borderColor:'var(--border-color)', color:'var(--muted-color)' }}>
+                      {v}%
+                    </button>
+                  ))}
+                </div>
+                <input type="number" min={0} max={100} step={1} value={referralDiscountPct}
+                  onChange={e => setReferralDiscountPct(Math.min(100, Math.max(0, parseFloat(e.target.value) || 0)))}
+                  className="field-input" />
+              </div>
+
+              {/* ── Referral Reward for Referrer ── */}
+              <div className="mb-6 p-5 rounded-xl border"
+                style={{ background:'rgba(139,92,246,.06)', borderColor:'rgba(139,92,246,.20)' }}>
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-5 h-5 rounded flex items-center justify-center"
+                    style={{ background:'rgba(139,92,246,.15)' }}>
+                    <Gift size={10} style={{ color:'#a78bfa' }} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-[var(--heading-color)]">Referrer Reward</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color:'#a78bfa' }}>After X completed bookings</p>
+                  </div>
+                </div>
+                <p className="text-xs text-[var(--muted-color)] mb-3 mt-2">
+                  The referrer receives this reward after their referred friend completes this many paid bookings.
+                </p>
+                <div className="mb-3">
+                  <label className="field-label text-xs">Completed Bookings Required</label>
+                  <div className="flex gap-2 mb-2">
+                    {[1, 3, 5, 10].map(v => (
+                      <button key={v} type="button" onClick={() => setReferralRequiredBookings(v)}
+                        className="flex-1 py-1.5 rounded-xl text-xs font-bold border transition"
+                        style={referralRequiredBookings === v
+                          ? { background:'rgba(139,92,246,.18)', borderColor:'rgba(139,92,246,.55)', color:'#a78bfa' }
+                          : { borderColor:'var(--border-color)', color:'var(--muted-color)' }}>
+                        {v}
+                      </button>
+                    ))}
+                  </div>
+                  <input type="number" min={1} max={100} step={1} value={referralRequiredBookings}
+                    onChange={e => setReferralRequiredBookings(Math.min(100, Math.max(1, parseInt(e.target.value) || 1)))}
+                    className="field-input" />
+                </div>
+                <p className="text-xs text-[var(--muted-color)] mb-4">
+                  Reward amount:
                 </p>
                 <div className="flex gap-2 mb-3">
                   {[25, 50, 75, 100].map(v => (
                     <button key={v} type="button" onClick={() => setReferralReward(v)}
-                      className="flex-1 py-2 rounded-xl text-xs font-bold border transition"
+                      className="flex-1 py-1.5 rounded-xl text-xs font-bold border transition"
                       style={referralReward === v
-                        ? { background:'rgba(139,92,246,.14)', borderColor:'rgba(139,92,246,.50)', color:'#a78bfa' }
+                        ? { background:'rgba(139,92,246,.18)', borderColor:'rgba(139,92,246,.55)', color:'#a78bfa' }
                         : { borderColor:'var(--border-color)', color:'var(--muted-color)' }}>
                       {v} QAR
                     </button>
@@ -809,19 +913,88 @@ export default function AdminSettings() {
                   className="field-input" />
               </div>
 
+              <div className="cta-prism-glow rounded-xl" style={{ boxShadow:'0 0 0 1.5px rgba(139,92,246,.40)' }}>
+                <button 
+                  type="button" 
+                  onClick={async () => {
+                    try {
+                      setReferralSaving(true); setReferralError('');
+                      await settingsAPI.updateSystemSettings({ ReferralRewardAmount: referralReward, ReferralDiscountPercent: referralDiscountPct, ReferralRequiredBookings: referralRequiredBookings });
+                      setReferralSaved(true);
+                      setReferralDiscountSaved(true);
+                      setTimeout(() => { setReferralSaved(false); setReferralDiscountSaved(false); }, 3000);
+                    } catch (err) { setReferralError(err?.response?.data?.message || 'Failed to save referral settings.'); }
+                    finally { setReferralSaving(false); setReferralDiscountSaving(false); }
+                  }} 
+                  disabled={referralSaving || referralDiscountSaving}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition disabled:opacity-60"
+                  style={{ background:'rgba(139,92,246,.15)', border:'1px solid rgba(139,92,246,.35)', color:'#a78bfa' }}>
+                  {(referralSaving || referralDiscountSaving) ? 'Saving…' : (referralSaved || referralDiscountSaved) ? <><CheckCircle size={14} /> Saved</> : <><Save size={14} /> Save Referral Settings</>}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Vehicle Multipliers card ── */}
+          <div className="glass-card relative overflow-hidden card-stagger">
+            <div className="absolute top-0 left-0 right-0 h-[2px]"
+              style={{ background:'linear-gradient(90deg,transparent,#3b82f6 38%,#8b5cf6 62%,transparent)' }} />
+            <div className="absolute top-0 left-0 w-[3px] h-full"
+              style={{ background:'linear-gradient(180deg,#3b82f6 0%,#3b82f644 60%,transparent 100%)' }} />
+            <div className="prism-ray" style={{ left:'58%', width:'14%', animation:'prism-ray-sweep 23s ease-in-out 2s infinite' }} />
+
+            <div className="p-7">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center"
+                  style={{ background:'rgba(59,130,246,.12)', border:'1px solid rgba(59,130,246,.24)' }}>
+                  <Shield size={14} style={{ color:'#3b82f6' }} />
+                </div>
+                <h2 className="premium-heading text-xl font-bold text-[var(--heading-color)]">Vehicle Price Multipliers</h2>
+              </div>
+              <p className="text-sm text-[var(--muted-color)] mb-5 ml-11">
+                Configure price multipliers for different vehicle types. These affect the base price of all packages.
+              </p>
+              <div className="mb-5"><div className="spectrum-line" /></div>
+
+              {multipliersError && (
+                <div className="flex items-start gap-3 rounded-xl border border-rose-500/25 bg-rose-500/8 px-4 py-3 mb-5">
+                  <AlertCircle size={14} className="text-rose-400 flex-shrink-0 mt-0.5" />
+                  <p className="text-rose-300 text-sm font-semibold">{multipliersError}</p>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-5">
+                {[
+                  { key: 'motorcycle', label: 'Motorcycle', icon: '🏍️' },
+                  { key: 'sedan', label: 'Sedan', icon: '🚗' },
+                  { key: 'suv', label: 'SUV', icon: '🚙' },
+                  { key: 'pickup', label: 'Pickup', icon: '🛻' },
+                ].map(({ key, label, icon }) => (
+                  <div key={key}>
+                    <label className="field-label">{icon} {label}</label>
+                    <input type="number" min={0} max={5} step={0.05} value={vehicleMultipliers[key]}
+                      onChange={e => setVehicleMultipliers(prev => ({ ...prev, [key]: parseFloat(e.target.value) || 0 }))}
+                      className="field-input text-center font-mono" />
+                  </div>
+                ))}
+              </div>
+
               <div className="rounded-xl border p-4 mb-6"
-                style={{ background:'rgba(139,92,246,.07)', borderColor:'rgba(139,92,246,.25)' }}>
+                style={{ background:'rgba(59,130,246,.07)', borderColor:'rgba(59,130,246,.25)' }}>
                 <p className="text-sm text-[var(--text-color)]">
-                  This reward is given to the <strong>referrer</strong> after their friend's first <strong>completed</strong> booking.
-                  The referred friend can still use the referral code during booking.
+                  Example: A QAR 100 package costs:{' '}
+                  <strong>QAR {Math.round(100 * vehicleMultipliers.motorcycle)}</strong> for Motorcycle,{' '}
+                  <strong>QAR {Math.round(100 * vehicleMultipliers.sedan)}</strong> for Sedan,{' '}
+                  <strong>QAR {Math.round(100 * vehicleMultipliers.suv)}</strong> for SUV,{' '}
+                  <strong>QAR {Math.round(100 * vehicleMultipliers.pickup)}</strong> for Pickup.
                 </p>
               </div>
 
-              <div className="cta-prism-glow rounded-xl" style={{ boxShadow:'0 0 0 1.5px rgba(139,92,246,.40)' }}>
-                <button type="button" onClick={handleSaveReferralReward} disabled={referralSaving}
+              <div className="cta-prism-glow rounded-xl" style={{ boxShadow:'0 0 0 1.5px rgba(59,130,246,.40)' }}>
+                <button type="button" onClick={handleSaveVehicleMultipliers} disabled={multipliersSaving}
                   className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition disabled:opacity-60"
-                  style={{ background:'rgba(139,92,246,.15)', border:'1px solid rgba(139,92,246,.35)', color:'#a78bfa' }}>
-                  {referralSaving ? 'Saving…' : referralSaved ? <><CheckCircle size={14} /> Saved</> : <><Save size={14} /> Save Referral Reward</>}
+                  style={{ background:'rgba(59,130,246,.15)', border:'1px solid rgba(59,130,246,.35)', color:'#60a5fa' }}>
+                  {multipliersSaving ? 'Saving…' : multipliersSaved ? <><CheckCircle size={14} /> Saved</> : <><Save size={14} /> Save Multipliers</>}
                 </button>
               </div>
             </div>
@@ -896,83 +1069,7 @@ export default function AdminSettings() {
             </div>
           </div>
 
-          {/* ── Pay Slip Settings card ── */}
-          <div className="glass-card relative overflow-hidden card-stagger mt-4">
-            <div className="absolute top-0 left-0 right-0 h-[2px]"
-              style={{ background:'linear-gradient(90deg,transparent,#c8a96b 38%,#0ea5a0 62%,transparent)' }} />
-            <div className="absolute top-0 left-0 w-[3px] h-full"
-              style={{ background:'linear-gradient(180deg,#c8a96b 0%,#c8a96b44 60%,transparent 100%)' }} />
-            <div className="p-6">
-              <div className="flex items-center gap-3 mb-5">
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center"
-                  style={{ background:'rgba(200,169,107,.12)', border:'1px solid rgba(200,169,107,.24)' }}>
-                  <DollarSign size={16} style={{ color:'#c8a96b' }} />
-                </div>
-                <h2 className="premium-heading text-xl font-bold text-[var(--heading-color)]">Pay Slip Settings</h2>
-              </div>
-              <div className="mb-4"><div className="spectrum-line" /></div>
-
-              {paySlipLoading ? (
-                <div className="text-center py-4 text-[var(--muted-color)]">Loading...</div>
-              ) : (
-                <div className="space-y-4">
-                  <div>
-                    <label className="field-label">Company Name</label>
-                    <input type="text" value={paySlip.companyName}
-                      onChange={e => setPaySlip(p => ({ ...p, companyName: e.target.value }))}
-                      className="field-input" placeholder="Your Company Name" />
-                  </div>
-                  <div>
-                    <label className="field-label">Company Logo URL</label>
-                    <input type="text" value={paySlip.companyLogo}
-                      onChange={e => setPaySlip(p => ({ ...p, companyLogo: e.target.value }))}
-                      className="field-input" placeholder="https://example.com/logo.png" />
-                  </div>
-                  <div>
-                    <label className="field-label">Company Address</label>
-                    <input type="text" value={paySlip.companyAddress}
-                      onChange={e => setPaySlip(p => ({ ...p, companyAddress: e.target.value }))}
-                      className="field-input" placeholder="123 Main St, Doha, Qatar" />
-                  </div>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="field-label">Phone</label>
-                      <input type="text" value={paySlip.companyPhone}
-                        onChange={e => setPaySlip(p => ({ ...p, companyPhone: e.target.value }))}
-                        className="field-input" placeholder="+974XXXXXXXX" />
-                    </div>
-                    <div>
-                      <label className="field-label">Email</label>
-                      <input type="email" value={paySlip.companyEmail}
-                        onChange={e => setPaySlip(p => ({ ...p, companyEmail: e.target.value }))}
-                        className="field-input" placeholder="info@company.com" />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="field-label">Footer Text</label>
-                    <input type="text" value={paySlip.footerText}
-                      onChange={e => setPaySlip(p => ({ ...p, footerText: e.target.value }))}
-                      className="field-input" placeholder="Thank you for your hard work!" />
-                  </div>
-
-                  {paySlipError && (
-                    <div className="flex items-center gap-2 rounded-xl border border-rose-500/25 bg-rose-500/8 px-4 py-3">
-                      <AlertCircle size={14} className="text-rose-400" />
-                      <p className="text-rose-300 text-sm">{paySlipError}</p>
-                    </div>
-                  )}
-
-                  <div className="cta-prism-glow rounded-xl" style={{ boxShadow:'0 0 0 1.5px rgba(200,169,107,.40)' }}>
-                    <button type="button" onClick={handleSavePaySlip} disabled={paySlipSaving}
-                      className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition disabled:opacity-60"
-                      style={{ background:'rgba(200,169,107,.15)', border:'1px solid rgba(200,169,107,.35)', color:'#c8a96b' }}>
-                      {paySlipSaving ? 'Saving…' : paySlipSaved ? <><CheckCircle size={14} /> Saved</> : <><Save size={14} /> Save Pay Slip Settings</>}
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
+          
 
         </div>
       </div>

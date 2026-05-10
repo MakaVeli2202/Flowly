@@ -7,6 +7,7 @@ import {
   Percent, DollarSign, Zap, Search, Clock, TrendingUp,
   ToggleLeft, ToggleRight, Info, ArrowUpDown, Send, ShieldCheck, ShieldX,
 } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
 import AppModal from '../../components/shared/AppModal';
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5289/api';
@@ -685,6 +686,7 @@ const TABS = [
 ];
 
 export default function AdminOffers() {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const initialTab = searchParams.get('tab') || 'offers';
@@ -878,7 +880,7 @@ export default function AdminOffers() {
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <span className="h-px w-6" style={{ background: 'linear-gradient(90deg, transparent, #c8a96b)' }} />
-                <p className="text-[10px] font-bold uppercase tracking-[0.26em] text-primary">Admin Panel</p>
+                <p className="text-[10px] font-bold uppercase tracking-[0.26em] text-primary">{t('adminPanel')}</p>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center"

@@ -1,6 +1,7 @@
 // AdminJobPositions.jsx — Admin CRUD for job positions
 import React, { useEffect, useState, useRef } from 'react';
 import { Briefcase, Plus, Trash2, Edit3, Save, X, Check, AlertCircle, ToggleLeft, ToggleRight } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
 
 const STORAGE_KEY = 'adminJobPositions';
 
@@ -32,6 +33,7 @@ function savePositions(positions) {
 const EMPTY_FORM = { title: '', department: '', type: 'Full-Time', location: '', description: '', isOpen: true };
 
 export default function AdminJobPositions() {
+  const { t } = useLanguage();
   const [positions, setPositions] = useState(loadPositions);
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState(null);
@@ -86,7 +88,7 @@ export default function AdminJobPositions() {
           <div>
             <div className="flex items-center gap-3 mb-2">
               <span className="h-px w-7" style={{ background: 'linear-gradient(90deg,transparent,#c8a96b)' }} />
-              <p className="text-[.60rem] font-bold uppercase tracking-[.26em] text-primary">Admin Panel</p>
+              <p className="text-[.60rem] font-bold uppercase tracking-[.26em] text-primary">{t('adminPanel')}</p>
               <span className="h-px w-7" style={{ background: 'linear-gradient(90deg,#c8a96b,transparent)' }} />
             </div>
             <div className="flex items-center justify-between gap-3">

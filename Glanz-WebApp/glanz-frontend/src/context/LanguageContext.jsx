@@ -1,184 +1,125 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 export const LANGUAGES = [
-  { code: 'en', label: 'English',  dir: 'ltr', flag: '🇬🇧' },
-  { code: 'ar', label: 'العربية',   dir: 'rtl', flag: '🇶🇦' },
-  { code: 'de', label: 'Deutsch',  dir: 'ltr', flag: '🇩🇪' },
+  { code: 'en', label: 'English', dir: 'ltr', flag: '🇬🇧' },
+  { code: 'ar', label: 'العربية', dir: 'rtl', flag: '🇶🇦' },
+  { code: 'de', label: 'Deutsch', dir: 'ltr', flag: '🇩🇪' },
 ];
 
-const translations = {
-  en: {
-    // Nav
-    home: 'Home',
-    packages: 'Packages',
-    plans: 'Plans',
-    myBookings: 'My Bookings',
-    admin: 'Admin',
-    dashboard: 'Dashboard',
-    bookings: 'Bookings',
-    schedule: 'Schedule',
-    staff: 'Staff',
-    subscriptions: 'Subscriptions',
-    reports: 'Reports',
-    settings: 'Settings',
-    profile: 'Profile',
-    logout: 'Logout',
-    login: 'Login',
-    signUp: 'Sign Up',
-    lightMode: 'Light Mode',
-    darkMode: 'Dark Mode',
-    // Notifications
-    notifications: 'Notifications',
-    markAll: 'Mark all',
-    viewAllNotifications: 'View all notifications →',
-    noNotifications: 'No notifications',
-    unread: 'unread',
-    loading: 'Loading…',
-    reconnecting: 'Reconnecting…',
-    live: 'Live',
-    // Bookings page
-    requestCancellation: 'Request Cancellation',
-    submitting: 'Submitting…',
-    requestCancellationTitle: 'Request Cancellation',
-    requestCancellationDesc: 'Submit a cancellation request for',
-    cancellationReason: 'Reason for cancellation',
-    cancellationReasonPlaceholder: 'Please tell us why you want to cancel…',
-    keepBooking: 'Keep Booking',
-    submitRequest: 'Submit Request',
-    cancellationRequestedSuccess: 'Cancellation request submitted. Our team will review it shortly.',
-    cancellationFeeWarning: 'Cancellation fee may apply',
-    freeCancellation: 'Free cancellation — no charge will be applied.',
-    checkingPolicy: 'Checking cancellation policy…',
-    edit: 'Edit',
-    bookAgain: 'Book Again',
-    viewDetails: 'View Details',
-  },
-  ar: {
-    // Nav
-    home: 'الرئيسية',
-    packages: 'الباقات',
-    plans: 'الخطط',
-    myBookings: 'حجوزاتي',
-    admin: 'المشرف',
-    dashboard: 'لوحة التحكم',
-    bookings: 'الحجوزات',
-    schedule: 'الجدول الزمني',
-    staff: 'الموظفون',
-    subscriptions: 'الاشتراكات',
-    reports: 'التقارير',
-    settings: 'الإعدادات',
-    profile: 'الملف الشخصي',
-    logout: 'تسجيل الخروج',
-    login: 'تسجيل الدخول',
-    signUp: 'إنشاء حساب',
-    lightMode: 'الوضع الفاتح',
-    darkMode: 'الوضع الداكن',
-    // Notifications
-    notifications: 'الإشعارات',
-    markAll: 'تحديد الكل',
-    viewAllNotifications: 'عرض كل الإشعارات ←',
-    noNotifications: 'لا توجد إشعارات',
-    unread: 'غير مقروءة',
-    loading: 'جاري التحميل…',
-    reconnecting: 'إعادة الاتصال…',
-    live: 'مباشر',
-    // Bookings page
-    requestCancellation: 'طلب إلغاء',
-    submitting: 'جاري الإرسال…',
-    requestCancellationTitle: 'طلب إلغاء الحجز',
-    requestCancellationDesc: 'إرسال طلب إلغاء لـ',
-    cancellationReason: 'سبب الإلغاء',
-    cancellationReasonPlaceholder: 'يرجى إخبارنا بسبب رغبتك في الإلغاء…',
-    keepBooking: 'الاحتفاظ بالحجز',
-    submitRequest: 'إرسال الطلب',
-    cancellationRequestedSuccess: 'تم إرسال طلب الإلغاء. سيراجعه فريقنا قريباً.',
-    cancellationFeeWarning: 'قد تُطبَّق رسوم إلغاء',
-    freeCancellation: 'إلغاء مجاني — لن يتم تحصيل أي رسوم.',
-    checkingPolicy: 'جاري التحقق من سياسة الإلغاء…',
-    edit: 'تعديل',
-    bookAgain: 'احجز مجدداً',
-    viewDetails: 'عرض التفاصيل',
-  },
-  de: {
-    // Nav
-    home: 'Startseite',
-    packages: 'Pakete',
-    plans: 'Pläne',
-    myBookings: 'Meine Buchungen',
-    admin: 'Admin',
-    dashboard: 'Dashboard',
-    bookings: 'Buchungen',
-    schedule: 'Zeitplan',
-    staff: 'Personal',
-    subscriptions: 'Abonnements',
-    reports: 'Berichte',
-    settings: 'Einstellungen',
-    profile: 'Profil',
-    logout: 'Abmelden',
-    login: 'Anmelden',
-    signUp: 'Registrieren',
-    lightMode: 'Hellmodus',
-    darkMode: 'Dunkelmodus',
-    // Notifications
-    notifications: 'Benachrichtigungen',
-    markAll: 'Alle markieren',
-    viewAllNotifications: 'Alle Benachrichtigungen →',
-    noNotifications: 'Keine Benachrichtigungen',
-    unread: 'ungelesen',
-    loading: 'Lädt…',
-    reconnecting: 'Verbinde erneut…',
-    live: 'Live',
-    // Bookings page
-    requestCancellation: 'Stornierung anfragen',
-    submitting: 'Wird gesendet…',
-    requestCancellationTitle: 'Stornierung anfragen',
-    requestCancellationDesc: 'Stornierungsanfrage für',
-    cancellationReason: 'Stornierungsgrund',
-    cancellationReasonPlaceholder: 'Bitte teilen Sie uns Ihren Stornierungsgrund mit…',
-    keepBooking: 'Buchung behalten',
-    submitRequest: 'Anfrage senden',
-    cancellationRequestedSuccess: 'Stornierungsanfrage eingereicht. Unser Team wird sie bald prüfen.',
-    cancellationFeeWarning: 'Stornierungsgebühr kann anfallen',
-    freeCancellation: 'Kostenlose Stornierung — keine Gebühr.',
-    checkingPolicy: 'Stornierungsrichtlinie wird geprüft…',
-    edit: 'Bearbeiten',
-    bookAgain: 'Erneut buchen',
-    viewDetails: 'Details anzeigen',
-  },
+const DEFAULT_LANGUAGE = 'en';
+const STORAGE_KEY = 'lang';
+
+const flattenObject = (obj, prefix = '') => {
+  const result = {};
+  for (const key in obj) {
+    const newKey = prefix ? `${prefix}.${key}` : key;
+    if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
+      Object.assign(result, flattenObject(obj[key], newKey));
+    } else {
+      result[newKey] = obj[key];
+    }
+  }
+  return result;
 };
 
-const ADMIN_LABEL_KEYS = {
-  Dashboard: 'dashboard',
-  Bookings: 'bookings',
-  Schedule: 'schedule',
-  Staff: 'staff',
-  Subscriptions: 'subscriptions',
-  Reports: 'reports',
-  Settings: 'settings',
+const loadLocale = async (lang) => {
+  try {
+    const [common, navbar, notifications, bookings] = await Promise.all([
+      import(`../locales/${lang}/common.json`),
+      import(`../locales/${lang}/navbar.json`),
+      import(`../locales/${lang}/notifications.json`),
+      import(`../locales/${lang}/bookings.json`),
+    ]);
+    return {
+      ...flattenObject(common.default),
+      ...flattenObject(navbar.default),
+      ...flattenObject(notifications.default),
+      ...flattenObject(bookings.default),
+    };
+  } catch (e) {
+    console.warn(`Failed to load locale ${lang}, falling back to ${DEFAULT_LANGUAGE}`);
+    if (lang !== DEFAULT_LANGUAGE) {
+      return loadLocale(DEFAULT_LANGUAGE);
+    }
+    return {};
+  }
 };
 
-export { ADMIN_LABEL_KEYS };
+const interpolate = (text, params) => {
+  if (!params || typeof text !== 'string') return text;
+  return text.replace(/\{\{(\w+)\}\}/g, (_, key) => params[key] ?? `{{${key}}}`);
+};
+
+const getPluralForm = (lang, count) => {
+  if (lang === 'ar') {
+    if (count === 1) return 'one';
+    if (count === 2) return 'two';
+    return 'other';
+  }
+  return count === 1 ? 'one' : 'other';
+};
 
 const LanguageContext = createContext({
   lang: 'en',
   t: (key) => key,
   setLang: () => {},
   toggleLang: () => {},
+  dir: 'ltr',
+  isLoading: true,
 });
 
 export function LanguageProvider({ children }) {
   const browserLang = navigator.language?.split('-')[0];
-  const [lang, setLangState] = useState(() => localStorage.getItem('lang') || (LANGUAGES.some(l => l.code === browserLang) ? browserLang : 'en'));
+  const defaultLang = localStorage.getItem(STORAGE_KEY) || 
+    (LANGUAGES.some(l => l.code === browserLang) ? browserLang : DEFAULT_LANGUAGE);
+
+  const [lang, setLangState] = useState(defaultLang);
+  const [translations, setTranslations] = useState({});
+  const [fallbackTranslations, setFallbackTranslations] = useState({});
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    setIsLoading(true);
+    loadLocale(lang).then((trans) => {
+      setTranslations(trans);
+      setIsLoading(false);
+    });
+  }, [lang]);
+
+  useEffect(() => {
+    if (lang !== DEFAULT_LANGUAGE) {
+      loadLocale(DEFAULT_LANGUAGE).then(setFallbackTranslations);
+    } else {
+      setFallbackTranslations({});
+    }
+  }, [lang]);
 
   useEffect(() => {
     const langDef = LANGUAGES.find(l => l.code === lang) || LANGUAGES[0];
     document.documentElement.lang = lang;
     document.documentElement.dir = langDef.dir;
-    localStorage.setItem('lang', lang);
+    localStorage.setItem(STORAGE_KEY, lang);
     window.dispatchEvent(new CustomEvent('app-language-changed', { detail: { lang } }));
   }, [lang]);
 
-  const t = (key) => translations[lang]?.[key] ?? translations.en[key] ?? key;
+  const t = useCallback((key, params) => {
+    let value = translations[key] ?? fallbackTranslations[key];
+
+    if (value === undefined) {
+      return key;
+    }
+
+    if (params?.count !== undefined) {
+      const form = getPluralForm(lang, params.count);
+      const pluralKey = `${key}_${form}`;
+      const pluralValue = translations[pluralKey] ?? fallbackTranslations[pluralKey];
+      if (pluralValue) {
+        value = pluralValue;
+      }
+    }
+
+    return interpolate(value, params);
+  }, [translations, fallbackTranslations, lang]);
 
   const setLang = (code) => {
     if (LANGUAGES.some(l => l.code === code)) {
@@ -191,8 +132,11 @@ export function LanguageProvider({ children }) {
     setLangState(LANGUAGES[(idx + 1) % LANGUAGES.length].code);
   };
 
+  const currentLangDef = LANGUAGES.find(l => l.code === lang) || LANGUAGES[0];
+  const dir = currentLangDef.dir;
+
   return (
-    <LanguageContext.Provider value={{ lang, t, setLang, toggleLang }}>
+    <LanguageContext.Provider value={{ lang, t, setLang, toggleLang, dir, isLoading }}>
       {children}
     </LanguageContext.Provider>
   );
@@ -201,3 +145,13 @@ export function LanguageProvider({ children }) {
 export function useLanguage() {
   return useContext(LanguageContext);
 }
+
+export const ADMIN_LABEL_KEYS = {
+  Dashboard: 'navbar.dashboard',
+  Bookings: 'navbar.bookings',
+  Schedule: 'navbar.schedule',
+  Staff: 'navbar.staff',
+  Subscriptions: 'navbar.subscriptions',
+  Reports: 'navbar.reports',
+  Settings: 'common.settings',
+};

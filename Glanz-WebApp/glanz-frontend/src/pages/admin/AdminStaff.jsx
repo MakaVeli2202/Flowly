@@ -5,6 +5,8 @@ import AppModal from '../../components/shared/AppModal';
 import { useToast } from '../../components/shared/Toast';
 import { Users, Plus, Trash2, AlertCircle, Mail, Phone, Eye, EyeOff,
   CalendarDays, ChevronDown, ChevronUp, Save, X, CheckCircle, DollarSign, FileText, Download, Wallet, Check, Clock, Bell } from 'lucide-react';
+import { getBusiness } from '../../config/business';
+import { useLanguage } from '../../context/LanguageContext';
 
 /* ── Constants — identical to original ── */
 const ALL_DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
@@ -62,6 +64,7 @@ function PrismaticCursorOrb() {
 }
 
 function ManageStaff() {
+  const { t } = useLanguage();
   const [workers,            setWorkers]            = useState([]);
   const [loading,            setLoading]            = useState(true);
   const [error,              setError]              = useState('');
@@ -81,18 +84,18 @@ function ManageStaff() {
   const [payrollMonth,     setPayrollMonth]     = useState(new Date().getMonth() + 1);
   const [payrollYear,      setPayrollYear]      = useState(new Date().getFullYear());
   const [payrollLoading,   setPayrollLoading]   = useState(false);
-  const [paySlipSettings, setPaySlipSettings] = useState({ companyName: '', companyLogo: '', companyAddress: '', companyPhone: '', companyEmail: '', footerText: '' });
   const [payModal, setPayModal] = useState({ open: false, worker: null, onConfirm: null });
   const [detailsModal, setDetailsModal] = useState({ open: false, worker: null });
+  const business = getBusiness();
   const closePayModal = () => setPayModal(m => ({ ...m, open: false, onConfirm: null }));
   const closeDetailsModal = () => setDetailsModal(m => ({ ...m, open: false, worker: null }));
   const downloadPaySlip = (worker) => {
-    const companyName = paySlipSettings.companyName || 'Glanz';
-    const companyLogo = paySlipSettings.companyLogo || '';
-    const companyAddress = paySlipSettings.companyAddress || '';
-    const companyPhone = paySlipSettings.companyPhone || '';
-    const companyEmail = paySlipSettings.companyEmail || '';
-    const footerText = paySlipSettings.footerText || '';
+    const companyName = business.name || 'Glanz';
+    const companyLogo = business.logo || '';
+    const companyAddress = business.location || '';
+    const companyPhone = business.phone || '';
+    const companyEmail = business.email || '';
+    const footerText = '';
     let slipText = '';
     if (companyLogo) {
       slipText += `[Logo: ${companyLogo}]\n`;
@@ -134,19 +137,6 @@ Generated: ${new Date().toLocaleString()}
   useEffect(() => { fetchWorkers(); }, []);
 
   useEffect(() => { checkPayrollDue(); }, []);
-
-  useEffect(() => {
-    authAPI.getPaySlipSettings()
-      .then(data => setPaySlipSettings({
-        companyName: data.companyName || '',
-        companyLogo: data.companyLogo || '',
-        companyAddress: data.companyAddress || '',
-        companyPhone: data.companyPhone || '',
-        companyEmail: data.companyEmail || '',
-        footerText: data.footerText || ''
-      }))
-      .catch(() => {});
-  }, []);
 
   const checkPayrollDue = async () => {
     try {
@@ -313,7 +303,7 @@ Generated: ${new Date().toLocaleString()}
             <div>
               <div className="flex items-center gap-3 mb-2">
                 <span className="h-px w-7" style={{ background:'linear-gradient(90deg,transparent,#c8a96b)' }} />
-                <p className="text-[.60rem] font-bold uppercase tracking-[.26em] text-primary">Admin Panel</p>
+                <p className="text-[.60rem] font-bold uppercase tracking-[.26em] text-primary">{t('adminPanel')}</p>
                 <span className="h-px w-7" style={{ background:'linear-gradient(90deg,#c8a96b,transparent)' }} />
               </div>
               <div className="flex items-center gap-3 mb-1.5">
@@ -419,8 +409,8 @@ Generated: ${new Date().toLocaleString()}
                 style={{ background:'rgba(200,169,107,.10)', border:'1px solid rgba(200,169,107,.22)' }}>
                 <Users size={28} style={{ color:'#c8a96b' }} />
               </div>
-              <h3 className="premium-heading text-xl font-bold text-[var(--heading-color)] mb-1.5">No staff members yet</h3>
-              <p className="text-sm text-[var(--muted-color)] mb-5">Start by adding your first detailer to the system</p>
+              <h3 className="premium-heading text-xl font-bold text-[var(--heading-color)] mb-1.5">{t('noStaffYet')}</h3>
+              <p className="text-sm text-[var(--muted-color)] mb-5">{t('startByAdding')}</p>
               <div className="cta-prism-glow rounded-xl inline-flex">
                 <button onClick={() => setShowAddForm(true)}
                   className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-bold hover:bg-primary/90 transition">
@@ -675,7 +665,7 @@ Generated: ${new Date().toLocaleString()}
                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
                   </div>
                 ) : payroll.length === 0 ? (
-                  <p className="text-xs text-[var(--muted-color)] text-center py-4">No payroll data for this period.</p>
+                  <p className="text-xs text-[var(--muted-color)] text-center py-4">{t('noPayrollData')}</p>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
@@ -754,11 +744,11 @@ Generated: ${new Date().toLocaleString()}
       <AppModal isOpen={detailsModal.open} title="Pay Slip" message="" variant="info" onClose={closeDetailsModal}>
 {detailsModal.worker && (() => {
           const worker = detailsModal.worker;
-          const companyName = paySlipSettings.companyName || 'Get It Cleaned';
-          const companyAddress = paySlipSettings.companyAddress || '';
-          const companyPhone = paySlipSettings.companyPhone || '';
-          const companyEmail = paySlipSettings.companyEmail || '';
-          const footerText = paySlipSettings.footerText || '';
+          const companyName = business.name || 'Glanz';
+          const companyAddress = business.location || '';
+          const companyPhone = business.phone || '';
+          const companyEmail = business.email || '';
+          const footerText = '';
           const payPeriod = ['January','February','March','April','May','June','July','August','September','October','November','December'][payrollMonth-1] + ' ' + payrollYear;
           const status = worker.isPaid ? 'PAID' : 'UNPAID';
           const statusColor = worker.isPaid ? '#22c55e' : '#fbbf24';

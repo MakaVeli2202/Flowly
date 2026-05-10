@@ -36,6 +36,8 @@ namespace Glanz.API.Models
 
         public decimal RewardAmount { get; set; } // Amount credited to referrer (e.g., 50 QAR)
 
+        public decimal? DiscountPercent { get; set; } // Discount % given to referred user on first booking
+
         public DateTime? RewardedAt { get; set; }
     }
 }

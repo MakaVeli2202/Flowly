@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Bell, CheckCheck, BellOff, Circle } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
 import { notificationsAPI } from '../../api/notifications';
 
 /* ── PRISM CSS ─────────────────────────────────────────────── */
@@ -142,6 +143,7 @@ function NotifTypeBadge({ type }) {
    ADMIN NOTIFICATIONS
 ════════════════════════════════════════════════════════════ */
 function AdminNotifications() {
+  const { t } = useLanguage();
   const [notifications, setNotifications] = useState([]);
   const [loading,       setLoading]       = useState(true);
 
@@ -186,7 +188,7 @@ function AdminNotifications() {
           <div className="mb-8">
             <div className="flex items-center gap-3 mb-2">
               <span className="h-px w-7" style={{ background: 'linear-gradient(90deg, transparent, #c8a96b)' }} />
-              <p className="text-[0.60rem] font-bold uppercase tracking-[0.26em] text-primary">Admin Panel</p>
+              <p className="text-[0.60rem] font-bold uppercase tracking-[0.26em] text-primary">{t('adminPanel')}</p>
               <span className="h-px w-7" style={{ background: 'linear-gradient(90deg, #c8a96b, transparent)' }} />
             </div>
 

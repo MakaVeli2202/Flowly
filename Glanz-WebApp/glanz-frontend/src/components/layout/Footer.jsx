@@ -137,13 +137,17 @@ function Footer() {
         <div className="grid md:grid-cols-4 gap-8">
           
 <div>
-             <div className="mb-4">
-               <img src="/Glanz-Logo.png" alt={business.name} className="h-12 w-auto object-contain" />
-             </div>
-             <p className="text-[var(--muted-color)]">
-               {business.tagline}
-             </p>
-           </div>
+              <div className="mb-4">
+                {business.logo ? (
+                  <img src={business.logo} alt={business.name} className="h-22 w-auto object-contain" />
+                ) : (
+                  <span className="text-2xl font-bold text-[var(--heading-color)]">{business.name}</span>
+                )}
+              </div>
+              <p className="text-[var(--muted-color)]">
+                {business.tagline}
+              </p>
+            </div>
 
             <div>
               <h3 className="text-lg font-semibold mb-4">{ui.quickLinks}</h3>

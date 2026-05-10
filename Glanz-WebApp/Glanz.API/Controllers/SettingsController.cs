@@ -29,6 +29,8 @@ namespace Glanz.API.Controllers
         private const string BusinessHoursKey     = "booking.businessHours";
         private const string BusinessConfigKey    = "business.config";
         private const string ReferralRewardKey    = "referral.rewardAmount";
+        private const string ReferralDiscountKey  = "referral.discountPercent"; // Discount for referred user
+        private const string ReferralRequiredBookingsKey = "referral.requiredBookingsForReward"; // How many bookings needed for referrer reward
 
         private static readonly Dictionary<string, (string Start, string End)> DefaultBusinessHours = new()
     {
@@ -51,6 +53,7 @@ namespace Glanz.API.Controllers
     };
     private const int DefaultWorkerTravelMinutes = 30;
     private const int DefaultReferralRewardAmount = 50; // Default 50 QAR reward
+    private const decimal DefaultReferralDiscountPercent = 0; // Default 0% discount for referred user
 
         private static readonly JsonSerializerOptions _jsonOpts =
             new() { PropertyNameCaseInsensitive = true };
@@ -158,6 +161,22 @@ namespace Glanz.API.Controllers
                 referralRewardAmount = parsedReward;
             }
 
+            // Get referral discount for referred user
+            decimal referralDiscountPercent = 0;
+            var discountRaw = GetVal(ReferralDiscountKey);
+            if (!string.IsNullOrWhiteSpace(discountRaw) && decimal.TryParse(discountRaw, out var parsedReferralDiscount) && parsedReferralDiscount >= 0)
+            {
+                referralDiscountPercent = parsedReferralDiscount;
+            }
+
+            // Get required bookings for referrer reward
+            int referralRequiredBookings = 1;
+            var requiredBookingsRaw = GetVal(ReferralRequiredBookingsKey);
+            if (!string.IsNullOrWhiteSpace(requiredBookingsRaw) && int.TryParse(requiredBookingsRaw, out var parsedRequired) && parsedRequired > 0)
+            {
+                referralRequiredBookings = parsedRequired;
+            }
+
             return Ok(new
             {
                 pricing = new { vehicleMultipliers },
@@ -166,7 +185,9 @@ namespace Glanz.API.Controllers
                 subscriptionDiscountPercent,
                 businessHours,
                 businessConfig,
-                referralRewardAmount, // Add referral reward to response
+                referralRewardAmount,
+                referralDiscountPercent,
+                referralRequiredBookings,
             });
         }
 
@@ -204,6 +225,29 @@ namespace Glanz.API.Controllers
                 if (dto.ReferralRewardAmount.Value < 0 || dto.ReferralRewardAmount.Value > 500) // Max 500 QAR reasonable limit
                     return BadRequest(new { message = "referralRewardAmount must be between 0 and 500." });
                 updates.Add((ReferralRewardKey, dto.ReferralRewardAmount.Value.ToString()));
+            }
+
+            // Handle referral discount for referred user
+            if (dto.ReferralDiscountPercent.HasValue)
+            {
+                if (dto.ReferralDiscountPercent.Value < 0 || dto.ReferralDiscountPercent.Value > 100)
+                    return BadRequest(new { message = "referralDiscountPercent must be between 0 and 100." });
+                updates.Add((ReferralDiscountKey, dto.ReferralDiscountPercent.Value.ToString()));
+            }
+
+            // Handle referral required bookings for referrer reward
+            if (dto.ReferralRequiredBookings.HasValue)
+            {
+                if (dto.ReferralRequiredBookings.Value < 1 || dto.ReferralRequiredBookings.Value > 100)
+                    return BadRequest(new { message = "referralRequiredBookings must be between 1 and 100." });
+                updates.Add((ReferralRequiredBookingsKey, dto.ReferralRequiredBookings.Value.ToString()));
+            }
+
+            // Handle vehicle multipliers
+            if (dto.VehicleMultipliers != null)
+            {
+                var multipliersJson = JsonSerializer.Serialize(dto.VehicleMultipliers, _jsonOpts);
+                updates.Add((MultipliersKey, multipliersJson));
             }
 
             if (dto.BusinessHours != null)
@@ -251,14 +295,26 @@ namespace Glanz.API.Controllers
         public int?              WorkerTravelBufferMinutes   { get; set; }
         public decimal?          SubscriptionDiscountPercent { get; set; }
         public bool?             SmsFollowUpEnabled          { get; set; }
-        public int?              ReferralRewardAmount        { get; set; } // Referral reward in QAR
+        public int?              ReferralRewardAmount        { get; set; } // Referral reward in QAR for referrer
+        public decimal?         ReferralDiscountPercent     { get; set; } // Discount % for referred user
+        public int?             ReferralRequiredBookings   { get; set; } // Number of bookings needed for referrer reward
+        public VehicleMultipliersDto? VehicleMultipliers     { get; set; } // Vehicle type multipliers
         public BusinessHoursPerDayDto? BusinessHours         { get; set; }
         public BusinessConfigDto?      BusinessConfig        { get; set; }
+    }
+
+    public class VehicleMultipliersDto
+    {
+        public decimal Motorcycle { get; set; } = 0.8m;
+        public decimal Sedan      { get; set; } = 1.0m;
+        public decimal SUV        { get; set; } = 1.25m;
+        public decimal Pickup     { get; set; } = 1.5m;
     }
 
     public class BusinessConfigDto
     {
         public string?       Name         { get; set; }
+        public string?       Logo         { get; set; }
         public string?       Tagline      { get; set; }
         public string?       Phone        { get; set; }
         public string?       Email        { get; set; }

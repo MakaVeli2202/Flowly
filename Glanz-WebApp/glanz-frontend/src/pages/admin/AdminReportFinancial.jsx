@@ -4,6 +4,7 @@ import { reportsAPI } from '../../api/reports';
 import { DollarSign, TrendingUp, TrendingDown, BarChart2, Calendar, Download, AlertCircle, Clock } from 'lucide-react';
 import { format, subDays } from 'date-fns';
 import { formatQAR } from '../../utils/currency';
+import { useLanguage } from '../../context/LanguageContext';
 import { generateFinancialPDF } from '../../utils/reportPDF';
 
 /* PRISM_CSS — identical to ManageProducts above */
@@ -115,6 +116,7 @@ const mBg     = (m) => m > 30 ? 'rgba(34,197,94,0.08)'  : m > 15 ? 'rgba(245,158
 const mBorder = (m) => m > 30 ? 'rgba(34,197,94,0.28)'  : m > 15 ? 'rgba(245,158,11,0.28)'  : 'rgba(239,68,68,0.28)';
 
 function FinancialReport() {
+  const { t } = useLanguage();
   const [report,    setReport]    = useState(null);
   const [loading,   setLoading]   = useState(true);
   const [startDate, setStartDate] = useState(format(subDays(new Date(), 30), 'yyyy-MM-dd'));
@@ -177,7 +179,7 @@ function FinancialReport() {
             <div>
               <div className="flex items-center gap-3 mb-2">
                 <span className="h-px w-7" style={{ background: 'linear-gradient(90deg, transparent, #c8a96b)' }} />
-                <p className="text-[0.60rem] font-bold uppercase tracking-[0.26em] text-primary">Admin Panel</p>
+                <p className="text-[0.60rem] font-bold uppercase tracking-[0.26em] text-primary">{t('adminPanel')}</p>
                 <span className="h-px w-7" style={{ background: 'linear-gradient(90deg, #c8a96b, transparent)' }} />
               </div>
               <div className="flex items-center gap-3 mb-1.5">

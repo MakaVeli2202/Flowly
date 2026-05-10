@@ -7,6 +7,8 @@
 export const BUSINESS = {
   /** Full brand name — used in copyright lines, page titles, etc. */
   name: 'Glanz',
+  /** Logo URL - used in navbar, footer, payslip, emails, etc. */
+  logo: '',
   /** First part of the logo word-mark (unstyled) */
   namePrefix: 'G',
   /** Second part of the logo word-mark (receives gradient / accent colour) */
@@ -39,7 +41,7 @@ export function getBusiness() {
 }
 
 /**
- * Persists partial overrides (name, phone, email, location, tagline) to localStorage.
+ * Persists partial overrides (name, logo, phone, email, location, tagline) to localStorage.
  * Fires a custom event so components can reactively update.
  */
 export function saveBusiness(updates) {
@@ -47,8 +49,8 @@ export function saveBusiness(updates) {
     const current = getBusiness();
     const merged = { ...current, ...updates };
     // Only persist the overridable fields
-    const { name, namePrefix, nameSuffix, tagline, phone, email, location, serviceAreas, socialLinks } = merged;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ name, namePrefix, nameSuffix, tagline, phone, email, location, serviceAreas, socialLinks }));
+    const { name, logo, namePrefix, nameSuffix, tagline, phone, email, location, serviceAreas, socialLinks } = merged;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ name, logo, namePrefix, nameSuffix, tagline, phone, email, location, serviceAreas, socialLinks }));
     window.dispatchEvent(new CustomEvent('businessConfigChanged', { detail: merged }));
     return merged;
   } catch {

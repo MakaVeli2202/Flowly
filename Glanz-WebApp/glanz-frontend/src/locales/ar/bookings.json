@@ -1,0 +1,16 @@
+{
+  "requestCancellation": "طلب إلغاء",
+  "submitting": "جاري الإرسال…",
+  "requestCancellationTitle": "طلب إلغاء الحجز",
+  "requestCancellationDesc": "إرسال طلب إلغاء لـ",
+  "cancellationReason": "سبب الإلغاء",
+  "cancellationReasonPlaceholder": "يرجى إخبارنا بسبب رغبتك في الإلغاء…",
+  "keepBooking": "الاحتفاظ بالحجز",
+  "submitRequest": "إرسال الطلب",
+  "cancellationRequestedSuccess": "تم إرسال طلب الإلغاء. سيراجعه فريقنا قريباً.",
+  "cancellationFeeWarning": "قد تُطبَّق رسوم إلغاء",
+  "freeCancellation": "إلغاء مجاني — لن يتم تحصيل أي رسوم.",
+  "checkingPolicy": "جاري التحقق من سياسة الإلغاء…",
+  "bookAgain": "احجز مجدداً",
+  "viewDetails": "عرض التفاصيل"
+}

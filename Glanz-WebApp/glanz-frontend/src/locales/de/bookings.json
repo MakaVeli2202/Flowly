@@ -1,0 +1,16 @@
+{
+  "requestCancellation": "Stornierung anfragen",
+  "submitting": "Wird gesendet…",
+  "requestCancellationTitle": "Stornierung anfragen",
+  "requestCancellationDesc": "Stornierungsanfrage für",
+  "cancellationReason": "Stornierungsgrund",
+  "cancellationReasonPlaceholder": "Bitte teilen Sie uns Ihren Stornierungsgrund mit…",
+  "keepBooking": "Buchung behalten",
+  "submitRequest": "Anfrage senden",
+  "cancellationRequestedSuccess": "Stornierungsanfrage eingereicht. Unser Team wird sie bald prüfen.",
+  "cancellationFeeWarning": "Stornierungsgebühr kann anfallen",
+  "freeCancellation": "Kostenlose Stornierung — keine Gebühr.",
+  "checkingPolicy": "Stornierungsrichtlinie wird geprüft…",
+  "bookAgain": "Erneut buchen",
+  "viewDetails": "Details anzeigen"
+}

@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 import {
   User, Mail, Phone, MapPin, Tag, Ticket, CreditCard,
-  Shield, Star, AlertCircle, Gift,
+  Shield, Star, AlertCircle, Gift, Coins,
 } from 'lucide-react';
 import { CardElement } from '@stripe/react-stripe-js';
 import AddressAutocompleteInput from '../../../components/shared/AddressAutocompleteInput';
@@ -26,6 +26,7 @@ function BookingDetailsCheckoutStep({
   myCoupons,
   isStripeMode, paymentMethod, setPaymentMethod,
   quote, totalAmount,
+  userReferralPoints = 0,
 }) {
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
@@ -149,7 +150,43 @@ function BookingDetailsCheckoutStep({
         </div>
       </div>
 
-      {/* ── 07 Payment ──────────────────────────────────────── */}
+      {/* ── My Referral Points ──────────────────────────────────── */}
+      {userReferralPoints > 0 && (
+        <div className="glass-card p-6 relative">
+          <SectionHeading icon={Coins} step={7}>My Reward Points</SectionHeading>
+          <div className="flex items-center justify-between p-4 rounded-xl border"
+            style={{ background: 'rgba(245,158,11,.08)', borderColor: 'rgba(245,158,11,.28)' }}>
+            <div className="flex items-center gap-3">
+              <Coins size={20} className="text-yellow-500" />
+              <div>
+                <p className="text-sm font-bold text-[var(--heading-color)]">
+                  You have <span className="text-primary">{userReferralPoints}</span> points
+                </p>
+                <p className="text-xs text-[var(--muted-color)]">
+                  1 point = 1 QAR discount
+                </p>
+              </div>
+            </div>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <span className="text-xs text-[var(--muted-color)]">
+                {formData.useReferralPoints ? 'Using' : 'Save'}
+              </span>
+              <button type="button" 
+                onClick={() => setFormData(prev => ({ ...prev, useReferralPoints: !prev.useReferralPoints }))}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ${formData.useReferralPoints ? 'bg-primary' : 'bg-[var(--border-color)]'}`}>
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200 ${formData.useReferralPoints ? 'translate-x-6' : 'translate-x-1'}`} />
+              </button>
+            </label>
+          </div>
+          <p className="text-[11px] text-[var(--muted-color)] mt-2">
+            {formData.useReferralPoints 
+              ? `This booking will use up to ${Math.min(userReferralPoints, totalAmount)} QAR from your points.`
+              : 'Save your points for a future booking with a bigger discount.'}
+          </p>
+        </div>
+      )}
+
+      {/* ── 08 Payment ──────────────────────────────────────── */}
       <div className="glass-card p-6 relative overflow-hidden">
         <div className="prism-ray" style={{ left: '28%', width: '13%', animation: 'prism-ray-sweep 15s ease-in-out 9s infinite' }} />
         <SectionHeading icon={CreditCard} step={7}>Payment</SectionHeading>

@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { servicesAPI } from '../../api/services';
 import { productsAPI } from '../../api/products';
 import { Plus, Edit2, Trash2, AlertCircle, CheckCircle, X, Wrench, Clock } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
 import { formatQAR } from '../../utils/currency';
 import AppModal from '../../components/shared/AppModal';
 
@@ -72,6 +73,7 @@ function FormDivider({ label }) {
 }
 
 function ManageServices() {
+  const { t } = useLanguage();
   const [services,       setServices]       = useState([]);
   const [products,       setProducts]       = useState([]);
   const [loading,        setLoading]        = useState(true);
@@ -180,7 +182,7 @@ function ManageServices() {
             <div>
               <div className="flex items-center gap-3 mb-2">
                 <span className="h-px w-7" style={{ background:'linear-gradient(90deg,transparent,#c8a96b)' }} />
-                <p className="text-[.60rem] font-bold uppercase tracking-[.26em] text-primary">Admin Panel</p>
+                <p className="text-[.60rem] font-bold uppercase tracking-[.26em] text-primary">{t('adminPanel')}</p>
                 <span className="h-px w-7" style={{ background:'linear-gradient(90deg,#c8a96b,transparent)' }} />
               </div>
               <div className="flex items-center gap-3 mb-1.5">

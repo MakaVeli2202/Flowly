@@ -7,6 +7,7 @@ import {
   Filter, Search, AlertCircle,
   X, Zap, Mail, Phone, Check,
 } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
 import { formatQAR } from '../../utils/currency';
 import { statusColors as statusConfig, paymentStatusColors as paymentStatusConfig, getStatusConfig } from '../../utils/statusConfig';
 import { subscribeToNotifications } from '../../api/notificationBus';
@@ -142,6 +143,7 @@ function formatBookingTimeWindow(timeSlot, durationMinutes) {
    ADMIN BOOKINGS
 ════════════════════════════════════════════════════════════ */
 function AdminBookings() {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [bookings,       setBookings]       = useState([]);
   const [workers,        setWorkers]        = useState([]);
@@ -377,7 +379,7 @@ function AdminBookings() {
               style={{ background: 'conic-gradient(from 0deg,rgba(200,169,107,.07),rgba(14,165,160,.05),rgba(200,169,107,.07))', filter: 'blur(72px)', animation: 'spectrum-float 22s ease-in-out infinite' }} />
             <div className="flex items-center gap-3 mb-3 relative">
               <span className="h-px w-8" style={{ background: 'linear-gradient(90deg, transparent, #c8a96b)' }} />
-              <p className="uppercase tracking-[0.26em] text-primary text-[0.62rem] font-semibold">Admin Panel</p>
+              <p className="uppercase tracking-[0.26em] text-primary text-[0.62rem] font-semibold">{t('adminPanel')}</p>
               <span className="h-px w-8" style={{ background: 'linear-gradient(90deg, #c8a96b, transparent)' }} />
             </div>
             <h1 className="premium-heading text-4xl md:text-5xl font-bold text-[var(--heading-color)] mb-2 relative">All Bookings</h1>

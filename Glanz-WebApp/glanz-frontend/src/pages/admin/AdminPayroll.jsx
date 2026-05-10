@@ -6,6 +6,8 @@ import {
   DollarSign, Check, Clock, FileText, Download, Wallet,
   AlertCircle, Users, CheckCircle,
 } from 'lucide-react';
+import { getBusiness } from '../../config/business';
+import { useLanguage } from '../../context/LanguageContext';
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -45,27 +47,15 @@ function PrismaticCursorOrb() {
 
 export default function AdminPayroll() {
   const toast = useToast();
+  const { t } = useLanguage();
+  const business = getBusiness();
   const [payroll,        setPayroll]        = useState([]);
   const [payrollMonth,   setPayrollMonth]   = useState(new Date().getMonth() + 1);
   const [payrollYear,    setPayrollYear]    = useState(new Date().getFullYear());
   const [payrollLoading, setPayrollLoading] = useState(false);
   const [payrollMarking, setPayrollMarking] = useState(null);
-  const [paySlipSettings, setPaySlipSettings] = useState({ companyName:'Glanz', companyLogo:'', companyAddress:'', companyPhone:'', companyEmail:'', footerText:'' });
   const [detailsModal,   setDetailsModal]   = useState({ open:false, worker:null });
   const closeDetailsModal = () => setDetailsModal({ open:false, worker:null });
-
-  useEffect(() => {
-    authAPI.getPaySlipSettings()
-      .then(d => setPaySlipSettings({
-        companyName:    d.companyName    || 'Glanz',
-        companyLogo:    d.companyLogo    || '',
-        companyAddress: d.companyAddress || '',
-        companyPhone:   d.companyPhone   || '',
-        companyEmail:   d.companyEmail   || '',
-        footerText:     d.footerText     || '',
-      }))
-      .catch(() => {});
-  }, []);
 
   useEffect(() => {
     authAPI.checkPayrollDue()
@@ -122,7 +112,7 @@ export default function AdminPayroll() {
           <div>
             <div className="flex items-center gap-3 mb-2">
               <span className="h-px w-7" style={{ background:'linear-gradient(90deg,transparent,#c8a96b)' }} />
-              <p className="text-[.60rem] font-bold uppercase tracking-[.26em] text-primary">Admin Panel</p>
+              <p className="text-[.60rem] font-bold uppercase tracking-[.26em] text-primary">{t('adminPanel')}</p>
               <span className="h-px w-7" style={{ background:'linear-gradient(90deg,#c8a96b,transparent)' }} />
             </div>
             <div className="flex items-center gap-3 mb-1.5">
@@ -276,7 +266,11 @@ export default function AdminPayroll() {
       <AppModal isOpen={detailsModal.open} title="Pay Slip" message="" variant="info" onClose={closeDetailsModal}>
         {detailsModal.worker && (() => {
           const worker = detailsModal.worker;
-          const { companyName, companyAddress, companyPhone, companyEmail, footerText } = paySlipSettings;
+          const companyName = business.name || 'Glanz';
+          const companyAddress = business.location || '';
+          const companyPhone = business.phone || '';
+          const companyEmail = business.email || '';
+          const footerText = '';
           const payPeriod = `${MONTHS[payrollMonth-1]} ${payrollYear}`;
           const status = worker.isPaid ? 'PAID' : 'UNPAID';
           const statusColor = worker.isPaid ? '#22c55e' : '#fbbf24';
