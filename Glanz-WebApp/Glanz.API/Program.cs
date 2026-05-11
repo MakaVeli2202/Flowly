@@ -286,6 +286,8 @@ using (var scope = app.Services.CreateScope())
     await EnsurePostgresSchemaCompatibilityAsync(dbContext);
 }
 
+await AdminAccountBootstrapper.SyncFromConfigurationAsync(app.Services, builder.Configuration);
+
 await DevelopmentDataSeeder.SeedAsync(app.Services, builder.Configuration, app.Environment);
 
 // Load business hours from DB and apply to slot helpers

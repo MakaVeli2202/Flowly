@@ -333,7 +333,7 @@ namespace Glanz.API.Controllers
         public async Task<IActionResult> VerifyGateAccess([FromBody] GateVerifyDto dto)
         {
             if (dto == null || string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.Password))
-                return BadRequest(new { message = "Email and password are required." });
+                return BadRequest(new { message = "Email and password are required.", reasonCode = "invalid_payload" });
 
             try
             {
@@ -344,37 +344,43 @@ namespace Glanz.API.Controllers
                     .FirstOrDefaultAsync(u => u.Email.ToLower() == normalizedEmail);
 
                 if (user == null)
-                    return Unauthorized(new { message = "Invalid credentials." });
+                    return Unauthorized(new { message = "Invalid credentials.", reasonCode = "user_not_found" });
 
                 var storedHash = user.PasswordHash?.Trim() ?? string.Empty;
                 var isPasswordValid = false;
+                var incomingPassword = dto.Password;
+                var trimmedPassword = dto.Password.Trim();
 
                 if (!string.IsNullOrWhiteSpace(storedHash) && storedHash.StartsWith("$2"))
                 {
-                    isPasswordValid = BCrypt.Net.BCrypt.Verify(dto.Password, storedHash);
+                    isPasswordValid = BCrypt.Net.BCrypt.Verify(incomingPassword, storedHash);
+                    if (!isPasswordValid && !string.Equals(trimmedPassword, incomingPassword, StringComparison.Ordinal))
+                        isPasswordValid = BCrypt.Net.BCrypt.Verify(trimmedPassword, storedHash);
                 }
                 else
                 {
                     // Legacy migration path: if old environments stored plain text passwords,
                     // accept once and immediately upgrade to BCrypt.
-                    isPasswordValid = string.Equals(storedHash, dto.Password, StringComparison.Ordinal);
+                    isPasswordValid = string.Equals(storedHash, incomingPassword, StringComparison.Ordinal)
+                        || (!string.Equals(trimmedPassword, incomingPassword, StringComparison.Ordinal)
+                            && string.Equals(storedHash, trimmedPassword, StringComparison.Ordinal));
                     if (isPasswordValid)
                     {
-                        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
+                        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(trimmedPassword);
                         user.UpdatedAt = DateTime.UtcNow;
                         await _context.SaveChangesAsync();
                     }
                 }
 
                 if (!isPasswordValid)
-                    return Unauthorized(new { message = "Invalid credentials." });
+                    return Unauthorized(new { message = "Invalid credentials.", reasonCode = "password_mismatch" });
 
                 // Only Admins can unlock the gate
                 if (!string.Equals(user.Role?.Trim(), "Admin", StringComparison.OrdinalIgnoreCase))
-                    return StatusCode(403, new { message = "Only admins can access the site gate." });
+                    return StatusCode(403, new { message = "Only admins can access the site gate.", reasonCode = "insufficient_role" });
 
                 if (!user.IsActive) 
-                    return Unauthorized(new { message = "Account is disabled." });
+                    return Unauthorized(new { message = "Account is disabled.", reasonCode = "account_disabled" });
 
                 // Generate a simple gate token (can be any string; frontend just stores it)
                 // In production, this could be a JWT with expiration
@@ -385,7 +391,7 @@ namespace Glanz.API.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Gate verify failed for email {Email}", dto.Email);
-                return StatusCode(500, new { message = "Verification failed." });
+                return StatusCode(500, new { message = "Verification failed.", reasonCode = "verification_failed" });
             }
         }
     }
