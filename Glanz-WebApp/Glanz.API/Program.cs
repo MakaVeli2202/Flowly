@@ -287,7 +287,6 @@ using (var scope = app.Services.CreateScope())
 }
 
 await DevelopmentDataSeeder.SeedAsync(app.Services, builder.Configuration, app.Environment);
-await AdminAccountBootstrapper.EnsureAdminUserAsync(app.Services, builder.Configuration, app.Environment);
 
 // Load business hours from DB and apply to slot helpers
 using (var scope = app.Services.CreateScope())
