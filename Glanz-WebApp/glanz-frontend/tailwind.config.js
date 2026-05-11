@@ -20,6 +20,18 @@ export default {
       boxShadow: {
         glow: '0 12px 40px rgba(200, 169, 107, 0.22)',
       },
+      height: {
+        22: '5.5rem',
+        24: '6rem',
+        28: '7rem',
+        32: '8rem',
+      },
+      width: {
+        22: '5.5rem',
+        24: '6rem',
+        28: '7rem',
+        32: '8rem',
+      },
     },
   },
   plugins: [],

@@ -148,11 +148,7 @@ function Footer() {
           
 <div>
               <div className="mb-4">
-                {business.logo ? (
-                  <img src={business.logo} alt={business.name} className="h-22 w-auto object-contain" />
-                ) : (
-                  <span className="text-2xl font-bold text-[var(--heading-color)]">{business.name}</span>
-                )}
+                <img src={business.logo || '/GlanzLogo.png'} alt={business.name} className="h-24 w-auto object-contain" />
               </div>
               <p className="text-[var(--muted-color)]">
                 {business.tagline}

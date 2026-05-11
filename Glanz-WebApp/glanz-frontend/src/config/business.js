@@ -40,6 +40,13 @@ export function getBusiness() {
   return { ...BUSINESS };
 }
 
+/** Returns the logo URL with fallback to default project logo. */
+export function getLogoUrl() {
+  const business = getBusiness();
+  // If admin has set a logo URL, use it; otherwise fall back to project default
+  return business.logo && business.logo.trim() !== '' ? business.logo : '/GlanzLogo.png';
+}
+
 /**
  * Persists partial overrides (name, logo, phone, email, location, tagline) to localStorage.
  * Fires a custom event so components can reactively update.

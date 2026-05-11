@@ -177,11 +177,7 @@ export function AdminHeader({ theme, onToggleTheme }) {
       <div className="flex items-center justify-between w-full mx-auto max-w-7xl">
         {/* Logo */}
         <Link to="/admin" className="flex items-center hover:opacity-80 transition-opacity">
-          {business.logo ? (
-            <img src={business.logo} alt={business.name} className="h-10 w-auto object-contain" />
-          ) : (
-            <span className="text-2xl font-bold text-white">{business.name}</span>
-          )}
+          <img src={business.logo || '/GlanzLogo.png'} alt={business.name} className="h-10 w-auto object-contain" />
         </Link>
 
         {/* Desktop Nav */}
