@@ -738,7 +738,23 @@ const SERVICE_AREA_LABELS = {
   'Al Shahaniya': { ar: 'الشحانية', de: 'Asch-Schahaniyya' },
 };
 const CARD_ACCENTS  = ['#c8a96b','#0ea5a0'];
-// Removed hardcoded SERVICE_HIGHLIGHTS_BY_LANG - only real API packages are displayed now
+const SERVICE_HIGHLIGHTS_FALLBACK_BY_LANG = {
+  en: [
+    { title: 'Exterior Detailing', description: 'Deep exterior wash, decontamination, and high-gloss finish.', features: ['Foam wash', 'Wheel and tire clean', 'Paint-safe drying', 'Gloss protection'] },
+    { title: 'Interior Detailing', description: 'Thorough cabin cleaning for seats, dashboard, and hard-to-reach areas.', features: ['Vacuum and extraction', 'Dashboard treatment', 'Leather-safe clean', 'Odor neutralization'] },
+    { title: 'Ceramic Protection', description: 'Long-lasting hydrophobic protection for easier maintenance and premium shine.', features: ['Surface prep', 'Panel application', 'Cure guidance', 'Water-repellent finish'] },
+  ],
+  ar: [
+    { title: 'تنظيف خارجي احترافي', description: 'غسيل خارجي عميق مع إزالة الشوائب ولمعة نهائية قوية.', features: ['غسيل رغوي', 'تنظيف الجنوط والإطارات', 'تجفيف آمن للطلاء', 'حماية ولمعان'] },
+    { title: 'تنظيف داخلي شامل', description: 'تنظيف دقيق للمقصورة والمقاعد والأسطح الداخلية.', features: ['شفط وتنظيف عميق', 'العناية بالطبلون', 'تنظيف آمن للجلد', 'إزالة الروائح'] },
+    { title: 'حماية سيراميك', description: 'حماية طويلة الأمد بخصائص طاردة للماء ولمعة مميزة.', features: ['تجهيز السطح', 'تطبيق احترافي', 'إرشادات ما بعد الخدمة', 'حماية طاردة للماء'] },
+  ],
+  de: [
+    { title: 'Aussenaufbereitung', description: 'Intensive Aussenreinigung mit Dekontamination und Hochglanz-Finish.', features: ['Schaumwaesche', 'Felgen- und Reifenpflege', 'Lackschonendes Trocknen', 'Glanzschutz'] },
+    { title: 'Innenaufbereitung', description: 'Gruendliche Reinigung von Sitzen, Armaturen und schwer erreichbaren Bereichen.', features: ['Saugen und Tiefenreinigung', 'Cockpit-Pflege', 'Lederfreundliche Reinigung', 'Geruchsneutralisierung'] },
+    { title: 'Keramikschutz', description: 'Lang anhaltender hydrophober Schutz fuer einfachere Pflege und starken Glanz.', features: ['Oberflaechenvorbereitung', 'Auftrag pro Panel', 'Hinweise zur Aushartung', 'Wasserabweisendes Finish'] },
+  ],
+};
 const BRAND_VALUE_BY_LANG = {
   en: {
     title: "We Come to You. We Don't Cut Corners.",
@@ -1055,7 +1071,7 @@ function Home() {
         if (type === 'stats') setStats(data);
         else if (type === 'reviews') setReviews(data);
         else if (type === 'packages') {
-          packageCountRef.current = data.length || fallbackServiceHighlights.length;
+          packageCountRef.current = Array.isArray(data) && data.length > 0 ? data.length : 3;
           setPackages(data);
         }
       })
@@ -1088,7 +1104,7 @@ function Home() {
       fetchReviews(),
       packagesAPI.getAll(lang).then(data => {
         const active = (data || []).filter(p => p.isActive);
-        packageCountRef.current = active.length || 0;
+        packageCountRef.current = active.length || 3;
         setPackages(active);
         return active;
       }).catch(() => []),
@@ -1355,20 +1371,30 @@ function Home() {
   const marqueeDuration = 28;
   const reviewDotsCount = Math.ceil(reviews.length / visibleReviewCount);
 
-  // Service highlights: only from real API data
-  const serviceHighlights = packages.map(pkg => ({
-    title: pickLocalizedField(pkg, 'name', lang) || pkg.name,
-    description: pickLocalizedField(pkg, 'description', lang) || pkg.description || '',
-    features: pkg.services?.map(s => (
-      pickLocalizedField(s, 'serviceName', lang)
-      || pickLocalizedField(s, 'name', lang)
-      || s.serviceName
-      || s.name
-    )).filter(Boolean) || [],
-    cta: ui.bookNow,
-    link: '/booking',
-    pkg,
-  }));
+  const fallbackHighlights = SERVICE_HIGHLIGHTS_FALLBACK_BY_LANG[normalizedLang]
+    || SERVICE_HIGHLIGHTS_FALLBACK_BY_LANG.en;
+
+  // Service highlights: prefer real API packages, fallback to static cards.
+  const serviceHighlights = packages.length > 0
+    ? packages.map(pkg => ({
+        title: pickLocalizedField(pkg, 'name', lang) || pkg.name,
+        description: pickLocalizedField(pkg, 'description', lang) || pkg.description || '',
+        features: pkg.services?.map(s => (
+          pickLocalizedField(s, 'serviceName', lang)
+          || pickLocalizedField(s, 'name', lang)
+          || s.serviceName
+          || s.name
+        )).filter(Boolean) || [],
+        cta: ui.bookNow,
+        link: '/booking',
+        pkg,
+      }))
+    : fallbackHighlights.map(item => ({
+        ...item,
+        cta: ui.bookNow,
+        link: '/booking',
+        pkg: null,
+      }));
 
   /* ══════════════════════════════════════════════════════════
      RENDER
