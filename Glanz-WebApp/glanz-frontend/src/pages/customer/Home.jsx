@@ -14,6 +14,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { statsAPI } from '../../api/stats';
 import { packagesAPI } from '../../api/packages';
 import { servicesAPI } from '../../api/services';
+import apiClient from '../../api/axios';
 import SEO from '../../components/shared/SEO';
 import { getBusiness } from '../../config/business';
 import { Skeleton, CardSkeleton, BookingCardSkeleton } from '../../components/shared/Skeleton';
@@ -60,9 +61,8 @@ const FALLBACK_REVIEWS = [
 const reviewsAPI = {
   getPublic: async () => {
     try {
-      const response = await fetch('/api/reviews/public');
-      if (!response.ok) throw new Error('Failed to fetch reviews');
-      const data = await response.json();
+      const response = await apiClient.get('/Reviews/public');
+      const data = response.data;
       const apiReviews = Array.isArray(data?.reviews) ? data.reviews : [];
       // Return real reviews or empty array (fallback handled in component)
       return apiReviews;

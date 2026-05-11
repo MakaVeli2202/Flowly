@@ -2,6 +2,23 @@ import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5289/api';
 
+if (typeof window !== 'undefined') {
+  const isLocalFrontend =
+    window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  const isLocalApi = API_URL.includes('localhost') || API_URL.includes('127.0.0.1');
+
+  if (!isLocalFrontend && isLocalApi) {
+    console.error(
+      `[API CONFIG] Frontend is deployed at ${window.location.origin} but API URL is local (${API_URL}). ` +
+      'Set VITE_API_BASE_URL in your hosting environment and redeploy.'
+    );
+  }
+
+  if (import.meta.env.DEV) {
+    console.info(`[API CONFIG] Using API base URL: ${API_URL}`);
+  }
+}
+
 const apiClient = axios.create({
   baseURL: API_URL,
   withCredentials: true,  // send HttpOnly refresh token cookie on every request
@@ -57,6 +74,18 @@ function flushQueue(error, token = null) {
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
+    if (!error?.response) {
+      console.error(
+        '[API NETWORK ERROR] Request failed before receiving a response. ' +
+        'Likely causes: CORS origin mismatch, HTTPS/mixed-content issue, or backend unavailable.',
+        {
+          url: error?.config?.url,
+          baseURL: error?.config?.baseURL,
+          method: error?.config?.method,
+        }
+      );
+    }
+
     const originalRequest = error.config;
     const currentPath = window.location.pathname;
     const isAuthPage = currentPath === '/login' || currentPath === '/register';
