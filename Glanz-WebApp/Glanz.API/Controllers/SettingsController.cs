@@ -5,6 +5,9 @@ using Microsoft.Extensions.Logging;
 using Glanz.API.Data;
 using Glanz.API.DTOs;
 using Glanz.API.Models;
+using Glanz.API.Services;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 
 namespace Glanz.API.Controllers
@@ -63,11 +66,17 @@ namespace Glanz.API.Controllers
 
         private readonly AppDbContext _context;
         private readonly ILogger<SettingsController> _logger;
+        private readonly IConfiguration _configuration;
+        private readonly IAuditService _audit;
+        private readonly ICredentialVerifier _credentialVerifier;
 
-        public SettingsController(AppDbContext context, ILogger<SettingsController> logger)
+        public SettingsController(AppDbContext context, ILogger<SettingsController> logger, IConfiguration configuration, IAuditService audit, ICredentialVerifier credentialVerifier)
         {
             _context = context;
             _logger = logger;
+            _configuration = configuration;
+            _audit = audit;
+            _credentialVerifier = credentialVerifier;
         }
 
         // ── GET api/Settings ────────────────────────────────────────────────────
@@ -346,34 +355,16 @@ namespace Glanz.API.Controllers
                 if (user == null)
                     return Unauthorized(new { message = "Invalid credentials.", reasonCode = "user_not_found" });
 
-                var storedHash = user.PasswordHash?.Trim() ?? string.Empty;
-                var isPasswordValid = false;
-                var incomingPassword = dto.Password;
-                var trimmedPassword = dto.Password.Trim();
-
-                if (!string.IsNullOrWhiteSpace(storedHash) && storedHash.StartsWith("$2"))
-                {
-                    isPasswordValid = BCrypt.Net.BCrypt.Verify(incomingPassword, storedHash);
-                    if (!isPasswordValid && !string.Equals(trimmedPassword, incomingPassword, StringComparison.Ordinal))
-                        isPasswordValid = BCrypt.Net.BCrypt.Verify(trimmedPassword, storedHash);
-                }
-                else
-                {
-                    // Legacy migration path: if old environments stored plain text passwords,
-                    // accept once and immediately upgrade to BCrypt.
-                    isPasswordValid = string.Equals(storedHash, incomingPassword, StringComparison.Ordinal)
-                        || (!string.Equals(trimmedPassword, incomingPassword, StringComparison.Ordinal)
-                            && string.Equals(storedHash, trimmedPassword, StringComparison.Ordinal));
-                    if (isPasswordValid)
-                    {
-                        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(trimmedPassword);
-                        user.UpdatedAt = DateTime.UtcNow;
-                        await _context.SaveChangesAsync();
-                    }
-                }
-
-                if (!isPasswordValid)
+                var verification = _credentialVerifier.Verify(dto.Password, user.PasswordHash);
+                if (!verification.IsValid)
                     return Unauthorized(new { message = "Invalid credentials.", reasonCode = "password_mismatch" });
+
+                if (verification.RequiresUpgrade && !string.IsNullOrWhiteSpace(verification.UpgradedHash))
+                {
+                    user.PasswordHash = verification.UpgradedHash;
+                    user.UpdatedAt = DateTime.UtcNow;
+                    await _context.SaveChangesAsync();
+                }
 
                 // Only Admins can unlock the gate
                 if (!string.Equals(user.Role?.Trim(), "Admin", StringComparison.OrdinalIgnoreCase))
@@ -393,6 +384,99 @@ namespace Glanz.API.Controllers
                 _logger.LogError(ex, "Gate verify failed for email {Email}", dto.Email);
                 return StatusCode(500, new { message = "Verification failed.", reasonCode = "verification_failed" });
             }
+        }
+
+        // ── POST api/Settings/gate/recover-admin ───────────────────────────
+        /// <summary>
+        /// Emergency admin password recovery. Protected by a server-side recovery token.
+        /// Keep AdminRecovery:Enabled false by default and enable only during incidents.
+        /// </summary>
+        [HttpPost("gate/recover-admin")]
+        [AllowAnonymous]
+        public async Task<IActionResult> RecoverAdminPassword([FromBody] GateAdminRecoveryDto dto)
+        {
+            if (dto == null || string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.NewPassword) || string.IsNullOrWhiteSpace(dto.RecoveryToken))
+                return BadRequest(new { message = "Email, newPassword, and recoveryToken are required.", reasonCode = "invalid_payload" });
+
+            if (dto.NewPassword.Length < 8)
+                return BadRequest(new { message = "New password must be at least 8 characters.", reasonCode = "weak_password" });
+
+            var recoveryEnabled = _configuration.GetValue("AdminRecovery:Enabled", false);
+            if (!recoveryEnabled)
+                return StatusCode(403, new { message = "Admin recovery is disabled.", reasonCode = "recovery_disabled" });
+
+            var configuredToken = _configuration["AdminRecovery:Token"];
+            if (string.IsNullOrWhiteSpace(configuredToken))
+                return StatusCode(503, new { message = "Admin recovery is not configured.", reasonCode = "recovery_not_configured" });
+
+            if (!SecureEquals(configuredToken, dto.RecoveryToken))
+            {
+                await _audit.LogAsync(
+                    action: "admin_recovery_failed",
+                    userEmail: dto.Email,
+                    entityType: "User",
+                    metadata: new { reasonCode = "invalid_recovery_token" },
+                    success: false);
+                return Unauthorized(new { message = "Invalid recovery token.", reasonCode = "invalid_recovery_token" });
+            }
+
+            try
+            {
+                var normalizedEmail = dto.Email.Trim().ToLowerInvariant();
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == normalizedEmail);
+                if (user == null)
+                {
+                    await _audit.LogAsync(
+                        action: "admin_recovery_failed",
+                        userEmail: dto.Email,
+                        entityType: "User",
+                        metadata: new { reasonCode = "user_not_found" },
+                        success: false);
+                    return NotFound(new { message = "Admin user not found.", reasonCode = "user_not_found" });
+                }
+
+                if (!string.Equals(user.Role?.Trim(), "Admin", StringComparison.OrdinalIgnoreCase))
+                {
+                    await _audit.LogAsync(
+                        action: "admin_recovery_failed",
+                        userId: user.Id,
+                        userEmail: user.Email,
+                        entityType: "User",
+                        entityId: user.Id.ToString(),
+                        metadata: new { reasonCode = "insufficient_role" },
+                        success: false);
+                    return StatusCode(403, new { message = "Only admin accounts can be recovered from this endpoint.", reasonCode = "insufficient_role" });
+                }
+
+                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword.Trim());
+                user.IsActive = true;
+                user.UpdatedAt = DateTime.UtcNow;
+
+                await _context.SaveChangesAsync();
+
+                await _audit.LogAsync(
+                    action: "admin_recovery_succeeded",
+                    userId: user.Id,
+                    userEmail: user.Email,
+                    entityType: "User",
+                    entityId: user.Id.ToString(),
+                    metadata: new { reasonCode = "password_reset" },
+                    success: true);
+
+                return Ok(new { message = "Admin password has been reset.", reasonCode = "password_reset" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Admin recovery failed for email {Email}", dto.Email);
+                return StatusCode(500, new { message = "Admin recovery failed.", reasonCode = "recovery_failed" });
+            }
+        }
+
+        private static bool SecureEquals(string expected, string actual)
+        {
+            var expectedBytes = Encoding.UTF8.GetBytes(expected);
+            var actualBytes = Encoding.UTF8.GetBytes(actual);
+            return CryptographicOperations.FixedTimeEquals(expectedBytes, actualBytes);
         }
     }
 
@@ -438,5 +522,19 @@ namespace Glanz.API.Controllers
 
         [System.ComponentModel.DataAnnotations.Required]
         public string Password { get; set; } = string.Empty;
+    }
+
+    public class GateAdminRecoveryDto
+    {
+        [System.ComponentModel.DataAnnotations.Required]
+        [System.ComponentModel.DataAnnotations.EmailAddress]
+        public string Email { get; set; } = string.Empty;
+
+        [System.ComponentModel.DataAnnotations.Required]
+        [System.ComponentModel.DataAnnotations.MinLength(8)]
+        public string NewPassword { get; set; } = string.Empty;
+
+        [System.ComponentModel.DataAnnotations.Required]
+        public string RecoveryToken { get; set; } = string.Empty;
     }
 }

@@ -23,6 +23,7 @@ namespace Glanz.API.Controllers
         private readonly IConfiguration _configuration;
         private readonly IWebHostEnvironment _env;
         private readonly IAuditService _audit;
+        private readonly ICredentialVerifier _credentialVerifier;
         private readonly IObjectStorageService _objectStorage;
         private static readonly string[] DefaultAvatarUrls =
         {
@@ -34,13 +35,14 @@ namespace Glanz.API.Controllers
             "/assets/avatars/default-expat-female-1.svg"
         };
 
-        public AuthController(AppDbContext context, ITokenService tokenService, IConfiguration configuration, IWebHostEnvironment env, IAuditService audit, IObjectStorageService objectStorage)
+        public AuthController(AppDbContext context, ITokenService tokenService, IConfiguration configuration, IWebHostEnvironment env, IAuditService audit, ICredentialVerifier credentialVerifier, IObjectStorageService objectStorage)
         {
             _context = context;
             _audit = audit;
             _tokenService = tokenService;
             _configuration = configuration;
             _env = env;
+            _credentialVerifier = credentialVerifier;
             _objectStorage = objectStorage;
         }
 
@@ -540,8 +542,15 @@ namespace Glanz.API.Controllers
 
                 if (user != null)
                 {
-                    if (!BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
-                        return Unauthorized(new { message = "Invalid email or password" });
+                    var userVerification = _credentialVerifier.Verify(dto.Password, user.PasswordHash);
+                    if (!userVerification.IsValid)
+                        return Unauthorized(new { message = "Invalid email or password", reasonCode = "password_mismatch" });
+
+                    if (userVerification.RequiresUpgrade && !string.IsNullOrWhiteSpace(userVerification.UpgradedHash))
+                    {
+                        user.PasswordHash = userVerification.UpgradedHash;
+                        user.UpdatedAt = DateTime.UtcNow;
+                    }
 
                     if (!user.IsActive)
                         return Unauthorized(new { message = "Account is disabled" });
@@ -561,8 +570,18 @@ namespace Glanz.API.Controllers
                 var staff = await _context.Staff
                     .FirstOrDefaultAsync(s => s.Email == dto.Email);
 
-                if (staff == null || !BCrypt.Net.BCrypt.Verify(dto.Password, staff.PasswordHash))
-                    return Unauthorized(new { message = "Invalid email or password" });
+                if (staff == null)
+                    return Unauthorized(new { message = "Invalid email or password", reasonCode = "user_not_found" });
+
+                var staffVerification = _credentialVerifier.Verify(dto.Password, staff.PasswordHash);
+                if (!staffVerification.IsValid)
+                    return Unauthorized(new { message = "Invalid email or password", reasonCode = "password_mismatch" });
+
+                if (staffVerification.RequiresUpgrade && !string.IsNullOrWhiteSpace(staffVerification.UpgradedHash))
+                {
+                    staff.PasswordHash = staffVerification.UpgradedHash;
+                    staff.UpdatedAt = DateTime.UtcNow;
+                }
 
                 if (!staff.IsActive)
                     return Unauthorized(new { message = "Account is disabled" });

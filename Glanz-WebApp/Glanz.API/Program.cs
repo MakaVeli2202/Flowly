@@ -164,6 +164,7 @@ builder.Services.AddSingleton<IObjectStorageService, ObjectStorageService>();
 // Security & audit services
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<Glanz.API.Services.IAuditService, Glanz.API.Services.AuditService>();
+builder.Services.AddScoped<Glanz.API.Services.ICredentialVerifier, Glanz.API.Services.CredentialVerifier>();
 builder.Services.AddSingleton<Glanz.API.Services.CouponRateLimiter>();
 
 // Register FluentValidation validators
