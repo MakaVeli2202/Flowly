@@ -16,7 +16,6 @@ import Footer               from './components/layout/Footer';
 import ProtectedRoute       from './components/shared/ProtectedRoute';
 import WhatsAppWidget      from './components/shared/WhatsAppWidget';
 import RainBackground       from './components/shared/RainBackground';
-import CookieConsent        from './components/ui/CookieConsent';
 
 // ─── Customer pages (eager) ───────────────────────────────────────────────────
 import Home                from './pages/customer/Home';
@@ -311,7 +310,6 @@ function App() {
                <AppRoutes />
                <Footer />
                 <WhatsAppWidget />
-                <CookieConsent privacyHref="/privacy" />
               </div>
             </ToastProvider>
           </ErrorBoundary>

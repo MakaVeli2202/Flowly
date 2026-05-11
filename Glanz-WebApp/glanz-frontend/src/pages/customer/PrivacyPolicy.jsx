@@ -18,8 +18,6 @@ const UI_BY_LANG = {
     securityBody: 'We implement reasonable security measures to protect your data from unauthorized access, alteration, disclosure, or destruction.',
     rightsTitle: 'Your Rights',
     rightsBody: 'You have the right to access, correct, or delete your personal data, and to opt-out of marketing communications. Contact us at privacy@glanz.com to exercise these rights.',
-    cookiesTitle: 'Cookies & Tracking',
-    cookiesBody: 'Our website uses cookies to enhance user experience, analyze traffic, and remember preferences. You can manage cookie preferences through your browser settings.',
     changesTitle: 'Changes to This Policy',
     changesBody: 'We may update this privacy policy from time to time. The updated version will be posted on this page with an effective date.',
     goHome: 'Go Home',
@@ -38,8 +36,6 @@ const UI_BY_LANG = {
     securityBody: 'نطبق إجراءات أمنية معقولة لحماية بياناتك من الوصول غير المصرح به أو التعديل أو الإفصاح أو الإتلاف.',
     rightsTitle: 'حقوقك',
     rightsBody: 'لك الحق في الوصول إلى بياناتك الشخصية أو تصحيحها أو حذفها، وإلغاء الاشتراك في الرسائل التسويقية. تواصل معنا عبر privacy@glanz.com لممارسة هذه الحقوق.',
-    cookiesTitle: 'ملفات تعريف الارتباط والتتبع',
-    cookiesBody: 'يستخدم موقعنا ملفات تعريف الارتباط لتحسين تجربة الاستخدام وتحليل الزيارات وتذكر التفضيلات. يمكنك إدارة هذه الإعدادات من خلال المتصفح.',
     changesTitle: 'التغييرات على هذه السياسة',
     changesBody: 'قد نقوم بتحديث هذه السياسة من وقت لآخر، وسيتم نشر النسخة المحدثة في هذه الصفحة مع تاريخ السريان.',
     goHome: 'العودة للرئيسية',
@@ -58,8 +54,6 @@ const UI_BY_LANG = {
     securityBody: 'Wir setzen angemessene SicherheitsmaBnahmen ein, um Ihre Daten vor unbefugtem Zugriff, Anderung, Offenlegung oder Zerstorung zu schutzen.',
     rightsTitle: 'Ihre Rechte',
     rightsBody: 'Sie haben das Recht auf Auskunft, Berichtigung oder Loschung Ihrer personenbezogenen Daten sowie auf Widerspruch gegen Marketingkommunikation. Kontakt: privacy@glanz.com.',
-    cookiesTitle: 'Cookies und Tracking',
-    cookiesBody: 'Unsere Website verwendet Cookies, um die Nutzererfahrung zu verbessern, den Traffic zu analysieren und Einstellungen zu speichern. Sie konnen Cookie-Einstellungen in Ihrem Browser verwalten.',
     changesTitle: 'Anderungen an dieser Richtlinie',
     changesBody: 'Wir konnen diese Datenschutzerklarung gelegentlich aktualisieren. Die aktualisierte Version wird auf dieser Seite mit einem Gultigkeitsdatum veroffentlicht.',
     goHome: 'Zur Startseite',
@@ -103,9 +97,6 @@ const PrivacyPolicy = () => {
           
           <h2 className="text-lg font-semibold text-[var(--heading-color)] mb-2">{ui.rightsTitle}</h2>
           <p className="text-[var(--muted-color)] mb-2">{ui.rightsBody}</p>
-          
-          <h2 className="text-lg font-semibold text-[var(--heading-color)] mb-2">{ui.cookiesTitle}</h2>
-          <p className="text-[var(--muted-color)] mb-2">{ui.cookiesBody}</p>
           
           <h2 className="text-lg font-semibold text-[var(--heading-color)] mb-2">{ui.changesTitle}</h2>
           <p className="text-[var(--muted-color)] mb-2">{ui.changesBody}</p>
