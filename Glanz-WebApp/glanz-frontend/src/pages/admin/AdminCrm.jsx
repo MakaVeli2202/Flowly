@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { crmAPI } from '../../api/crm';
+import { useLanguage } from '../../context/LanguageContext';
 import {
   Users, TrendingUp, AlertTriangle, Star, DollarSign, 
   Calendar, MessageSquare, CheckCircle, XCircle,
@@ -93,8 +94,53 @@ const QUICK_TAGS = [
   { label: 'Preferred', color: '#0ea5e0', icon: Star },
 ];
 
+const UI_BY_LANG = {
+  en: {
+    title: 'CRM Dashboard',
+    subtitle: 'Manage customers, segments, and feedback',
+    showGuide: 'Show Guide',
+    hideGuide: 'Hide Guide',
+    segmentGuide: 'Segment Guide - What Each Means & What To Do',
+    quickActions: 'Quick Actions:',
+    loading: 'Loading CRM data...',
+    overview: 'Overview',
+    customers: 'Customers',
+    leads: 'Leads',
+    feedback: 'Feedback',
+  },
+  ar: {
+    title: 'لوحة CRM',
+    subtitle: 'إدارة العملاء والتصنيفات والملاحظات',
+    showGuide: 'إظهار الدليل',
+    hideGuide: 'إخفاء الدليل',
+    segmentGuide: 'دليل التصنيفات - ماذا تعني وماذا تفعل',
+    quickActions: 'إجراءات سريعة:',
+    loading: 'جارٍ تحميل بيانات CRM...',
+    overview: 'نظرة عامة',
+    customers: 'العملاء',
+    leads: 'العملاء المحتملون',
+    feedback: 'الملاحظات',
+  },
+  de: {
+    title: 'CRM-Dashboard',
+    subtitle: 'Kunden, Segmente und Feedback verwalten',
+    showGuide: 'Leitfaden anzeigen',
+    hideGuide: 'Leitfaden ausblenden',
+    segmentGuide: 'Segment-Leitfaden - Bedeutung und Aktionen',
+    quickActions: 'Schnellaktionen:',
+    loading: 'CRM-Daten werden geladen...',
+    overview: 'Ubersicht',
+    customers: 'Kunden',
+    leads: 'Leads',
+    feedback: 'Feedback',
+  },
+};
+
 export default function AdminCrm() {
   const navigate = useNavigate();
+  const { lang } = useLanguage();
+  const localeKey = String(lang || '').startsWith('ar') ? 'ar' : String(lang || '').startsWith('de') ? 'de' : 'en';
+  const ui = UI_BY_LANG[localeKey] || UI_BY_LANG.en;
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [stats, setStats] = useState(null);
@@ -233,10 +279,10 @@ export default function AdminCrm() {
   );
 
   const tabs = [
-    { id: 'dashboard', label: 'Overview', icon: TrendingUp },
-    { id: 'customers', label: 'Customers', icon: Users },
-    { id: 'leads', label: 'Leads', icon: Target },
-    { id: 'feedback', label: 'Feedback', icon: MessageCircle },
+    { id: 'dashboard', label: ui.overview, icon: TrendingUp },
+    { id: 'customers', label: ui.customers, icon: Users },
+    { id: 'leads', label: ui.leads, icon: Target },
+    { id: 'feedback', label: ui.feedback, icon: MessageCircle },
   ];
 
   return (
@@ -274,9 +320,9 @@ export default function AdminCrm() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold" style={{ color: 'var(--heading-color)' }}>
-            CRM Dashboard
+            {ui.title}
           </h1>
-          <p style={{ color: 'var(--muted-color)' }}>Manage customers, segments, and feedback</p>
+          <p style={{ color: 'var(--muted-color)' }}>{ui.subtitle}</p>
         </div>
         <div className="flex gap-2">
           <button 
@@ -285,7 +331,7 @@ export default function AdminCrm() {
             style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)', color: 'var(--text-color)' }}
           >
             <HelpCircle size={18} />
-            {showHelp ? 'Hide Guide' : 'Show Guide'}
+            {showHelp ? ui.hideGuide : ui.showGuide}
           </button>
           <button 
             onClick={loadData}
@@ -299,7 +345,7 @@ export default function AdminCrm() {
 
       {showHelp && (
         <div className="mb-6 p-4 rounded-xl" style={{ background: 'rgba(200,169,107,0.1)', border: '1px solid rgba(200,169,107,0.3)' }}>
-          <h3 className="font-bold mb-3" style={{ color: 'var(--heading-color)' }}>📚 Segment Guide - What Each Means & What To Do</h3>
+          <h3 className="font-bold mb-3" style={{ color: 'var(--heading-color)' }}>📚 {ui.segmentGuide}</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {Object.entries(SEGMENT_INFO).map(([segment, info]) => {
               const Icon = info.icon;
@@ -320,7 +366,7 @@ export default function AdminCrm() {
             })}
           </div>
           <div className="mt-4 p-3 rounded-lg" style={{ background: 'var(--surface-bg)' }}>
-            <p className="text-sm font-medium" style={{ color: 'var(--heading-color)' }}>💡 Quick Actions:</p>
+            <p className="text-sm font-medium" style={{ color: 'var(--heading-color)' }}>💡 {ui.quickActions}</p>
             <ul className="text-xs mt-2 space-y-1" style={{ color: 'var(--muted-color)' }}>
               <li>• <b>Select customers</b> → Use the checkbox to select multiple customers</li>
               <li>• <b>Quick Tag</b> → Click VIP, Fleet, or Commercial buttons to tag selected customers</li>
@@ -354,7 +400,7 @@ export default function AdminCrm() {
 
       {loading ? (
         <div className="text-center py-12" style={{ color: 'var(--muted-color)' }}>
-          Loading CRM data...
+          {ui.loading}
         </div>
       ) : activeTab === 'dashboard' && stats ? (
         <div className="space-y-6">

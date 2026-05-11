@@ -15,6 +15,9 @@ import { formatQAR } from '../utils/currency';
 import { theme } from '../theme/theme';
 import { ListSkeleton, PackageCardSkeleton } from '../components/Skeleton';
 import PressableScale from '../components/PressableScale';
+import { useTranslation } from 'react-i18next';
+import i18n from '../i18n/i18n';
+import { pickLocalizedField, normalizeLangCode } from '../utils/localization';
 
 const PADDING     = 20;
 const MAX_VISIBLE = 4;
@@ -56,7 +59,7 @@ const PrismLeftBar = () => (
 );
 
 /* ── ServicesList ─────────────────────────────────────────── */
-function ServicesList({ services = [], isExpanded, onToggle }) {
+function ServicesList({ services = [], isExpanded, onToggle, lang, t }) {
   if (!services.length) return null;
   const hasMore     = services.length > MAX_VISIBLE;
   const visible     = isExpanded ? services : services.slice(0, MAX_VISIBLE);
@@ -65,11 +68,17 @@ function ServicesList({ services = [], isExpanded, onToggle }) {
     /* sl.wrap has overflow:'hidden' — clips PrismTopLine to borderRadius */
     <View style={sl.wrap}>
       <PrismTopLine />
-      <Text style={sl.label}>Services Included</Text>
+      <Text style={sl.label}>{t('packagesScreen.servicesIncluded')}</Text>
       {visible.map((svc, i) => (
         <View key={i} style={sl.row}>
           <Ionicons name="checkmark-circle" size={13} color={theme.colors.primary} />
-          <Text style={sl.text}>{svc.serviceName || svc.name || 'Service'}</Text>
+          <Text style={sl.text}>
+            {pickLocalizedField(svc, 'serviceName', lang)
+              || pickLocalizedField(svc, 'name', lang)
+              || svc.serviceName
+              || svc.name
+              || t('packagesScreen.serviceFallback')}
+          </Text>
         </View>
       ))}
       {hasMore && (
@@ -80,7 +89,9 @@ function ServicesList({ services = [], isExpanded, onToggle }) {
             color={theme.colors.primary}
           />
           <Text style={sl.toggleText}>
-            {isExpanded ? 'Show Less' : `+${hiddenCount} More Services`}
+            {isExpanded
+              ? t('packagesScreen.showLess')
+              : t('packagesScreen.moreServices', { count: hiddenCount })}
           </Text>
         </TouchableOpacity>
       )}
@@ -92,6 +103,8 @@ function ServicesList({ services = [], isExpanded, onToggle }) {
    SCREEN
 ══════════════════════════════════════════════════════════ */
 export default function PackagesScreen({ navigation }) {
+  const { t } = useTranslation();
+  const lang = normalizeLangCode(i18n.language);
   const { isAdmin }  = useAuth();
   const headerHeight = useHeaderHeight();
   const scrollHeader = useScrollHeader();
@@ -102,17 +115,22 @@ export default function PackagesScreen({ navigation }) {
     fetchPackages,
   } = usePackages();
 
-  const [selectedTier,      setSelectedTier]      = useState('All');
+  const [selectedTier,      setSelectedTier]      = useState('__all__');
   const [expandedPackageId, setExpandedPackageId] = useState(null);
   const [refreshing,        setRefreshing]        = useState(false);
 
   useEffect(() => { fetchPackages(); }, []);
 
-  const tiers    = useMemo(() => ['All', ...new Set(packages.map((p) => p.tier))], [packages]);
+  const tiers = useMemo(() => ['__all__', ...new Set(packages.map((p) => p.tier))], [packages]);
   const filtered = useMemo(
-    () => (selectedTier === 'All' ? packages : packages.filter((p) => p.tier === selectedTier)),
+    () => (selectedTier === '__all__' ? packages : packages.filter((p) => p.tier === selectedTier)),
     [packages, selectedTier]
   );
+
+  const getTierLabel = (tier) => {
+    if (tier === '__all__') return t('packagesScreen.tiers.all');
+    return t(`packagesScreen.tiers.${tier}`, { defaultValue: tier });
+  };
 
   const toggleExpand = (id) => setExpandedPackageId((prev) => (prev === id ? null : id));
 
@@ -165,15 +183,15 @@ export default function PackagesScreen({ navigation }) {
               style={s.eyebrowLine}
             />
             <Ionicons name="cube-outline" size={10} color={theme.colors.primary} />
-            <Text style={s.eyebrowText}>CATALOGUE</Text>
+            <Text style={s.eyebrowText}>{t('packagesScreen.catalogue')}</Text>
             <LinearGradient
               colors={[G(0.70), 'transparent']}
               start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
               style={s.eyebrowLine}
             />
           </View>
-          <Text style={s.heading}>Packages</Text>
-          <Text style={s.sub}>Choose your preferred cleaning package</Text>
+          <Text style={s.heading}>{t('packagesScreen.title')}</Text>
+          <Text style={s.sub}>{t('packagesScreen.subtitle')}</Text>
           <SpectrumLine style={{ marginTop: 12 }} />
         </View>
         {/* Count pill — gradient ring technique */}
@@ -214,7 +232,7 @@ export default function PackagesScreen({ navigation }) {
                 activeScale={0.94}
               >
                 {active && <View style={s.tierChipDot} />}
-                <Text style={[s.tierChipText, active && s.tierChipTextActive]}>{tier}</Text>
+                <Text style={[s.tierChipText, active && s.tierChipTextActive]}>{getTierLabel(tier)}</Text>
               </PressableScale>
             );
           })}
@@ -233,13 +251,13 @@ export default function PackagesScreen({ navigation }) {
               <Ionicons name="cube-outline" size={28} color={theme.colors.primary} />
             </View>
           </LinearGradient>
-          <Text style={s.emptyTitle}>No packages found</Text>
+          <Text style={s.emptyTitle}>{t('packagesScreen.emptyTitle')}</Text>
           <Text style={s.emptyBody}>
-            {selectedTier === 'All'
-              ? 'No packages are available right now.'
-              : `No ${selectedTier} packages found. Try a different tier.`}
+            {selectedTier === '__all__'
+              ? t('packagesScreen.emptyAll')
+              : t('packagesScreen.emptyTier', { tier: getTierLabel(selectedTier) })}
           </Text>
-          {selectedTier !== 'All' && (
+          {selectedTier !== '__all__' && (
             <View style={s.emptyBtnWrap}>
               <LinearGradient
                 colors={[theme.colors.primary, G(0.82)]}
@@ -247,8 +265,8 @@ export default function PackagesScreen({ navigation }) {
                 style={StyleSheet.absoluteFillObject}
                 pointerEvents="none"
               />
-              <PressableScale style={s.emptyBtnTouch} onPress={() => setSelectedTier('All')}>
-                <Text style={s.emptyBtnText}>Show All</Text>
+              <PressableScale style={s.emptyBtnTouch} onPress={() => setSelectedTier('__all__')}>
+                <Text style={s.emptyBtnText}>{t('packagesScreen.showAll')}</Text>
               </PressableScale>
             </View>
           )}
@@ -283,10 +301,10 @@ export default function PackagesScreen({ navigation }) {
                   pointerEvents="none"
                 />
                 <View style={s.tierBadge}>
-                  <Text style={s.tierBadgeText}>{pkg.tier}</Text>
+                  <Text style={s.tierBadgeText}>{getTierLabel(pkg.tier)}</Text>
                 </View>
                 <View style={s.priceTag}>
-                  <Text style={s.priceTagLabel}>Starting at</Text>
+                  <Text style={s.priceTagLabel}>{t('packagesScreen.startingAt')}</Text>
                   <Text style={s.priceTagText}>{formatQAR(pkg.price)}</Text>
                 </View>
               </View>
@@ -294,19 +312,25 @@ export default function PackagesScreen({ navigation }) {
               {/* Body */}
               <View style={s.body}>
                 <View style={s.nameRow}>
-                  <Text style={s.pkgName} numberOfLines={2}>{pkg.name}</Text>
+                  <Text style={s.pkgName} numberOfLines={2}>
+                    {pickLocalizedField(pkg, 'name', lang) || pkg.name}
+                  </Text>
                   <View style={s.durationPill}>
                     <Ionicons name="time-outline" size={11} color={theme.colors.textMuted} />
-                    <Text style={s.durationText}>{pkg.estimatedDurationMinutes} min</Text>
+                    <Text style={s.durationText}>{t('packagesScreen.minutes', { count: pkg.estimatedDurationMinutes })}</Text>
                   </View>
                 </View>
                 {!!pkg.description && (
-                  <Text style={s.desc} numberOfLines={2}>{pkg.description}</Text>
+                  <Text style={s.desc} numberOfLines={2}>
+                    {pickLocalizedField(pkg, 'description', lang) || pkg.description}
+                  </Text>
                 )}
                 <ServicesList
                   services={pkg.services || []}
                   isExpanded={isExpanded}
                   onToggle={() => toggleExpand(pkg.id)}
+                  lang={lang}
+                  t={t}
                 />
                 {/* Book button — gradient fill */}
                 <View style={s.bookBtnWrap}>
@@ -321,7 +345,7 @@ export default function PackagesScreen({ navigation }) {
                     onPress={() => navigation.navigate('Booking', { selectedPackage: pkg })}
                   >
                     <Text style={s.bookBtnText}>
-                      {isAdmin ? 'Create Customer Booking' : 'Book This Package'}
+                      {isAdmin ? t('packagesScreen.createCustomerBooking') : t('packagesScreen.bookThisPackage')}
                     </Text>
                     <Ionicons name="arrow-forward" size={15} color={theme.colors.ink} />
                   </PressableScale>

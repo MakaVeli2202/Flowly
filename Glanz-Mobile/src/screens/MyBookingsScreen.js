@@ -7,6 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { useFocusEffect, useRoute } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { bookingsAPI } from '../api/bookings';
 import { offersAPI } from '../api/offers';
 import { formatQAR } from '../utils/currency';
@@ -132,6 +133,7 @@ function getStatusMessage(status) {
    SCREEN
 ═══════════════════════════════════════════════════════════ */
 export default function MyBookingsScreen({ navigation }) {
+  const { t } = useTranslation();
   const headerHeight = useHeaderHeight();
   const scrollHeader = useScrollHeader();
   const route        = useRoute();
@@ -166,8 +168,8 @@ export default function MyBookingsScreen({ navigation }) {
       ]);
       setBookings(bookingData || []);
       setLoyalty(loyaltyData);
-    } catch { setError('Failed to load bookings.'); }
-  }, []);
+    } catch { setError(t('myBookings.errors.load')); }
+  }, [t]);
 
   const initialLoadDone = useRef(false);
 
@@ -256,11 +258,11 @@ export default function MyBookingsScreen({ navigation }) {
           reason: requestReason, preferredDate: requestDate,
         });
       }
-      Alert.alert('Request Submitted', 'Our team will contact you shortly.');
+      Alert.alert(t('myBookings.alerts.requestSubmittedTitle'), t('myBookings.alerts.requestSubmittedBody'));
       closeRequestModal();
       await loadData();
     } catch (err) {
-      Alert.alert('Error', err?.response?.data?.message || 'Failed to submit request. Please try again.');
+      Alert.alert(t('common.error'), err?.response?.data?.message || t('myBookings.errors.submitRequest'));
     } finally { setSubmitting(false); }
   };
 
@@ -306,15 +308,15 @@ export default function MyBookingsScreen({ navigation }) {
               style={s.eyebrowLine}
             />
             <Ionicons name="calendar-outline" size={10} color={theme.colors.primary} />
-            <Text style={s.eyebrowText}>MY ACCOUNT</Text>
+            <Text style={s.eyebrowText}>{t('myBookings.header.eyebrow')}</Text>
             <LinearGradient
               colors={[G(0.70), 'transparent']}
               start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
               style={s.eyebrowLine}
             />
           </View>
-          <Text style={s.heading}>My Bookings</Text>
-          <Text style={s.sub}>View and manage your appointments</Text>
+          <Text style={s.heading}>{t('myBookings.header.title')}</Text>
+          <Text style={s.sub}>{t('myBookings.header.subtitle')}</Text>
           <SpectrumLine style={{ marginTop: 14 }} />
         </View>
 
@@ -453,9 +455,9 @@ export default function MyBookingsScreen({ navigation }) {
                 <Ionicons name="calendar-outline" size={32} color={theme.colors.primary} />
               </View>
             </LinearGradient>
-            <Text style={s.emptyTitle}>No bookings yet</Text>
+            <Text style={s.emptyTitle}>{t('myBookings.empty.title')}</Text>
             <Text style={s.emptyBody}>
-              Your upcoming washes will show up here once you make a booking.
+              {t('myBookings.empty.body')}
             </Text>
             {/* Gradient button */}
             <View style={s.emptyBtnWrap}>
@@ -471,7 +473,7 @@ export default function MyBookingsScreen({ navigation }) {
                 activeOpacity={0.85}
               >
                 <Ionicons name="add-circle-outline" size={16} color={theme.colors.ink} />
-                <Text style={s.emptyBtnText}>Book Your First Service</Text>
+                <Text style={s.emptyBtnText}>{t('myBookings.empty.cta')}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -563,7 +565,7 @@ export default function MyBookingsScreen({ navigation }) {
                         activeOpacity={0.7}
                       >
                         <Text style={s.expandToggleText}>
-                          {isExpanded ? 'Hide package details' : 'Show package details'}
+                          {isExpanded ? t('myBookings.actions.hidePackageDetails') : t('myBookings.actions.showPackageDetails')}
                         </Text>
                         <Ionicons
                           name={isExpanded ? 'chevron-up' : 'chevron-down'}
@@ -623,7 +625,7 @@ export default function MyBookingsScreen({ navigation }) {
                         activeOpacity={0.8}
                       >
                         <Ionicons name="receipt-outline" size={14} color={theme.colors.ink} />
-                        <Text style={s.viewBtnText}>View Details</Text>
+                        <Text style={s.viewBtnText}>{t('myBookings.actions.viewDetails')}</Text>
                       </TouchableOpacity>
                     </View>
 
@@ -637,7 +639,7 @@ export default function MyBookingsScreen({ navigation }) {
                         activeOpacity={0.8}
                       >
                         <Ionicons name="navigate-outline" size={14} color="#7C3AED" />
-                        <Text style={[s.bookAgainBtnText, { color: '#7C3AED' }]}>Track Worker</Text>
+                        <Text style={[s.bookAgainBtnText, { color: '#7C3AED' }]}>{t('myBookings.actions.trackWorker')}</Text>
                       </TouchableOpacity>
                     )}
 
@@ -648,7 +650,7 @@ export default function MyBookingsScreen({ navigation }) {
                         activeOpacity={0.8}
                       >
                         <Ionicons name="refresh-outline" size={14} color="#22C55E" />
-                        <Text style={s.bookAgainBtnText}>Book Again</Text>
+                        <Text style={s.bookAgainBtnText}>{t('myBookings.actions.bookAgain')}</Text>
                       </TouchableOpacity>
                     )}
                   </View>
@@ -666,7 +668,7 @@ export default function MyBookingsScreen({ navigation }) {
                         activeOpacity={0.8}
                       >
                         <Ionicons name="calendar-outline" size={13} color="#60A5FA" />
-                        <Text style={s.rescheduleBtnText}>Reschedule</Text>
+                        <Text style={s.rescheduleBtnText}>{t('myBookings.actions.reschedule')}</Text>
                       </TouchableOpacity>
                       <TouchableOpacity
                         style={s.cancelBtn}
@@ -674,7 +676,7 @@ export default function MyBookingsScreen({ navigation }) {
                         activeOpacity={0.8}
                       >
                         <Ionicons name="close-circle-outline" size={13} color="#F87171" />
-                        <Text style={s.cancelBtnText}>Cancel</Text>
+                        <Text style={s.cancelBtnText}>{t('myBookings.actions.cancel')}</Text>
                       </TouchableOpacity>
                     </View>
                   )}
@@ -721,7 +723,7 @@ export default function MyBookingsScreen({ navigation }) {
                 />
               </View>
               <Text style={m.title}>
-                {requestModal?.type === 'cancel' ? 'Request Cancellation' : 'Request Reschedule'}
+                {requestModal?.type === 'cancel' ? t('myBookings.modal.requestCancellation') : t('myBookings.modal.requestReschedule')}
               </Text>
               <TouchableOpacity
                 style={m.closeBtn}
@@ -737,7 +739,7 @@ export default function MyBookingsScreen({ navigation }) {
             {requestModal?.type === 'cancel' && feeLoading && (
               <View style={m.feeLoading}>
                 <ActivityIndicator size="small" color={theme.colors.textMuted} />
-                <Text style={m.feeLoadingText}>Checking cancellation policy…</Text>
+                <Text style={m.feeLoadingText}>{t('myBookings.modal.checkingPolicy')}</Text>
               </View>
             )}
             {requestModal?.type === 'cancel'
@@ -747,11 +749,13 @@ export default function MyBookingsScreen({ navigation }) {
               <View style={m.feeWarning}>
                 <Ionicons name="warning-outline" size={15} color="#F59E0B" />
                 <View style={{ flex: 1 }}>
-                  <Text style={m.feeWarningTitle}>Cancellation Fee May Apply</Text>
+                  <Text style={m.feeWarningTitle}>{t('myBookings.modal.feeMayApply')}</Text>
                   <Text style={m.feeWarningText}>
-                    Your appointment is in {Math.round(cancellationFeeInfo.hoursUntilAppointment)}h —
-                    outside the {cancellationFeeInfo.freeWindowHours}h free window.
-                    Fee: {cancellationFeeInfo.calculatedFee?.toFixed(2)} QAR.
+                    {t('myBookings.modal.feeWarning', {
+                      hoursUntil: Math.round(cancellationFeeInfo.hoursUntilAppointment),
+                      freeWindow: cancellationFeeInfo.freeWindowHours,
+                      fee: cancellationFeeInfo.calculatedFee?.toFixed(2),
+                    })}
                   </Text>
                 </View>
               </View>
@@ -762,15 +766,15 @@ export default function MyBookingsScreen({ navigation }) {
               <View style={m.feeFree}>
                 <Ionicons name="checkmark-circle-outline" size={15} color="#22C55E" />
                 <View style={{ flex: 1 }}>
-                  <Text style={m.feeFreeTitle}>Free Cancellation</Text>
-                  <Text style={m.feeFreeText}>You're within the free window — no charge will apply.</Text>
+                  <Text style={m.feeFreeTitle}>{t('myBookings.modal.freeCancellation')}</Text>
+                  <Text style={m.feeFreeText}>{t('myBookings.modal.freeCancellationBody')}</Text>
                 </View>
               </View>
             )}
 
-            <FieldLabel>Reason</FieldLabel>
+            <FieldLabel>{t('myBookings.modal.reason')}</FieldLabel>
             <ModalInput
-              placeholder="Tell us why…"
+              placeholder={t('myBookings.modal.reasonPlaceholder')}
               value={requestReason}
               onChangeText={setRequestReason}
               multiline
@@ -780,9 +784,9 @@ export default function MyBookingsScreen({ navigation }) {
 
             {requestModal?.type === 'reschedule' && (
               <>
-                <FieldLabel>Preferred Date</FieldLabel>
+                <FieldLabel>{t('myBookings.modal.preferredDate')}</FieldLabel>
                 <ModalInput
-                  placeholder="e.g. 15 Apr 2026"
+                  placeholder={t('myBookings.modal.preferredDatePlaceholder')}
                   value={requestDate}
                   onChangeText={setRequestDate}
                 />
@@ -796,7 +800,7 @@ export default function MyBookingsScreen({ navigation }) {
                 disabled={submitting}
                 activeOpacity={0.8}
               >
-                <Text style={m.dismissBtnText}>Dismiss</Text>
+                <Text style={m.dismissBtnText}>{t('myBookings.modal.dismiss')}</Text>
               </TouchableOpacity>
 
               {/* Submit — gradient wrapped, opacity applied to wrapper */}
@@ -815,7 +819,7 @@ export default function MyBookingsScreen({ navigation }) {
                 >
                   {submitting
                     ? <ActivityIndicator size="small" color={theme.colors.ink} />
-                    : <Text style={m.submitBtnText}>Submit</Text>}
+                    : <Text style={m.submitBtnText}>{t('myBookings.modal.submit')}</Text>}
                 </TouchableOpacity>
               </View>
             </View>

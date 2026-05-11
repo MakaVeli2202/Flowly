@@ -12,11 +12,240 @@ import {
 import { reportsAPI } from '../../api/reports';
 import { subscribeToNotifications } from '../../api/notificationBus';
 import { formatQAR, formatCompactQAR as formatCompactCurrency } from '../../utils/currency';
+import { useLanguage } from '../../context/LanguageContext';
 
 const CHART_COLORS = ['#c8a96b', '#0ea5a0', '#3b82f6', '#f59e0b', '#8b5cf6', '#ef4444'];
 
-const formatShortDate = (value) =>
-  new Date(value).toLocaleDateString('en-GB', { month: 'short', day: 'numeric' });
+const getLocale = (lang) => {
+  if (String(lang || '').startsWith('ar')) return 'ar';
+  if (String(lang || '').startsWith('de')) return 'de-DE';
+  return 'en-GB';
+};
+
+const formatShortDate = (value, lang) =>
+  new Date(value).toLocaleDateString(getLocale(lang), { month: 'short', day: 'numeric' });
+
+const UI_BY_LANG = {
+  en: {
+    revenue: 'Revenue',
+    profit: 'Profit',
+    bookings: 'Bookings',
+    noFinancialData: 'No financial data available yet.',
+    noOperationalData: 'No operational data available yet.',
+    noPackageAnalytics: 'No package analytics available yet.',
+    completionRate: 'Completion Rate',
+    cancellationRate: 'Cancellation Rate',
+    avgBookingValue: 'Avg Booking Value',
+    completedOfTotal: (c, t) => `${c} of ${t} bookings finished`,
+    cancelledInWindow: (c) => `${c} cancelled in the current window`,
+    totalProfitWindow: (p) => `${formatQAR(p)} total profit over the selected period`,
+    lifetimeRevenue: 'Lifetime Revenue',
+    bookingsCard: 'Bookings',
+    customers: 'Customers',
+    activeCatalog: 'Active Catalog',
+    last30Revenue: (v) => `${formatQAR(v)} in the last 30 days`,
+    bookingMixDetail: (p, c) => `${p} pending · ${c} completed`,
+    customerDetail: (r) => `${r} bookings in the last 30 days`,
+    catalogDetail: (s, p) => `${s} services · ${p} products`,
+    commandCenter: 'Command Center',
+    adminDashboard: 'Admin Dashboard',
+    liveData: 'Live data from your detailing business',
+    revenueTrend: 'Revenue Trend',
+    revenueTrendSub: 'Last 30 days of bookings, revenue, and profit performance',
+    financial: 'Financial',
+    profitMargin: 'Profit Margin',
+    bookingMix: 'Booking Mix',
+    bookingMixSub: 'Current workload split by booking status',
+    operational: 'Operational',
+    topPackages: 'Top Packages',
+    topPackagesSub: 'Best-performing packages by booking volume across the current reporting window',
+    analytics: 'Analytics',
+    fullReport: 'Full report',
+    adminTools: 'Admin Tools',
+    managementCenter: 'Management Center',
+    open: 'Open',
+    toolCards: {
+      manageProductsTitle: 'Manage Products',
+      manageProductsDesc: 'Add and manage chemical inventory',
+      manageServicesTitle: 'Manage Services',
+      manageServicesDesc: 'Create services and assign products',
+      managePackagesTitle: 'Manage Packages',
+      managePackagesDesc: 'Build packages and set pricing',
+      managePlansTitle: 'Manage Plans',
+      managePlansDesc: 'Create and edit subscription plan templates',
+      viewBookingsTitle: 'View Bookings',
+      viewBookingsDesc: 'Manage all customer bookings',
+      subscriptionBookingsTitle: 'Subscription Bookings',
+      subscriptionBookingsDesc: 'Manage bookings made via subscription plans',
+      financialReportsTitle: 'Financial Reports',
+      financialReportsDesc: 'Revenue and profit analysis',
+      operationalReportsTitle: 'Operational Reports',
+      operationalReportsDesc: 'Booking and service statistics',
+      contentEditorTitle: 'Content Editor',
+      contentEditorDesc: 'Edit home, packages, and booking text/settings',
+      offersLoyaltyTitle: 'Offers & Loyalty',
+      offersLoyaltyDesc: 'Manage discounts, coupons, and loyalty rewards',
+      crmDashboardTitle: 'CRM Dashboard',
+      crmDashboardDesc: 'Customer insights, segments, and feedback management',
+      manageStaffTitle: 'Manage Staff',
+      manageStaffDesc: 'Add, remove, and manage your detailing team',
+      detailerScheduleTitle: 'Detailer Schedule',
+      detailerScheduleDesc: 'Calendar heatmap of worker busyness and free windows',
+      detailerSkillsTitle: 'Detailer Skills',
+      detailerSkillsDesc: 'Create and assign skills to detailers for smart job matching',
+      jobPositionsTitle: 'Job Positions',
+      jobPositionsDesc: 'Post and manage open job positions and descriptions',
+      settingsTitle: 'Settings',
+      settingsDesc: 'Cancellation policy, fees, and platform configuration',
+    },
+  },
+  ar: {
+    revenue: 'الإيرادات',
+    profit: 'الربح',
+    bookings: 'الحجوزات',
+    noFinancialData: 'لا توجد بيانات مالية متاحة حاليا.',
+    noOperationalData: 'لا توجد بيانات تشغيلية متاحة حاليا.',
+    noPackageAnalytics: 'لا توجد تحليلات باقات متاحة حاليا.',
+    completionRate: 'معدل الإكمال',
+    cancellationRate: 'معدل الإلغاء',
+    avgBookingValue: 'متوسط قيمة الحجز',
+    completedOfTotal: (c, t) => `${c} من ${t} حجوزات مكتملة`,
+    cancelledInWindow: (c) => `${c} ملغاة ضمن الفترة الحالية`,
+    totalProfitWindow: (p) => `${formatQAR(p)} إجمالي الربح خلال الفترة`,
+    lifetimeRevenue: 'إجمالي الإيراد',
+    bookingsCard: 'الحجوزات',
+    customers: 'العملاء',
+    activeCatalog: 'الكتالوج النشط',
+    last30Revenue: (v) => `${formatQAR(v)} خلال آخر 30 يوما`,
+    bookingMixDetail: (p, c) => `${p} قيد الانتظار · ${c} مكتملة`,
+    customerDetail: (r) => `${r} حجوزات خلال آخر 30 يوما`,
+    catalogDetail: (s, p) => `${s} خدمات · ${p} منتجات`,
+    commandCenter: 'مركز التحكم',
+    adminDashboard: 'لوحة الإدارة',
+    liveData: 'بيانات مباشرة من نشاطك',
+    revenueTrend: 'اتجاه الإيرادات',
+    revenueTrendSub: 'آخر 30 يوما من الحجوزات والإيرادات والربح',
+    financial: 'مالي',
+    profitMargin: 'هامش الربح',
+    bookingMix: 'توزيع الحجوزات',
+    bookingMixSub: 'توزيع عبء العمل حسب حالة الحجز',
+    operational: 'تشغيلي',
+    topPackages: 'أفضل الباقات',
+    topPackagesSub: 'أفضل الباقات أداءً حسب عدد الحجوزات خلال فترة التقرير الحالية',
+    analytics: 'تحليلات',
+    fullReport: 'التقرير الكامل',
+    adminTools: 'أدوات الإدارة',
+    managementCenter: 'مركز الإدارة',
+    open: 'فتح',
+    toolCards: {
+      manageProductsTitle: 'إدارة المنتجات',
+      manageProductsDesc: 'إضافة وإدارة مخزون المواد الكيميائية',
+      manageServicesTitle: 'إدارة الخدمات',
+      manageServicesDesc: 'إنشاء الخدمات وربط المنتجات بها',
+      managePackagesTitle: 'إدارة الباقات',
+      managePackagesDesc: 'إنشاء الباقات وتحديد الأسعار',
+      managePlansTitle: 'إدارة الخطط',
+      managePlansDesc: 'إنشاء وتعديل قوالب خطط الاشتراك',
+      viewBookingsTitle: 'عرض الحجوزات',
+      viewBookingsDesc: 'إدارة جميع حجوزات العملاء',
+      subscriptionBookingsTitle: 'حجوزات الاشتراك',
+      subscriptionBookingsDesc: 'إدارة الحجوزات التي تمت عبر خطط الاشتراك',
+      financialReportsTitle: 'التقارير المالية',
+      financialReportsDesc: 'تحليل الإيرادات والأرباح',
+      operationalReportsTitle: 'التقارير التشغيلية',
+      operationalReportsDesc: 'إحصاءات الحجوزات والخدمات',
+      contentEditorTitle: 'محرر المحتوى',
+      contentEditorDesc: 'تعديل نصوص وإعدادات الصفحة الرئيسية والباقات والحجز',
+      offersLoyaltyTitle: 'العروض والولاء',
+      offersLoyaltyDesc: 'إدارة الخصومات والكوبونات ومكافآت الولاء',
+      crmDashboardTitle: 'لوحة CRM',
+      crmDashboardDesc: 'رؤى العملاء والتصنيفات وإدارة الملاحظات',
+      manageStaffTitle: 'إدارة الفريق',
+      manageStaffDesc: 'إضافة وإزالة وإدارة فريق العناية لديك',
+      detailerScheduleTitle: 'جدول العمال',
+      detailerScheduleDesc: 'خريطة زمنية لانشغال العمال والفترات المتاحة',
+      detailerSkillsTitle: 'مهارات العمال',
+      detailerSkillsDesc: 'إنشاء المهارات وربطها بالعمال لمطابقة المهام بذكاء',
+      jobPositionsTitle: 'الوظائف الشاغرة',
+      jobPositionsDesc: 'نشر وإدارة الوظائف الشاغرة والوصف الوظيفي',
+      settingsTitle: 'الإعدادات',
+      settingsDesc: 'سياسة الإلغاء والرسوم وإعدادات المنصة',
+    },
+  },
+  de: {
+    revenue: 'Umsatz',
+    profit: 'Gewinn',
+    bookings: 'Buchungen',
+    noFinancialData: 'Noch keine Finanzdaten verfugbar.',
+    noOperationalData: 'Noch keine Betriebsdaten verfugbar.',
+    noPackageAnalytics: 'Noch keine Paket-Analysen verfugbar.',
+    completionRate: 'Abschlussrate',
+    cancellationRate: 'Stornorate',
+    avgBookingValue: 'Durchschnittlicher Buchungswert',
+    completedOfTotal: (c, t) => `${c} von ${t} Buchungen abgeschlossen`,
+    cancelledInWindow: (c) => `${c} im aktuellen Zeitraum storniert`,
+    totalProfitWindow: (p) => `${formatQAR(p)} Gesamtgewinn im gewahlten Zeitraum`,
+    lifetimeRevenue: 'Gesamtumsatz',
+    bookingsCard: 'Buchungen',
+    customers: 'Kunden',
+    activeCatalog: 'Aktiver Katalog',
+    last30Revenue: (v) => `${formatQAR(v)} in den letzten 30 Tagen`,
+    bookingMixDetail: (p, c) => `${p} ausstehend · ${c} abgeschlossen`,
+    customerDetail: (r) => `${r} Buchungen in den letzten 30 Tagen`,
+    catalogDetail: (s, p) => `${s} Services · ${p} Produkte`,
+    commandCenter: 'Leitzentrale',
+    adminDashboard: 'Admin-Dashboard',
+    liveData: 'Live-Daten aus Ihrem Detailing-Geschaft',
+    revenueTrend: 'Umsatztrend',
+    revenueTrendSub: 'Letzte 30 Tage mit Buchungen, Umsatz und Gewinn',
+    financial: 'Finanzen',
+    profitMargin: 'Gewinnmarge',
+    bookingMix: 'Buchungsmix',
+    bookingMixSub: 'Aktuelle Auslastung nach Buchungsstatus',
+    operational: 'Betrieb',
+    topPackages: 'Top-Pakete',
+    topPackagesSub: 'Leistungsstarkste Pakete nach Buchungsvolumen im aktuellen Berichtszeitraum',
+    analytics: 'Analysen',
+    fullReport: 'Voller Bericht',
+    adminTools: 'Admin-Tools',
+    managementCenter: 'Verwaltungszentrum',
+    open: 'Offnen',
+    toolCards: {
+      manageProductsTitle: 'Produkte verwalten',
+      manageProductsDesc: 'Chemie-Inventar hinzufugen und verwalten',
+      manageServicesTitle: 'Services verwalten',
+      manageServicesDesc: 'Services erstellen und Produkte zuweisen',
+      managePackagesTitle: 'Pakete verwalten',
+      managePackagesDesc: 'Pakete erstellen und Preise festlegen',
+      managePlansTitle: 'Plane verwalten',
+      managePlansDesc: 'Vorlagen fur Aboplane erstellen und bearbeiten',
+      viewBookingsTitle: 'Buchungen anzeigen',
+      viewBookingsDesc: 'Alle Kundenbuchungen verwalten',
+      subscriptionBookingsTitle: 'Abo-Buchungen',
+      subscriptionBookingsDesc: 'Buchungen aus Aboplanen verwalten',
+      financialReportsTitle: 'Finanzberichte',
+      financialReportsDesc: 'Umsatz- und Gewinnanalyse',
+      operationalReportsTitle: 'Betriebsberichte',
+      operationalReportsDesc: 'Buchungs- und Service-Statistiken',
+      contentEditorTitle: 'Content-Editor',
+      contentEditorDesc: 'Startseite, Pakete und Buchungstexte/-einstellungen bearbeiten',
+      offersLoyaltyTitle: 'Angebote & Treue',
+      offersLoyaltyDesc: 'Rabatte, Gutscheine und Treuepramien verwalten',
+      crmDashboardTitle: 'CRM-Dashboard',
+      crmDashboardDesc: 'Kundeneinblicke, Segmente und Feedback-Verwaltung',
+      manageStaffTitle: 'Team verwalten',
+      manageStaffDesc: 'Detailing-Team hinzufugen, entfernen und verwalten',
+      detailerScheduleTitle: 'Mitarbeiterplan',
+      detailerScheduleDesc: 'Kalender-Heatmap zu Auslastung und freien Zeitfenstern',
+      detailerSkillsTitle: 'Mitarbeiter-Skills',
+      detailerSkillsDesc: 'Skills erstellen und zuweisen fur intelligentes Job-Matching',
+      jobPositionsTitle: 'Stellenangebote',
+      jobPositionsDesc: 'Offene Stellen und Beschreibungen posten und verwalten',
+      settingsTitle: 'Einstellungen',
+      settingsDesc: 'Stornorichtlinie, Gebuhren und Plattformkonfiguration',
+    },
+  },
+};
 
 /* ── PRISM CSS ─────────────────────────────────────────────── */
 const PRISM_CSS = `
@@ -118,7 +347,7 @@ const ttDot   = (color) => ({ width: 8, height: 8, borderRadius: '50%', backgrou
 const ttName  = { fontSize: 11, color: 'var(--muted-color)' };
 const ttVal   = { fontSize: 11, fontWeight: 700, color: 'var(--heading-color)' };
 
-function RevenueTooltip({ active, payload, label }) {
+function RevenueTooltip({ active, payload, label, ui }) {
   if (!active || !payload?.length) return null;
   return (
     <div style={ttBase('rgba(200,169,107,0.32)')}>
@@ -126,7 +355,7 @@ function RevenueTooltip({ active, payload, label }) {
       {payload.map((e, i) => (
         <div key={i} style={ttRow}>
           <span style={ttDot(e.color)} />
-          <span style={ttName}>{e.name === 'revenue' ? 'Revenue' : 'Profit'}:</span>
+          <span style={ttName}>{e.name === 'revenue' ? ui.revenue : ui.profit}:</span>
           <span style={ttVal}>{formatQAR(e.value)}</span>
         </div>
       ))}
@@ -145,7 +374,7 @@ function StatusTooltip({ active, payload }) {
     </div>
   );
 }
-function PackagesTooltip({ active, payload, label }) {
+function PackagesTooltip({ active, payload, label, ui }) {
   if (!active || !payload?.length) return null;
   return (
     <div style={ttBase('rgba(59,130,246,0.32)')}>
@@ -153,7 +382,7 @@ function PackagesTooltip({ active, payload, label }) {
       {payload.map((e, i) => (
         <div key={i} style={ttRow}>
           <span style={ttDot(e.color)} />
-          <span style={ttName}>{e.name === 'bookings' ? 'Bookings' : 'Revenue'}:</span>
+          <span style={ttName}>{e.name === 'bookings' ? ui.bookings : ui.revenue}:</span>
           <span style={ttVal}>{e.name === 'bookings' ? e.value : formatQAR(e.value)}</span>
         </div>
       ))}
@@ -209,6 +438,9 @@ function SkeletonCard() {
    ADMIN DASHBOARD
 ════════════════════════════════════════════════════════════ */
 function AdminDashboard() {
+  const { lang } = useLanguage();
+  const localeKey = String(lang || '').startsWith('ar') ? 'ar' : String(lang || '').startsWith('de') ? 'de' : 'en';
+  const ui = UI_BY_LANG[localeKey] || UI_BY_LANG.en;
   const [summary,           setSummary]           = useState(null);
   const [loadingSummary,    setLoadingSummary]    = useState(true);
   const [financialReport,   setFinancialReport]   = useState(null);
@@ -251,12 +483,12 @@ function AdminDashboard() {
   /* ── Derived data (logic unchanged) ─────────────────────── */
   const revenueTrendData = useMemo(() => (
     (financialReport?.dailyBreakdown || []).map((day) => ({
-      date: formatShortDate(day.date),
+      date: formatShortDate(day.date, lang),
       revenue: Number(day.revenue || 0),
       profit:  Number(day.profit  || 0),
       bookings: Number(day.bookingCount || 0),
     }))
-  ), [financialReport]);
+  ), [financialReport, lang]);
 
   const bookingStatusData = useMemo(() => {
     if (!operationalReport?.bookingsByStatus) return [];
@@ -280,37 +512,38 @@ function AdminDashboard() {
     const cancellationRate = operationalReport.totalBookings > 0
       ? (operationalReport.cancelledBookings / operationalReport.totalBookings) * 100 : 0;
     return [
-      { title: 'Completion Rate',       value: `${completionRate.toFixed(1)}%`,                     detail: `${operationalReport.completedBookings} of ${operationalReport.totalBookings} bookings finished`,     accent: '#0ea5a0' },
-      { title: 'Cancellation Rate',     value: `${cancellationRate.toFixed(1)}%`,                   detail: `${operationalReport.cancelledBookings} cancelled in the current window`,                             accent: '#ef4444' },
-      { title: 'Avg Booking Value',     value: formatQAR(financialReport.averageBookingValue),       detail: `${formatQAR(financialReport.totalProfit)} total profit over the selected period`,                   accent: '#c8a96b' },
+      { title: ui.completionRate,       value: `${completionRate.toFixed(1)}%`,                     detail: ui.completedOfTotal(operationalReport.completedBookings, operationalReport.totalBookings),           accent: '#0ea5a0' },
+      { title: ui.cancellationRate,     value: `${cancellationRate.toFixed(1)}%`,                   detail: ui.cancelledInWindow(operationalReport.cancelledBookings),                                            accent: '#ef4444' },
+      { title: ui.avgBookingValue,      value: formatQAR(financialReport.averageBookingValue),       detail: ui.totalProfitWindow(financialReport.totalProfit),                                                     accent: '#c8a96b' },
     ];
-  }, [financialReport, operationalReport]);
+  }, [financialReport, operationalReport, ui]);
 
   /* ── Static data ─────────────────────────────────────────── */
   const summaryCards = summary ? [
-    { title: 'Lifetime Revenue', value: formatQAR(summary.lifetimeRevenue), detail: `${formatQAR(summary.recentRevenue)} in the last 30 days`,                         icon: TrendingUp,    accent: '#c8a96b' },
-    { title: 'Bookings',         value: `${summary.totalBookings}`,         detail: `${summary.pendingBookings} pending · ${summary.completedBookings} completed`,      icon: ClipboardList, accent: '#0ea5a0' },
-    { title: 'Customers',        value: `${summary.activeCustomers}`,       detail: `${summary.recentBookings} bookings in the last 30 days`,                           icon: Users,         accent: '#f59e0b' },
-    { title: 'Active Catalog',   value: `${summary.activePackages}`,        detail: `${summary.activeServices} services · ${summary.activeProducts} products`,          icon: Package,       accent: '#8b5cf6' },
+    { title: ui.lifetimeRevenue, value: formatQAR(summary.lifetimeRevenue), detail: ui.last30Revenue(summary.recentRevenue),                                              icon: TrendingUp,    accent: '#c8a96b' },
+    { title: ui.bookingsCard,    value: `${summary.totalBookings}`,         detail: ui.bookingMixDetail(summary.pendingBookings, summary.completedBookings),               icon: ClipboardList, accent: '#0ea5a0' },
+    { title: ui.customers,       value: `${summary.activeCustomers}`,       detail: ui.customerDetail(summary.recentBookings),                                            icon: Users,         accent: '#f59e0b' },
+    { title: ui.activeCatalog,   value: `${summary.activePackages}`,        detail: ui.catalogDetail(summary.activeServices, summary.activeProducts),                    icon: Package,       accent: '#8b5cf6' },
   ] : [];
 
+  const tc = ui.toolCards;
   const adminSections = [
-    { title: 'Manage Products',      description: 'Add and manage chemical inventory',                              icon: Beaker,      path: '/admin/products',              accent: '#3b82f6' },
-    { title: 'Manage Services',      description: 'Create services and assign products',                            icon: Package,     path: '/admin/services',              accent: '#22c55e' },
-    { title: 'Manage Packages',      description: 'Build packages and set pricing',                                 icon: ShoppingBag, path: '/admin/packages',              accent: '#8b5cf6' },
-    { title: 'Manage Plans',         description: 'Create and edit subscription plan templates',                    icon: Layers,      path: '/admin/plans',                 accent: '#10b981' },
-    { title: 'View Bookings',        description: 'Manage all customer bookings',                                   icon: Calendar,    path: '/admin/bookings',              accent: '#f97316' },
-    { title: 'Subscription Bookings',description: 'Manage bookings made via subscription plans',                    icon: Repeat,      path: '/admin/subscription-bookings', accent: '#c8a96b' },
-    { title: 'Financial Reports',    description: 'Revenue and profit analysis',                                    icon: TrendingUp,  path: '/admin/reports/financial',     accent: '#ef4444' },
-    { title: 'Operational Reports',  description: 'Booking and service statistics',                                 icon: BarChart3,   path: '/admin/reports/operational',   accent: '#6366f1' },
-    { title: 'Content Editor',       description: 'Edit home, packages, and booking text/settings',                icon: FileEdit,    path: '/admin/content',               accent: '#f59e0b' },
-    { title: 'Offers & Loyalty',     description: 'Manage discounts, coupons, and loyalty rewards',                icon: Ticket,      path: '/admin/offers',                accent: '#14b8a6' },
-    { title: 'CRM Dashboard',        description: 'Customer insights, segments, and feedback management',          icon: Users,      path: '/admin/crm',                  accent: '#ec4899' },
-    { title: 'Manage Staff',         description: 'Add, remove, and manage your detailing team',                   icon: Wrench,      path: '/admin/staff',                 accent: '#06b6d4' },
-    { title: 'Detailer Schedule',    description: 'Calendar heatmap of worker busyness and free windows',          icon: Calendar,    path: '/admin/workers/schedule',      accent: '#84cc16' },
-    { title: 'Detailer Skills',      description: 'Create and assign skills to detailers for smart job matching', icon: Zap,       path: '/admin/skills',                accent: '#a855f7' },
-    { title: 'Job Positions',        description: 'Post and manage open job positions and descriptions',            icon: Briefcase,   path: '/admin/job-positions',         accent: '#f59e0b' },
-    { title: 'Settings',             description: 'Cancellation policy, fees, and platform configuration',         icon: Settings,    path: '/admin/settings',              accent: '#94a3b8' },
+    { title: tc.manageProductsTitle,       description: tc.manageProductsDesc,       icon: Beaker,      path: '/admin/products',              accent: '#3b82f6' },
+    { title: tc.manageServicesTitle,       description: tc.manageServicesDesc,       icon: Package,     path: '/admin/services',              accent: '#22c55e' },
+    { title: tc.managePackagesTitle,       description: tc.managePackagesDesc,       icon: ShoppingBag, path: '/admin/packages',              accent: '#8b5cf6' },
+    { title: tc.managePlansTitle,          description: tc.managePlansDesc,          icon: Layers,      path: '/admin/plans',                 accent: '#10b981' },
+    { title: tc.viewBookingsTitle,         description: tc.viewBookingsDesc,         icon: Calendar,    path: '/admin/bookings',              accent: '#f97316' },
+    { title: tc.subscriptionBookingsTitle, description: tc.subscriptionBookingsDesc, icon: Repeat,      path: '/admin/subscription-bookings', accent: '#c8a96b' },
+    { title: tc.financialReportsTitle,     description: tc.financialReportsDesc,     icon: TrendingUp,  path: '/admin/reports/financial',     accent: '#ef4444' },
+    { title: tc.operationalReportsTitle,   description: tc.operationalReportsDesc,   icon: BarChart3,   path: '/admin/reports/operational',   accent: '#6366f1' },
+    { title: tc.contentEditorTitle,        description: tc.contentEditorDesc,        icon: FileEdit,    path: '/admin/content',               accent: '#f59e0b' },
+    { title: tc.offersLoyaltyTitle,        description: tc.offersLoyaltyDesc,        icon: Ticket,      path: '/admin/offers',                accent: '#14b8a6' },
+    { title: tc.crmDashboardTitle,         description: tc.crmDashboardDesc,         icon: Users,       path: '/admin/crm',                   accent: '#ec4899' },
+    { title: tc.manageStaffTitle,          description: tc.manageStaffDesc,          icon: Wrench,      path: '/admin/staff',                 accent: '#06b6d4' },
+    { title: tc.detailerScheduleTitle,     description: tc.detailerScheduleDesc,     icon: Calendar,    path: '/admin/workers/schedule',      accent: '#84cc16' },
+    { title: tc.detailerSkillsTitle,       description: tc.detailerSkillsDesc,       icon: Zap,         path: '/admin/skills',                accent: '#a855f7' },
+    { title: tc.jobPositionsTitle,         description: tc.jobPositionsDesc,         icon: Briefcase,   path: '/admin/job-positions',         accent: '#f59e0b' },
+    { title: tc.settingsTitle,             description: tc.settingsDesc,             icon: Settings,    path: '/admin/settings',              accent: '#94a3b8' },
   ];
 
   /* ── Axis tick style ─────────────────────────────────────── */
@@ -342,11 +575,11 @@ function AdminDashboard() {
           <div className="mb-10">
             <div className="flex items-center gap-3 mb-3">
               <span className="h-px w-8" style={{ background: 'linear-gradient(90deg, transparent, #c8a96b)' }} />
-              <p className="text-[0.62rem] font-bold uppercase tracking-[0.26em] text-primary">Command Center</p>
+              <p className="text-[0.62rem] font-bold uppercase tracking-[0.26em] text-primary">{ui.commandCenter}</p>
               <span className="h-px w-8" style={{ background: 'linear-gradient(90deg, #c8a96b, transparent)' }} />
             </div>
-            <h1 className="premium-heading text-4xl md:text-5xl font-bold text-[var(--heading-color)] mb-2">Admin Dashboard</h1>
-            <p className="text-[var(--muted-color)]">Live data from your detailing business</p>
+            <h1 className="premium-heading text-4xl md:text-5xl font-bold text-[var(--heading-color)] mb-2">{ui.adminDashboard}</h1>
+            <p className="text-[var(--muted-color)]">{ui.liveData}</p>
           </div>
 
           {/* ── Summary cards ────────────────────────────── */}
@@ -391,16 +624,16 @@ function AdminDashboard() {
 
             {/* Revenue Trend */}
             <ChartCard
-              title="Revenue Trend"
-              subtitle="Last 30 days of bookings, revenue, and profit performance"
-              badge="Financial"
+              title={ui.revenueTrend}
+              subtitle={ui.revenueTrendSub}
+              badge={ui.financial}
               accentColor="#c8a96b"
               rayDelay="2s"
               rightAction={
                 financialReport ? (
                   <div className="rounded-xl px-4 py-3 text-right"
                     style={{ background: 'rgba(200,169,107,0.10)', border: '1px solid rgba(200,169,107,0.24)' }}>
-                    <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--muted-color)] mb-0.5">Profit Margin</p>
+                    <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--muted-color)] mb-0.5">{ui.profitMargin}</p>
                     <p className="text-2xl font-black" style={{ color: '#c8a96b' }}>
                       {Number(financialReport.profitMarginPercent || 0).toFixed(1)}%
                     </p>
@@ -427,7 +660,7 @@ function AdminDashboard() {
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#888" strokeOpacity={0.12} />
                       <XAxis dataKey="date" tickLine={false} axisLine={false} tick={axisTick} />
                       <YAxis tickFormatter={formatCompactCurrency} tickLine={false} axisLine={false} tick={axisTick} />
-                      <Tooltip content={<RevenueTooltip />} />
+                      <Tooltip content={<RevenueTooltip ui={ui} />} />
                       <Area type="monotone" dataKey="revenue" stroke="#c8a96b" fill="url(#revenueFill)" strokeWidth={2.5} dot={false} />
                       <Area type="monotone" dataKey="profit"  stroke="#0ea5a0" fill="url(#profitFill)"  strokeWidth={2}   dot={false} />
                     </AreaChart>
@@ -435,16 +668,16 @@ function AdminDashboard() {
                 </div>
               ) : (
                 <div className="h-80 rounded-xl border border-dashed border-[var(--border-color)] flex items-center justify-center text-[var(--muted-color)] text-sm">
-                  No financial data available yet.
+                  {ui.noFinancialData}
                 </div>
               )}
             </ChartCard>
 
             {/* Booking Mix */}
             <ChartCard
-              title="Booking Mix"
-              subtitle="Current workload split by booking status"
-              badge="Operational"
+              title={ui.bookingMix}
+              subtitle={ui.bookingMixSub}
+              badge={ui.operational}
               accentColor="#0ea5a0"
               rayDelay="9s"
             >
@@ -480,7 +713,7 @@ function AdminDashboard() {
                 </>
               ) : (
                 <div className="h-80 rounded-xl border border-dashed border-[var(--border-color)] flex items-center justify-center text-[var(--muted-color)] text-sm">
-                  No operational data available yet.
+                  {ui.noOperationalData}
                 </div>
               )}
             </ChartCard>
@@ -491,16 +724,16 @@ function AdminDashboard() {
 
             {/* Top Packages */}
             <ChartCard
-              title="Top Packages"
-              subtitle="Best-performing packages by booking volume across the current reporting window"
-              badge="Analytics"
+              title={ui.topPackages}
+              subtitle={ui.topPackagesSub}
+              badge={ui.analytics}
               accentColor="#3b82f6"
               rayDelay="5s"
               rightAction={
                 <Link to="/admin/reports/operational"
                   className="flex items-center gap-1.5 text-xs font-bold transition-opacity hover:opacity-80"
                   style={{ color: '#3b82f6' }}>
-                  Full report <ArrowRight size={11} />
+                  {ui.fullReport} <ArrowRight size={11} />
                 </Link>
               }
             >
@@ -513,14 +746,14 @@ function AdminDashboard() {
                       <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#888" strokeOpacity={0.12} />
                       <XAxis type="number" tickLine={false} axisLine={false} tick={axisTick} />
                       <YAxis type="category" dataKey="name" width={148} tickLine={false} axisLine={false} tick={axisTick} />
-                      <Tooltip content={<PackagesTooltip />} />
+                      <Tooltip content={<PackagesTooltip ui={ui} />} />
                       <Bar dataKey="bookings" fill="#3b82f6" radius={[0, 6, 6, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
               ) : (
                 <div className="h-80 rounded-xl border border-dashed border-[var(--border-color)] flex items-center justify-center text-[var(--muted-color)] text-sm">
-                  No package analytics available yet.
+                  {ui.noPackageAnalytics}
                 </div>
               )}
             </ChartCard>
@@ -561,10 +794,10 @@ function AdminDashboard() {
             <div className="mb-7">
               <div className="flex items-center gap-3 mb-2">
                 <span className="h-px w-6" style={{ background: 'linear-gradient(90deg, transparent, #c8a96b)' }} />
-                <p className="text-[0.60rem] font-bold uppercase tracking-[0.25em] text-primary">Admin Tools</p>
+                <p className="text-[0.60rem] font-bold uppercase tracking-[0.25em] text-primary">{ui.adminTools}</p>
                 <span className="h-px w-6" style={{ background: 'linear-gradient(90deg, #c8a96b, transparent)' }} />
               </div>
-              <h2 className="premium-heading text-2xl font-bold text-[var(--heading-color)]">Management Center</h2>
+              <h2 className="premium-heading text-2xl font-bold text-[var(--heading-color)]">{ui.managementCenter}</h2>
             </div>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -609,7 +842,7 @@ function AdminDashboard() {
 
                       <div className="flex items-center gap-1.5 text-xs font-bold opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0 transition-all duration-300"
                         style={{ color: section.accent }}>
-                        Open <ArrowRight size={11} />
+                        {ui.open} <ArrowRight size={11} />
                       </div>
                     </div>
                   </Link>

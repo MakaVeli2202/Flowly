@@ -119,17 +119,17 @@ function SkeletonNotif({ delay = '0s' }) {
 }
 
 /* ── NotifTypeBadge ─────────────────────────────────────────── */
-const TYPE_STYLES = {
-  BookingCreated:     { color: '#0ea5a0', label: 'New Booking'   },
-  BookingCancelled:   { color: '#ef4444', label: 'Cancellation'  },
-  BookingCompleted:   { color: '#22c55e', label: 'Completed'     },
-  PaymentReceived:    { color: '#c8a96b', label: 'Payment'       },
-  RescheduleRequest:  { color: '#f59e0b', label: 'Reschedule'    },
-  CancellationRequest:{ color: '#f97316', label: 'Cancel Req.'   },
-  WorkerAssigned:     { color: '#8b5cf6', label: 'Assignment'    },
-};
-function NotifTypeBadge({ type }) {
-  const style = TYPE_STYLES[type] || { color: '#94a3b8', label: type || 'Alert' };
+function NotifTypeBadge({ type, ui }) {
+  const typeStyles = {
+    BookingCreated:     { color: '#0ea5a0', label: ui.newBooking },
+    BookingCancelled:   { color: '#ef4444', label: ui.cancellation },
+    BookingCompleted:   { color: '#22c55e', label: ui.completed },
+    PaymentReceived:    { color: '#c8a96b', label: ui.payment },
+    RescheduleRequest:  { color: '#f59e0b', label: ui.reschedule },
+    CancellationRequest:{ color: '#f97316', label: ui.cancelReq },
+    WorkerAssigned:     { color: '#8b5cf6', label: ui.assignment },
+  };
+  const style = typeStyles[type] || { color: '#94a3b8', label: type || ui.alert };
   return (
     <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full"
       style={{ background: `${style.color}18`, border: `1px solid ${style.color}30`, color: style.color }}>
@@ -143,7 +143,70 @@ function NotifTypeBadge({ type }) {
    ADMIN NOTIFICATIONS
 ════════════════════════════════════════════════════════════ */
 function AdminNotifications() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+  const uiByLang = {
+    en: {
+      notifications: 'Notifications',
+      unread: 'unread',
+      subtitle: 'Saved admin alerts and booking activity',
+      markAllRead: 'Mark all read',
+      total: 'Total',
+      unreadLabel: 'Unread',
+      read: 'Read',
+      allClear: 'All Clear',
+      noNotifications: 'No notifications found.',
+      markRead: 'Mark read',
+      newBooking: 'New Booking',
+      cancellation: 'Cancellation',
+      completed: 'Completed',
+      payment: 'Payment',
+      reschedule: 'Reschedule',
+      cancelReq: 'Cancel Req.',
+      assignment: 'Assignment',
+      alert: 'Alert',
+    },
+    ar: {
+      notifications: 'الإشعارات',
+      unread: 'غير مقروء',
+      subtitle: 'تنبيهات المشرف ونشاط الحجوزات المحفوظ',
+      markAllRead: 'تعيين الكل كمقروء',
+      total: 'الإجمالي',
+      unreadLabel: 'غير مقروء',
+      read: 'مقروء',
+      allClear: 'لا توجد تنبيهات',
+      noNotifications: 'لم يتم العثور على إشعارات.',
+      markRead: 'تعيين كمقروء',
+      newBooking: 'حجز جديد',
+      cancellation: 'إلغاء',
+      completed: 'مكتمل',
+      payment: 'دفعة',
+      reschedule: 'إعادة جدولة',
+      cancelReq: 'طلب إلغاء',
+      assignment: 'تعيين',
+      alert: 'تنبيه',
+    },
+    de: {
+      notifications: 'Benachrichtigungen',
+      unread: 'ungelesen',
+      subtitle: 'Gespeicherte Admin-Hinweise und Buchungsaktivitat',
+      markAllRead: 'Alle als gelesen markieren',
+      total: 'Gesamt',
+      unreadLabel: 'Ungelesen',
+      read: 'Gelesen',
+      allClear: 'Alles klar',
+      noNotifications: 'Keine Benachrichtigungen gefunden.',
+      markRead: 'Als gelesen markieren',
+      newBooking: 'Neue Buchung',
+      cancellation: 'Stornierung',
+      completed: 'Abgeschlossen',
+      payment: 'Zahlung',
+      reschedule: 'Umplanung',
+      cancelReq: 'Stornoanfrage',
+      assignment: 'Zuweisung',
+      alert: 'Hinweis',
+    },
+  };
+  const ui = uiByLang[lang] || uiByLang.en;
   const [notifications, setNotifications] = useState([]);
   const [loading,       setLoading]       = useState(true);
 
@@ -199,16 +262,16 @@ function AdminNotifications() {
                     style={{ background: 'rgba(200,169,107,0.12)', border: '1px solid rgba(200,169,107,0.24)' }}>
                     <Bell size={16} style={{ color: '#c8a96b' }} />
                   </div>
-                  <h1 className="premium-heading text-4xl md:text-5xl font-bold text-[var(--heading-color)]">Notifications</h1>
+                  <h1 className="premium-heading text-4xl md:text-5xl font-bold text-[var(--heading-color)]">{ui.notifications}</h1>
                   {/* Live unread badge */}
                   {!loading && unreadCount > 0 && (
                     <span className="px-2.5 py-0.5 rounded-full text-xs font-black"
                       style={{ background: 'rgba(200,169,107,0.16)', border: '1px solid rgba(200,169,107,0.30)', color: '#c8a96b' }}>
-                      {unreadCount} unread
+                      {unreadCount} {ui.unread}
                     </span>
                   )}
                 </div>
-                <p className="text-sm text-[var(--muted-color)] ml-12">Saved admin alerts and booking activity</p>
+                <p className="text-sm text-[var(--muted-color)] ml-12">{ui.subtitle}</p>
               </div>
 
               {/* Mark all read — prism glow only when there are unread items */}
@@ -217,7 +280,7 @@ function AdminNotifications() {
                   disabled={loading || unreadCount === 0}
                   className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[var(--border-color)] text-sm font-bold text-[var(--text-color)] transition hover:bg-white/5 disabled:opacity-40 disabled:cursor-not-allowed">
                   <CheckCheck size={15} />
-                  Mark all read
+                  {ui.markAllRead}
                 </button>
               </div>
             </div>
@@ -230,9 +293,9 @@ function AdminNotifications() {
                 style={{ background: 'linear-gradient(90deg, transparent, #c8a96b 38%, #0ea5a0 62%, transparent)' }} />
               <div className="grid grid-cols-3 divide-x divide-[var(--border-color)]">
                 {[
-                  { label: 'Total',  value: notifications.length,                         color: 'text-[var(--heading-color)]' },
-                  { label: 'Unread', value: unreadCount,                                  color: 'text-primary'                },
-                  { label: 'Read',   value: notifications.length - unreadCount,            color: 'text-[var(--muted-color)]'  },
+                  { label: ui.total, value: notifications.length,                         color: 'text-[var(--heading-color)]' },
+                  { label: ui.unreadLabel, value: unreadCount,                            color: 'text-primary'                },
+                  { label: ui.read, value: notifications.length - unreadCount,            color: 'text-[var(--muted-color)]'  },
                 ].map(({ label, value, color }) => (
                   <div key={label} className="px-6 py-4">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)] mb-1">{label}</p>
@@ -269,8 +332,8 @@ function AdminNotifications() {
                     <BellOff size={28} className="bell-animate" style={{ color: '#c8a96b' }} />
                   </div>
                 </div>
-                <h2 className="premium-heading text-xl font-bold text-[var(--heading-color)] mb-1.5">All Clear</h2>
-                <p className="text-sm text-[var(--muted-color)]">No notifications found.</p>
+                  <h2 className="premium-heading text-xl font-bold text-[var(--heading-color)] mb-1.5">{ui.allClear}</h2>
+                  <p className="text-sm text-[var(--muted-color)]">{ui.noNotifications}</p>
               </div>
             )}
 
@@ -307,7 +370,7 @@ function AdminNotifications() {
                       <div className="flex-1 min-w-0">
                         {/* Type badge + unread dot */}
                         <div className="flex items-center gap-2.5 mb-2.5 flex-wrap">
-                          <NotifTypeBadge type={notif.type} />
+                          <NotifTypeBadge type={notif.type} ui={ui} />
                           {isUnread && (
                             <span className="w-1.5 h-1.5 rounded-full flex-shrink-0"
                               style={{ background: '#c8a96b', boxShadow: '0 0 6px rgba(200,169,107,0.65)' }} />
@@ -321,7 +384,7 @@ function AdminNotifications() {
 
                         {/* Timestamp */}
                         <p className="text-[11px] text-[var(--muted-color)]">
-                          {new Date(notif.createdAt).toLocaleString('en-US', {
+                          {new Date(notif.createdAt).toLocaleString(lang === 'ar' ? 'ar' : lang === 'de' ? 'de-DE' : 'en-US', {
                             month: 'short', day: 'numeric', year: 'numeric',
                             hour: '2-digit', minute: '2-digit',
                           })}
@@ -333,7 +396,7 @@ function AdminNotifications() {
                         <button type="button" onClick={() => handleMarkRead(notif.id)}
                           className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-[var(--border-color)] text-xs font-bold text-[var(--text-color)] hover:border-primary/40 hover:text-primary transition">
                           <CheckCheck size={12} />
-                          Mark read
+                          {ui.markRead}
                         </button>
                       )}
 

@@ -55,7 +55,7 @@ export function PackagesProvider({ children }) {
         return result;
       } catch {
         if (currentLangRef.current === lang) {
-          setError('Failed to load packages');
+          setError(i18n.t('packagesScreen.loadError'));
         }
         return packagesByLangRef.current[lang] || [];
       } finally {

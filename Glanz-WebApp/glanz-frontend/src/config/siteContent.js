@@ -213,6 +213,26 @@ const resolveNestedLocalizedValues = (input, lang) => {
   return result;
 };
 
+const mergeFeaturesByKey = (baseFeatures = [], overrideFeatures = []) => {
+  if (!Array.isArray(overrideFeatures) || overrideFeatures.length === 0) {
+    return baseFeatures;
+  }
+
+  const baseByKey = new Map(
+    (Array.isArray(baseFeatures) ? baseFeatures : [])
+      .filter((item) => item && item.key)
+      .map((item) => [item.key, item])
+  );
+
+  return overrideFeatures.map((item, index) => {
+    const fallback = (item?.key && baseByKey.get(item.key)) || baseFeatures[index] || {};
+    return {
+      ...fallback,
+      ...item,
+    };
+  });
+};
+
 const mergeContent = (defaults, overrides) => {
   return {
     ...defaults,
@@ -224,7 +244,10 @@ const mergeContent = (defaults, overrides) => {
     homePageContent: {
       ...defaults.homePageContent,
       ...overrides?.homePageContent,
-      features: overrides?.homePageContent?.features || defaults.homePageContent.features,
+      features: mergeFeaturesByKey(
+        defaults.homePageContent.features,
+        overrides?.homePageContent?.features
+      ),
     },
     packagesPageContent: {
       ...defaults.packagesPageContent,

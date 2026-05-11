@@ -22,6 +22,7 @@ import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { bookingsAPI } from '../api/bookings';
 import { authAPI } from '../api/auth';
 import { locationAPI } from '../api/location';
@@ -136,12 +137,13 @@ function RevenueTrendBar({ days = [], maxRevenue = 1 }) {
 
 // ─── Worker availability row ───────────────────────────────────────────────────
 function WorkerRow({ worker, isOnDuty }) {
+  const { t } = useTranslation();
   const color = isOnDuty ? '#C084FC' : '#22C55E';
   return (
     <View style={wr.row}>
       <View style={[wr.dot, { backgroundColor: color }]} />
       <Text style={wr.name} numberOfLines={1}>{worker.firstName} {worker.lastName}</Text>
-      <Text style={[wr.status, { color }]}>{isOnDuty ? 'On Job' : 'Available'}</Text>
+      <Text style={[wr.status, { color }]}>{isOnDuty ? t('adminDashboard.workers.onJob') : t('adminDashboard.workers.available')}</Text>
     </View>
   );
 }
@@ -151,6 +153,7 @@ function WorkerRow({ worker, isOnDuty }) {
 // ═══════════════════════════════════════════════════════════════════════════════
 export default function AdminDashboardScreen({ navigation }) {
   const insets = useSafeAreaInsets();
+  const { t, i18n } = useTranslation();
 
   const [bookings,        setBookings]        = useState([]);
   const [workers,         setWorkers]         = useState([]);
@@ -210,11 +213,11 @@ export default function AdminDashboardScreen({ navigation }) {
         const idx = prev.findIndex((w) => Number(w.workerId) === workerId);
         const next = {
           workerId,
-          workerName: prev[idx]?.workerName || `Worker #${workerId}`,
+          workerName: prev[idx]?.workerName || t('adminDashboard.workers.workerId', { id: workerId }),
           latitude,
           longitude,
           timestamp: payload?.timestamp || new Date().toISOString(),
-          status: payload?.status || prev[idx]?.status || 'Live',
+          status: payload?.status || prev[idx]?.status || t('adminDashboard.workers.live'),
           currentBooking: prev[idx]?.currentBooking || null,
         };
         if (idx === -1) return [...prev, next];
@@ -224,7 +227,7 @@ export default function AdminDashboardScreen({ navigation }) {
       });
     });
     return () => { unsub(); };
-  }, []);
+  }, [t]);
 
   // ── Derived data ─────────────────────────────────────────────────────────────
   const todayKey = useMemo(() => toLocalDateKey(new Date()), []);
@@ -254,10 +257,11 @@ export default function AdminDashboardScreen({ navigation }) {
       const rev = bookings
         .filter((b) => extractDateKey(b.scheduledDate) === key && b.status === 'Completed')
         .reduce((s, b) => s + Number(b.totalAmount || 0), 0);
-      days.push({ key, label: d.toLocaleDateString('en-US', { weekday: 'short' }).slice(0, 1), revenue: rev });
+      const locale = i18n.language?.startsWith('ar') ? 'ar' : i18n.language?.startsWith('de') ? 'de-DE' : 'en-US';
+      days.push({ key, label: d.toLocaleDateString(locale, { weekday: 'short' }).slice(0, 1), revenue: rev });
     }
     return days;
-  }, [bookings]);
+  }, [bookings, i18n.language]);
 
   const weekRevenue = useMemo(
     () => weeklyTrend.reduce((s, d) => s + d.revenue, 0),
@@ -290,9 +294,9 @@ export default function AdminDashboardScreen({ navigation }) {
         id: 'unassigned',
         type: 'warning',
         icon: 'person-outline',
-        title: `${unassigned.length} Unassigned Job${unassigned.length !== 1 ? 's' : ''} Today`,
+        title: t('adminDashboard.alerts.unassignedTitle', { count: unassigned.length }),
         body: unassigned.map((b) => b.bookingNumber || `#${b.id}`).slice(0, 3).join(', ') + (unassigned.length > 3 ? '…' : ''),
-        badge: 'Unassigned',
+        badge: t('adminDashboard.alerts.unassignedBadge'),
         raw: unassigned,
       });
     }
@@ -303,9 +307,9 @@ export default function AdminDashboardScreen({ navigation }) {
         id: 'cancellations',
         type: 'danger',
         icon: 'close-circle-outline',
-        title: `${cancellationRequests.length} Cancellation Request${cancellationRequests.length !== 1 ? 's' : ''}`,
+        title: t('adminDashboard.alerts.cancellationTitle', { count: cancellationRequests.length }),
         body: cancellationRequests.map((b) => b.customerName).slice(0, 2).join(', ') + (cancellationRequests.length > 2 ? '…' : ''),
-        badge: 'Action Needed',
+        badge: t('adminDashboard.alerts.actionNeededBadge'),
         raw: cancellationRequests,
       });
     }
@@ -316,9 +320,9 @@ export default function AdminDashboardScreen({ navigation }) {
         id: 'reschedules',
         type: 'info',
         icon: 'calendar-outline',
-        title: `${rescheduleRequests.length} Reschedule Request${rescheduleRequests.length !== 1 ? 's' : ''}`,
+        title: t('adminDashboard.alerts.rescheduleTitle', { count: rescheduleRequests.length }),
         body: rescheduleRequests.map((b) => b.customerName).slice(0, 2).join(', ') + (rescheduleRequests.length > 2 ? '…' : ''),
-        badge: 'Review',
+        badge: t('adminDashboard.alerts.reviewBadge'),
         raw: rescheduleRequests,
       });
     }
@@ -331,29 +335,29 @@ export default function AdminDashboardScreen({ navigation }) {
         id: 'payment',
         type: 'danger',
         icon: 'card-outline',
-        title: `${unpaidCompleted.length} Unpaid Completed Job${unpaidCompleted.length !== 1 ? 's' : ''}`,
-        body: 'Payment not collected for completed service',
-        badge: 'Payment Issue',
+        title: t('adminDashboard.alerts.unpaidCompletedTitle', { count: unpaidCompleted.length }),
+        body: t('adminDashboard.alerts.unpaidCompletedBody'),
+        badge: t('adminDashboard.alerts.paymentIssueBadge'),
         raw: unpaidCompleted,
       });
     }
 
     return list;
-  }, [bookings, todayBookings]);
+  }, [bookings, t, todayBookings]);
 
   // Quick actions
   const quickActions = useMemo(() => [
     {
       id: 'new-booking',
       icon: 'add-circle-outline',
-      label: 'New Booking',
+      label: t('adminDashboard.quickActions.newBooking'),
       primary: true,
       onPress: () => navigation.navigate('Create Booking'),
     },
     {
       id: 'today-dispatch',
       icon: 'radio-outline',
-      label: "Today's Jobs",
+      label: t('adminDashboard.quickActions.todaysJobs'),
       color: '#C084FC',
       badge: overview.active > 0 ? overview.active : undefined,
       onPress: () => navigation.navigate('Today Jobs'),
@@ -361,7 +365,7 @@ export default function AdminDashboardScreen({ navigation }) {
     {
       id: 'all-jobs',
       icon: 'briefcase-outline',
-      label: 'All Jobs',
+      label: t('adminDashboard.quickActions.allJobs'),
       color: '#60A5FA',
       badge: overview.pending > 0 ? overview.pending : undefined,
       onPress: () => navigation.navigate('All Jobs'),
@@ -369,37 +373,37 @@ export default function AdminDashboardScreen({ navigation }) {
     {
       id: 'workers',
       icon: 'people-outline',
-      label: 'Workers',
+      label: t('adminDashboard.quickActions.workers'),
       color: '#34D399',
       onPress: () => navigation.navigate('Worker Management'),
     },
     {
       id: 'reports',
       icon: 'bar-chart-outline',
-      label: 'Reports',
+      label: t('adminDashboard.quickActions.reports'),
       color: theme.colors.primary,
       onPress: () => navigation.navigate('Admin Reports'),
     },
     {
       id: 'notifications',
       icon: 'notifications-outline',
-      label: 'Notifications',
+      label: t('adminDashboard.quickActions.notifications'),
       color: '#FB923C',
       onPress: () => navigation.navigate('Admin Notifications'),
     },
-  ], [navigation, overview.active, overview.pending]);
+  ], [navigation, overview.active, overview.pending, t]);
 
   // Greeting
   const greeting = useMemo(() => {
     const h = new Date().getHours();
-    if (h < 12) return 'Good morning';
-    if (h < 17) return 'Good afternoon';
-    return 'Good evening';
-  }, []);
+    if (h < 12) return t('adminDashboard.greeting.morning');
+    if (h < 17) return t('adminDashboard.greeting.afternoon');
+    return t('adminDashboard.greeting.evening');
+  }, [t]);
 
   const dateLabel = useMemo(
-    () => new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }),
-    []
+    () => new Date().toLocaleDateString(i18n.language?.startsWith('ar') ? 'ar' : i18n.language?.startsWith('de') ? 'de-DE' : 'en-GB', { weekday: 'long', day: 'numeric', month: 'long' }),
+    [i18n.language]
   );
 
   const lastRefreshedLabel = lastRefreshed
@@ -411,7 +415,7 @@ export default function AdminDashboardScreen({ navigation }) {
     return (
       <View style={s.center}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
-        <Text style={s.loadingText}>Loading dashboard…</Text>
+        <Text style={s.loadingText}>{t('adminDashboard.loading')}</Text>
       </View>
     );
   }
@@ -433,7 +437,7 @@ export default function AdminDashboardScreen({ navigation }) {
           <View style={s.eyebrow}>
             <PulseDot color={overview.active > 0 ? '#C084FC' : '#22C55E'} />
             <Text style={s.eyebrowText}>
-              {overview.active > 0 ? `${overview.active} LIVE` : 'OPERATIONS CENTER'}
+              {overview.active > 0 ? t('adminDashboard.hero.liveCount', { count: overview.active }) : t('adminDashboard.hero.operationsCenter')}
             </Text>
           </View>
           <Text style={s.heroTitle}>{greeting}</Text>
@@ -490,37 +494,37 @@ export default function AdminDashboardScreen({ navigation }) {
         <View style={s.section}>
           <SectionHeader
             icon="today-outline"
-            title="Today's Overview"
-            sub={`${overview.total} booking${overview.total !== 1 ? 's' : ''} scheduled`}
+            title={t('adminDashboard.sections.todaysOverview')}
+            sub={t('adminDashboard.sections.scheduledBookings', { count: overview.total })}
           />
           {/* 2×2 KPI grid */}
           <View style={s.kpiGrid}>
             <StatsCard
               icon="calendar-outline"
-              label="Total Today"
+              label={t('adminDashboard.stats.totalToday')}
               value={overview.total}
               color={theme.colors.primary}
             />
             <StatsCard
               icon="flash-outline"
-              label="In Progress"
+              label={t('adminDashboard.stats.inProgress')}
               value={overview.active}
               color="#C084FC"
-              sub={overview.active > 0 ? 'Jobs running now' : 'None active'}
+              sub={overview.active > 0 ? t('adminDashboard.stats.jobsRunningNow') : t('adminDashboard.stats.noneActive')}
             />
             <StatsCard
               icon="hourglass-outline"
-              label="Pending"
+              label={t('adminDashboard.stats.pending')}
               value={overview.pending + overview.confirmed}
               color="#FBBF24"
-              sub={overview.pending > 0 ? `${overview.pending} unconfirmed` : 'All confirmed'}
+              sub={overview.pending > 0 ? t('adminDashboard.stats.unconfirmed', { count: overview.pending }) : t('adminDashboard.stats.allConfirmed')}
             />
             <StatsCard
               icon="checkmark-circle-outline"
-              label="Completed"
+              label={t('adminDashboard.stats.completed')}
               value={overview.completed}
               color="#84CC16"
-              sub={overview.cancelled > 0 ? `${overview.cancelled} cancelled` : undefined}
+              sub={overview.cancelled > 0 ? t('adminDashboard.stats.cancelled', { count: overview.cancelled }) : undefined}
             />
           </View>
         </View>
@@ -531,19 +535,19 @@ export default function AdminDashboardScreen({ navigation }) {
         <View style={s.section}>
           <SectionHeader
             icon="cash-outline"
-            title="Revenue"
-            sub="Completed bookings only"
+            title={t('adminDashboard.sections.revenue')}
+            sub={t('adminDashboard.sections.completedOnly')}
             color={theme.colors.primary}
           />
 
           {/* Today's revenue — full width large card */}
           <StatsCard
             icon="cash-outline"
-            label="Today's Revenue"
+            label={t('adminDashboard.stats.todaysRevenue')}
             value={formatQAR(overview.revenue)}
             color={theme.colors.primary}
             size="lg"
-            sub={`${overview.completed} job${overview.completed !== 1 ? 's' : ''} completed`}
+            sub={t('adminDashboard.stats.jobsCompleted', { count: overview.completed })}
           />
 
           {/* Weekly snapshot card */}
@@ -565,7 +569,7 @@ export default function AdminDashboardScreen({ navigation }) {
             />
             <View style={s.revenueWeekHeader}>
               <View style={{ flex: 1 }}>
-                <Text style={s.revenueWeekLabel}>Weekly Revenue</Text>
+                <Text style={s.revenueWeekLabel}>{t('adminDashboard.stats.weeklyRevenue')}</Text>
                 <Text style={s.revenueWeekValue}>{formatQAR(weekRevenue)}</Text>
               </View>
               {/* Summary from API if available */}
@@ -599,8 +603,8 @@ export default function AdminDashboardScreen({ navigation }) {
         <View style={s.section}>
           <SectionHeader
             icon="people-outline"
-            title="Operational Status"
-            sub={`${workers.filter((w) => w.isActive).length} active workers`}
+            title={t('adminDashboard.sections.operationalStatus')}
+            sub={t('adminDashboard.sections.activeWorkers', { count: workers.filter((w) => w.isActive).length })}
             color="#34D399"
           />
 
@@ -623,9 +627,9 @@ export default function AdminDashboardScreen({ navigation }) {
             {/* Worker counts strip */}
             <View style={s.opStripRow}>
               {[
-                { label: 'On Job',     value: activeWorkers.length,    color: '#C084FC' },
-                { label: 'Available',  value: availableWorkers.length, color: '#34D399' },
-                { label: 'Total',      value: workers.filter((w) => w.isActive).length, color: theme.colors.text },
+                { label: t('adminDashboard.workers.onJob'), value: activeWorkers.length, color: '#C084FC' },
+                { label: t('adminDashboard.workers.available'), value: availableWorkers.length, color: '#34D399' },
+                { label: t('adminDashboard.workers.total'), value: workers.filter((w) => w.isActive).length, color: theme.colors.text },
               ].map(({ label, value, color }, i, arr) => (
                 <React.Fragment key={label}>
                   <View style={s.opStripItem}>
@@ -653,7 +657,7 @@ export default function AdminDashboardScreen({ navigation }) {
                     activeOpacity={0.7}
                   >
                     <Text style={s.workerMoreText}>
-                      View all {workers.filter((w) => w.isActive).length} workers
+                      {t('adminDashboard.workers.viewAll', { count: workers.filter((w) => w.isActive).length })}
                     </Text>
                     <Ionicons name="chevron-forward" size={12} color={theme.colors.primary} />
                   </TouchableOpacity>
@@ -662,12 +666,12 @@ export default function AdminDashboardScreen({ navigation }) {
             )}
 
             {workers.filter((w) => w.isActive).length === 0 && (
-              <Text style={s.noWorkersText}>No active workers</Text>
+              <Text style={s.noWorkersText}>{t('adminDashboard.workers.noActiveWorkers')}</Text>
             )}
 
             {liveWorkers.length > 0 && (
               <View style={s.liveMapWrap}>
-                <Text style={s.liveMapTitle}>Live Detailer Map</Text>
+                <Text style={s.liveMapTitle}>{t('adminDashboard.workers.liveDetailerMap')}</Text>
                 <MapView
                   style={s.liveMap}
                   provider={PROVIDER_DEFAULT}
@@ -678,8 +682,8 @@ export default function AdminDashboardScreen({ navigation }) {
                     <Marker
                       key={String(w.workerId)}
                       coordinate={{ latitude: Number(w.latitude), longitude: Number(w.longitude) }}
-                      title={w.workerName || `Worker #${w.workerId}`}
-                      description={`${w.status || 'Live'} · ${new Date(w.timestamp).toLocaleTimeString()}`}
+                      title={w.workerName || t('adminDashboard.workers.workerId', { id: w.workerId })}
+                      description={`${w.status || t('adminDashboard.workers.live')} · ${new Date(w.timestamp).toLocaleTimeString()}`}
                     >
                       <View style={s.liveWorkerPinOuter}>
                         <View style={s.liveWorkerPinInner}>
@@ -701,8 +705,8 @@ export default function AdminDashboardScreen({ navigation }) {
           <View style={s.section}>
             <SectionHeader
               icon="warning-outline"
-              title="Alerts & Issues"
-              sub="Requires attention"
+              title={t('adminDashboard.sections.alertsIssues')}
+              sub={t('adminDashboard.sections.requiresAttention')}
               color={theme.colors.warning}
             />
             <AlertsPanel
@@ -728,8 +732,8 @@ export default function AdminDashboardScreen({ navigation }) {
               />
               <Ionicons name="checkmark-circle" size={22} color={theme.colors.success} />
               <View style={{ flex: 1 }}>
-                <Text style={s.allClearTitle}>All Clear</Text>
-                <Text style={s.allClearSub}>No unresolved issues right now</Text>
+                <Text style={s.allClearTitle}>{t('adminDashboard.alerts.allClearTitle')}</Text>
+                <Text style={s.allClearSub}>{t('adminDashboard.alerts.allClearSub')}</Text>
               </View>
             </View>
           </View>
@@ -741,7 +745,7 @@ export default function AdminDashboardScreen({ navigation }) {
         <View style={s.section}>
           <SectionHeader
             icon="flash-outline"
-            title="Quick Actions"
+            title={t('adminDashboard.sections.quickActions')}
             color={theme.colors.primary}
           />
           <ActionButtonPanel
@@ -757,8 +761,8 @@ export default function AdminDashboardScreen({ navigation }) {
           <View style={s.section}>
             <SectionHeader
               icon="pie-chart-outline"
-              title="Overall Status"
-              sub={`${bookings.length} total bookings`}
+              title={t('adminDashboard.sections.overallStatus')}
+              sub={t('adminDashboard.sections.totalBookings', { count: bookings.length })}
               color={theme.colors.textMuted}
             />
             <View style={s.statusCard}>

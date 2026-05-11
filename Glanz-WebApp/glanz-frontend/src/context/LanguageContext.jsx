@@ -35,8 +35,12 @@ const loadLocale = async (lang) => {
       ...flattenObject(navbar.default),
       ...flattenObject(notifications.default),
       ...flattenObject(bookings.default),
+      ...flattenObject(common.default, 'common'),
+      ...flattenObject(navbar.default, 'navbar'),
+      ...flattenObject(notifications.default, 'notifications'),
+      ...flattenObject(bookings.default, 'bookings'),
     };
-  } catch (e) {
+  } catch {
     console.warn(`Failed to load locale ${lang}, falling back to ${DEFAULT_LANGUAGE}`);
     if (lang !== DEFAULT_LANGUAGE) {
       return loadLocale(DEFAULT_LANGUAGE);
@@ -154,4 +158,9 @@ export const ADMIN_LABEL_KEYS = {
   Subscriptions: 'navbar.subscriptions',
   Reports: 'navbar.reports',
   Settings: 'common.settings',
+  Shifts: 'navbar.shifts',
+  SalesKit: 'navbar.salesKit',
+  Payroll: 'navbar.payroll',
+  LiveMap: 'navbar.liveMap',
+  DevSettings: 'navbar.devSettings',
 };

@@ -12,6 +12,69 @@ import { useLanguage } from '../../context/LanguageContext';
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
+const UI_BY_LANG = {
+  en: {
+    subtitle: 'Monthly salary overview and payment tracking for all active workers.',
+    totalPayroll: 'Total Payroll',
+    jobsDone: 'Jobs Done',
+    revenue: 'Revenue',
+    paid: 'Paid',
+    periodDesc: (month, year) => `${month} ${year} - click Pay Slip to view or download individual payslips.`,
+    noData: 'No payroll data for this period.',
+    noDataHint: 'Workers with completed bookings in this month will appear here.',
+    worker: 'Worker',
+    salary: 'Salary',
+    jobs: 'Jobs',
+    status: 'Status',
+    paySlip: 'Pay Slip',
+    notSet: 'Not set',
+    markPaid: 'Mark Paid',
+    salaryUnset: 'Salary unset',
+    total: 'Total',
+    paidSuffix: 'paid',
+  },
+  ar: {
+    subtitle: 'نظرة عامة شهرية على الرواتب وتتبع المدفوعات لجميع العاملين النشطين.',
+    totalPayroll: 'إجمالي الرواتب',
+    jobsDone: 'المهام المنجزة',
+    revenue: 'الإيرادات',
+    paid: 'مدفوع',
+    periodDesc: (month, year) => `${month} ${year} - اضغط على كشف الراتب للعرض أو التحميل.`,
+    noData: 'لا توجد بيانات رواتب لهذه الفترة.',
+    noDataHint: 'سيظهر العاملون الذين لديهم حجوزات مكتملة خلال هذا الشهر هنا.',
+    worker: 'العامل',
+    salary: 'الراتب',
+    jobs: 'المهام',
+    status: 'الحالة',
+    paySlip: 'كشف الراتب',
+    notSet: 'غير محدد',
+    markPaid: 'تحديد كمدفوع',
+    salaryUnset: 'الراتب غير محدد',
+    total: 'الإجمالي',
+    paidSuffix: 'مدفوع',
+  },
+  de: {
+    subtitle: 'Monatliche Gehaltsubersicht und Zahlungsverfolgung fur alle aktiven Mitarbeiter.',
+    totalPayroll: 'Gesamtlohn',
+    jobsDone: 'Erledigte Auftrage',
+    revenue: 'Umsatz',
+    paid: 'Bezahlt',
+    periodDesc: (month, year) => `${month} ${year} - klicken Sie auf Gehaltszettel zum Anzeigen oder Herunterladen.`,
+    noData: 'Keine Lohndaten fur diesen Zeitraum.',
+    noDataHint: 'Mitarbeiter mit abgeschlossenen Buchungen in diesem Monat erscheinen hier.',
+    worker: 'Mitarbeiter',
+    salary: 'Gehalt',
+    jobs: 'Auftrage',
+    status: 'Status',
+    paySlip: 'Gehaltszettel',
+    notSet: 'Nicht gesetzt',
+    markPaid: 'Als bezahlt markieren',
+    salaryUnset: 'Gehalt nicht gesetzt',
+    total: 'Gesamt',
+    paidSuffix: 'bezahlt',
+  },
+};
+
 const PRISM_CSS = `
 @keyframes holo-sweep{0%{background-position:0% 50%}100%{background-position:300% 50%}}
 @keyframes prism-ray-sweep{0%{transform:translateX(-130%) skewX(-15deg);opacity:0}10%{opacity:1}90%{opacity:1}100%{transform:translateX(460%) skewX(-15deg);opacity:0}}
@@ -47,7 +110,9 @@ function PrismaticCursorOrb() {
 
 export default function AdminPayroll() {
   const toast = useToast();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+  const localeKey = String(lang || '').startsWith('ar') ? 'ar' : String(lang || '').startsWith('de') ? 'de' : 'en';
+  const ui = UI_BY_LANG[localeKey] || UI_BY_LANG.en;
   const business = getBusiness();
   const [payroll,        setPayroll]        = useState([]);
   const [payrollMonth,   setPayrollMonth]   = useState(new Date().getMonth() + 1);
@@ -116,23 +181,23 @@ export default function AdminPayroll() {
               <span className="h-px w-7" style={{ background:'linear-gradient(90deg,#c8a96b,transparent)' }} />
             </div>
             <div className="flex items-center gap-3 mb-1.5">
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center"
-                style={{ background:'rgba(200,169,107,.12)', border:'1px solid rgba(200,169,107,.24)' }}>
-                <DollarSign size={16} style={{ color:'#c8a96b' }} />
-              </div>
-              <h1 className="premium-heading text-4xl md:text-5xl font-bold text-[var(--heading-color)]">Payroll</h1>
+               <div className="w-9 h-9 rounded-xl flex items-center justify-center"
+                 style={{ background:'rgba(200,169,107,.12)', border:'1px solid rgba(200,169,107,.24)' }}>
+                 <DollarSign size={16} style={{ color:'#c8a96b' }} />
+               </div>
+               <h1 className="premium-heading text-4xl md:text-5xl font-bold text-[var(--heading-color)]">{t('payroll')}</h1>
             </div>
-            <p className="text-sm text-[var(--muted-color)] ml-12">Monthly salary overview and payment tracking for all active workers.</p>
+            <p className="text-sm text-[var(--muted-color)] ml-12">{ui.subtitle}</p>
           </div>
 
           {/* ── Stats row ── */}
           {payroll.length > 0 && (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {[
-                { label:'Total Payroll',  value:`QAR ${totalSalary.toLocaleString()}`,  color:'#c8a96b' },
-                { label:'Jobs Done',      value:totalJobs,                               color:'#6366f1' },
-                { label:'Revenue',        value:`QAR ${totalRevenue.toLocaleString()}`,  color:'#22c55e' },
-                { label:'Paid',           value:`${paidCount}/${payroll.length}`,        color: paidCount === payroll.length ? '#22c55e' : '#fbbf24' },
+                { label:ui.totalPayroll,  value:`QAR ${totalSalary.toLocaleString()}`,  color:'#c8a96b' },
+                { label:ui.jobsDone,      value:totalJobs,                               color:'#6366f1' },
+                { label:ui.revenue,       value:`QAR ${totalRevenue.toLocaleString()}`,  color:'#22c55e' },
+                { label:ui.paid,          value:`${paidCount}/${payroll.length}`,        color: paidCount === payroll.length ? '#22c55e' : '#fbbf24' },
               ].map(s => (
                 <div key={s.label} className="glass-card p-4 card-stagger">
                   <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)] mb-1">{s.label}</p>
@@ -152,13 +217,13 @@ export default function AdminPayroll() {
 
             <div className="p-7">
               <div className="flex flex-wrap items-center justify-between gap-4 mb-2">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center"
-                    style={{ background:'rgba(200,169,107,.12)', border:'1px solid rgba(200,169,107,.24)' }}>
-                    <Users size={14} style={{ color:'#c8a96b' }} />
-                  </div>
-                  <h2 className="premium-heading text-xl font-bold text-[var(--heading-color)]">Payroll Summary</h2>
-                </div>
+                   <div className="flex items-center gap-3">
+                     <div className="w-8 h-8 rounded-lg flex items-center justify-center"
+                       style={{ background:'rgba(200,169,107,.12)', border:'1px solid rgba(200,169,107,.24)' }}>
+                       <Users size={14} style={{ color:'#c8a96b' }} />
+                     </div>
+                     <h2 className="premium-heading text-xl font-bold text-[var(--heading-color)]">{t('payrollSummary')}</h2>
+                   </div>
                 <div className="flex items-center gap-2">
                   <select value={payrollMonth} onChange={e => setPayrollMonth(Number(e.target.value))}
                     className="px-3 py-1.5 rounded-xl border border-[var(--border-color)] bg-[var(--surface-bg)] text-[var(--text-color)] text-xs font-bold focus:outline-none">
@@ -169,9 +234,7 @@ export default function AdminPayroll() {
                     className="w-20 px-3 py-1.5 rounded-xl border border-[var(--border-color)] bg-[var(--surface-bg)] text-[var(--text-color)] text-xs font-bold focus:outline-none" />
                 </div>
               </div>
-              <p className="text-sm text-[var(--muted-color)] mb-5 ml-11">
-                {MONTHS[payrollMonth-1]} {payrollYear} — click Pay Slip to view or download individual payslips.
-              </p>
+                <p className="text-sm text-[var(--muted-color)] mb-5 ml-11">{ui.periodDesc(MONTHS[payrollMonth-1], payrollYear)}</p>
               <div className="mb-5"><div className="spectrum-line" /></div>
 
               {payrollLoading ? (
@@ -180,20 +243,20 @@ export default function AdminPayroll() {
                 </div>
               ) : payroll.length === 0 ? (
                 <div className="text-center py-10">
-                  <p className="text-[var(--muted-color)] text-sm">No payroll data for this period.</p>
-                  <p className="text-[var(--muted-color)] text-xs mt-1">Workers with completed bookings in this month will appear here.</p>
+                  <p className="text-[var(--muted-color)] text-sm">{ui.noData}</p>
+                  <p className="text-[var(--muted-color)] text-xs mt-1">{ui.noDataHint}</p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-[var(--border-color)]">
-                        <th className="px-3 py-2.5 text-left text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)]">Worker</th>
-                        <th className="px-3 py-2.5 text-left text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)]">Salary</th>
-                        <th className="px-3 py-2.5 text-left text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)]">Jobs</th>
-                        <th className="px-3 py-2.5 text-left text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)]">Revenue</th>
-                        <th className="px-3 py-2.5 text-left text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)]">Status</th>
-                        <th className="px-3 py-2.5 text-left text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)]">Pay Slip</th>
+                        <th className="px-3 py-2.5 text-left text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)]">{ui.worker}</th>
+                        <th className="px-3 py-2.5 text-left text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)]">{ui.salary}</th>
+                        <th className="px-3 py-2.5 text-left text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)]">{ui.jobs}</th>
+                        <th className="px-3 py-2.5 text-left text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)]">{ui.revenue}</th>
+                        <th className="px-3 py-2.5 text-left text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)]">{ui.status}</th>
+                        <th className="px-3 py-2.5 text-left text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)]">{ui.paySlip}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[var(--border-color)]">
@@ -203,7 +266,7 @@ export default function AdminPayroll() {
                           <td className="px-3 py-3 font-black text-primary">
                             {p.monthlySalary != null
                               ? `QAR ${p.monthlySalary.toLocaleString()}`
-                              : <span className="text-[var(--muted-color)] font-normal italic text-xs">Not set</span>}
+                              : <span className="text-[var(--muted-color)] font-normal italic text-xs">{ui.notSet}</span>}
                           </td>
                           <td className="px-3 py-3 text-[var(--text-color)]">{p.jobsCompleted}</td>
                           <td className="px-3 py-3 text-green-400 font-bold">QAR {(p.totalRevenue ?? 0).toLocaleString()}</td>
@@ -219,12 +282,12 @@ export default function AdminPayroll() {
                                 onClick={() => handleMarkPaid(p)}
                                 className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold border transition hover:opacity-80 disabled:opacity-50"
                                 style={{ background:'rgba(245,158,11,.10)', borderColor:'rgba(245,158,11,.28)', color:'#fbbf24' }}>
-                                {payrollMarking === p.workerId ? '…' : <><Clock size={10} /> Mark Paid</>}
+                                {payrollMarking === p.workerId ? '…' : <><Clock size={10} /> {ui.markPaid}</>}
                               </button>
                             ) : (
                               <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold"
                                 style={{ background:'rgba(148,163,184,.10)', border:'1px solid rgba(148,163,184,.28)', color:'#94a3b8' }}>
-                                Salary unset
+                                {ui.salaryUnset}
                               </span>
                             )}
                           </td>
@@ -233,7 +296,7 @@ export default function AdminPayroll() {
                               onClick={() => setDetailsModal({ open:true, worker:p })}
                               className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold border transition hover:bg-white/5"
                               style={{ borderColor:'rgba(200,169,107,.40)', color:'#c8a96b' }}>
-                              <FileText size={10} /> Pay Slip
+                              <FileText size={10} /> {ui.paySlip}
                             </button>
                           </td>
                         </tr>
@@ -241,13 +304,13 @@ export default function AdminPayroll() {
                     </tbody>
                     <tfoot>
                       <tr className="border-t-2 border-[var(--border-color)]">
-                        <td className="px-3 py-3 text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)]">Total</td>
+                          <td className="px-3 py-3 text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)]">{ui.total}</td>
                         <td className="px-3 py-3 font-black text-primary">QAR {totalSalary.toLocaleString()}</td>
                         <td className="px-3 py-3 font-bold text-[var(--text-color)]">{totalJobs}</td>
                         <td className="px-3 py-3 font-bold text-green-400">QAR {totalRevenue.toLocaleString()}</td>
                         <td className="px-3 py-3">
                           <span className="text-[10px] font-bold" style={{ color: paidCount === payroll.length ? '#22c55e' : '#fbbf24' }}>
-                            {paidCount}/{payroll.length} paid
+                            {paidCount}/{payroll.length} {ui.paidSuffix}
                           </span>
                         </td>
                         <td />

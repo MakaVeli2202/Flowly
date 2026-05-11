@@ -57,6 +57,11 @@ function BookingForm({ stripe, elements, isStripeMode }) {
   const [availabilityByDate, setAvailabilityByDate] = useState({});
   const [myCoupons,          setMyCoupons]          = useState([]);
 
+  const normalizeSelectedPackage = useCallback((value) => {
+    const packageId = value?.packageId ?? value?.id ?? null;
+    return packageId ? { packageId } : null;
+  }, []);
+
   const bookingTopRef = useRef(null);
   const initialized   = useRef(false);
 
@@ -95,18 +100,18 @@ function BookingForm({ stripe, elements, isStripeMode }) {
   const currentVehicleMultiplier = settings.vehicleMultipliers[formData.vehicleType] ?? 1.0;
 
   // ── Derived totals ────────────────────────────────────────────────────
-  const totalDuration = useMemo(() =>
-    selectedPackages.reduce((sum, item) => {
-      const pkg = packages.find((p) => p.id === item.packageId);
-      return sum + (pkg?.estimatedDurationMinutes || 0);
-    }, 0),
-  [packages, selectedPackages]);
+  const totalDuration = useMemo(() => {
+    const selectedPackageId = selectedPackages[0]?.packageId;
+    if (!selectedPackageId) return 0;
+    const pkg = packages.find((p) => p.id === selectedPackageId);
+    return pkg?.estimatedDurationMinutes || 0;
+  }, [packages, selectedPackages]);
 
   const calculateTotal = useCallback(() => {
-    const base = selectedPackages.reduce((sum, item) => {
-      const pkg = packages.find((p) => p.id === item.packageId);
-      return sum + Math.round(((pkg?.price || 0) * currentVehicleMultiplier) * 100) / 100;
-    }, 0);
+    const selectedPackageId = selectedPackages[0]?.packageId;
+    if (!selectedPackageId) return 0;
+    const pkg = packages.find((p) => p.id === selectedPackageId);
+    const base = Math.round(((pkg?.price || 0) * currentVehicleMultiplier) * 100) / 100;
     if (mySubscription?.isActive && mySubscription.discountPercent > 0) {
       return Math.round(base * (1 - mySubscription.discountPercent / 100) * 100) / 100;
     }
@@ -125,13 +130,16 @@ function BookingForm({ stripe, elements, isStripeMode }) {
     initialized.current = true;
     fetchPackagesCtx(lang).then((data) => {
       if (Array.isArray(data) && data.length > 0) {
-        setSelectedPackages((prev) => (prev.length > 0 ? prev : [{ packageId: data[0].id, quantity: 1 }]));
+        setSelectedPackages((prev) => (prev.length > 0 ? prev : [{ packageId: data[0].id }]));
       }
     });
     const preSelected       = location.state?.selectedPackage;
     const rebookFromBooking = location.state?.rebookFromBooking;
     if (rebookFromBooking?.packages?.length) {
-      setSelectedPackages([rebookFromBooking.packages[0]]);
+      const normalizedRebookPackage = normalizeSelectedPackage(rebookFromBooking.packages[0]);
+      if (normalizedRebookPackage) {
+        setSelectedPackages([normalizedRebookPackage]);
+      }
       setFormData((prev) => ({
         ...prev,
         customerAddress:     rebookFromBooking.customerAddress     || prev.customerAddress,
@@ -143,8 +151,13 @@ function BookingForm({ stripe, elements, isStripeMode }) {
         specialInstructions: rebookFromBooking.specialInstructions || prev.specialInstructions,
       }));
     }
-    if (preSelected) setSelectedPackages([{ packageId: preSelected.id, quantity: 1 }]);
-  }, [location, fetchPackagesCtx, lang]);
+    if (preSelected) {
+      const normalizedPreSelectedPackage = normalizeSelectedPackage(preSelected);
+      if (normalizedPreSelectedPackage) {
+        setSelectedPackages([normalizedPreSelectedPackage]);
+      }
+    }
+  }, [location, fetchPackagesCtx, lang, normalizeSelectedPackage]);
 
   useEffect(() => {
     fetchPackagesCtx(lang);
@@ -235,8 +248,9 @@ function BookingForm({ stripe, elements, isStripeMode }) {
     setQuoteLoading(true);
     const timer = setTimeout(async () => {
       try {
+        const selectedPackage = selectedPackages[0];
         const q = await bookingsAPI.getQuote({
-          packages:               selectedPackages,
+          packages:               selectedPackage ? [{ packageId: selectedPackage.packageId }] : [],
           vehicleType:            formData.vehicleType,
           customerSubscriptionId: (mySubscription?.isActive || mySubscription?.status === 'Active')
             ? (mySubscription?.id ?? null)
@@ -319,7 +333,7 @@ function BookingForm({ stripe, elements, isStripeMode }) {
         specialInstructions:    formData.specialInstructions || null,
         leadSource:             formData.leadSource || 'Direct',
         leadSourceDetails:      formData.leadSourceDetails || null,
-        packages:               selectedPackages,
+        packages:               selectedPackages[0] ? [{ packageId: selectedPackages[0].packageId }] : [],
         customerSubscriptionId: (mySubscription?.isActive || mySubscription?.status === 'Active')
           ? (mySubscription.id ?? null)
           : null,

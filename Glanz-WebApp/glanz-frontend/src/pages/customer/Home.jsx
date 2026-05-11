@@ -721,49 +721,150 @@ const MARQUEE_ITEMS = [
   'Odor Elimination','Upholstery Treatment','Glass Sealing',
 ];
 const featureIcons  = { Star, Shield, Clock, Award };
-const SERVICE_AREAS_DEFAULT = ['Doha','Al Rayyan','Al Wakrah','Lusail','Al Khor','Dukhan','Al Shahaniya'];
-const CARD_ACCENTS  = ['#c8a96b','#0ea5a0'];
-const SERVICE_HIGHLIGHTS = [
-  {
-    title: 'Exterior Care That Speaks for Itself',
-    description: 'Your paintwork is the first thing anyone sees. We protect it with precision — from wash and decontamination to machine correction and ceramic coating. Every step is calibrated to the condition of your finish and the demands of Qatar\'s climate.',
-    features: ['Premium Wash & Hand Wax','Clay Bar & Paint Decontamination','Machine Polish & Paint Correction','Headlight Restoration','Engine Bay Cleaning','Ceramic Coating & PPF'],
-    cta: 'Book Now', link: '/booking',
-  },
-  {
-    title: 'An Interior Worthy of the Drive',
-    description: 'The inside of your car deserves the same attention as the outside. We restore, protect, and refresh every surface — leaving you with a cabin that feels as clean and considered as the day you first sat in it.',
-    features: ['Full Interior Deep Clean','Seat & Upholstery Treatment','Stain & Spot Removal','Odor Elimination','Dashboard & Panel Detailing','Interior Ceramic Coating'],
-    cta: 'Book Now', link: '/booking',
-  },
-];
-const BRAND_VALUE = {
-  title: "We Come to You. We Don't Cut Corners.",
-  description: "Other shops make you drive there, drop your car, and hope for the best. We schedule around your life, arrive fully equipped at your home or office, and work with the same precision whether it's a daily driver or a weekend supercar. Every vehicle leaves looking exactly how it should.",
+const SERVICE_AREAS_DEFAULT_BY_LANG = {
+  en: ['Doha', 'Al Rayyan', 'Al Wakrah', 'Lusail', 'Al Khor', 'Dukhan', 'Al Shahaniya'],
+  ar: ['الدوحة', 'الريان', 'الوكرة', 'لوسيل', 'الخور', 'دخان', 'الشحانية'],
+  de: ['Doha', 'Ar-Rayyan', 'Al-Wakra', 'Lusail', 'Al-Khor', 'Dukhan', 'Asch-Schahaniyya'],
 };
-const HOW_IT_WORKS = [
-  {
-    step: '01',
-    Icon: CalendarDays,
-    title: 'Book in Minutes',
-    description: 'Choose your service, pick a date and time that suits your schedule, and confirm your location anywhere in Qatar.',
-    accent: '#c8a96b',
+const SERVICE_AREA_LABELS = {
+  Doha: { ar: 'الدوحة', de: 'Doha' },
+  'Al Rayyan': { ar: 'الريان', de: 'Ar-Rayyan' },
+  'Al Wakrah': { ar: 'الوكرة', de: 'Al-Wakra' },
+  Lusail: { ar: 'لوسيل', de: 'Lusail' },
+  'Al Khor': { ar: 'الخور', de: 'Al-Khor' },
+  Dukhan: { ar: 'دخان', de: 'Dukhan' },
+  'Al Shahaniya': { ar: 'الشحانية', de: 'Asch-Schahaniyya' },
+};
+const CARD_ACCENTS  = ['#c8a96b','#0ea5a0'];
+const SERVICE_HIGHLIGHTS_BY_LANG = {
+  en: [
+    {
+      title: 'Exterior Care That Speaks for Itself',
+      description: 'Your paintwork is the first thing anyone sees. We protect it with precision from wash and decontamination to machine correction and ceramic coating. Every step is calibrated to your finish and Qatar\'s climate.',
+      features: ['Premium Wash & Hand Wax', 'Clay Bar & Paint Decontamination', 'Machine Polish & Paint Correction', 'Headlight Restoration', 'Engine Bay Cleaning', 'Ceramic Coating & PPF'],
+      cta: 'Book Now', link: '/booking',
+    },
+    {
+      title: 'An Interior Worthy of the Drive',
+      description: 'The inside of your car deserves the same attention as the outside. We restore, protect, and refresh every surface for a clean, premium cabin feel.',
+      features: ['Full Interior Deep Clean', 'Seat & Upholstery Treatment', 'Stain & Spot Removal', 'Odor Elimination', 'Dashboard & Panel Detailing', 'Interior Ceramic Coating'],
+      cta: 'Book Now', link: '/booking',
+    },
+  ],
+  ar: [
+    {
+      title: 'عناية خارجية تترك انطباعا فوريا',
+      description: 'المظهر الخارجي هو اول ما يلاحظه الجميع. نحمي الطلاء بدقة من الغسيل العميق وازالة الملوثات حتى التصحيح والتغليف الخزفي بما يناسب مناخ قطر.',
+      features: ['غسيل فاخر مع شمع يدوي', 'تنظيف الطلاء بالطين', 'تلميع وتصحيح الطلاء', 'استعادة المصابيح الامامية', 'تنظيف حجرة المحرك', 'تغليف خزفي وحماية الطلاء'],
+      cta: 'احجز الآن', link: '/booking',
+    },
+    {
+      title: 'مقصورة داخلية بمستوى راق',
+      description: 'المقصورة الداخلية تستحق نفس الاهتمام. نقوم بالتنظيف العميق والحماية والإنعاش لكل الاسطح لتجربة قيادة نظيفة ومريحة.',
+      features: ['تنظيف داخلي عميق كامل', 'العناية بالمقاعد والمفروشات', 'ازالة البقع', 'إزالة الروائح', 'تفصيل التابلوه واللوحات', 'حماية خزفية داخلية'],
+      cta: 'احجز الآن', link: '/booking',
+    },
+  ],
+  de: [
+    {
+      title: 'Aussenpflege, die sofort auffaellt',
+      description: 'Der Lack ist das Erste, was man sieht. Wir schuetzen ihn praezise von Waesche und Dekontamination bis zur Lackkorrektur und Keramikversiegelung fuer das Klima in Katar.',
+      features: ['Premium-Waesche und Handwachs', 'Lackdekontamination mit Knete', 'Maschinenpolitur und Lackkorrektur', 'Scheinwerfer-Aufbereitung', 'Motorraumreinigung', 'Keramikversiegelung und PPF'],
+      cta: 'Jetzt buchen', link: '/booking',
+    },
+    {
+      title: 'Innenraum auf Premium-Niveau',
+      description: 'Der Innenraum verdient dieselbe Sorgfalt wie das Exterieur. Wir reinigen, schuetzen und frischen jede Flaeche auf fuer ein hochwertiges Fahrerlebnis.',
+      features: ['Komplette Innenreinigung', 'Sitz- und Polsterpflege', 'Fleckenentfernung', 'Geruchsbeseitigung', 'Cockpit- und Panel-Detailing', 'Innenraum-Keramikschutz'],
+      cta: 'Jetzt buchen', link: '/booking',
+    },
+  ],
+};
+const BRAND_VALUE_BY_LANG = {
+  en: {
+    title: "We Come to You. We Don't Cut Corners.",
+    description: "Other shops make you drive there, drop your car, and hope for the best. We schedule around your life, arrive fully equipped at your home or office, and work with the same precision whether it's a daily driver or a weekend supercar. Every vehicle leaves looking exactly how it should.",
   },
-  {
-    step: '02',
-    Icon: Car,
-    title: 'We Arrive Equipped',
-    description: 'Our team shows up fully loaded — professional tools, premium products, and everything needed to deliver a flawless result.',
-    accent: '#0ea5a0',
+  ar: {
+    title: 'نصل إليك أينما كنت. والجودة ليست محل تفاوض.',
+    description: 'ورش كثيرة تطلب منك القيادة والانتظار. نحن نرتب المواعيد حسب وقتك، ونصل إلى منزلك أو مقر عملك بكامل المعدات، وننفذ الخدمة بنفس الدقة لكل سيارة، من الاستخدام اليومي حتى السيارات الفاخرة.',
   },
-  {
-    step: '03',
-    Icon: Sparkles,
-    title: 'Drive in Brilliance',
-    description: 'Collect your keys and experience a finish that turns heads. No queues. No drop-offs. No compromise.',
-    accent: '#c8a96b',
+  de: {
+    title: 'Wir kommen zu Ihnen. Ohne Kompromisse bei der Qualitaet.',
+    description: 'Andere Anbieter verlangen Anfahrt und Wartezeit. Wir richten uns nach Ihrem Termin, kommen voll ausgestattet zu Ihnen und arbeiten mit derselben Praezision bei jedem Fahrzeug.',
   },
-];
+};
+const HOW_IT_WORKS_BY_LANG = {
+  en: [
+    {
+      step: '01',
+      Icon: CalendarDays,
+      title: 'Book in Minutes',
+      description: 'Choose your service, pick a date and time that suits your schedule, and confirm your location anywhere in Qatar.',
+      accent: '#c8a96b',
+    },
+    {
+      step: '02',
+      Icon: Car,
+      title: 'We Arrive Equipped',
+      description: 'Our team shows up fully loaded with professional tools, premium products, and everything needed to deliver a flawless result.',
+      accent: '#0ea5a0',
+    },
+    {
+      step: '03',
+      Icon: Sparkles,
+      title: 'Drive in Brilliance',
+      description: 'Collect your keys and experience a finish that turns heads. No queues. No drop-offs. No compromise.',
+      accent: '#c8a96b',
+    },
+  ],
+  ar: [
+    {
+      step: '01',
+      Icon: CalendarDays,
+      title: 'احجز خلال دقائق',
+      description: 'اختر الخدمة المناسبة، وحدد اليوم والوقت المناسبين لك، ثم أكد موقعك في أي منطقة داخل قطر.',
+      accent: '#c8a96b',
+    },
+    {
+      step: '02',
+      Icon: Car,
+      title: 'نصل إليك مجهزين بالكامل',
+      description: 'فريقنا يصل بكل المعدات والمواد الاحترافية اللازمة لتنفيذ خدمة دقيقة بنتيجة ممتازة.',
+      accent: '#0ea5a0',
+    },
+    {
+      step: '03',
+      Icon: Sparkles,
+      title: 'استلم سيارتك بأفضل مظهر',
+      description: 'استلم المفاتيح واستمتع بنتيجة تبرز سيارتك. بدون طوابير، بدون تسليم السيارة في الورشة، وبدون تنازلات.',
+      accent: '#c8a96b',
+    },
+  ],
+  de: [
+    {
+      step: '01',
+      Icon: CalendarDays,
+      title: 'In Minuten buchen',
+      description: 'Waehlen Sie Ihre Leistung, den passenden Termin und bestaetigen Sie Ihren Standort in Katar.',
+      accent: '#c8a96b',
+    },
+    {
+      step: '02',
+      Icon: Car,
+      title: 'Wir kommen voll ausgestattet',
+      description: 'Unser Team erscheint mit professionellen Werkzeugen und Premium-Produkten fuer ein makelloses Ergebnis.',
+      accent: '#0ea5a0',
+    },
+    {
+      step: '03',
+      Icon: Sparkles,
+      title: 'Fahren mit Glanz',
+      description: 'Nehmen Sie Ihre Schluessel entgegen und geniessen Sie ein Ergebnis, das auffaellt. Ohne Wartezeiten und ohne Kompromisse.',
+      accent: '#c8a96b',
+    },
+  ],
+};
 const DOTS = [
   { top: '12%', left: '8%',   size: 3, color: 'rgba(200,169,107,0.5)',  anim: 'floatA', delay: '0s'   },
   { top: '70%', left: '5%',   size: 2, color: 'rgba(14,165,160,0.4)',   anim: 'floatB', delay: '1s'   },
@@ -791,6 +892,21 @@ const HOME_UI_BY_LANG = {
     viewAllDetails: 'View all details',
     whatsIncluded: "What's Included",
     bookNow: 'Book Now',
+    howItWorksLabel: 'The Process',
+    howItWorksTitle: 'How It Works',
+    howItWorksDescription: 'Three steps. Zero hassle. A finish that speaks for itself.',
+    serviceAreasTitle: 'We Come to You. Anywhere in Qatar.',
+    serviceAreasDescription: 'Professional mobile detailing across every major district.',
+    heroRating: 'Rating',
+    heroHappyClients: 'Happy Clients',
+    heroMobileService: 'Mobile Service · Qatar',
+    heroScroll: 'Scroll',
+    statsHappyClients: 'Happy Clients',
+    statsCarsDetailed: 'Cars Detailed',
+    statsAverageRating: 'Average Rating',
+    statsYearsExcellence: 'Years of Excellence',
+    featuresLabel: 'Why Choose Us',
+    featuresTitle: 'Crafted for Perfection',
   },
   ar: {
     ourServices: 'خدماتنا',
@@ -802,6 +918,21 @@ const HOME_UI_BY_LANG = {
     viewAllDetails: 'عرض كل التفاصيل',
     whatsIncluded: 'ما الذي تتضمنه الخدمة',
     bookNow: 'احجز الآن',
+    howItWorksLabel: 'الآلية',
+    howItWorksTitle: 'كيف تعمل الخدمة',
+    howItWorksDescription: 'ثلاث خطوات فقط. بدون تعقيد. ونتيجة تتحدث عن نفسها.',
+    serviceAreasTitle: 'نصل إليك في أي مكان داخل قطر.',
+    serviceAreasDescription: 'خدمة تفصيل متنقلة احترافية في جميع المناطق الرئيسية.',
+    heroRating: 'تقييم',
+    heroHappyClients: 'عميل سعيد',
+    heroMobileService: 'خدمة متنقلة · قطر',
+    heroScroll: 'مرر',
+    statsHappyClients: 'عميل سعيد',
+    statsCarsDetailed: 'سيارة تم خدمتها',
+    statsAverageRating: 'متوسط التقييم',
+    statsYearsExcellence: 'سنوات من التميز',
+    featuresLabel: 'لماذا تختارنا',
+    featuresTitle: 'مصمم للإتقان',
   },
   de: {
     ourServices: 'Unsere Services',
@@ -813,10 +944,37 @@ const HOME_UI_BY_LANG = {
     viewAllDetails: 'Alle Details anzeigen',
     whatsIncluded: 'Was enthalten ist',
     bookNow: 'Jetzt buchen',
+    howItWorksLabel: 'Ablauf',
+    howItWorksTitle: 'So funktioniert es',
+    howItWorksDescription: 'Drei Schritte. Kein Aufwand. Ein Ergebnis, das fuer sich spricht.',
+    serviceAreasTitle: 'Wir kommen zu Ihnen. Ueberall in Katar.',
+    serviceAreasDescription: 'Professionelle mobile Fahrzeugpflege in allen wichtigen Gebieten.',
+    heroRating: 'Bewertung',
+    heroHappyClients: 'Zufriedene Kunden',
+    heroMobileService: 'Mobiler Service · Katar',
+    heroScroll: 'Scrollen',
+    statsHappyClients: 'Zufriedene Kunden',
+    statsCarsDetailed: 'Fahrzeuge aufbereitet',
+    statsAverageRating: 'Durchschnittsbewertung',
+    statsYearsExcellence: 'Jahre Exzellenz',
+    featuresLabel: 'Warum wir',
+    featuresTitle: 'Fuer Perfektion gemacht',
   },
 };
 
 const normalizeLangCode = (lang) => (lang || 'en').toLowerCase().split('-')[0];
+
+const getDefaultServiceAreasForLang = (lang) => {
+  const normalizedLang = normalizeLangCode(lang);
+  return SERVICE_AREAS_DEFAULT_BY_LANG[normalizedLang] || SERVICE_AREAS_DEFAULT_BY_LANG.en;
+};
+
+const localizeServiceArea = (area, lang) => {
+  const normalizedLang = normalizeLangCode(lang);
+  if (normalizedLang === 'en') return area;
+  const mapped = SERVICE_AREA_LABELS[area]?.[normalizedLang];
+  return mapped || area;
+};
 
 const pickLocalizedField = (item, baseKey, lang) => {
   if (!item || typeof item !== 'object') return '';
@@ -860,7 +1018,11 @@ const pickLocalizedField = (item, baseKey, lang) => {
 ════════════════════════════════════════════════════════════ */
 function Home() {
   const { lang } = useLanguage();
-  const ui = HOME_UI_BY_LANG[normalizeLangCode(lang)] || HOME_UI_BY_LANG.en;
+  const normalizedLang = normalizeLangCode(lang);
+  const ui = HOME_UI_BY_LANG[normalizedLang] || HOME_UI_BY_LANG.en;
+  const fallbackServiceHighlights = SERVICE_HIGHLIGHTS_BY_LANG[normalizedLang] || SERVICE_HIGHLIGHTS_BY_LANG.en;
+  const howItWorks = HOW_IT_WORKS_BY_LANG[normalizedLang] || HOW_IT_WORKS_BY_LANG.en;
+  const brandValue = BRAND_VALUE_BY_LANG[normalizedLang] || BRAND_VALUE_BY_LANG.en;
   const { homePageContent } = getSiteContent(lang);
   const { isAdmin } = useAuth();
   const navigate = useNavigate();
@@ -877,7 +1039,7 @@ function Home() {
   const [reviews, setReviews]                       = useState([]);
   const [packages, setPackages]                     = useState([]);
   const [services, setServices]                     = useState([]);
-  const [serviceAreas, setServiceAreas]             = useState(() => getBusiness().serviceAreas || SERVICE_AREAS_DEFAULT);
+  const [serviceAreas, setServiceAreas]             = useState(() => getBusiness().serviceAreas || getDefaultServiceAreasForLang(normalizedLang));
   const [currentReviewIndex, setCurrentReviewIndex] = useState(0);
   const [visibleReviewCount, setVisibleReviewCount] = useState(1);
   const [isDragging, setIsDragging]                 = useState(false);
@@ -899,7 +1061,7 @@ function Home() {
   const brandRef          = useRef(null);
   const processRef        = useRef(null);
   // Tracks live package count for GSAP counter callback (avoids stale closure)
-  const packageCountRef   = useRef(SERVICE_HIGHLIGHTS.length);
+  const packageCountRef   = useRef(2);
 
   // Loading states
   const [loading, setLoading] = useState({
@@ -930,7 +1092,7 @@ function Home() {
         if (type === 'stats') setStats(data);
         else if (type === 'reviews') setReviews(data);
         else if (type === 'packages') {
-          packageCountRef.current = data.length || SERVICE_HIGHLIGHTS.length;
+          packageCountRef.current = data.length || fallbackServiceHighlights.length;
           setPackages(data);
         }
       })
@@ -945,7 +1107,7 @@ function Home() {
       reviewsAPI.getPublic().then(data => { setReviews(Array.isArray(data) ? data : []); return data; }).catch(() => []),
       packagesAPI.getAll(lang).then(data => {
         const active = (data || []).filter(p => p.isActive);
-        packageCountRef.current = active.length || SERVICE_HIGHLIGHTS.length;
+        packageCountRef.current = active.length || fallbackServiceHighlights.length;
         setPackages(active);
         return active;
       }).catch(() => []),
@@ -962,14 +1124,14 @@ function Home() {
         console.error('Home page data fetch error:', err);
         setLoading({ stats: false, reviews: false, packages: false });
       });
-  }, [lang]);
+  }, [fallbackServiceHighlights.length, lang]);
 
   // Reload service areas when admin updates business config
   useEffect(() => {
-    const handler = () => setServiceAreas(getBusiness().serviceAreas || SERVICE_AREAS_DEFAULT);
+    const handler = () => setServiceAreas(getBusiness().serviceAreas || getDefaultServiceAreasForLang(normalizedLang));
     window.addEventListener('businessConfigChanged', handler);
     return () => window.removeEventListener('businessConfigChanged', handler);
-  }, []);
+  }, [normalizedLang]);
 
   // Recalculate GSAP pin-spacer height after package count is known
   useEffect(() => {
@@ -1201,7 +1363,9 @@ function Home() {
     setCurrentReviewIndex(p => (p >= max ? 0 : p + 1));
   };
 
-  const marqueeSource  = services.length > 0 ? services.map(s => s.name) : MARQUEE_ITEMS;
+  const marqueeSource  = services.length > 0
+    ? services.map((s) => pickLocalizedField(s, 'name', lang) || s.name).filter(Boolean)
+    : MARQUEE_ITEMS;
   const marqueeItems    = [...marqueeSource, ...marqueeSource];
   const marqueeDuration = 28;
   const reviewDotsCount = Math.ceil(reviews.length / visibleReviewCount);
@@ -1221,7 +1385,7 @@ function Home() {
         link: '/booking',
         pkg,
       }))
-    : SERVICE_HIGHLIGHTS;
+    : fallbackServiceHighlights;
 
   /* ══════════════════════════════════════════════════════════
      RENDER
@@ -1301,12 +1465,12 @@ function Home() {
               <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 hero-animate hero-animate-4">
                 <div className="flex items-center gap-1.5">
                   {[...Array(5)].map((_, i) => <Star key={i} size={12} className="fill-primary text-primary" />)}
-                  <span className="text-white/45 text-xs ml-1 font-medium">4.9 Rating</span>
+                  <span className="text-white/45 text-xs ml-1 font-medium">4.9 {ui.heroRating}</span>
                 </div>
                 <span className="h-3 w-px bg-white/15 hidden sm:block" />
-                <span className="text-white/45 text-xs font-medium">{stats.happyClients > 0 ? `${stats.happyClients}+` : '100+'} Happy Clients</span>
+                <span className="text-white/45 text-xs font-medium">{stats.happyClients > 0 ? `${stats.happyClients}+` : '100+'} {ui.heroHappyClients}</span>
                 <span className="h-3 w-px bg-white/15 hidden sm:block" />
-                <span className="flex items-center gap-1 text-white/45 text-xs font-medium"><MapPin size={10} />Mobile Service · Qatar</span>
+                <span className="flex items-center gap-1 text-white/45 text-xs font-medium"><MapPin size={10} />{ui.heroMobileService}</span>
               </div>
             </div>
           </div>
@@ -1317,7 +1481,7 @@ function Home() {
           <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ border: '1px solid rgba(255,255,255,0.18)' }}>
             <ChevronDown size={14} className="text-white/40 animate-bounce" />
           </div>
-          <span className="text-white/30 text-[0.55rem] tracking-[0.22em] uppercase font-semibold">Scroll</span>
+          <span className="text-white/30 text-[0.55rem] tracking-[0.22em] uppercase font-semibold">{ui.heroScroll}</span>
         </div>
       </section>
 
@@ -1357,10 +1521,10 @@ function Home() {
             />
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <StatCard number={stats.happyClients} suffix="+"   label="Happy Clients"      started={statsStarted} />
-              <StatCard number={stats.carsDetailed} suffix="+"   label="Cars Detailed"       started={statsStarted} />
-              <StatCard number={4}                  suffix=".9★" label="Average Rating"      started={statsStarted} />
-              <StatCard number={stats.yearsActive}  suffix="+"   label="Years of Excellence" started={statsStarted} />
+              <StatCard number={stats.happyClients} suffix="+"   label={ui.statsHappyClients}      started={statsStarted} />
+              <StatCard number={stats.carsDetailed} suffix="+"   label={ui.statsCarsDetailed}       started={statsStarted} />
+              <StatCard number={4}                  suffix=".9★" label={ui.statsAverageRating}      started={statsStarted} />
+              <StatCard number={stats.yearsActive}  suffix="+"   label={ui.statsYearsExcellence} started={statsStarted} />
             </div>
           )}
         </div>
@@ -1372,16 +1536,16 @@ function Home() {
       <section ref={processRef} className="py-10 md:py-14">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12 process-heading">
-            <p className="uppercase tracking-[0.26em] text-primary text-[0.68rem] font-bold mb-3">The Process</p>
-            <h2 className="premium-heading text-4xl md:text-5xl font-bold text-[var(--heading-color)]">How It Works</h2>
+            <p className="uppercase tracking-[0.26em] text-primary text-[0.68rem] font-bold mb-3">{ui.howItWorksLabel}</p>
+            <h2 className="premium-heading text-4xl md:text-5xl font-bold text-[var(--heading-color)]">{ui.howItWorksTitle}</h2>
             <p className="text-[var(--muted-color)] text-base md:text-lg mt-4 max-w-xl mx-auto leading-relaxed">
-              Three steps. Zero hassle. A finish that speaks for itself.
+              {ui.howItWorksDescription}
             </p>
           </div>
           <div className="grid md:grid-cols-3 gap-6 md:gap-8 relative">
             <div className="hidden md:block absolute top-[3.5rem] left-[calc(33.33%_+_2rem)] right-[calc(33.33%_+_2rem)] h-px"
               style={{ background: 'linear-gradient(90deg, rgba(200,169,107,0.5), rgba(14,165,160,0.5))' }} />
-            {HOW_IT_WORKS.map((item, i) => {
+            {howItWorks.map((item, i) => {
               const StepIcon = item.Icon;
               return (
                 <div key={item.step}
@@ -1580,9 +1744,9 @@ function Home() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-10 areas-heading">
             <h2 className="premium-heading text-3xl md:text-4xl font-bold text-[var(--heading-color)] mb-4">
-              We Come to You. Anywhere in Qatar.
+              {ui.serviceAreasTitle}
             </h2>
-            <p className="text-[var(--muted-color)] text-base md:text-lg">Professional mobile detailing across every major district.</p>
+            <p className="text-[var(--muted-color)] text-base md:text-lg">{ui.serviceAreasDescription}</p>
           </div>
           <div className="flex flex-wrap justify-center gap-3">
             {serviceAreas.map((city) => (
@@ -1594,7 +1758,7 @@ function Home() {
                   e.currentTarget.style.setProperty('--py', `${((e.clientY - r.top)  / r.height * 100).toFixed(1)}%`);
                 }}>
                 <MapPin size={16} className="transition-colors duration-200 group-hover:text-primary" style={{ color: 'var(--muted-color)' }} />
-                <span className="text-sm font-semibold text-[var(--heading-color)]">{city}</span>
+                <span className="text-sm font-semibold text-[var(--heading-color)]">{localizeServiceArea(city, normalizedLang)}</span>
               </div>
             ))}
           </div>
@@ -1607,8 +1771,8 @@ function Home() {
           <div ref={brandRef} className="cta-prism-glow rounded-2xl">
             <div className="glass-card p-8 md:p-12 text-center relative overflow-hidden">
               <AdvDroplets dense />
-              <h2 className="premium-heading text-3xl md:text-4xl font-bold text-[var(--heading-color)] mb-6 relative z-10">{BRAND_VALUE.title}</h2>
-              <p className="text-base md:text-lg text-[var(--muted-color)] leading-relaxed max-w-3xl mx-auto relative z-10">{BRAND_VALUE.description}</p>
+              <h2 className="premium-heading text-3xl md:text-4xl font-bold text-[var(--heading-color)] mb-6 relative z-10">{brandValue.title}</h2>
+              <p className="text-base md:text-lg text-[var(--muted-color)] leading-relaxed max-w-3xl mx-auto relative z-10">{brandValue.description}</p>
             </div>
           </div>
         </div>
@@ -1618,8 +1782,8 @@ function Home() {
       <section ref={featuresRef} className="py-8 md:py-10">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <p className="uppercase tracking-[0.26em] text-primary text-[0.68rem] font-bold mb-3">Why Choose Us</p>
-            <h2 className="premium-heading text-4xl md:text-5xl font-bold text-[var(--heading-color)]">Crafted for Perfection</h2>
+            <p className="uppercase tracking-[0.26em] text-primary text-[0.68rem] font-bold mb-3">{ui.featuresLabel}</p>
+            <h2 className="premium-heading text-4xl md:text-5xl font-bold text-[var(--heading-color)]">{ui.featuresTitle}</h2>
           </div>
           <div className="grid md:grid-cols-4 gap-6">
             {homePageContent.features.map((feature, index) => {

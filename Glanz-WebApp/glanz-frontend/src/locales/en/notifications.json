@@ -3,5 +3,17 @@
   "markAll": "Mark all",
   "viewAllNotifications": "View all notifications →",
   "noNotifications": "No notifications",
-  "unread": "unread"
+  "unread": "unread",
+  "newBooking": "New Booking",
+  "bookingConfirmed": "Booking Confirmed",
+  "bookingCancelled": "Booking Cancelled",
+  "bookingStatusChanged": "Status Updated",
+  "workerArrived": "Detailer Arrived",
+  "jobStarted": "Service Started",
+  "jobCompleted": "Service Completed",
+  "lowStock": "Low Stock Alert",
+  "specialOffer": "Special Offer",
+  "loyaltyReward": "Loyalty Reward",
+  "cancellationRequested": "Cancellation Request",
+  "notification": "Notification"
 }

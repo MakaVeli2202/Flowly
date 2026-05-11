@@ -54,6 +54,7 @@ function Footer() {
       myBookings: 'My Bookings',
       editBookings: 'Edit Bookings',
       openPositions: 'Open Positions',
+      myReferrals: 'My Referrals',
       services: 'Services',
       contact: 'Contact',
       allRightsReserved: 'All rights reserved.',
@@ -68,6 +69,7 @@ function Footer() {
       myBookings: 'حجوزاتي',
       editBookings: 'تعديل الحجوزات',
       openPositions: 'الوظائف المتاحة',
+      myReferrals: 'إحالاتي',
       services: 'الخدمات',
       contact: 'تواصل معنا',
       allRightsReserved: 'جميع الحقوق محفوظة.',
@@ -82,6 +84,7 @@ function Footer() {
       myBookings: 'Meine Buchungen',
       editBookings: 'Buchungen bearbeiten',
       openPositions: 'Offene Stellen',
+      myReferrals: 'Meine Empfehlungen',
       services: 'Services',
       contact: 'Kontakt',
       allRightsReserved: 'Alle Rechte vorbehalten.',
@@ -116,7 +119,14 @@ function Footer() {
           new Set(
             (Array.isArray(data) ? data : [])
               .flatMap((pkg) => pkg?.services || [])
-              .map((svc) => svc?.serviceName || svc?.name)
+              .map((svc) => {
+                const localized =
+                  (normalizedLang === 'ar' ? (svc?.serviceNameAr || svc?.nameAr) : null)
+                  || (normalizedLang === 'de' ? (svc?.serviceNameDe || svc?.nameDe) : null)
+                  || svc?.serviceName
+                  || svc?.name;
+                return localized;
+              })
               .filter(Boolean)
           )
         );
@@ -161,7 +171,7 @@ function Footer() {
                     <li><Link to="/my-bookings" className="text-[var(--muted-color)] hover:text-primary transition">{ui.myBookings}</Link></li>
                     <li className="relative">
                       <Link to="/referrals" className="text-[var(--muted-color)] hover:text-primary transition block">
-                        My Referrals
+                        {ui.myReferrals}
                         {/* Show indicator when referral code is unlocked - if has firstWashCompletedAt OR has any completed bookings */}
                         {(user?.firstWashCompletedAt || user?.totalBookingsCount > 0) && (
                           <span className="absolute -top-1 -right-0 h-2 w-2 bg-green-500 rounded-full" />
@@ -175,7 +185,7 @@ function Footer() {
                     <li><Link to="/admin/bookings" className="text-[var(--muted-color)] hover:text-primary transition">{ui.editBookings}</Link></li>
                     <li className="relative">
                       <Link to="/referrals" className="text-[var(--muted-color)] hover:text-primary transition block">
-                        My Referrals
+                        {ui.myReferrals}
                         {/* Show admin their own referral status if applicable */}
                         {(user?.firstWashCompletedAt || user?.totalBookingsCount > 0) && (
                           <span className="absolute -top-1 -right-0 h-2 w-2 bg-green-500 rounded-full" />

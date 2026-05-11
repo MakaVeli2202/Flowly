@@ -37,6 +37,145 @@
       "packages":   "Packages"
     }
   },
+  "myBookings": {
+    "header": {
+      "eyebrow": "MY ACCOUNT",
+      "title": "My Bookings",
+      "subtitle": "View and manage your appointments"
+    },
+    "empty": {
+      "title": "No bookings yet",
+      "body": "Your upcoming washes will show up here once you make a booking.",
+      "cta": "Book Your First Service"
+    },
+    "actions": {
+      "showPackageDetails": "Show package details",
+      "hidePackageDetails": "Hide package details",
+      "viewDetails": "View Details",
+      "trackWorker": "Track Worker",
+      "bookAgain": "Book Again",
+      "reschedule": "Reschedule",
+      "cancel": "Cancel"
+    },
+    "modal": {
+      "requestCancellation": "Request Cancellation",
+      "requestReschedule": "Request Reschedule",
+      "checkingPolicy": "Checking cancellation policy...",
+      "feeMayApply": "Cancellation Fee May Apply",
+      "feeWarning": "Your appointment is in {{hoursUntil}}h, outside the {{freeWindow}}h free window. Fee: {{fee}} QAR.",
+      "freeCancellation": "Free Cancellation",
+      "freeCancellationBody": "You are within the free window, no charge will apply.",
+      "reason": "Reason",
+      "reasonPlaceholder": "Tell us why...",
+      "preferredDate": "Preferred Date",
+      "preferredDatePlaceholder": "e.g. 15 Apr 2026",
+      "dismiss": "Dismiss",
+      "submit": "Submit"
+    },
+    "alerts": {
+      "requestSubmittedTitle": "Request Submitted",
+      "requestSubmittedBody": "Our team will contact you shortly."
+    },
+    "errors": {
+      "load": "Failed to load bookings.",
+      "submitRequest": "Failed to submit request. Please try again."
+    }
+  },
+  "packagesScreen": {
+    "catalogue": "CATALOGUE",
+    "title": "Packages",
+    "subtitle": "Choose your preferred cleaning package",
+    "servicesIncluded": "Services Included",
+    "serviceFallback": "Service",
+    "showLess": "Show Less",
+    "moreServices": "+{{count}} More Services",
+    "emptyTitle": "No packages found",
+    "emptyAll": "No packages are available right now.",
+    "emptyTier": "No {{tier}} packages found. Try a different tier.",
+    "showAll": "Show All",
+    "startingAt": "Starting at",
+    "minutes": "{{count}} min",
+    "createCustomerBooking": "Create Customer Booking",
+    "bookThisPackage": "Book This Package",
+    "loadError": "Failed to load packages",
+    "tiers": {
+      "all": "All",
+      "Standard": "Standard",
+      "Gold": "Gold",
+      "Platinum": "Platinum",
+      "Premium": "Premium"
+    }
+  },
+  "adminDashboard": {
+    "loading": "Loading dashboard...",
+    "greeting": {
+      "morning": "Good morning",
+      "afternoon": "Good afternoon",
+      "evening": "Good evening"
+    },
+    "hero": {
+      "liveCount": "{{count}} LIVE",
+      "operationsCenter": "OPERATIONS CENTER"
+    },
+    "sections": {
+      "todaysOverview": "Today's Overview",
+      "scheduledBookings": "{{count}} bookings scheduled",
+      "revenue": "Revenue",
+      "completedOnly": "Completed bookings only",
+      "operationalStatus": "Operational Status",
+      "activeWorkers": "{{count}} active workers",
+      "alertsIssues": "Alerts & Issues",
+      "requiresAttention": "Requires attention",
+      "quickActions": "Quick Actions",
+      "overallStatus": "Overall Status",
+      "totalBookings": "{{count}} total bookings"
+    },
+    "stats": {
+      "totalToday": "Total Today",
+      "inProgress": "In Progress",
+      "jobsRunningNow": "Jobs running now",
+      "noneActive": "None active",
+      "pending": "Pending",
+      "unconfirmed": "{{count}} unconfirmed",
+      "allConfirmed": "All confirmed",
+      "completed": "Completed",
+      "cancelled": "{{count}} cancelled",
+      "todaysRevenue": "Today's Revenue",
+      "jobsCompleted": "{{count}} jobs completed",
+      "weeklyRevenue": "Weekly Revenue"
+    },
+    "workers": {
+      "onJob": "On Job",
+      "available": "Available",
+      "total": "Total",
+      "viewAll": "View all {{count}} workers",
+      "noActiveWorkers": "No active workers",
+      "liveDetailerMap": "Live Detailer Map",
+      "workerId": "Worker #{{id}}",
+      "live": "Live"
+    },
+    "alerts": {
+      "unassignedTitle": "{{count}} Unassigned Jobs Today",
+      "unassignedBadge": "Unassigned",
+      "cancellationTitle": "{{count}} Cancellation Requests",
+      "actionNeededBadge": "Action Needed",
+      "rescheduleTitle": "{{count}} Reschedule Requests",
+      "reviewBadge": "Review",
+      "unpaidCompletedTitle": "{{count}} Unpaid Completed Jobs",
+      "unpaidCompletedBody": "Payment not collected for completed service",
+      "paymentIssueBadge": "Payment Issue",
+      "allClearTitle": "All Clear",
+      "allClearSub": "No unresolved issues right now"
+    },
+    "quickActions": {
+      "newBooking": "New Booking",
+      "todaysJobs": "Today's Jobs",
+      "allJobs": "All Jobs",
+      "workers": "Workers",
+      "reports": "Reports",
+      "notifications": "Notifications"
+    }
+  },
   "common": {
     "cancel":    "Cancel",
     "close":     "Close",
@@ -280,8 +419,11 @@
         "Notifications": "Notifications",
         "Packages": "Packages",
         "Subscriptions": "Subscriptions",
+        "Referrals": "Referrals",
         "Booking": "Book Now",
         "My Bookings": "My Bookings",
+        "Careers": "Careers",
+        "WhatsApp": "WhatsApp",
         "Assistant": "AI Assistant",
         "Profile": "Profile"
       }
@@ -303,17 +445,25 @@
         "Admin Home": "Dashboard",
         "Today Jobs": "Today's Dispatch",
         "All Jobs": "All Jobs",
+        "Financial Reports": "Financial Reports",
+        "Operational Reports": "Operational Reports",
+        "Admin Payroll": "Payroll",
+        "Worker Schedule": "Worker Schedule",
         "Admin Reports": "Reports",
         "Admin Products": "Products",
         "Admin Services": "Services",
         "Admin Packages": "Packages",
         "Admin Offers": "Offers",
+        "Admin Plans": "Plans",
+        "Admin Skills": "Skills",
+        "Job Applications": "Applications",
         "Admin Subscriptions": "Subscriptions",
         "Worker Management": "Workers",
         "Admin Staff": "Manage Staff",
         "Create Worker": "Add Worker",
         "Admin Notifications": "Notifications",
         "System Settings": "System Settings",
+        "Dev Settings": "Dev Settings",
         "Admin Job Positions": "Job Positions",
         "Admin Content": "Content",
         "Sub Bookings": "Sub Bookings"

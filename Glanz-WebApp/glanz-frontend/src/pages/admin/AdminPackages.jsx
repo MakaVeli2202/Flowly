@@ -17,6 +17,105 @@ const TIER_STYLES = {
   Premium:  { color: '#8b5cf6' },
 };
 
+const UI_BY_LANG = {
+  en: {
+    loading: 'Loading packages...',
+    loadFail: 'Failed to load data',
+    selectService: 'Please select at least one service',
+    updateOk: 'Package updated successfully',
+    createOk: 'Package created successfully',
+    saveFail: 'Failed to save package',
+    deleteTitle: 'Delete Package',
+    deleteMsg: (name) => `Are you sure you want to delete "${name}"? This cannot be undone.`,
+    deleteOk: 'Package deleted successfully',
+    deleteFail: 'Failed to delete package',
+    activateTitle: 'Activate Package',
+    deactivateTitle: 'Deactivate Package',
+    activateMsg: (name) => `Are you sure you want to activate "${name}"?`,
+    deactivateMsg: (name) => `Are you sure you want to deactivate "${name}"?`,
+    toggled: (active) => `Package ${active ? 'deactivated' : 'activated'} successfully`,
+    toggleFail: 'Failed to update package status',
+    title: 'Manage Packages',
+    subtitle: 'Build packages and set pricing',
+    closeForm: 'Close Form',
+    addPackage: 'Add Package',
+    editMode: 'Edit Mode',
+    newPackage: 'New Package',
+    createPackage: 'Create Package',
+    packageName: 'Package Name *',
+    tier: 'Tier *',
+    price: 'Price (QAR) *',
+    duration: 'Duration (minutes) *',
+    imageUrl: 'Image URL',
+    description: 'Description',
+    servicesSelected: (count) => `Services - ${count} selected`,
+  },
+  ar: {
+    loading: 'جارٍ تحميل الباقات...',
+    loadFail: 'فشل تحميل البيانات',
+    selectService: 'يرجى اختيار خدمة واحدة على الأقل',
+    updateOk: 'تم تحديث الباقة بنجاح',
+    createOk: 'تم إنشاء الباقة بنجاح',
+    saveFail: 'فشل حفظ الباقة',
+    deleteTitle: 'حذف الباقة',
+    deleteMsg: (name) => `هل تريد حذف "${name}"؟ لا يمكن التراجع.`,
+    deleteOk: 'تم حذف الباقة بنجاح',
+    deleteFail: 'فشل حذف الباقة',
+    activateTitle: 'تفعيل الباقة',
+    deactivateTitle: 'تعطيل الباقة',
+    activateMsg: (name) => `هل تريد تفعيل "${name}"؟`,
+    deactivateMsg: (name) => `هل تريد تعطيل "${name}"؟`,
+    toggled: (active) => `تم ${active ? 'تعطيل' : 'تفعيل'} الباقة بنجاح`,
+    toggleFail: 'فشل تحديث حالة الباقة',
+    title: 'إدارة الباقات',
+    subtitle: 'إنشاء الباقات وتحديد الأسعار',
+    closeForm: 'إغلاق النموذج',
+    addPackage: 'إضافة باقة',
+    editMode: 'وضع التعديل',
+    newPackage: 'باقة جديدة',
+    createPackage: 'إنشاء باقة',
+    packageName: 'اسم الباقة *',
+    tier: 'الفئة *',
+    price: 'السعر (ر.ق) *',
+    duration: 'المدة (دقائق) *',
+    imageUrl: 'رابط الصورة',
+    description: 'الوصف',
+    servicesSelected: (count) => `الخدمات - ${count} مختارة`,
+  },
+  de: {
+    loading: 'Pakete werden geladen...',
+    loadFail: 'Daten konnten nicht geladen werden',
+    selectService: 'Bitte mindestens einen Service auswahlen',
+    updateOk: 'Paket erfolgreich aktualisiert',
+    createOk: 'Paket erfolgreich erstellt',
+    saveFail: 'Paket konnte nicht gespeichert werden',
+    deleteTitle: 'Paket loschen',
+    deleteMsg: (name) => `Mochten Sie "${name}" wirklich loschen?`,
+    deleteOk: 'Paket erfolgreich geloscht',
+    deleteFail: 'Paket konnte nicht geloscht werden',
+    activateTitle: 'Paket aktivieren',
+    deactivateTitle: 'Paket deaktivieren',
+    activateMsg: (name) => `"${name}" aktivieren?`,
+    deactivateMsg: (name) => `"${name}" deaktivieren?`,
+    toggled: (active) => `Paket erfolgreich ${active ? 'deaktiviert' : 'aktiviert'}`,
+    toggleFail: 'Paketstatus konnte nicht aktualisiert werden',
+    title: 'Pakete verwalten',
+    subtitle: 'Pakete erstellen und Preise festlegen',
+    closeForm: 'Formular schlieBen',
+    addPackage: 'Paket hinzufugen',
+    editMode: 'Bearbeitungsmodus',
+    newPackage: 'Neues Paket',
+    createPackage: 'Paket erstellen',
+    packageName: 'Paketname *',
+    tier: 'Stufe *',
+    price: 'Preis (QAR) *',
+    duration: 'Dauer (Minuten) *',
+    imageUrl: 'Bild-URL',
+    description: 'Beschreibung',
+    servicesSelected: (count) => `Services - ${count} ausgewahlt`,
+  },
+};
+
 /* ── PRISM CSS ─────────────────────────────────────────────── */
 const PRISM_CSS = `
 @keyframes holo-sweep {
@@ -143,7 +242,9 @@ function FormDivider({ label }) {
    MANAGE PACKAGES
 ════════════════════════════════════════════════════════════ */
 function ManagePackages() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+  const localeKey = String(lang || '').startsWith('ar') ? 'ar' : String(lang || '').startsWith('de') ? 'de' : 'en';
+  const ui = UI_BY_LANG[localeKey] || UI_BY_LANG.en;
   /* ── State & logic: identical to original ─────────────────── */
   const [packages,          setPackages]          = useState([]);
   const [services,          setServices]          = useState([]);
@@ -175,7 +276,7 @@ function ManagePackages() {
       ]);
       setPackages(packagesData);
       setServices(servicesData);
-    } catch { setError('Failed to load data'); }
+    } catch { setError(ui.loadFail); }
     finally { setLoading(false); }
   };
 
@@ -192,7 +293,7 @@ function ManagePackages() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(''); setSuccess('');
-    if (formData.serviceIds.length === 0) { setError('Please select at least one service'); return; }
+    if (formData.serviceIds.length === 0) { setError(ui.selectService); return; }
     try {
       const packageData = {
         name: formData.name, description: formData.description,
@@ -202,13 +303,13 @@ function ManagePackages() {
       };
       if (editingPackage) {
         await packagesAPI.update(editingPackage.id, packageData);
-        setSuccess('Package updated successfully');
+        setSuccess(ui.updateOk);
       } else {
         await packagesAPI.create(packageData);
-        setSuccess('Package created successfully');
+        setSuccess(ui.createOk);
       }
       resetForm(); fetchData();
-    } catch (err) { setError(err.response?.data?.message || 'Failed to save package'); }
+    } catch (err) { setError(err.response?.data?.message || ui.saveFail); }
   };
 
   const handleEdit = (pkg) => {
@@ -224,11 +325,11 @@ function ManagePackages() {
   };
 
   const handleDelete = (id, name) => {
-    showConfirm('Delete Package', `Are you sure you want to delete "${name}"? This cannot be undone.`, 'danger',
+    showConfirm(ui.deleteTitle, ui.deleteMsg(name), 'danger',
       async () => {
         closeModal();
-        try { await packagesAPI.delete(id); setSuccess('Package deleted successfully'); fetchData(); }
-        catch { setError('Failed to delete package'); }
+        try { await packagesAPI.delete(id); setSuccess(ui.deleteOk); fetchData(); }
+        catch { setError(ui.deleteFail); }
       }
     );
   };
@@ -236,17 +337,17 @@ function ManagePackages() {
   const handleToggleActive = (id, isCurrentlyActive, name) => {
     const action = isCurrentlyActive ? 'deactivate' : 'activate';
     showConfirm(
-      `${isCurrentlyActive ? 'Deactivate' : 'Activate'} Package`,
-      `Are you sure you want to ${action} "${name}"?`,
+      isCurrentlyActive ? ui.deactivateTitle : ui.activateTitle,
+      isCurrentlyActive ? ui.deactivateMsg(name) : ui.activateMsg(name),
       isCurrentlyActive ? 'warning' : 'info',
       async () => {
         closeModal(); setError(''); setSuccess('');
         setTogglingPackageId(id);
         try {
           await packagesAPI.toggleActive(id);
-          setSuccess(`Package ${isCurrentlyActive ? 'deactivated' : 'activated'} successfully`);
+          setSuccess(ui.toggled(isCurrentlyActive));
           fetchData();
-        } catch { setError('Failed to update package status'); }
+        } catch { setError(ui.toggleFail); }
         finally { setTogglingPackageId(null); }
       }
     );
@@ -271,7 +372,7 @@ function ManagePackages() {
   if (loading) return (
     <div className="flex flex-col items-center justify-center min-h-screen gap-4">
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
-      <p className="text-[var(--muted-color)] text-sm">Loading packages…</p>
+      <p className="text-[var(--muted-color)] text-sm">{ui.loading}</p>
     </div>
   );
 
@@ -311,15 +412,15 @@ function ManagePackages() {
                   style={{ background: 'rgba(200,169,107,0.12)', border: '1px solid rgba(200,169,107,0.24)' }}>
                   <ShoppingBag size={16} style={{ color: '#c8a96b' }} />
                 </div>
-                <h1 className="premium-heading text-4xl md:text-5xl font-bold text-[var(--heading-color)]">Manage Packages</h1>
+                <h1 className="premium-heading text-4xl md:text-5xl font-bold text-[var(--heading-color)]">{ui.title}</h1>
               </div>
-              <p className="text-sm text-[var(--muted-color)] ml-12">Build packages and set pricing</p>
+              <p className="text-sm text-[var(--muted-color)] ml-12">{ui.subtitle}</p>
             </div>
             <div className={showForm ? '' : 'cta-prism-glow rounded-xl'}>
               <button type="button" onClick={() => setShowForm((prev) => !prev)}
                 className="flex items-center gap-2.5 px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-bold hover:bg-primary/90 transition">
                 {showForm ? <X size={15} /> : <Plus size={15} />}
-                {showForm ? 'Close Form' : 'Add Package'}
+                {showForm ? ui.closeForm : ui.addPackage}
               </button>
             </div>
           </div>
@@ -354,12 +455,12 @@ function ManagePackages() {
                     <div className="flex items-center gap-3 mb-1">
                       <span className="h-px w-5" style={{ background: `linear-gradient(90deg, transparent, ${formAccent})` }} />
                       <p className="text-[0.58rem] font-bold uppercase tracking-[0.24em]" style={{ color: formAccent }}>
-                        {editingPackage ? 'Edit Mode' : 'New Package'}
+                        {editingPackage ? ui.editMode : ui.newPackage}
                       </p>
                       <span className="h-px w-5" style={{ background: `linear-gradient(90deg, ${formAccent}, transparent)` }} />
                     </div>
                     <h2 className="premium-heading text-xl font-bold text-[var(--heading-color)]">
-                      {editingPackage ? `Editing: ${editingPackage.name}` : 'Create Package'}
+                      {editingPackage ? `Editing: ${editingPackage.name}` : ui.createPackage}
                     </h2>
                   </div>
                   <button type="button" onClick={resetForm}
@@ -372,11 +473,11 @@ function ManagePackages() {
                 <form onSubmit={handleSubmit} className="space-y-5">
                   {/* Core fields */}
                   <div className="grid md:grid-cols-2 gap-5">
-                    <FormField label="Package Name *">
+                    <FormField label={ui.packageName}>
                       <input type="text" name="name" required value={formData.name} onChange={handleChange}
                         className={inp} placeholder="e.g. Gold Package" />
                     </FormField>
-                    <FormField label="Tier *">
+                    <FormField label={ui.tier}>
                       <select name="tier" required value={formData.tier} onChange={handleChange} className={inp}>
                         <option value="Standard">Standard</option>
                         <option value="Gold">Gold</option>
@@ -384,29 +485,29 @@ function ManagePackages() {
                         <option value="Premium">Premium</option>
                       </select>
                     </FormField>
-                    <FormField label="Price (QAR) *">
+                    <FormField label={ui.price}>
                       <input type="number" step="0.01" name="price" required value={formData.price} onChange={handleChange}
                         className={inp} placeholder="299.00" />
                     </FormField>
-                    <FormField label="Duration (minutes) *">
+                    <FormField label={ui.duration}>
                       <input type="number" name="estimatedDurationMinutes" required value={formData.estimatedDurationMinutes} onChange={handleChange}
                         className={inp} placeholder="120" />
                     </FormField>
                     <div className="md:col-span-2">
-                      <FormField label="Image URL">
+                      <FormField label={ui.imageUrl}>
                         <input type="url" name="imageUrl" value={formData.imageUrl} onChange={handleChange}
                           className={inp} placeholder="https://..." />
                       </FormField>
                     </div>
                     <div className="md:col-span-2">
-                      <FormField label="Description">
+                      <FormField label={ui.description}>
                         <textarea name="description" value={formData.description} onChange={handleChange}
                           rows={3} className={inp} placeholder="Package description…" />
                       </FormField>
                     </div>
                   </div>
 
-                  <FormDivider label={`Services — ${formData.serviceIds.length} selected`} />
+                  <FormDivider label={ui.servicesSelected(formData.serviceIds.length)} />
 
                   {/* Service selector */}
                   <div className="grid md:grid-cols-2 gap-3">

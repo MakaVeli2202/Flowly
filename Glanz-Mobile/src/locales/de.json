@@ -37,6 +37,145 @@
       "packages":   "Pakete"
     }
   },
+  "myBookings": {
+    "header": {
+      "eyebrow": "MEIN KONTO",
+      "title": "Meine Buchungen",
+      "subtitle": "Verwalte deine Termine"
+    },
+    "empty": {
+      "title": "Noch keine Buchungen",
+      "body": "Deine kommenden Waschtermine erscheinen hier nach der Buchung.",
+      "cta": "Erste Leistung buchen"
+    },
+    "actions": {
+      "showPackageDetails": "Paketdetails anzeigen",
+      "hidePackageDetails": "Paketdetails ausblenden",
+      "viewDetails": "Details anzeigen",
+      "trackWorker": "Mitarbeiter verfolgen",
+      "bookAgain": "Erneut buchen",
+      "reschedule": "Verschieben",
+      "cancel": "Stornieren"
+    },
+    "modal": {
+      "requestCancellation": "Stornierung anfragen",
+      "requestReschedule": "Verschiebung anfragen",
+      "checkingPolicy": "Stornierungsrichtlinie wird geprueft...",
+      "feeMayApply": "Stornogebuehr moeglich",
+      "feeWarning": "Dein Termin ist in {{hoursUntil}} Std., ausserhalb des kostenlosen Fensters von {{freeWindow}} Std. Gebuehr: {{fee}} QAR.",
+      "freeCancellation": "Kostenlose Stornierung",
+      "freeCancellationBody": "Du bist im kostenlosen Zeitfenster, es fallen keine Gebuehren an.",
+      "reason": "Grund",
+      "reasonPlaceholder": "Sag uns warum...",
+      "preferredDate": "Bevorzugtes Datum",
+      "preferredDatePlaceholder": "z. B. 15 Apr 2026",
+      "dismiss": "Schliessen",
+      "submit": "Senden"
+    },
+    "alerts": {
+      "requestSubmittedTitle": "Anfrage gesendet",
+      "requestSubmittedBody": "Unser Team meldet sich in Kuerze."
+    },
+    "errors": {
+      "load": "Buchungen konnten nicht geladen werden.",
+      "submitRequest": "Anfrage konnte nicht gesendet werden. Bitte erneut versuchen."
+    }
+  },
+  "packagesScreen": {
+    "catalogue": "KATALOG",
+    "title": "Pakete",
+    "subtitle": "Waehle dein bevorzugtes Reinigungspaket",
+    "servicesIncluded": "Enthaltene Leistungen",
+    "serviceFallback": "Service",
+    "showLess": "Weniger anzeigen",
+    "moreServices": "+{{count}} weitere Leistungen",
+    "emptyTitle": "Keine Pakete gefunden",
+    "emptyAll": "Derzeit sind keine Pakete verfuegbar.",
+    "emptyTier": "Keine Pakete in {{tier}} gefunden. Bitte andere Kategorie waehlen.",
+    "showAll": "Alle anzeigen",
+    "startingAt": "Ab",
+    "minutes": "{{count}} Min.",
+    "createCustomerBooking": "Kundenbuchung erstellen",
+    "bookThisPackage": "Dieses Paket buchen",
+    "loadError": "Pakete konnten nicht geladen werden",
+    "tiers": {
+      "all": "Alle",
+      "Standard": "Standard",
+      "Gold": "Gold",
+      "Platinum": "Platinum",
+      "Premium": "Premium"
+    }
+  },
+  "adminDashboard": {
+    "loading": "Dashboard wird geladen...",
+    "greeting": {
+      "morning": "Guten Morgen",
+      "afternoon": "Guten Tag",
+      "evening": "Guten Abend"
+    },
+    "hero": {
+      "liveCount": "{{count}} LIVE",
+      "operationsCenter": "BETRIEBSZENTRUM"
+    },
+    "sections": {
+      "todaysOverview": "Heutige Uebersicht",
+      "scheduledBookings": "{{count}} Buchungen geplant",
+      "revenue": "Umsatz",
+      "completedOnly": "Nur abgeschlossene Buchungen",
+      "operationalStatus": "Betriebsstatus",
+      "activeWorkers": "{{count}} aktive Mitarbeiter",
+      "alertsIssues": "Warnungen und Probleme",
+      "requiresAttention": "Erfordert Aufmerksamkeit",
+      "quickActions": "Schnellaktionen",
+      "overallStatus": "Gesamtstatus",
+      "totalBookings": "{{count}} Buchungen gesamt"
+    },
+    "stats": {
+      "totalToday": "Heute gesamt",
+      "inProgress": "In Bearbeitung",
+      "jobsRunningNow": "Auftraege laufen jetzt",
+      "noneActive": "Keine aktiv",
+      "pending": "Ausstehend",
+      "unconfirmed": "{{count}} unbestaetigt",
+      "allConfirmed": "Alle bestaetigt",
+      "completed": "Abgeschlossen",
+      "cancelled": "{{count}} storniert",
+      "todaysRevenue": "Heutiger Umsatz",
+      "jobsCompleted": "{{count}} Auftraege abgeschlossen",
+      "weeklyRevenue": "Wochenumsatz"
+    },
+    "workers": {
+      "onJob": "Im Einsatz",
+      "available": "Verfuegbar",
+      "total": "Gesamt",
+      "viewAll": "Alle {{count}} Mitarbeiter anzeigen",
+      "noActiveWorkers": "Keine aktiven Mitarbeiter",
+      "liveDetailerMap": "Live-Detailer-Karte",
+      "workerId": "Mitarbeiter #{{id}}",
+      "live": "Live"
+    },
+    "alerts": {
+      "unassignedTitle": "{{count}} unzugewiesene Auftraege heute",
+      "unassignedBadge": "Unzugewiesen",
+      "cancellationTitle": "{{count}} Stornierungsanfragen",
+      "actionNeededBadge": "Aktion noetig",
+      "rescheduleTitle": "{{count}} Umbuchungsanfragen",
+      "reviewBadge": "Pruefen",
+      "unpaidCompletedTitle": "{{count}} unbezahlte abgeschlossene Auftraege",
+      "unpaidCompletedBody": "Zahlung fuer abgeschlossenen Service nicht eingezogen",
+      "paymentIssueBadge": "Zahlungsproblem",
+      "allClearTitle": "Alles klar",
+      "allClearSub": "Aktuell keine offenen Probleme"
+    },
+    "quickActions": {
+      "newBooking": "Neue Buchung",
+      "todaysJobs": "Heutige Auftraege",
+      "allJobs": "Alle Auftraege",
+      "workers": "Mitarbeiter",
+      "reports": "Berichte",
+      "notifications": "Benachrichtigungen"
+    }
+  },
   "common": {
     "cancel":    "Abbrechen",
     "close":     "Schließen",
@@ -280,8 +419,11 @@
         "Notifications": "Benachrichtigungen",
         "Packages": "Pakete",
         "Subscriptions": "Abonnements",
+        "Referrals": "Empfehlungen",
         "Booking": "Jetzt buchen",
         "My Bookings": "Meine Buchungen",
+        "Careers": "Karriere",
+        "WhatsApp": "WhatsApp",
         "Assistant": "KI-Assistent",
         "Profile": "Profil"
       }
@@ -303,17 +445,25 @@
         "Admin Home": "Dashboard",
         "Today Jobs": "Heutige Disposition",
         "All Jobs": "Alle Auftraege",
+        "Financial Reports": "Finanzberichte",
+        "Operational Reports": "Betriebsberichte",
+        "Admin Payroll": "Lohnabrechnung",
+        "Worker Schedule": "Mitarbeiterplan",
         "Admin Reports": "Berichte",
         "Admin Products": "Produkte",
         "Admin Services": "Services",
         "Admin Packages": "Pakete",
         "Admin Offers": "Angebote",
+        "Admin Plans": "Plaene",
+        "Admin Skills": "Faehigkeiten",
+        "Job Applications": "Bewerbungen",
         "Admin Subscriptions": "Abonnements",
         "Worker Management": "Mitarbeiter",
         "Admin Staff": "Team verwalten",
         "Create Worker": "Mitarbeiter hinzufuegen",
         "Admin Notifications": "Benachrichtigungen",
         "System Settings": "Systemeinstellungen",
+        "Dev Settings": "Entwickler-Einstellungen",
         "Admin Job Positions": "Stellen",
         "Admin Content": "Inhalte",
         "Sub Bookings": "Abo-Buchungen"

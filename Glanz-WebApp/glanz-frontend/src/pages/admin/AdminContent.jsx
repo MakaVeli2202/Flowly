@@ -233,7 +233,127 @@ function FormSection({ title, badge, icon: Icon, accentColor, rayDelay = '3s', d
    CONTENT EDITOR
 ════════════════════════════════════════════════════════════ */
 function ContentEditor() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+  const uiByLang = {
+    en: {
+      contentEditor: 'Content Editor',
+      subtitle: 'Edit home, packages, and booking page content from one place.',
+      dashboard: 'Dashboard',
+      homePage: 'Home Page',
+      heroCtas: 'Hero & CTAs',
+      badgeText: 'Badge Text',
+      heroTitle: 'Hero Title',
+      heroDescription: 'Hero Description',
+      primaryCta: 'Primary CTA',
+      secondaryCta: 'Secondary CTA',
+      curatedSection: 'Curated Section',
+      curatedTitle: 'Curated Title',
+      curatedCta: 'Curated CTA',
+      curatedDescription: 'Curated Description',
+      finalCtaSection: 'Final CTA Section',
+      finalTitle: 'Final Title',
+      finalCtaButton: 'Final CTA Button',
+      finalDescription: 'Final Description',
+      packagesPage: 'Packages Page',
+      labelsCopy: 'Labels & Copy',
+      pageTitle: 'Page Title',
+      pageSubtitle: 'Page Subtitle',
+      allTierLabel: 'All Tier Label',
+      emptyTierMessage: 'Empty Tier Message',
+      includesLabel: 'Includes Label',
+      fromPriceLabel: 'From Price Label',
+      moreServicesText: 'More Services Text',
+      bookingPage: 'Booking Page',
+      config: 'Config',
+      earliestOffset: 'Earliest Booking Offset (Days)',
+      earliestOffsetHint: 'Minimum number of days in the future customers can book. 0 = same day allowed.',
+      timeSlots: 'Available Time Slots',
+      timeSlotsHint: 'Comma-separated list, e.g. 09:00-10:00, 10:00-11:00. Prices live in Manage Packages.',
+      saveChanges: 'Save Changes',
+      resetDefaults: 'Reset Defaults',
+      saveSuccess: 'Changes saved successfully.',
+      resetSuccess: 'Content reset to defaults.',
+    },
+    ar: {
+      contentEditor: 'محرر المحتوى',
+      subtitle: 'قم بتعديل محتوى الصفحة الرئيسية والباقات والحجز من مكان واحد.',
+      dashboard: 'لوحة التحكم',
+      homePage: 'الصفحة الرئيسية',
+      heroCtas: 'الهيرو وأزرار الدعوة',
+      badgeText: 'نص الشارة',
+      heroTitle: 'عنوان الهيرو',
+      heroDescription: 'وصف الهيرو',
+      primaryCta: 'زر الدعوة الأساسي',
+      secondaryCta: 'زر الدعوة الثانوي',
+      curatedSection: 'قسم المحتوى المميز',
+      curatedTitle: 'عنوان القسم المميز',
+      curatedCta: 'زر القسم المميز',
+      curatedDescription: 'وصف القسم المميز',
+      finalCtaSection: 'قسم الدعوة النهائي',
+      finalTitle: 'العنوان النهائي',
+      finalCtaButton: 'زر الدعوة النهائي',
+      finalDescription: 'الوصف النهائي',
+      packagesPage: 'صفحة الباقات',
+      labelsCopy: 'التسميات والنصوص',
+      pageTitle: 'عنوان الصفحة',
+      pageSubtitle: 'العنوان الفرعي',
+      allTierLabel: 'تسمية كل الفئات',
+      emptyTierMessage: 'رسالة الفئة الفارغة',
+      includesLabel: 'تسمية يشمل',
+      fromPriceLabel: 'تسمية يبدأ من',
+      moreServicesText: 'نص خدمات إضافية',
+      bookingPage: 'صفحة الحجز',
+      config: 'الإعدادات',
+      earliestOffset: 'أقرب موعد حجز (بالأيام)',
+      earliestOffsetHint: 'الحد الأدنى لعدد الأيام قبل الحجز. 0 يعني السماح بالحجز في نفس اليوم.',
+      timeSlots: 'الفترات الزمنية المتاحة',
+      timeSlotsHint: 'قائمة مفصولة بفواصل مثل 09:00-10:00, 10:00-11:00. الأسعار في إدارة الباقات.',
+      saveChanges: 'حفظ التغييرات',
+      resetDefaults: 'إعادة القيم الافتراضية',
+      saveSuccess: 'تم حفظ التغييرات بنجاح.',
+      resetSuccess: 'تمت إعادة المحتوى إلى الإعدادات الافتراضية.',
+    },
+    de: {
+      contentEditor: 'Content-Editor',
+      subtitle: 'Bearbeite Inhalte fur Startseite, Pakete und Buchung an einem Ort.',
+      dashboard: 'Dashboard',
+      homePage: 'Startseite',
+      heroCtas: 'Hero & CTAs',
+      badgeText: 'Badge-Text',
+      heroTitle: 'Hero-Titel',
+      heroDescription: 'Hero-Beschreibung',
+      primaryCta: 'Primarer CTA',
+      secondaryCta: 'Sekundarer CTA',
+      curatedSection: 'Kuratierten Bereich',
+      curatedTitle: 'Kuratierter Titel',
+      curatedCta: 'Kuratierter CTA',
+      curatedDescription: 'Kuratiere Beschreibung',
+      finalCtaSection: 'Finaler CTA-Bereich',
+      finalTitle: 'Finaler Titel',
+      finalCtaButton: 'Finaler CTA-Button',
+      finalDescription: 'Finale Beschreibung',
+      packagesPage: 'Pakete-Seite',
+      labelsCopy: 'Labels & Texte',
+      pageTitle: 'Seitentitel',
+      pageSubtitle: 'Untertitel',
+      allTierLabel: 'Label fur alle Stufen',
+      emptyTierMessage: 'Leere-Stufe-Nachricht',
+      includesLabel: 'Enthalt-Label',
+      fromPriceLabel: 'Ab-Preis-Label',
+      moreServicesText: 'Text fur weitere Services',
+      bookingPage: 'Buchungsseite',
+      config: 'Konfiguration',
+      earliestOffset: 'Fruhester Buchungsoffset (Tage)',
+      earliestOffsetHint: 'Minimale Anzahl Tage in der Zukunft fur Buchungen. 0 = gleiche Tag erlaubt.',
+      timeSlots: 'Verfugbare Zeitfenster',
+      timeSlotsHint: 'Kommagetrennte Liste, z. B. 09:00-10:00, 10:00-11:00. Preise in Pakete-Verwaltung.',
+      saveChanges: 'Anderungen speichern',
+      resetDefaults: 'Standardwerte zurucksetzen',
+      saveSuccess: 'Anderungen erfolgreich gespeichert.',
+      resetSuccess: 'Inhalte auf Standardwerte zuruckgesetzt.',
+    },
+  };
+  const ui = uiByLang[lang] || uiByLang.en;
   const initialContent = useMemo(() => getSiteContent(), []);
   const [formState, setFormState] = useState(() => mapContentToForm(initialContent));
   const [status,    setStatus]    = useState('');
@@ -243,12 +363,12 @@ function ContentEditor() {
   const handleSave = (event) => {
     event.preventDefault();
     saveSiteContent(mapFormToContent(formState));
-    setStatus('Changes saved successfully.');
+    setStatus(ui.saveSuccess);
     setTimeout(() => setStatus(''), 5000);
   };
   const handleReset = () => {
     setFormState(mapContentToForm(resetSiteContent()));
-    setStatus('Content reset to defaults.');
+    setStatus(ui.resetSuccess);
     setTimeout(() => setStatus(''), 5000);
   };
 
@@ -287,13 +407,13 @@ function ContentEditor() {
                   style={{ background: 'rgba(200,169,107,0.12)', border: '1px solid rgba(200,169,107,0.24)' }}>
                   <FileEdit size={16} style={{ color: '#c8a96b' }} />
                 </div>
-                <h1 className="premium-heading text-4xl md:text-5xl font-bold text-[var(--heading-color)]">Content Editor</h1>
+                <h1 className="premium-heading text-4xl md:text-5xl font-bold text-[var(--heading-color)]">{ui.contentEditor}</h1>
               </div>
-              <p className="text-sm text-[var(--muted-color)] ml-12">Edit home, packages, and booking page content from one place.</p>
+              <p className="text-sm text-[var(--muted-color)] ml-12">{ui.subtitle}</p>
             </div>
             <Link to="/admin"
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[var(--border-color)] text-sm font-bold text-[var(--text-color)] hover:bg-white/5 transition flex-shrink-0">
-              <ArrowLeft size={14} /> Dashboard
+              <ArrowLeft size={14} /> {ui.dashboard}
             </Link>
           </div>
 
@@ -301,27 +421,27 @@ function ContentEditor() {
           <form onSubmit={handleSave} className="space-y-6">
 
             {/* Home page */}
-            <FormSection title="Home Page" badge="Hero & CTAs" icon={Home} accentColor="#c8a96b" rayDelay="2s" delay="0.05s">
+            <FormSection title={ui.homePage} badge={ui.heroCtas} icon={Home} accentColor="#c8a96b" rayDelay="2s" delay="0.05s">
               <div className="grid md:grid-cols-2 gap-5">
-                <FormField label="Badge Text">
+                <FormField label={ui.badgeText}>
                   <input className={inp} value={formState.homeBadge}
                     onChange={(e) => updateField('homeBadge', e.target.value)} />
                 </FormField>
-                <FormField label="Hero Title">
+                <FormField label={ui.heroTitle}>
                   <input className={inp} value={formState.homeTitle}
                     onChange={(e) => updateField('homeTitle', e.target.value)} />
                 </FormField>
               </div>
-              <FormField label="Hero Description">
+              <FormField label={ui.heroDescription}>
                 <textarea className={inp} rows={3} value={formState.homeDescription}
                   onChange={(e) => updateField('homeDescription', e.target.value)} />
               </FormField>
               <div className="grid md:grid-cols-2 gap-5">
-                <FormField label="Primary CTA">
+                <FormField label={ui.primaryCta}>
                   <input className={inp} value={formState.homePrimaryCta}
                     onChange={(e) => updateField('homePrimaryCta', e.target.value)} />
                 </FormField>
-                <FormField label="Secondary CTA">
+                <FormField label={ui.secondaryCta}>
                   <input className={inp} value={formState.homeSecondaryCta}
                     onChange={(e) => updateField('homeSecondaryCta', e.target.value)} />
                 </FormField>
@@ -330,20 +450,20 @@ function ContentEditor() {
               {/* Divider for curated section */}
               <div className="flex items-center gap-3 py-1">
                 <div className="flex-1 h-px bg-[var(--border-color)]" />
-                <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)]">Curated Section</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)]">{ui.curatedSection}</p>
                 <div className="flex-1 h-px bg-[var(--border-color)]" />
               </div>
               <div className="grid md:grid-cols-2 gap-5">
-                <FormField label="Curated Title">
+                <FormField label={ui.curatedTitle}>
                   <input className={inp} value={formState.homeCuratedTitle}
                     onChange={(e) => updateField('homeCuratedTitle', e.target.value)} />
                 </FormField>
-                <FormField label="Curated CTA">
+                <FormField label={ui.curatedCta}>
                   <input className={inp} value={formState.homeCuratedCta}
                     onChange={(e) => updateField('homeCuratedCta', e.target.value)} />
                 </FormField>
               </div>
-              <FormField label="Curated Description">
+              <FormField label={ui.curatedDescription}>
                 <textarea className={inp} rows={2} value={formState.homeCuratedDescription}
                   onChange={(e) => updateField('homeCuratedDescription', e.target.value)} />
               </FormField>
@@ -351,71 +471,71 @@ function ContentEditor() {
               {/* Divider for final CTA section */}
               <div className="flex items-center gap-3 py-1">
                 <div className="flex-1 h-px bg-[var(--border-color)]" />
-                <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)]">Final CTA Section</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)]">{ui.finalCtaSection}</p>
                 <div className="flex-1 h-px bg-[var(--border-color)]" />
               </div>
               <div className="grid md:grid-cols-2 gap-5">
-                <FormField label="Final Title">
+                <FormField label={ui.finalTitle}>
                   <input className={inp} value={formState.homeFinalTitle}
                     onChange={(e) => updateField('homeFinalTitle', e.target.value)} />
                 </FormField>
-                <FormField label="Final CTA Button">
+                <FormField label={ui.finalCtaButton}>
                   <input className={inp} value={formState.homeFinalCta}
                     onChange={(e) => updateField('homeFinalCta', e.target.value)} />
                 </FormField>
               </div>
-              <FormField label="Final Description">
+              <FormField label={ui.finalDescription}>
                 <textarea className={inp} rows={2} value={formState.homeFinalDescription}
                   onChange={(e) => updateField('homeFinalDescription', e.target.value)} />
               </FormField>
             </FormSection>
 
             {/* Packages page */}
-            <FormSection title="Packages Page" badge="Labels & Copy" icon={Package} accentColor="#0ea5a0" rayDelay="7s" delay="0.12s">
+            <FormSection title={ui.packagesPage} badge={ui.labelsCopy} icon={Package} accentColor="#0ea5a0" rayDelay="7s" delay="0.12s">
               <div className="grid md:grid-cols-2 gap-5">
-                <FormField label="Page Title">
+                <FormField label={ui.pageTitle}>
                   <input className={inp} value={formState.packagesTitle}
                     onChange={(e) => updateField('packagesTitle', e.target.value)} />
                 </FormField>
-                <FormField label="Page Subtitle">
+                <FormField label={ui.pageSubtitle}>
                   <input className={inp} value={formState.packagesSubtitle}
                     onChange={(e) => updateField('packagesSubtitle', e.target.value)} />
                 </FormField>
-                <FormField label="All Tier Label">
+                <FormField label={ui.allTierLabel}>
                   <input className={inp} value={formState.packagesAllTierLabel}
                     onChange={(e) => updateField('packagesAllTierLabel', e.target.value)} />
                 </FormField>
-                <FormField label="Empty Tier Message">
+                <FormField label={ui.emptyTierMessage}>
                   <input className={inp} value={formState.packagesEmptyTierMessage}
                     onChange={(e) => updateField('packagesEmptyTierMessage', e.target.value)} />
                 </FormField>
-                <FormField label="Includes Label">
+                <FormField label={ui.includesLabel}>
                   <input className={inp} value={formState.packagesIncludesLabel}
                     onChange={(e) => updateField('packagesIncludesLabel', e.target.value)} />
                 </FormField>
-                <FormField label="From Price Label">
+                <FormField label={ui.fromPriceLabel}>
                   <input className={inp} value={formState.packagesFromOnlyLabel}
                     onChange={(e) => updateField('packagesFromOnlyLabel', e.target.value)} />
                 </FormField>
               </div>
-              <FormField label="More Services Text">
+              <FormField label={ui.moreServicesText}>
                 <input className={inp} value={formState.packagesMoreServicesText}
                   onChange={(e) => updateField('packagesMoreServicesText', e.target.value)} />
               </FormField>
             </FormSection>
 
             {/* Booking page */}
-            <FormSection title="Booking Page" badge="Config" icon={Calendar} accentColor="#3b82f6" rayDelay="12s" delay="0.20s">
+            <FormSection title={ui.bookingPage} badge={ui.config} icon={Calendar} accentColor="#3b82f6" rayDelay="12s" delay="0.20s">
               <div className="grid md:grid-cols-2 gap-5">
-                <FormField label="Earliest Booking Offset (Days)"
-                  hint="Minimum number of days in the future customers can book. 0 = same day allowed.">
+                <FormField label={ui.earliestOffset}
+                  hint={ui.earliestOffsetHint}>
                   <input type="number" min="0" className={inp}
                     value={formState.bookingEarliestOffsetDays}
                     onChange={(e) => updateField('bookingEarliestOffsetDays', e.target.value)} />
                 </FormField>
                 <div className="md:col-span-1">
-                  <FormField label="Available Time Slots"
-                    hint="Comma-separated list, e.g. 09:00-10:00, 10:00-11:00. Prices live in Manage Packages.">
+                  <FormField label={ui.timeSlots}
+                    hint={ui.timeSlotsHint}>
                     <textarea className={inp} rows={4}
                       value={formState.bookingTimeSlots}
                       onChange={(e) => updateField('bookingTimeSlots', e.target.value)} />
@@ -436,7 +556,7 @@ function ContentEditor() {
                   <button type="submit"
                     className="flex items-center gap-2.5 rounded-xl bg-primary px-6 py-2.5 text-sm font-bold text-white hover:bg-primary/90 transition">
                     <Save size={15} />
-                    Save Changes
+                    {ui.saveChanges}
                   </button>
                 </div>
 
@@ -444,7 +564,7 @@ function ContentEditor() {
                 <button type="button" onClick={handleReset}
                   className="flex items-center gap-2.5 px-6 py-2.5 rounded-xl border border-[var(--border-color)] text-sm font-bold text-[var(--text-color)] hover:bg-white/5 transition">
                   <RotateCcw size={15} />
-                  Reset Defaults
+                  {ui.resetDefaults}
                 </button>
 
                 {/* Status message */}

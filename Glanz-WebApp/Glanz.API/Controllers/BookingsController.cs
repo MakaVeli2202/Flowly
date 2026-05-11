@@ -29,6 +29,7 @@ namespace Glanz.API.Controllers
         private readonly IWebHostEnvironment _env;
         private readonly IObjectStorageService _objectStorage;
         private readonly IReferralService _referralService;
+        private readonly ILocalizationTextResolver _localizationTextResolver;
 
         public BookingsController(
             AppDbContext context,
@@ -39,7 +40,8 @@ namespace Glanz.API.Controllers
             CouponRateLimiter couponLimiter,
             IWebHostEnvironment env,
             IObjectStorageService objectStorage,
-            IReferralService referralService)
+            IReferralService referralService,
+            ILocalizationTextResolver localizationTextResolver)
         {
             _context = context;
             _configuration = configuration;
@@ -50,7 +52,21 @@ namespace Glanz.API.Controllers
             _env = env;
             _objectStorage = objectStorage;
             _referralService = referralService;
+            _localizationTextResolver = localizationTextResolver;
             StripeConfiguration.ApiKey = _configuration["Stripe:SecretKey"];
+        }
+
+        private string ResolveRequestedLanguage()
+        {
+            var queryLang = Request.Query["lang"].FirstOrDefault();
+            if (!string.IsNullOrWhiteSpace(queryLang))
+                return queryLang;
+
+            var header = Request.Headers["Accept-Language"].FirstOrDefault()
+                         ?? Request.Headers["X-Language"].FirstOrDefault();
+            if (string.IsNullOrWhiteSpace(header)) return "en";
+
+            return header.Split(',')[0].Split('-')[0].Trim().ToLowerInvariant();
         }
 
         private int? GetUserId()
@@ -1217,7 +1233,10 @@ namespace Glanz.API.Controllers
                 .ToList();
         }
 
-        private static BookingDto MapBookingToDto(Booking b, int estimatedDurationMinutes)
+        private static BookingDto MapBookingToDto(
+            Booking b,
+            int estimatedDurationMinutes,
+            Dictionary<int, LocalizedText>? packageTextMap = null)
         {
             return new BookingDto
             {
@@ -1264,7 +1283,9 @@ namespace Glanz.API.Controllers
                 Items = b.BookingItems.Select(bi => new BookingItemDetailDto
                 {
                     PackageId = bi.PackageId,
-                    PackageName = bi.Package?.Name ?? string.Empty,
+                    PackageName = packageTextMap != null && packageTextMap.TryGetValue(bi.PackageId, out var packageText)
+                        ? (packageText.Name ?? bi.Package?.Name ?? string.Empty)
+                        : (bi.Package?.Name ?? string.Empty),
                     PackageTier = bi.Package?.Tier ?? string.Empty,
                     Price = bi.Price,
                     Quantity = bi.Quantity,
@@ -2258,6 +2279,9 @@ namespace Glanz.API.Controllers
         {
             try
             {
+                var lang = ResolveRequestedLanguage();
+                var packageTextMap = await _localizationTextResolver.GetPackageTextsAsync(lang, HttpContext.RequestAborted);
+
                 // ── Idempotency check ────────────────────────────────────────────────────
                 // If the client sent a key and a booking already exists with that key, return
                 // the original booking instead of creating a duplicate. This handles the case
@@ -2281,7 +2305,7 @@ namespace Glanz.API.Controllers
                     {
                         // Idempotent replay — return the original booking
                         var existingDuration = ResolveBookingDurationMinutes(existingByKey);
-                        return Ok(MapBookingToDto(existingByKey, existingDuration));
+                        return Ok(MapBookingToDto(existingByKey, existingDuration, packageTextMap));
                     }
                 }
                 // ────────────────────────────────────────────────────────────────────────
@@ -2712,7 +2736,9 @@ namespace Glanz.API.Controllers
                     Items = bookingItems.Select(bi => new BookingItemDetailDto
                     {
                         PackageId = bi.PackageId,
-                        PackageName = packages[bi.PackageId].Name,
+                        PackageName = packageTextMap.TryGetValue(bi.PackageId, out var packageText)
+                            ? (packageText.Name ?? packages[bi.PackageId].Name)
+                            : packages[bi.PackageId].Name,
                         PackageTier = packages[bi.PackageId].Tier,
                         Price = bi.Price,
                         Quantity = bi.Quantity,
@@ -2737,6 +2763,9 @@ namespace Glanz.API.Controllers
         {
             try
             {
+                var lang = ResolveRequestedLanguage();
+                var packageTextMap = await _localizationTextResolver.GetPackageTextsAsync(lang, HttpContext.RequestAborted);
+
                 var userId = GetUserId();
                 if (!userId.HasValue)
                 {
@@ -2803,7 +2832,9 @@ namespace Glanz.API.Controllers
                     Items = b.BookingItems.Select(bi => new BookingItemDetailDto
                     {
                         PackageId = bi.PackageId,
-                        PackageName = bi.Package.Name,
+                        PackageName = packageTextMap.TryGetValue(bi.PackageId, out var packageText)
+                            ? (packageText.Name ?? bi.Package.Name)
+                            : bi.Package.Name,
                         PackageTier = bi.Package.Tier,
                         Price = bi.Price,
                         Quantity = bi.Quantity,
@@ -2828,6 +2859,9 @@ namespace Glanz.API.Controllers
         {
             try
             {
+                var lang = ResolveRequestedLanguage();
+                var packageTextMap = await _localizationTextResolver.GetPackageTextsAsync(lang, HttpContext.RequestAborted);
+
                 var booking = await _context.Bookings
                     .Include(b => b.BookingItems)
                         .ThenInclude(bi => bi.Package)
@@ -2909,7 +2943,9 @@ namespace Glanz.API.Controllers
                     Items = booking.BookingItems.Select(bi => new BookingItemDetailDto
                     {
                         PackageId = bi.PackageId,
-                        PackageName = bi.Package.Name,
+                        PackageName = packageTextMap.TryGetValue(bi.PackageId, out var packageText)
+                            ? (packageText.Name ?? bi.Package.Name)
+                            : bi.Package.Name,
                         PackageTier = bi.Package.Tier,
                         Price = bi.Price,
                         Quantity = bi.Quantity,
@@ -2934,6 +2970,10 @@ namespace Glanz.API.Controllers
         {
             try
             {
+                var lang = ResolveRequestedLanguage();
+                var packageTextMap = await _localizationTextResolver.GetPackageTextsAsync(lang, HttpContext.RequestAborted);
+                var serviceTextMap = await _localizationTextResolver.GetServiceTextsAsync(lang, HttpContext.RequestAborted);
+
                 var workerId = GetUserId();
                 if (!workerId.HasValue)
                 {
@@ -3001,11 +3041,17 @@ namespace Glanz.API.Controllers
                     Items = b.BookingItems.Select(bi => new BookingItemDetailDto
                     {
                         PackageId = bi.PackageId,
-                        PackageName = bi.Package.Name,
+                        PackageName = packageTextMap.TryGetValue(bi.PackageId, out var packageText)
+                            ? (packageText.Name ?? bi.Package.Name)
+                            : bi.Package.Name,
                         PackageTier = bi.Package.Tier,
-                        PackageDescription = bi.Package.Description,
+                        PackageDescription = packageTextMap.TryGetValue(bi.PackageId, out packageText)
+                            ? (packageText.Description ?? bi.Package.Description)
+                            : bi.Package.Description,
                         IncludedServices = bi.Package.PackageServices
-                            .Select(ps => ps.Service.Name)
+                            .Select(ps => serviceTextMap.TryGetValue(ps.ServiceId, out var serviceText)
+                                ? (serviceText.Name ?? ps.Service.Name)
+                                : ps.Service.Name)
                             .Distinct()
                             .OrderBy(name => name)
                             .ToList(),
@@ -3163,6 +3209,10 @@ namespace Glanz.API.Controllers
         {
             try
             {
+                var lang = ResolveRequestedLanguage();
+                var packageTextMap = await _localizationTextResolver.GetPackageTextsAsync(lang, HttpContext.RequestAborted);
+                var serviceTextMap = await _localizationTextResolver.GetServiceTextsAsync(lang, HttpContext.RequestAborted);
+
                 IQueryable<Booking> query = _context.Bookings
                     .Include(b => b.BookingItems)
                         .ThenInclude(bi => bi.Package)
@@ -3227,11 +3277,17 @@ namespace Glanz.API.Controllers
                     Items = b.BookingItems.Select(bi => new BookingItemDetailDto
                     {
                         PackageId = bi.PackageId,
-                        PackageName = bi.Package.Name,
+                        PackageName = packageTextMap.TryGetValue(bi.PackageId, out var packageText)
+                            ? (packageText.Name ?? bi.Package.Name)
+                            : bi.Package.Name,
                         PackageTier = bi.Package.Tier,
-                        PackageDescription = bi.Package.Description,
+                        PackageDescription = packageTextMap.TryGetValue(bi.PackageId, out packageText)
+                            ? (packageText.Description ?? bi.Package.Description)
+                            : bi.Package.Description,
                         IncludedServices = bi.Package.PackageServices
-                            .Select(ps => ps.Service.Name)
+                            .Select(ps => serviceTextMap.TryGetValue(ps.ServiceId, out var serviceText)
+                                ? (serviceText.Name ?? ps.Service.Name)
+                                : ps.Service.Name)
                             .Distinct()
                             .OrderBy(name => name)
                             .ToList(),
@@ -4436,6 +4492,10 @@ namespace Glanz.API.Controllers
         {
             try
             {
+                var lang = ResolveRequestedLanguage();
+                var packageTextMap = await _localizationTextResolver.GetPackageTextsAsync(lang, HttpContext.RequestAborted);
+                var serviceTextMap = await _localizationTextResolver.GetServiceTextsAsync(lang, HttpContext.RequestAborted);
+
                 var workerId = GetUserId();
                 if (!workerId.HasValue)
                 {
@@ -4597,11 +4657,17 @@ namespace Glanz.API.Controllers
                     Items = booking.BookingItems.Select(bi => new BookingItemDetailDto
                     {
                         PackageId = bi.PackageId,
-                        PackageName = bi.Package.Name,
+                        PackageName = packageTextMap.TryGetValue(bi.PackageId, out var packageText)
+                            ? (packageText.Name ?? bi.Package.Name)
+                            : bi.Package.Name,
                         PackageTier = bi.Package.Tier,
-                        PackageDescription = bi.Package.Description,
+                        PackageDescription = packageTextMap.TryGetValue(bi.PackageId, out packageText)
+                            ? (packageText.Description ?? bi.Package.Description)
+                            : bi.Package.Description,
                         IncludedServices = bi.Package.PackageServices
-                            .Select(ps => ps.Service.Name)
+                            .Select(ps => serviceTextMap.TryGetValue(ps.ServiceId, out var serviceText)
+                                ? (serviceText.Name ?? ps.Service.Name)
+                                : ps.Service.Name)
                             .Distinct()
                             .OrderBy(name => name)
                             .ToList(),
@@ -4628,6 +4694,10 @@ namespace Glanz.API.Controllers
         {
             try
             {
+                var lang = ResolveRequestedLanguage();
+                var packageTextMap = await _localizationTextResolver.GetPackageTextsAsync(lang, HttpContext.RequestAborted);
+                var serviceTextMap = await _localizationTextResolver.GetServiceTextsAsync(lang, HttpContext.RequestAborted);
+
                 var workerId = GetUserId();
                 if (!workerId.HasValue)
                 {
@@ -4867,11 +4937,17 @@ namespace Glanz.API.Controllers
                     Items = booking.BookingItems.Select(bi => new BookingItemDetailDto
                     {
                         PackageId = bi.PackageId,
-                        PackageName = bi.Package.Name,
+                        PackageName = packageTextMap.TryGetValue(bi.PackageId, out var packageText)
+                            ? (packageText.Name ?? bi.Package.Name)
+                            : bi.Package.Name,
                         PackageTier = bi.Package.Tier,
-                        PackageDescription = bi.Package.Description,
+                        PackageDescription = packageTextMap.TryGetValue(bi.PackageId, out packageText)
+                            ? (packageText.Description ?? bi.Package.Description)
+                            : bi.Package.Description,
                         IncludedServices = bi.Package.PackageServices
-                            .Select(ps => ps.Service.Name)
+                            .Select(ps => serviceTextMap.TryGetValue(ps.ServiceId, out var serviceText)
+                                ? (serviceText.Name ?? ps.Service.Name)
+                                : ps.Service.Name)
                             .Distinct()
                             .OrderBy(name => name)
                             .ToList(),

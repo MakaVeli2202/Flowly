@@ -9,5 +9,13 @@
   "schedule": "الجدول الزمني",
   "staff": "الموظفون",
   "subscriptions": "الاشتراكات",
-  "reports": "التقارير"
+  "reports": "التقارير",
+  "shifts": "المناوبات",
+  "salesKit": "عدة المبيعات",
+  "payroll": "الرواتب",
+  "liveMap": "الخريطة المباشرة",
+  "devSettings": "إعدادات المطور",
+  "translations": "الترجمات",
+  "operations": "العمليات",
+  "management": "الإدارة"
 }

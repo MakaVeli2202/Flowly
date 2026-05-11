@@ -6,47 +6,11 @@ import { LayoutDashboard, Bell, LogOut, Sun, Moon, Globe, ChevronDown, CheckChec
 import { useAuth } from '../../context/AuthContext';
 import { notificationsAPI } from '../../api/notifications';
 import { subscribeToNotifications } from '../../api/notificationBus';
-import { useLanguage, ADMIN_LABEL_KEYS, LANGUAGES } from '../../context/LanguageContext';
+import { useLanguage, LANGUAGES } from '../../context/LanguageContext';
 import { useRealtimeStatus } from '../../hooks/useRealtimeStatus';
 import { getBusiness } from '../../config/business';
 
-const ADMIN_LINKS = [
-  { to: '/admin',                      label: 'Dashboard',   icon: LayoutDashboard },
-  { to: '/admin/bookings',             label: 'Bookings',     icon: BookOpen },
-  { to: '/admin/staff',               label: 'Staff',        icon: Users },
-  { to: '/admin/workers/schedule',    label: 'Schedule',    icon: Calendar },
-  { to: '/admin/workers/management',   label: 'Shifts',       icon: Clock },
-  { to: '/admin/workers/sales',        label: 'Sales Kit',    icon: Briefcase },
-  { to: '/admin/payroll',             label: 'Payroll',      icon: DollarSign },
-  { to: '/admin/live-map',            label: 'Live Map',     icon: MapPin },
-  { to: '/admin/settings',            label: 'Settings',     icon: Settings },
-  { to: '/admin/dev-settings',        label: 'Dev Settings', icon: Wrench },
-];
-
-const ADMIN_GROUPS = [
-  {
-    title: 'Operations',
-    links: ['/admin/bookings', '/admin/workers/schedule', '/admin/workers/management', '/admin/workers/sales', '/admin/live-map', '/admin/payroll'],
-  },
-  {
-    title: 'Management',
-    links: ['/admin', '/admin/staff', '/admin/settings', '/admin/dev-settings'],
-  },
-];
-
-const NOTIF_CONFIG = {
-  NewBooking:            { icon: BookOpen,    color: 'text-blue-400 bg-blue-500/20', label: 'New Booking' },
-  BookingConfirmed:      { icon: CheckCircle, color: 'text-emerald-400 bg-emerald-500/20', label: 'Booking Confirmed' },
-  BookingCancelled:      { icon: XCircle,     color: 'text-rose-400 bg-rose-500/20', label: 'Booking Cancelled' },
-  BookingStatusChanged:  { icon: Car,         color: 'text-cyan-400 bg-cyan-500/20', label: 'Status Updated' },
-  WorkerArrived:         { icon: Car,         color: 'text-green-400 bg-green-500/20', label: 'Detailer Arrived' },
-  JobStarted:            { icon: Play,        color: 'text-blue-400 bg-blue-500/20', label: 'Service Started' },
-  JobCompleted:          { icon: CheckCircle, color: 'text-emerald-400 bg-emerald-500/20', label: 'Service Completed' },
-  LowStock:              { icon: AlertTriangle, color: 'text-rose-400 bg-rose-500/20', label: 'Low Stock Alert' },
-  SpecialOffer:          { icon: Tag,         color: 'text-purple-400 bg-purple-500/20', label: 'Special Offer' },
-  LoyaltyReward:         { icon: Gift,        color: 'text-amber-400 bg-amber-500/20', label: 'Loyalty Reward' },
-  CancellationRequested: { icon: XCircle,   color: 'text-orange-400 bg-orange-500/20', label: 'Cancellation Request' },
-};
+// ADMIN_LINKS and ADMIN_GROUPS will be defined inside the AdminHeader function after we have access to the `t` function
 
 function CheckCircle({ size, className }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>;
@@ -54,15 +18,6 @@ function CheckCircle({ size, className }) {
 
 function XCircle({ size, className }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className}><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>;
-}
-
-function relativeTime(dateStr) {
-  if (!dateStr) return '';
-  const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
-  if (diff < 60)    return 'just now';
-  if (diff < 3600)  return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  return `${Math.floor(diff / 86400)}d ago`;
 }
 
 export function AdminHeader({ theme, onToggleTheme }) {
@@ -82,6 +37,54 @@ export function AdminHeader({ theme, onToggleTheme }) {
   const wsStatus = useRealtimeStatus();
   const navigate = useNavigate();
   const location = useLocation();
+
+  const relativeTime = (dateStr) => {
+    if (!dateStr) return '';
+    const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
+    if (diff < 60)    return 'just now';
+    if (diff < 3600)  return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    return `${Math.floor(diff / 86400)}d ago`;
+  };
+
+  const NOTIF_CONFIG = {
+    NewBooking:            { icon: BookOpen,    color: 'text-blue-400 bg-blue-500/20', label: t('notifications.newBooking') },
+    BookingConfirmed:      { icon: CheckCircle, color: 'text-emerald-400 bg-emerald-500/20', label: t('notifications.bookingConfirmed') },
+    BookingCancelled:      { icon: XCircle,     color: 'text-rose-400 bg-rose-500/20', label: t('notifications.bookingCancelled') },
+    BookingStatusChanged:  { icon: Car,         color: 'text-cyan-400 bg-cyan-500/20', label: t('notifications.bookingStatusChanged') },
+    WorkerArrived:         { icon: Car,         color: 'text-green-400 bg-green-500/20', label: t('notifications.workerArrived') },
+    JobStarted:            { icon: Play,        color: 'text-blue-400 bg-blue-500/20', label: t('notifications.jobStarted') },
+    JobCompleted:          { icon: CheckCircle, color: 'text-emerald-400 bg-emerald-500/20', label: t('notifications.jobCompleted') },
+    LowStock:              { icon: AlertTriangle, color: 'text-rose-400 bg-rose-500/20', label: t('notifications.lowStock') },
+    SpecialOffer:          { icon: Tag,         color: 'text-purple-400 bg-purple-500/20', label: t('notifications.specialOffer') },
+    LoyaltyReward:         { icon: Gift,        color: 'text-amber-400 bg-amber-500/20', label: t('notifications.loyaltyReward') },
+    CancellationRequested: { icon: XCircle,   color: 'text-orange-400 bg-orange-500/20', label: t('notifications.cancellationRequested') },
+  };
+
+  const ADMIN_LINKS = [
+    { to: '/admin',                     labelKey: 'navbar.dashboard',   icon: LayoutDashboard },
+    { to: '/admin/bookings',            labelKey: 'navbar.bookings',    icon: BookOpen },
+    { to: '/admin/staff',               labelKey: 'navbar.staff',       icon: Users },
+    { to: '/admin/workers/schedule',    labelKey: 'navbar.schedule',    icon: Calendar },
+    { to: '/admin/workers/management',  labelKey: 'navbar.shifts',      icon: Clock },
+    { to: '/admin/workers/sales',       labelKey: 'navbar.salesKit',    icon: Briefcase },
+    { to: '/admin/payroll',             labelKey: 'navbar.payroll',     icon: DollarSign },
+    { to: '/admin/live-map',            labelKey: 'navbar.liveMap',     icon: MapPin },
+    { to: '/admin/settings',            labelKey: 'common.settings',    icon: Settings },
+    { to: '/admin/dev-settings',        labelKey: 'navbar.devSettings', icon: Wrench },
+    { to: '/admin/translations',        labelKey: 'navbar.translations', icon: Globe },
+  ];
+
+  const ADMIN_GROUPS = [
+    {
+      titleKey: 'navbar.operations',
+      links: ['/admin/bookings', '/admin/workers/schedule', '/admin/workers/management', '/admin/workers/sales', '/admin/live-map', '/admin/payroll'],
+    },
+    {
+      titleKey: 'navbar.management',
+      links: ['/admin', '/admin/staff', '/admin/settings', '/admin/dev-settings', '/admin/translations'],
+    },
+  ];
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 0);
@@ -184,37 +187,37 @@ export function AdminHeader({ theme, onToggleTheme }) {
         {/* Desktop Nav */}
         <div className="hidden lg:flex items-center gap-1">
           {/* Dashboard Button - Always visible */}
-          <Link
-            to="/admin"
-            className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
-              location.pathname === '/admin'
-                ? 'bg-primary text-white'
-                : 'text-gray-300 hover:text-white hover:bg-white/10'
-            }`}
-          >
-            <LayoutDashboard size={14} className="inline mr-1.5" />
-            Dashboard
-          </Link>
+           <Link
+             to="/admin"
+             className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+               location.pathname === '/admin'
+                 ? 'bg-primary text-white'
+                 : 'text-gray-300 hover:text-white hover:bg-white/10'
+             }`}
+           >
+             <LayoutDashboard size={14} className="inline mr-1.5" />
+             {t('navbar.dashboard')}
+           </Link>
 
           {/* Admin Dropdown */}
           <div className="relative" ref={adminMenuRef}>
-            <button
-              type="button"
-              onClick={() => setShowAdminMenu((v) => !v)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-all"
-            >
-              Admin
-              <ChevronDown size={14} className={`transition-transform ${showAdminMenu ? 'rotate-180' : ''}`} />
-            </button>
+<button
+  type="button"
+  onClick={() => setShowAdminMenu((v) => !v)}
+  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-all"
+>
+  {t('navbar.admin')}
+  <ChevronDown size={14} className={`transition-transform ${showAdminMenu ? 'rotate-180' : ''}`} />
+</button>
 
             {showAdminMenu && (
               <div className="absolute left-0 top-full mt-3 w-[38rem] rounded-2xl border border-gray-800 bg-[#0d1117] shadow-2xl z-50 p-3">
                 <div className="grid grid-cols-2 gap-3">
                   {ADMIN_GROUPS.map((group) => (
-                    <div key={group.title} className="rounded-xl border border-gray-800 p-2">
-                      <p className="px-2 pb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-gray-500">
-                        {group.title}
-                      </p>
+                    <div key={group.titleKey} className="rounded-xl border border-gray-800 p-2">
+                       <p className="px-2 pb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-gray-500">
+                         {t(group.titleKey)}
+                       </p>
                       <div className="space-y-1">
                         {group.links.map((path) => {
                           const item = ADMIN_LINKS.find((l) => l.to === path);
@@ -235,7 +238,7 @@ export function AdminHeader({ theme, onToggleTheme }) {
                                 <span className="mt-0.5 rounded-md border border-gray-700 p-1.5"><Icon size={14} /></span>
                                 <span className="min-w-0">
                                   <span className="block text-xs font-semibold">
-                                    {t(ADMIN_LABEL_KEYS[item.label] || item.label.toLowerCase())}
+                                    {t(item.labelKey)}
                                   </span>
                                 </span>
                               </div>
@@ -329,7 +332,7 @@ export function AdminHeader({ theme, onToggleTheme }) {
                     <p className="text-sm text-gray-400 text-center py-6">{t('noNotifications')}</p>
                   )}
                   {!notificationsLoading && notifications.map((notif) => {
-                    const config = NOTIF_CONFIG[notif.type] || { icon: Bell, color: 'text-gray-400 bg-gray-700', label: 'Notification' };
+                    const config = NOTIF_CONFIG[notif.type] || { icon: Bell, color: 'text-gray-400 bg-gray-700', label: t('notifications.notification') };
                     const IconComponent = config.icon;
                     return (
                       <button
@@ -360,7 +363,7 @@ export function AdminHeader({ theme, onToggleTheme }) {
 
           {/* User Menu */}
           <div className="flex items-center gap-2 pl-2 border-l border-gray-800">
-            <span className="text-sm text-gray-300 hidden sm:block">{user?.firstName || 'Admin'}</span>
+            <span className="text-sm text-gray-300 hidden sm:block">{user?.firstName || t('navbar.admin')}</span>
             <button
               onClick={handleLogout}
               className="p-2 rounded-lg hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 transition-all"
@@ -384,21 +387,21 @@ export function AdminHeader({ theme, onToggleTheme }) {
       {showAdminMenu && (
         <div className="lg:hidden absolute top-16 left-0 right-0 bg-[#0d1117] border-b border-gray-800 p-4">
           <div className="space-y-1">
-            {ADMIN_LINKS.map(({ to, label, icon: Icon }) => (
-              <Link
-                key={to}
-                to={to}
-                onClick={() => setShowAdminMenu(false)}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition ${
-                  location.pathname === to
-                    ? 'bg-primary/10 text-primary font-semibold'
-                    : 'text-gray-400 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                <Icon size={16} />
-                {t(ADMIN_LABEL_KEYS[label] || label.toLowerCase())}
-              </Link>
-            ))}
+{ADMIN_LINKS.map(({ to, label, icon: Icon }) => (
+  <Link
+    key={to}
+    to={to}
+    onClick={() => setShowAdminMenu(false)}
+    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition ${
+      location.pathname === to
+        ? 'bg-primary/10 text-primary font-semibold'
+        : 'text-gray-400 hover:text-white hover:bg-white/5'
+    }`}
+  >
+    <Icon size={16} />
+    {t(label)}
+  </Link>
+))}
           </div>
         </div>
       )}

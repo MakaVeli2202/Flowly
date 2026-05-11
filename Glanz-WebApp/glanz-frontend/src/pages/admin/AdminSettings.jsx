@@ -55,7 +55,492 @@ function Toggle({ checked, onClick }) {
 }
 
 export default function AdminSettings() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+  const ui = {
+    en: {
+      loadingSettings: 'Loading settings...',
+      failedToLoadSettings: 'Failed to load settings.',
+      failedToSaveSettings: 'Failed to save settings.',
+      workerTravelRangeError: 'Worker travel buffer must be between 0 and 480 minutes.',
+      failedToSaveWorkerBuffer: 'Failed to save worker travel buffer setting.',
+      failedToSaveSms: 'Failed to save SMS setting.',
+      discountRangeError: 'Discount must be between 0 and 50 percent.',
+      failedToSaveDiscount: 'Failed to save discount.',
+      referralRewardRangeError: 'Referral reward must be between 0 and 500 QAR.',
+      failedToSaveReferralReward: 'Failed to save referral reward.',
+      referralDiscountRangeError: 'Referral discount must be between 0 and 100 percent.',
+      failedToSaveReferralDiscount: 'Failed to save referral discount.',
+      multiplierRangeError: 'Each multiplier must be between 0 and 5.',
+      failedToSaveMultipliers: 'Failed to save vehicle multipliers.',
+      failedToSaveBusinessHours: 'Failed to save business hours.',
+      adminSettings: 'Admin Settings',
+      settingsSubtitle: 'Control system-wide policies and fees.',
+      cancellationPolicy: 'Cancellation Policy',
+      businessConfiguration: 'Business Configuration',
+      bookingTimeBuffers: 'Booking Time Buffers',
+      businessHours: 'Business Hours',
+      subscriptionDiscount: 'Subscription Discount',
+      referralSettings: 'Referral Settings',
+      vehiclePriceMultipliers: 'Vehicle Price Multipliers',
+      smsFollowUps: 'SMS Follow-Up Notifications',
+      saveSettings: 'Save Settings',
+      saveBusinessConfig: 'Save Business Config',
+      saveWorkerBuffer: 'Save Worker Buffer',
+      saveBusinessHours: 'Save Business Hours',
+      saveDiscount: 'Save Discount',
+      saveReferralSettings: 'Save Referral Settings',
+      saveMultipliers: 'Save Multipliers',
+      saveSmsSetting: 'Save SMS Setting',
+      saving: 'Saving...',
+      saved: 'Saved',
+      to: 'to',
+      cancellationPolicyDesc: 'Configure whether a fee is charged when customers cancel a booking. Shown to customers before they confirm cancellation.',
+      enableCancellationFee: 'Enable Cancellation Fee',
+      cancellationFeeWarning: 'Customers will see a warning and calculated fee before confirming cancellation.',
+      feeTypeLabel: 'Fee Type',
+      feeTypePercent: 'Percentage of booking',
+      feeTypeFlat: 'Flat amount (QAR)',
+      feePercentageLabel: 'Fee Percentage (%)',
+      flatFeeLabel: 'Flat Fee (QAR)',
+      freeCancellationWindowLabel: 'Free Cancellation Window (hours)',
+      freeCancellationWindowDesc: 'Cancellations made more than this many hours before the appointment incur no fee.',
+      policyPreviewLabel: 'Policy Preview',
+      policyPreviewText: 'Customers who cancel within {{hours}}h of their appointment will be charged {{fee}}. Cancellations made more than {{hours}}h before are free.',
+      businessConfigurationDesc: 'Set the business name, contact info, and operating area. These values are shown throughout the app.',
+      logoUrlLabel: 'Logo URL',
+      logoUrlPlaceholder: 'https://example.com/logo.png',
+      logoHint: 'Used in navbar, footer, payslips, and emails',
+      logoPreviewAlt: 'Logo preview',
+      businessNameLabel: 'Business Name',
+      businessNamePlaceholder: 'e.g. Glanz',
+      taglineLabel: 'Tagline',
+      taglinePlaceholder: 'Short description',
+      phoneLabel: 'Phone',
+      phonePlaceholder: '+974 4444 4444',
+      supportEmailLabel: 'Support Email',
+      supportEmailPlaceholder: 'info@example.qa',
+      operatingAreaLabel: 'Operating Area',
+      operatingAreaPlaceholder: 'e.g. Doha, Qatar',
+      serviceAreasLabel: 'Service Areas (cities / districts)',
+      noAreasAdded: 'No areas added',
+      areaInputPlaceholder: 'Type area name and press Enter',
+      addAreaButton: '+ Add',
+      socialMediaLinksLabel: 'Social Media Links',
+      failedToSaveBusinessConfig: 'Failed to save business configuration.',
+      bookingTimeBuffersDesc: 'Control how much gap workers need between consecutive jobs.',
+      workerTravelBufferTitle: 'Worker Travel Buffer',
+      workerTravelBufferTag: 'Gap between consecutive jobs',
+      workerTravelBufferDesc: 'Minimum gap between end of one booking and start of the next. Accounts for travel and preparation time between jobs.',
+      workerTravelRule: 'Worker available at T only if T >= lastBookingEnd + {{minutes}} min.',
+      businessHoursDesc: 'Set opening and closing hours for each day of the week. Slots are generated in 30-minute steps within these bounds.',
+      subscriptionDiscountDesc: 'Percentage discount applied automatically to monthly subscription bookings before any coupon is applied. Valid range: 0-50%.',
+      discountPercentageLabel: 'Discount Percentage',
+      discountPercentageDesc: 'A 10% discount means: a QAR 200 monthly plan is billed at QAR 180 before any coupon.',
+      discountEndpointNote: 'Applied in CreatePaymentIntent and CreateBookingV2 endpoints. Change takes effect on the next booking creation and needs no restart.',
+      referralSettingsDesc: 'Configure referral rewards for the referrer and discount for the referred user.',
+      referredUserDiscountLabel: 'Referred User Discount',
+      firstBookingOnly: 'First booking only',
+      referredUserDiscountDesc: 'Discount applied to the referred user\'s first completed booking.',
+      referrerRewardLabel: 'Referrer Reward',
+      afterXCompletedBookings: 'After X completed bookings',
+      referrerRewardDesc: 'The referrer receives this reward after their referred friend completes this many paid bookings.',
+      completedBookingsRequiredLabel: 'Completed Bookings Required',
+      rewardAmountLabel: 'Reward amount:',
+      failedToSaveReferralSettings: 'Failed to save referral settings.',
+      vehiclePriceMultipliersDesc: 'Configure price multipliers for different vehicle types. These affect the base price of all packages.',
+      vehicleMultiplierExample: 'Example: A QAR 100 package costs: QAR {{motorcycle}} for Motorcycle, QAR {{sedan}} for Sedan, QAR {{suv}} for SUV, QAR {{pickup}} for Pickup.',
+      smsFollowUpsDesc: 'Enable automated SMS messages for booking reminders, abandoned booking recovery, and win-back campaigns. Keep off during development to avoid carrier costs.',
+      enableSmsFollowUps: 'Enable SMS Follow-Ups',
+      enableSmsFollowUpsDesc: 'When enabled, SMS messages will fire for reminders, win-backs, and abandoned bookings. Requires a Twilio integration to be configured.',
+      developmentMode: 'Development mode:',
+      smsOffWarning: 'SMS is off. No messages will be sent and no costs will be incurred.',
+      smsActiveWarning: 'SMS is active. Messages will be sent to customers. Ensure Twilio credentials are configured in appsettings.',
+      social: {
+        facebook: 'Facebook',
+        twitter: 'Twitter/X',
+        instagram: 'Instagram',
+        linkedin: 'LinkedIn',
+        youtube: 'YouTube',
+      },
+      days: {
+        Sunday: 'Sunday',
+        Monday: 'Monday',
+        Tuesday: 'Tuesday',
+        Wednesday: 'Wednesday',
+        Thursday: 'Thursday',
+        Friday: 'Friday',
+        Saturday: 'Saturday',
+      },
+      vehicles: {
+        motorcycle: 'Motorcycle',
+        sedan: 'Sedan',
+        suv: 'SUV',
+        pickup: 'Pickup',
+      },
+    },
+    ar: {
+      loadingSettings: 'جارٍ تحميل الإعدادات...',
+      failedToLoadSettings: 'فشل تحميل الإعدادات.',
+      failedToSaveSettings: 'فشل حفظ الإعدادات.',
+      workerTravelRangeError: 'يجب أن تكون مهلة تنقل العامل بين 0 و480 دقيقة.',
+      failedToSaveWorkerBuffer: 'فشل حفظ إعداد مهلة تنقل العامل.',
+      failedToSaveSms: 'فشل حفظ إعداد الرسائل النصية.',
+      discountRangeError: 'يجب أن تكون نسبة الخصم بين 0 و50 بالمئة.',
+      failedToSaveDiscount: 'فشل حفظ الخصم.',
+      referralRewardRangeError: 'يجب أن تكون مكافأة الإحالة بين 0 و500 ر.ق.',
+      failedToSaveReferralReward: 'فشل حفظ مكافأة الإحالة.',
+      referralDiscountRangeError: 'يجب أن يكون خصم الإحالة بين 0 و100 بالمئة.',
+      failedToSaveReferralDiscount: 'فشل حفظ خصم الإحالة.',
+      multiplierRangeError: 'يجب أن يكون كل معامل بين 0 و5.',
+      failedToSaveMultipliers: 'فشل حفظ معاملات المركبات.',
+      failedToSaveBusinessHours: 'فشل حفظ ساعات العمل.',
+      adminSettings: 'إعدادات الإدارة',
+      settingsSubtitle: 'تحكم في السياسات والرسوم على مستوى النظام.',
+      cancellationPolicy: 'سياسة الإلغاء',
+      businessConfiguration: 'إعدادات النشاط التجاري',
+      bookingTimeBuffers: 'فواصل وقت الحجز',
+      businessHours: 'ساعات العمل',
+      subscriptionDiscount: 'خصم الاشتراك',
+      referralSettings: 'إعدادات الإحالة',
+      vehiclePriceMultipliers: 'معاملات أسعار المركبات',
+      smsFollowUps: 'إشعارات المتابعة عبر الرسائل النصية',
+      saveSettings: 'حفظ الإعدادات',
+      saveBusinessConfig: 'حفظ إعدادات النشاط',
+      saveWorkerBuffer: 'حفظ مهلة العامل',
+      saveBusinessHours: 'حفظ ساعات العمل',
+      saveDiscount: 'حفظ الخصم',
+      saveReferralSettings: 'حفظ إعدادات الإحالة',
+      saveMultipliers: 'حفظ المعاملات',
+      saveSmsSetting: 'حفظ إعداد SMS',
+      saving: 'جارٍ الحفظ...',
+      saved: 'تم الحفظ',
+      to: 'إلى',
+      cancellationPolicyDesc: 'حدد ما إذا كانت هناك رسوم عند إلغاء العميل للحجز. تظهر للعملاء قبل تأكيد الإلغاء.',
+      enableCancellationFee: 'تفعيل رسوم الإلغاء',
+      cancellationFeeWarning: 'سيظهر للعملاء تنبيه ورسوم محسوبة قبل تأكيد الإلغاء.',
+      feeTypeLabel: 'نوع الرسوم',
+      feeTypePercent: 'نسبة من قيمة الحجز',
+      feeTypeFlat: 'مبلغ ثابت (ر.ق)',
+      feePercentageLabel: 'نسبة الرسوم (%)',
+      flatFeeLabel: 'رسوم ثابتة (ر.ق)',
+      freeCancellationWindowLabel: 'مهلة الإلغاء المجاني (ساعات)',
+      freeCancellationWindowDesc: 'الإلغاء قبل هذا العدد من الساعات لا يترتب عليه رسوم.',
+      policyPreviewLabel: 'معاينة السياسة',
+      policyPreviewText: 'العملاء الذين يلغون خلال {{hours}} ساعة من الموعد سيتم تحصيل {{fee}} منهم. أما قبل {{hours}} ساعة فالإلغاء مجاني.',
+      businessConfigurationDesc: 'حدد اسم النشاط ومعلومات التواصل ونطاق التشغيل. تظهر هذه القيم في أنحاء التطبيق.',
+      logoUrlLabel: 'رابط الشعار',
+      logoUrlPlaceholder: 'https://example.com/logo.png',
+      logoHint: 'يستخدم في شريط التنقل والتذييل وكشوف الرواتب والبريد',
+      logoPreviewAlt: 'معاينة الشعار',
+      businessNameLabel: 'اسم النشاط',
+      businessNamePlaceholder: 'مثال: Glanz',
+      taglineLabel: 'العبارة التعريفية',
+      taglinePlaceholder: 'وصف قصير',
+      phoneLabel: 'الهاتف',
+      phonePlaceholder: '+974 4444 4444',
+      supportEmailLabel: 'بريد الدعم',
+      supportEmailPlaceholder: 'info@example.qa',
+      operatingAreaLabel: 'منطقة التشغيل',
+      operatingAreaPlaceholder: 'مثال: الدوحة، قطر',
+      serviceAreasLabel: 'مناطق الخدمة (مدن / أحياء)',
+      noAreasAdded: 'لم تتم إضافة مناطق',
+      areaInputPlaceholder: 'اكتب اسم المنطقة ثم اضغط Enter',
+      addAreaButton: '+ إضافة',
+      socialMediaLinksLabel: 'روابط التواصل الاجتماعي',
+      failedToSaveBusinessConfig: 'فشل حفظ إعدادات النشاط.',
+      bookingTimeBuffersDesc: 'تحكم في مدة الفاصل المطلوبة بين الحجوزات المتتالية للعامل.',
+      workerTravelBufferTitle: 'مهلة تنقل العامل',
+      workerTravelBufferTag: 'فاصل بين الحجوزات المتتالية',
+      workerTravelBufferDesc: 'أقل فاصل بين نهاية حجز وبداية الحجز التالي، ويشمل وقت التنقل والتجهيز.',
+      workerTravelRule: 'يكون العامل متاحا عند T فقط إذا كان T >= نهاية الحجز الأخير + {{minutes}} دقيقة.',
+      businessHoursDesc: 'حدد وقت الفتح والإغلاق لكل يوم. يتم توليد المواعيد كل 30 دقيقة داخل هذه الحدود.',
+      subscriptionDiscountDesc: 'خصم يطبق تلقائيا على حجوزات الاشتراك الشهرية قبل أي كوبون. المجال: 0-50%.',
+      discountPercentageLabel: 'نسبة الخصم',
+      discountPercentageDesc: 'خصم 10% يعني أن باقة 200 ر.ق تصبح 180 ر.ق قبل أي كوبون.',
+      discountEndpointNote: 'يطبق في نقاط CreatePaymentIntent و CreateBookingV2. يسري التغيير في أول حجز جديد بدون إعادة تشغيل.',
+      referralSettingsDesc: 'حدد مكافأة المُحيل وخصم المستخدم المُحال.',
+      referredUserDiscountLabel: 'خصم المستخدم المُحال',
+      firstBookingOnly: 'لأول حجز فقط',
+      referredUserDiscountDesc: 'يطبق الخصم على أول حجز مكتمل للمستخدم المُحال.',
+      referrerRewardLabel: 'مكافأة المُحيل',
+      afterXCompletedBookings: 'بعد عدد X من الحجوزات المكتملة',
+      referrerRewardDesc: 'يحصل المُحيل على هذه المكافأة بعد إكمال الصديق المُحال لهذا العدد من الحجوزات المدفوعة.',
+      completedBookingsRequiredLabel: 'عدد الحجوزات المكتملة المطلوبة',
+      rewardAmountLabel: 'قيمة المكافأة:',
+      failedToSaveReferralSettings: 'فشل حفظ إعدادات الإحالة.',
+      vehiclePriceMultipliersDesc: 'حدد معاملات الأسعار لأنواع المركبات المختلفة. تؤثر على السعر الأساسي لكل الباقات.',
+      vehicleMultiplierExample: 'مثال: باقة بسعر 100 ر.ق تصبح: {{motorcycle}} للدراجة، {{sedan}} للسيدان، {{suv}} للـSUV، {{pickup}} للبيك أب.',
+      smsFollowUpsDesc: 'تفعيل الرسائل التلقائية للتذكير واسترجاع الحجوزات المتروكة وحملات الاسترجاع. اتركها مغلقة أثناء التطوير لتجنب التكلفة.',
+      enableSmsFollowUps: 'تفعيل متابعات SMS',
+      enableSmsFollowUpsDesc: 'عند التفعيل سترسل رسائل للتذكير والاسترجاع واستكمال الحجوزات المتروكة. يتطلب إعداد Twilio.',
+      developmentMode: 'وضع التطوير:',
+      smsOffWarning: 'الرسائل النصية متوقفة. لن يتم إرسال رسائل ولن توجد تكلفة.',
+      smsActiveWarning: 'الرسائل النصية مفعلة. سيتم الإرسال للعملاء. تأكد من إعداد بيانات Twilio في appsettings.',
+      social: {
+        facebook: 'فيسبوك',
+        twitter: 'إكس / تويتر',
+        instagram: 'إنستغرام',
+        linkedin: 'لينكدإن',
+        youtube: 'يوتيوب',
+      },
+      days: {
+        Sunday: 'الأحد',
+        Monday: 'الاثنين',
+        Tuesday: 'الثلاثاء',
+        Wednesday: 'الأربعاء',
+        Thursday: 'الخميس',
+        Friday: 'الجمعة',
+        Saturday: 'السبت',
+      },
+      vehicles: {
+        motorcycle: 'دراجة',
+        sedan: 'سيدان',
+        suv: 'دفع رباعي',
+        pickup: 'بيك أب',
+      },
+    },
+    de: {
+      loadingSettings: 'Einstellungen werden geladen...',
+      failedToLoadSettings: 'Einstellungen konnten nicht geladen werden.',
+      failedToSaveSettings: 'Einstellungen konnten nicht gespeichert werden.',
+      workerTravelRangeError: 'Der Mitarbeiter-Puffer muss zwischen 0 und 480 Minuten liegen.',
+      failedToSaveWorkerBuffer: 'Der Mitarbeiter-Puffer konnte nicht gespeichert werden.',
+      failedToSaveSms: 'SMS-Einstellung konnte nicht gespeichert werden.',
+      discountRangeError: 'Der Rabatt muss zwischen 0 und 50 Prozent liegen.',
+      failedToSaveDiscount: 'Rabatt konnte nicht gespeichert werden.',
+      referralRewardRangeError: 'Die Empfehlungspramie muss zwischen 0 und 500 QAR liegen.',
+      failedToSaveReferralReward: 'Empfehlungspramie konnte nicht gespeichert werden.',
+      referralDiscountRangeError: 'Der Empfehlungsrabatt muss zwischen 0 und 100 Prozent liegen.',
+      failedToSaveReferralDiscount: 'Empfehlungsrabatt konnte nicht gespeichert werden.',
+      multiplierRangeError: 'Jeder Multiplikator muss zwischen 0 und 5 liegen.',
+      failedToSaveMultipliers: 'Fahrzeug-Multiplikatoren konnten nicht gespeichert werden.',
+      failedToSaveBusinessHours: 'Geschaftszeiten konnten nicht gespeichert werden.',
+      adminSettings: 'Admin-Einstellungen',
+      settingsSubtitle: 'Steuern Sie systemweite Richtlinien und Gebuhren.',
+      cancellationPolicy: 'Stornierungsrichtlinie',
+      businessConfiguration: 'Unternehmenskonfiguration',
+      bookingTimeBuffers: 'Buchungszeit-Puffer',
+      businessHours: 'Geschaftszeiten',
+      subscriptionDiscount: 'Abonnement-Rabatt',
+      referralSettings: 'Empfehlungseinstellungen',
+      vehiclePriceMultipliers: 'Fahrzeugpreis-Multiplikatoren',
+      smsFollowUps: 'SMS-Follow-up-Benachrichtigungen',
+      saveSettings: 'Einstellungen speichern',
+      saveBusinessConfig: 'Unternehmensdaten speichern',
+      saveWorkerBuffer: 'Mitarbeiter-Puffer speichern',
+      saveBusinessHours: 'Geschaftszeiten speichern',
+      saveDiscount: 'Rabatt speichern',
+      saveReferralSettings: 'Empfehlungseinstellungen speichern',
+      saveMultipliers: 'Multiplikatoren speichern',
+      saveSmsSetting: 'SMS-Einstellung speichern',
+      saving: 'Speichern...',
+      saved: 'Gespeichert',
+      to: 'bis',
+      cancellationPolicyDesc: 'Legen Sie fest, ob bei Stornierungen eine Gebuhr erhoben wird. Dies wird Kunden vor der Bestatigung angezeigt.',
+      enableCancellationFee: 'Stornierungsgebuhr aktivieren',
+      cancellationFeeWarning: 'Kunden sehen vor der Bestatigung einen Hinweis und die berechnete Gebuhr.',
+      feeTypeLabel: 'Gebuhrenart',
+      feeTypePercent: 'Prozentsatz vom Buchungswert',
+      feeTypeFlat: 'Pauschalbetrag (QAR)',
+      feePercentageLabel: 'Gebuhrenprozentsatz (%)',
+      flatFeeLabel: 'Pauschalgebuhr (QAR)',
+      freeCancellationWindowLabel: 'Kostenfreies Stornierungsfenster (Stunden)',
+      freeCancellationWindowDesc: 'Stornierungen fruher als diese Stundenzahl vor dem Termin sind kostenfrei.',
+      policyPreviewLabel: 'Richtlinienvorschau',
+      policyPreviewText: 'Kunden, die innerhalb von {{hours}}h vor dem Termin stornieren, zahlen {{fee}}. Fruher als {{hours}}h ist kostenfrei.',
+      businessConfigurationDesc: 'Setzen Sie Firmenname, Kontakt und Einsatzgebiet. Diese Werte erscheinen in der gesamten App.',
+      logoUrlLabel: 'Logo-URL',
+      logoUrlPlaceholder: 'https://example.com/logo.png',
+      logoHint: 'Wird in Navbar, Footer, Gehaltsnachweisen und E-Mails verwendet',
+      logoPreviewAlt: 'Logo-Vorschau',
+      businessNameLabel: 'Firmenname',
+      businessNamePlaceholder: 'z. B. Glanz',
+      taglineLabel: 'Slogan',
+      taglinePlaceholder: 'Kurze Beschreibung',
+      phoneLabel: 'Telefon',
+      phonePlaceholder: '+974 4444 4444',
+      supportEmailLabel: 'Support-E-Mail',
+      supportEmailPlaceholder: 'info@example.qa',
+      operatingAreaLabel: 'Einsatzgebiet',
+      operatingAreaPlaceholder: 'z. B. Doha, Katar',
+      serviceAreasLabel: 'Servicegebiete (Stadte / Bezirke)',
+      noAreasAdded: 'Keine Gebiete hinzugefugt',
+      areaInputPlaceholder: 'Gebiet eingeben und Enter drucken',
+      addAreaButton: '+ Hinzufugen',
+      socialMediaLinksLabel: 'Social-Media-Links',
+      failedToSaveBusinessConfig: 'Unternehmenskonfiguration konnte nicht gespeichert werden.',
+      bookingTimeBuffersDesc: 'Steuern Sie, wie viel Abstand Mitarbeiter zwischen aufeinanderfolgenden Jobs brauchen.',
+      workerTravelBufferTitle: 'Mitarbeiter-Fahrtpuffer',
+      workerTravelBufferTag: 'Abstand zwischen aufeinanderfolgenden Jobs',
+      workerTravelBufferDesc: 'Minimaler Abstand zwischen dem Ende einer Buchung und dem Start der nachsten. Beinhaltet Fahrt- und Vorbereitungszeit.',
+      workerTravelRule: 'Mitarbeiter ist bei T nur verfugbar, wenn T >= letztes Buchungsende + {{minutes}} Min.',
+      businessHoursDesc: 'Legen Sie Offnungs- und Schlusszeiten fur jeden Wochentag fest. Slots werden alle 30 Minuten erzeugt.',
+      subscriptionDiscountDesc: 'Rabatt fur monatliche Abo-Buchungen vor Gutscheinen. Gultiger Bereich: 0-50%.',
+      discountPercentageLabel: 'Rabattprozentsatz',
+      discountPercentageDesc: '10% Rabatt bedeutet: Ein QAR-200-Abo wird vor Gutschein mit QAR 180 berechnet.',
+      discountEndpointNote: 'Wird in CreatePaymentIntent- und CreateBookingV2-Endpunkten angewendet. Wirkt bei der nachsten Buchung, ohne Neustart.',
+      referralSettingsDesc: 'Konfigurieren Sie Pramie fur Werbende und Rabatt fur Geworbene.',
+      referredUserDiscountLabel: 'Rabatt fur Geworbene',
+      firstBookingOnly: 'Nur fur die erste Buchung',
+      referredUserDiscountDesc: 'Rabatt wird auf die erste abgeschlossene Buchung der geworbenen Person angewendet.',
+      referrerRewardLabel: 'Pramie fur Werbende',
+      afterXCompletedBookings: 'Nach X abgeschlossenen Buchungen',
+      referrerRewardDesc: 'Die werbende Person erhalt diese Pramie, nachdem die geworbene Person so viele bezahlte Buchungen abgeschlossen hat.',
+      completedBookingsRequiredLabel: 'Erforderliche abgeschlossene Buchungen',
+      rewardAmountLabel: 'Pramienbetrag:',
+      failedToSaveReferralSettings: 'Empfehlungseinstellungen konnten nicht gespeichert werden.',
+      vehiclePriceMultipliersDesc: 'Konfigurieren Sie Preis-Multiplikatoren fur Fahrzeugtypen. Diese beeinflussen den Basispreis aller Pakete.',
+      vehicleMultiplierExample: 'Beispiel: Ein QAR-100-Paket kostet: QAR {{motorcycle}} fur Motorrad, QAR {{sedan}} fur Sedan, QAR {{suv}} fur SUV, QAR {{pickup}} fur Pickup.',
+      smsFollowUpsDesc: 'Aktiviert automatische SMS fur Erinnerungen, Buchungs-Recovery und Win-Back-Kampagnen. In der Entwicklung auslassen, um Kosten zu vermeiden.',
+      enableSmsFollowUps: 'SMS-Follow-ups aktivieren',
+      enableSmsFollowUpsDesc: 'Bei Aktivierung werden SMS fur Erinnerungen, Win-Backs und abgebrochene Buchungen gesendet. Twilio-Integration erforderlich.',
+      developmentMode: 'Entwicklungsmodus:',
+      smsOffWarning: 'SMS ist aus. Es werden keine Nachrichten versendet und keine Kosten verursacht.',
+      smsActiveWarning: 'SMS ist aktiv. Nachrichten werden an Kunden gesendet. Stellen Sie sicher, dass Twilio in appsettings konfiguriert ist.',
+      social: {
+        facebook: 'Facebook',
+        twitter: 'Twitter/X',
+        instagram: 'Instagram',
+        linkedin: 'LinkedIn',
+        youtube: 'YouTube',
+      },
+      days: {
+        Sunday: 'Sonntag',
+        Monday: 'Montag',
+        Tuesday: 'Dienstag',
+        Wednesday: 'Mittwoch',
+        Thursday: 'Donnerstag',
+        Friday: 'Freitag',
+        Saturday: 'Samstag',
+      },
+      vehicles: {
+        motorcycle: 'Motorrad',
+        sedan: 'Sedan',
+        suv: 'SUV',
+        pickup: 'Pickup',
+      },
+    },
+  }[lang] || {
+    loadingSettings: 'Loading settings...',
+    failedToLoadSettings: 'Failed to load settings.',
+    failedToSaveSettings: 'Failed to save settings.',
+    workerTravelRangeError: 'Worker travel buffer must be between 0 and 480 minutes.',
+    failedToSaveWorkerBuffer: 'Failed to save worker travel buffer setting.',
+    failedToSaveSms: 'Failed to save SMS setting.',
+    discountRangeError: 'Discount must be between 0 and 50 percent.',
+    failedToSaveDiscount: 'Failed to save discount.',
+    referralRewardRangeError: 'Referral reward must be between 0 and 500 QAR.',
+    failedToSaveReferralReward: 'Failed to save referral reward.',
+    referralDiscountRangeError: 'Referral discount must be between 0 and 100 percent.',
+    failedToSaveReferralDiscount: 'Failed to save referral discount.',
+    multiplierRangeError: 'Each multiplier must be between 0 and 5.',
+    failedToSaveMultipliers: 'Failed to save vehicle multipliers.',
+    failedToSaveBusinessHours: 'Failed to save business hours.',
+    adminSettings: 'Admin Settings',
+    settingsSubtitle: 'Control system-wide policies and fees.',
+    cancellationPolicy: 'Cancellation Policy',
+    businessConfiguration: 'Business Configuration',
+    bookingTimeBuffers: 'Booking Time Buffers',
+    businessHours: 'Business Hours',
+    subscriptionDiscount: 'Subscription Discount',
+    referralSettings: 'Referral Settings',
+    vehiclePriceMultipliers: 'Vehicle Price Multipliers',
+    smsFollowUps: 'SMS Follow-Up Notifications',
+    saveSettings: 'Save Settings',
+    saveBusinessConfig: 'Save Business Config',
+    saveWorkerBuffer: 'Save Worker Buffer',
+    saveBusinessHours: 'Save Business Hours',
+    saveDiscount: 'Save Discount',
+    saveReferralSettings: 'Save Referral Settings',
+    saveMultipliers: 'Save Multipliers',
+    saveSmsSetting: 'Save SMS Setting',
+    saving: 'Saving...',
+    saved: 'Saved',
+    to: 'to',
+    cancellationPolicyDesc: 'Configure whether a fee is charged when customers cancel a booking. Shown to customers before they confirm cancellation.',
+    enableCancellationFee: 'Enable Cancellation Fee',
+    cancellationFeeWarning: 'Customers will see a warning and calculated fee before confirming cancellation.',
+    feeTypeLabel: 'Fee Type',
+    feeTypePercent: 'Percentage of booking',
+    feeTypeFlat: 'Flat amount (QAR)',
+    feePercentageLabel: 'Fee Percentage (%)',
+    flatFeeLabel: 'Flat Fee (QAR)',
+    freeCancellationWindowLabel: 'Free Cancellation Window (hours)',
+    freeCancellationWindowDesc: 'Cancellations made more than this many hours before the appointment incur no fee.',
+    policyPreviewLabel: 'Policy Preview',
+    policyPreviewText: 'Customers who cancel within {{hours}}h of their appointment will be charged {{fee}}. Cancellations made more than {{hours}}h before are free.',
+    businessConfigurationDesc: 'Set the business name, contact info, and operating area. These values are shown throughout the app.',
+    logoUrlLabel: 'Logo URL',
+    logoUrlPlaceholder: 'https://example.com/logo.png',
+    logoHint: 'Used in navbar, footer, payslips, and emails',
+    logoPreviewAlt: 'Logo preview',
+    businessNameLabel: 'Business Name',
+    businessNamePlaceholder: 'e.g. Glanz',
+    taglineLabel: 'Tagline',
+    taglinePlaceholder: 'Short description',
+    phoneLabel: 'Phone',
+    phonePlaceholder: '+974 4444 4444',
+    supportEmailLabel: 'Support Email',
+    supportEmailPlaceholder: 'info@example.qa',
+    operatingAreaLabel: 'Operating Area',
+    operatingAreaPlaceholder: 'e.g. Doha, Qatar',
+    serviceAreasLabel: 'Service Areas (cities / districts)',
+    noAreasAdded: 'No areas added',
+    areaInputPlaceholder: 'Type area name and press Enter',
+    addAreaButton: '+ Add',
+    socialMediaLinksLabel: 'Social Media Links',
+    failedToSaveBusinessConfig: 'Failed to save business configuration.',
+    bookingTimeBuffersDesc: 'Control how much gap workers need between consecutive jobs.',
+    workerTravelBufferTitle: 'Worker Travel Buffer',
+    workerTravelBufferTag: 'Gap between consecutive jobs',
+    workerTravelBufferDesc: 'Minimum gap between end of one booking and start of the next. Accounts for travel and preparation time between jobs.',
+    workerTravelRule: 'Worker available at T only if T >= lastBookingEnd + {{minutes}} min.',
+    businessHoursDesc: 'Set opening and closing hours for each day of the week. Slots are generated in 30-minute steps within these bounds.',
+    subscriptionDiscountDesc: 'Percentage discount applied automatically to monthly subscription bookings before any coupon is applied. Valid range: 0-50%.',
+    discountPercentageLabel: 'Discount Percentage',
+    discountPercentageDesc: 'A 10% discount means: a QAR 200 monthly plan is billed at QAR 180 before any coupon.',
+    discountEndpointNote: 'Applied in CreatePaymentIntent and CreateBookingV2 endpoints. Change takes effect on the next booking creation and needs no restart.',
+    referralSettingsDesc: 'Configure referral rewards for the referrer and discount for the referred user.',
+    referredUserDiscountLabel: 'Referred User Discount',
+    firstBookingOnly: 'First booking only',
+    referredUserDiscountDesc: 'Discount applied to the referred user\'s first completed booking.',
+    referrerRewardLabel: 'Referrer Reward',
+    afterXCompletedBookings: 'After X completed bookings',
+    referrerRewardDesc: 'The referrer receives this reward after their referred friend completes this many paid bookings.',
+    completedBookingsRequiredLabel: 'Completed Bookings Required',
+    rewardAmountLabel: 'Reward amount:',
+    failedToSaveReferralSettings: 'Failed to save referral settings.',
+    vehiclePriceMultipliersDesc: 'Configure price multipliers for different vehicle types. These affect the base price of all packages.',
+    vehicleMultiplierExample: 'Example: A QAR 100 package costs: QAR {{motorcycle}} for Motorcycle, QAR {{sedan}} for Sedan, QAR {{suv}} for SUV, QAR {{pickup}} for Pickup.',
+    smsFollowUpsDesc: 'Enable automated SMS messages for booking reminders, abandoned booking recovery, and win-back campaigns. Keep off during development to avoid carrier costs.',
+    enableSmsFollowUps: 'Enable SMS Follow-Ups',
+    enableSmsFollowUpsDesc: 'When enabled, SMS messages will fire for reminders, win-backs, and abandoned bookings. Requires a Twilio integration to be configured.',
+    developmentMode: 'Development mode:',
+    smsOffWarning: 'SMS is off. No messages will be sent and no costs will be incurred.',
+    smsActiveWarning: 'SMS is active. Messages will be sent to customers. Ensure Twilio credentials are configured in appsettings.',
+    social: {
+      facebook: 'Facebook',
+      twitter: 'Twitter/X',
+      instagram: 'Instagram',
+      linkedin: 'LinkedIn',
+      youtube: 'YouTube',
+    },
+    days: {
+      Sunday: 'Sunday',
+      Monday: 'Monday',
+      Tuesday: 'Tuesday',
+      Wednesday: 'Wednesday',
+      Thursday: 'Thursday',
+      Friday: 'Friday',
+      Saturday: 'Saturday',
+    },
+    vehicles: {
+      motorcycle: 'Motorcycle',
+      sedan: 'Sedan',
+      suv: 'SUV',
+      pickup: 'Pickup',
+    },
+  };
   const [policy, setPolicy] = useState({ feeEnabled:false, feeType:'Percent', feeAmount:20, freeWindowHours:24 });
   const [loading, setLoading] = useState(true);
   const [saving,  setSaving]  = useState(false);
@@ -123,7 +608,7 @@ export default function AdminSettings() {
       try {
         const data = await settingsAPI.getCancellationPolicy();
         setPolicy({ feeEnabled: data.feeEnabled ?? false, feeType: data.feeType ?? 'Percent', feeAmount: data.feeAmount ?? 20, freeWindowHours: data.freeWindowHours ?? 24 });
-      } catch { setError('Failed to load settings.'); }
+      } catch { setError(ui.failedToLoadSettings); }
       finally { setLoading(false); }
     })();
   }, []);
@@ -181,21 +666,21 @@ export default function AdminSettings() {
       setPolicy({ feeEnabled: updated.feeEnabled, feeType: updated.feeType, feeAmount: updated.feeAmount, freeWindowHours: updated.freeWindowHours });
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
-    } catch (err) { setError(err?.response?.data?.message || 'Failed to save settings.'); }
+    } catch (err) { setError(err?.response?.data?.message || ui.failedToSaveSettings); }
     finally { setSaving(false); }
   };
 
   const handleSaveWorkerTravel = async () => {
     const v = Number(workerTravelMinutes);
     if (!Number.isFinite(v) || v < 0 || v > 480) {
-      setWorkerTravelError('Worker travel buffer must be between 0 and 480 minutes.'); return;
+      setWorkerTravelError(ui.workerTravelRangeError); return;
     }
     try {
       setWorkerTravelSaving(true); setWorkerTravelError('');
       await settingsAPI.updateSystemSettings({ WorkerTravelBufferMinutes: v });
       setWorkerTravelSaved(true);
       setTimeout(() => setWorkerTravelSaved(false), 3000);
-    } catch (err) { setWorkerTravelError(err?.response?.data?.message || 'Failed to save worker travel buffer setting.'); }
+    } catch (err) { setWorkerTravelError(err?.response?.data?.message || ui.failedToSaveWorkerBuffer); }
     finally { setWorkerTravelSaving(false); }
   };
 
@@ -205,49 +690,49 @@ export default function AdminSettings() {
       await settingsAPI.updateSmsSettings({ followUpEnabled: smsEnabled });
       setSmsSaved(true);
       setTimeout(() => setSmsSaved(false), 3000);
-    } catch (err) { setSmsError(err?.response?.data?.message || 'Failed to save SMS setting.'); }
+    } catch (err) { setSmsError(err?.response?.data?.message || ui.failedToSaveSms); }
     finally { setSmsSaving(false); }
   };
 
   const handleSaveDiscount = async () => {
     const v = Number(discountPct);
     if (!Number.isFinite(v) || v < 0 || v > 50) {
-      setDiscountError('Discount must be between 0 and 50 percent.'); return;
+      setDiscountError(ui.discountRangeError); return;
     }
     try {
       setDiscountSaving(true); setDiscountError('');
       await settingsAPI.updateSystemSettings({ subscriptionDiscountPercent: v });
       setDiscountSaved(true);
       setTimeout(() => setDiscountSaved(false), 3000);
-    } catch (err) { setDiscountError(err?.response?.data?.message || 'Failed to save discount.'); }
+    } catch (err) { setDiscountError(err?.response?.data?.message || ui.failedToSaveDiscount); }
     finally { setDiscountSaving(false); }
   };
 
   const handleSaveReferralReward = async () => {
     const v = Number(referralReward);
     if (!Number.isFinite(v) || v < 0 || v > 500) {
-      setReferralError('Referral reward must be between 0 and 500 QAR.'); return;
+      setReferralError(ui.referralRewardRangeError); return;
     }
     try {
       setReferralSaving(true); setReferralError('');
       await settingsAPI.updateSystemSettings({ ReferralRewardAmount: v });
       setReferralSaved(true);
       setTimeout(() => setReferralSaved(false), 3000);
-    } catch (err) { setReferralError(err?.response?.data?.message || 'Failed to save referral reward.'); }
+    } catch (err) { setReferralError(err?.response?.data?.message || ui.failedToSaveReferralReward); }
     finally { setReferralSaving(false); }
   };
 
   const handleSaveReferralDiscount = async () => {
     const v = Number(referralDiscountPct);
     if (!Number.isFinite(v) || v < 0 || v > 100) {
-      setReferralDiscountError('Referral discount must be between 0 and 100 percent.'); return;
+      setReferralDiscountError(ui.referralDiscountRangeError); return;
     }
     try {
       setReferralDiscountSaving(true); setReferralDiscountError('');
       await settingsAPI.updateSystemSettings({ ReferralDiscountPercent: v });
       setReferralDiscountSaved(true);
       setTimeout(() => setReferralDiscountSaved(false), 3000);
-    } catch (err) { setReferralDiscountError(err?.response?.data?.message || 'Failed to save referral discount.'); }
+    } catch (err) { setReferralDiscountError(err?.response?.data?.message || ui.failedToSaveReferralDiscount); }
     finally { setReferralDiscountSaving(false); }
   };
 
@@ -255,7 +740,7 @@ export default function AdminSettings() {
     const vm = vehicleMultipliers;
     const valid = [vm.motorcycle, vm.sedan, vm.suv, vm.pickup].every(v => Number.isFinite(v) && v >= 0 && v <= 5);
     if (!valid) {
-      setMultipliersError('Each multiplier must be between 0 and 5.'); return;
+      setMultipliersError(ui.multiplierRangeError); return;
     }
     try {
       setMultipliersSaving(true); setMultipliersError('');
@@ -264,7 +749,7 @@ export default function AdminSettings() {
       });
       setMultipliersSaved(true);
       setTimeout(() => setMultipliersSaved(false), 3000);
-    } catch (err) { setMultipliersError(err?.response?.data?.message || 'Failed to save vehicle multipliers.'); }
+    } catch (err) { setMultipliersError(err?.response?.data?.message || ui.failedToSaveMultipliers); }
     finally { setMultipliersSaving(false); }
   };
 
@@ -274,7 +759,7 @@ export default function AdminSettings() {
       await settingsAPI.updateSystemSettings({ BusinessHours: businessHours });
       setBizHoursSaved(true);
       setTimeout(() => setBizHoursSaved(false), 3000);
-    } catch (err) { setBizHoursError(err?.response?.data?.message || 'Failed to save business hours.'); }
+    } catch (err) { setBizHoursError(err?.response?.data?.message || ui.failedToSaveBusinessHours); }
     finally { setBizHoursSaving(false); }
   };
 
@@ -289,7 +774,7 @@ export default function AdminSettings() {
   if (loading) return (
     <div className="flex flex-col items-center justify-center min-h-screen gap-4">
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
-      <p className="text-[var(--muted-color)] text-sm">Loading settings…</p>
+      <p className="text-[var(--muted-color)] text-sm">{ui.loadingSettings}</p>
     </div>
   );
 
@@ -315,9 +800,9 @@ export default function AdminSettings() {
                 style={{ background:'rgba(200,169,107,.12)', border:'1px solid rgba(200,169,107,.24)' }}>
                 <Settings size={16} style={{ color:'#c8a96b' }} />
               </div>
-              <h1 className="premium-heading text-4xl md:text-5xl font-bold text-[var(--heading-color)]">Admin Settings</h1>
+              <h1 className="premium-heading text-4xl md:text-5xl font-bold text-[var(--heading-color)]">{ui.adminSettings}</h1>
             </div>
-            <p className="text-sm text-[var(--muted-color)] ml-12">Control system-wide policies and fees.</p>
+            <p className="text-sm text-[var(--muted-color)] ml-12">{ui.settingsSubtitle}</p>
           </div>
 
           {/* ── Cancellation Policy card ── */}
@@ -334,11 +819,9 @@ export default function AdminSettings() {
                   style={{ background:'rgba(200,169,107,.12)', border:'1px solid rgba(200,169,107,.24)' }}>
                   <Shield size={14} style={{ color:'#c8a96b' }} />
                 </div>
-                <h2 className="premium-heading text-xl font-bold text-[var(--heading-color)]">Cancellation Policy</h2>
+                <h2 className="premium-heading text-xl font-bold text-[var(--heading-color)]">{ui.cancellationPolicy}</h2>
               </div>
-              <p className="text-sm text-[var(--muted-color)] mb-5 ml-11">
-                Configure whether a fee is charged when customers cancel a booking. Shown to customers before they confirm cancellation.
-              </p>
+              <p className="text-sm text-[var(--muted-color)] mb-5 ml-11">{ui.cancellationPolicyDesc}</p>
               <div className="mb-5"><div className="spectrum-line" /></div>
 
               {error && (
@@ -351,15 +834,15 @@ export default function AdminSettings() {
               {/* Enable toggle */}
               <div className="flex items-center justify-between p-4 rounded-xl border border-[var(--border-color)] mb-5">
                 <div>
-                  <p className="font-bold text-sm text-[var(--heading-color)] mb-0.5">Enable Cancellation Fee</p>
-                  <p className="text-xs text-[var(--muted-color)]">Customers will see a warning and calculated fee before confirming cancellation.</p>
+                  <p className="font-bold text-sm text-[var(--heading-color)] mb-0.5">{ui.enableCancellationFee}</p>
+                  <p className="text-xs text-[var(--muted-color)]">{ui.cancellationFeeWarning}</p>
                 </div>
                 <Toggle checked={policy.feeEnabled} onClick={() => setPolicy(p => ({ ...p, feeEnabled:!p.feeEnabled }))} />
               </div>
 
               {/* Fee type pills */}
               <div className="mb-5">
-                <label className="field-label">Fee Type</label>
+                <label className="field-label">{ui.feeTypeLabel}</label>
                 <div className="flex gap-2">
                   {['Percent','Flat'].map(t => (
                     <button key={t} type="button" disabled={!policy.feeEnabled}
@@ -368,7 +851,7 @@ export default function AdminSettings() {
                         policy.feeType !== t ? 'border-[var(--border-color)] text-[var(--muted-color)] hover:border-primary/30 hover:text-[var(--text-color)]' : ''
                       }`}
                       style={policy.feeType === t ? { background:'rgba(200,169,107,.10)', borderColor:'rgba(200,169,107,.45)', color:'#c8a96b' } : {}}>
-                      {t === 'Percent' ? 'Percentage of booking' : 'Flat amount (QAR)'}
+                      {t === 'Percent' ? ui.feeTypePercent : ui.feeTypeFlat}
                     </button>
                   ))}
                 </div>
@@ -376,7 +859,7 @@ export default function AdminSettings() {
 
               {/* Fee amount */}
               <div className="mb-5">
-                <label className="field-label">{policy.feeType === 'Percent' ? 'Fee Percentage (%)' : 'Flat Fee (QAR)'}</label>
+                <label className="field-label">{policy.feeType === 'Percent' ? ui.feePercentageLabel : ui.flatFeeLabel}</label>
                 <input type="number" min={0} max={policy.feeType === 'Percent' ? 100 : undefined}
                   step={policy.feeType === 'Percent' ? 1 : 0.5}
                   value={policy.feeAmount} disabled={!policy.feeEnabled}
@@ -386,10 +869,8 @@ export default function AdminSettings() {
 
               {/* Free window */}
               <div className="mb-5">
-                <label className="field-label">Free Cancellation Window (hours)</label>
-                <p className="text-xs text-[var(--muted-color)] mb-2">
-                  Cancellations made more than this many hours before the appointment incur no fee.
-                </p>
+                <label className="field-label">{ui.freeCancellationWindowLabel}</label>
+                <p className="text-xs text-[var(--muted-color)] mb-2">{ui.freeCancellationWindowDesc}</p>
                 <input type="number" min={0} step={1} value={policy.freeWindowHours} disabled={!policy.feeEnabled}
                   onChange={e => setPolicy(p => ({ ...p, freeWindowHours: parseInt(e.target.value) || 0 }))}
                   className="field-input disabled:opacity-40" />
@@ -401,11 +882,12 @@ export default function AdminSettings() {
                   style={{ background:'rgba(245,158,11,.08)', borderColor:'rgba(245,158,11,.28)' }}>
                   <div className="flex items-center gap-2 mb-2">
                     <Shield size={12} style={{ color:'#f59e0b' }} />
-                    <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color:'#f59e0b' }}>Policy Preview</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color:'#f59e0b' }}>{ui.policyPreviewLabel}</p>
                   </div>
                   <p className="text-sm text-[var(--text-color)]">
-                    Customers who cancel within <strong>{policy.freeWindowHours}h</strong> of their appointment will be charged{' '}
-                    <strong>{exampleFee}</strong>. Cancellations made more than {policy.freeWindowHours}h before are free.
+                    {ui.policyPreviewText
+                      .replace('{{hours}}', String(policy.freeWindowHours))
+                      .replace('{{fee}}', exampleFee)}
                   </p>
                 </div>
               )}
@@ -414,7 +896,7 @@ export default function AdminSettings() {
               <div className="cta-prism-glow rounded-xl">
                 <button type="button" onClick={handleSave} disabled={saving}
                   className="w-full flex items-center justify-center gap-2 bg-primary text-white py-2.5 rounded-xl text-sm font-bold hover:bg-primary/90 transition disabled:opacity-60">
-                  {saving ? 'Saving…' : saved ? <><CheckCircle size={14} /> Saved</> : <><Save size={14} /> Save Settings</>}
+                  {saving ? ui.saving : saved ? <><CheckCircle size={14} /> {ui.saved}</> : <><Save size={14} /> {ui.saveSettings}</>}
                 </button>
               </div>
             </div>
@@ -433,11 +915,9 @@ export default function AdminSettings() {
                   style={{ background:'rgba(16,185,129,.12)', border:'1px solid rgba(16,185,129,.24)' }}>
                   <Building2 size={14} style={{ color:'#10b981' }} />
                 </div>
-                <h2 className="premium-heading text-xl font-bold text-[var(--heading-color)]">Business Configuration</h2>
+                <h2 className="premium-heading text-xl font-bold text-[var(--heading-color)]">{ui.businessConfiguration}</h2>
               </div>
-              <p className="text-sm text-[var(--muted-color)] mb-5 ml-11">
-                Set the business name, contact info, and operating area. These values are shown throughout the app.
-              </p>
+              <p className="text-sm text-[var(--muted-color)] mb-5 ml-11">{ui.businessConfigurationDesc}</p>
               <div className="mb-5"><div className="spectrum-line" /></div>
 
               {bizError && (
@@ -449,49 +929,49 @@ export default function AdminSettings() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
                 <div className="sm:col-span-2">
-                  <label className="field-label">Logo URL</label>
+                  <label className="field-label">{ui.logoUrlLabel}</label>
                   <input type="url" value={biz.logo || ''}
                     onChange={e => setBiz(b => ({ ...b, logo: e.target.value }))}
-                    className="field-input" placeholder="https://example.com/logo.png" />
-                  <p className="text-xs text-[var(--muted-color)] mt-1">Used in navbar, footer, payslips, and emails</p>
+                    className="field-input" placeholder={ui.logoUrlPlaceholder} />
+                  <p className="text-xs text-[var(--muted-color)] mt-1">{ui.logoHint}</p>
                   {biz.logo && (
                     <div className="mt-2 p-2 rounded-lg border border-[var(--border-color)] inline-block">
-                      <img src={biz.logo} alt="Logo preview" className="h-12 object-contain" />
+                      <img src={biz.logo} alt={ui.logoPreviewAlt} className="h-12 object-contain" />
                     </div>
                   )}
                 </div>
                 <div>
-                  <label className="field-label">Business Name</label>
+                  <label className="field-label">{ui.businessNameLabel}</label>
                   <input type="text" value={biz.name}
                     onChange={e => setBiz(b => ({ ...b, name: e.target.value }))}
-                    className="field-input" placeholder="e.g. Glanz" />
+                    className="field-input" placeholder={ui.businessNamePlaceholder} />
                 </div>
                 <div>
-                  <label className="field-label">Tagline</label>
+                  <label className="field-label">{ui.taglineLabel}</label>
                   <input type="text" value={biz.tagline}
                     onChange={e => setBiz(b => ({ ...b, tagline: e.target.value }))}
-                    className="field-input" placeholder="Short description" />
+                    className="field-input" placeholder={ui.taglinePlaceholder} />
                 </div>
                 <div>
-                  <label className="field-label">Phone</label>
+                  <label className="field-label">{ui.phoneLabel}</label>
                   <input type="text" value={biz.phone}
                     onChange={e => setBiz(b => ({ ...b, phone: e.target.value }))}
-                    className="field-input" placeholder="+974 4444 4444" />
+                    className="field-input" placeholder={ui.phonePlaceholder} />
                 </div>
                 <div>
-                  <label className="field-label">Support Email</label>
+                  <label className="field-label">{ui.supportEmailLabel}</label>
                   <input type="email" value={biz.email}
                     onChange={e => setBiz(b => ({ ...b, email: e.target.value }))}
-                    className="field-input" placeholder="info@example.qa" />
+                    className="field-input" placeholder={ui.supportEmailPlaceholder} />
                 </div>
                 <div className="sm:col-span-2">
-                  <label className="field-label">Operating Area</label>
+                  <label className="field-label">{ui.operatingAreaLabel}</label>
                   <input type="text" value={biz.location}
                     onChange={e => setBiz(b => ({ ...b, location: e.target.value }))}
-                    className="field-input" placeholder="e.g. Doha, Qatar" />
+                    className="field-input" placeholder={ui.operatingAreaPlaceholder} />
                 </div>
                  <div className="sm:col-span-2">
-                   <label className="field-label">Service Areas (cities / districts)</label>
+                   <label className="field-label">{ui.serviceAreasLabel}</label>
                    <div className="flex flex-wrap gap-2 mb-3">
                      {(biz.serviceAreas || []).map((area, i) => (
                        <span key={i} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold"
@@ -505,7 +985,7 @@ export default function AdminSettings() {
                        </span>
                      ))}
                      {(!biz.serviceAreas || biz.serviceAreas.length === 0) && (
-                       <span className="text-xs text-[var(--muted-color)]">No areas added</span>
+                       <span className="text-xs text-[var(--muted-color)]">{ui.noAreasAdded}</span>
                      )}
                    </div>
                    <div className="flex gap-2">
@@ -519,7 +999,7 @@ export default function AdminSettings() {
                            setNewArea('');
                          }
                        }}
-                       placeholder="Type area name and press Enter"
+                       placeholder={ui.areaInputPlaceholder}
                        className="field-input flex-1"
                      />
                      <button type="button"
@@ -531,21 +1011,21 @@ export default function AdminSettings() {
                        }}
                        className="px-4 py-2.5 rounded-xl text-xs font-bold transition"
                        style={{ background: 'rgba(200,169,107,.12)', color: '#c8a96b', border: '1px solid rgba(200,169,107,.28)' }}>
-                       + Add
+                       {ui.addAreaButton}
                      </button>
                    </div>
                  </div>
 
                  {/* Social Links */}
                  <div className="sm:col-span-2 mt-4">
-                   <label className="field-label">Social Media Links</label>
+                   <label className="field-label">{ui.socialMediaLinksLabel}</label>
                    <div className="space-y-3">
                      {[
-                       { id: 'facebook', label: 'Facebook' },
-                       { id: 'twitter', label: 'Twitter/X' },
-                       { id: 'instagram', label: 'Instagram' },
-                       { id: 'linkedin', label: 'LinkedIn' },
-                       { id: 'youtube', label: 'YouTube' },
+                       { id: 'facebook', label: ui.social.facebook },
+                       { id: 'twitter', label: ui.social.twitter },
+                       { id: 'instagram', label: ui.social.instagram },
+                       { id: 'linkedin', label: ui.social.linkedin },
+                       { id: 'youtube', label: ui.social.youtube },
                      ].map(({ id, label }) => (
                        <div key={id} className="flex items-center gap-3">
                          <span className="w-24 text-xs font-medium text-[var(--muted-color)]">{label}</span>
@@ -587,7 +1067,7 @@ export default function AdminSettings() {
                       setBizSaved(true);
                       setTimeout(() => setBizSaved(false), 3000);
                     } catch (err) {
-                      setBizError(err?.response?.data?.message || 'Failed to save business configuration.');
+                      setBizError(err?.response?.data?.message || ui.failedToSaveBusinessConfig);
                     } finally {
                       setBizSaving(false);
                     }
@@ -595,7 +1075,7 @@ export default function AdminSettings() {
                   className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition disabled:opacity-60"
                   style={{ background:'rgba(16,185,129,.15)', border:'1px solid rgba(16,185,129,.35)', color:'#10b981' }}
                 >
-                  {bizSaving ? 'Saving…' : bizSaved ? <><CheckCircle size={14} /> Saved</> : <><Save size={14} /> Save Business Config</>}
+                  {bizSaving ? ui.saving : bizSaved ? <><CheckCircle size={14} /> {ui.saved}</> : <><Save size={14} /> {ui.saveBusinessConfig}</>}
                 </button>
               </div>
             </div>
@@ -615,11 +1095,9 @@ export default function AdminSettings() {
                   style={{ background:'rgba(99,102,241,.12)', border:'1px solid rgba(99,102,241,.24)' }}>
                   <Clock size={14} style={{ color:'#6366f1' }} />
                 </div>
-                <h2 className="premium-heading text-xl font-bold text-[var(--heading-color)]">Booking Time Buffers</h2>
+                <h2 className="premium-heading text-xl font-bold text-[var(--heading-color)]">{ui.bookingTimeBuffers}</h2>
               </div>
-              <p className="text-sm text-[var(--muted-color)] mb-5 ml-11">
-                Control how much gap workers need between consecutive jobs.
-              </p>
+              <p className="text-sm text-[var(--muted-color)] mb-5 ml-11">{ui.bookingTimeBuffersDesc}</p>
               <div className="mb-5"><div className="spectrum-line" /></div>
 
               {/* ── Worker Travel Buffer ── */}
@@ -631,13 +1109,11 @@ export default function AdminSettings() {
                     <Clock size={10} style={{ color:'#22d3ee' }} />
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-[var(--heading-color)]">Worker Travel Buffer</p>
-                    <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color:'#22d3ee' }}>Gap between consecutive jobs</p>
+                    <p className="text-sm font-bold text-[var(--heading-color)]">{ui.workerTravelBufferTitle}</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color:'#22d3ee' }}>{ui.workerTravelBufferTag}</p>
                   </div>
                 </div>
-                <p className="text-xs text-[var(--muted-color)] mb-4 mt-2">
-                  Minimum gap between end of one booking and start of the next. Accounts for travel and preparation time between jobs.
-                </p>
+                <p className="text-xs text-[var(--muted-color)] mb-4 mt-2">{ui.workerTravelBufferDesc}</p>
 
                 {workerTravelError && (
                   <div className="flex items-start gap-2 rounded-lg border border-rose-500/25 bg-rose-500/8 px-3 py-2 mb-4">
@@ -661,10 +1137,7 @@ export default function AdminSettings() {
                   onChange={e => setWorkerTravelMinutes(Math.max(0, parseInt(e.target.value) || 0))}
                   className="field-input" />
 
-                <p className="text-xs text-[var(--text-color)] mt-3">
-                  Worker available at <strong>T</strong> only if{' '}
-                  <code className="text-xs bg-white/6 px-1.5 py-0.5 rounded font-mono">T ≥ lastBookingEnd + {workerTravelMinutes} min</code>.
-                </p>
+                <p className="text-xs text-[var(--text-color)] mt-3">{ui.workerTravelRule.replace('{{minutes}}', String(workerTravelMinutes))}</p>
               </div>
 
               {/* ── Save ── */}
@@ -672,7 +1145,7 @@ export default function AdminSettings() {
                 <button type="button" onClick={handleSaveWorkerTravel} disabled={workerTravelSaving}
                   className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition disabled:opacity-60"
                   style={{ background:'rgba(6,182,212,.15)', border:'1px solid rgba(6,182,212,.35)', color:'#22d3ee' }}>
-                  {workerTravelSaving ? 'Saving…' : workerTravelSaved ? <><CheckCircle size={14} /> Saved</> : <><Save size={14} /> Save Worker Buffer</>}
+                  {workerTravelSaving ? ui.saving : workerTravelSaved ? <><CheckCircle size={14} /> {ui.saved}</> : <><Save size={14} /> {ui.saveWorkerBuffer}</>}
                 </button>
               </div>
             </div>
@@ -692,11 +1165,9 @@ export default function AdminSettings() {
                   style={{ background:'rgba(16,185,129,.12)', border:'1px solid rgba(16,185,129,.24)' }}>
                   <Clock size={14} style={{ color:'#10b981' }} />
                 </div>
-                <h2 className="premium-heading text-xl font-bold text-[var(--heading-color)]">Business Hours</h2>
+                <h2 className="premium-heading text-xl font-bold text-[var(--heading-color)]">{ui.businessHours}</h2>
               </div>
-              <p className="text-sm text-[var(--muted-color)] mb-5 ml-11">
-                Set opening and closing hours for each day of the week. Slots are generated in 30-minute steps within these bounds.
-              </p>
+              <p className="text-sm text-[var(--muted-color)] mb-5 ml-11">{ui.businessHoursDesc}</p>
               <div className="mb-5"><div className="spectrum-line" /></div>
 
               {bizHoursError && (
@@ -711,11 +1182,11 @@ export default function AdminSettings() {
                   const [start, end] = (businessHours[day] || '09:00-18:00').split('-');
                   return (
                     <div key={day} className="flex items-center gap-3">
-                      <span className="w-28 text-sm font-medium text-[var(--text-color)]">{day}</span>
+                      <span className="w-28 text-sm font-medium text-[var(--text-color)]">{ui.days[day] || day}</span>
                       <input type="time" value={start} step="1800"
                         onChange={e => updateBusinessHours(day, e.target.value, end)}
                         className="field-input flex-1" />
-                      <span className="text-[var(--muted-color)]">to</span>
+                      <span className="text-[var(--muted-color)]">{ui.to}</span>
                       <input type="time" value={end} step="1800"
                         onChange={e => updateBusinessHours(day, start, e.target.value)}
                         className="field-input flex-1" />
@@ -728,7 +1199,7 @@ export default function AdminSettings() {
                 <button type="button" onClick={handleSaveBusinessHours} disabled={bizHoursSaving}
                   className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition disabled:opacity-60"
                   style={{ background:'rgba(16,185,129,.15)', border:'1px solid rgba(16,185,129,.35)', color:'#10b981' }}>
-                  {bizHoursSaving ? 'Saving…' : bizHoursSaved ? <><CheckCircle size={14} /> Saved</> : <><Save size={14} /> Save Business Hours</>}
+                  {bizHoursSaving ? ui.saving : bizHoursSaved ? <><CheckCircle size={14} /> {ui.saved}</> : <><Save size={14} /> {ui.saveBusinessHours}</>}
                 </button>
               </div>
             </div>
@@ -748,11 +1219,9 @@ export default function AdminSettings() {
                   style={{ background:'rgba(245,158,11,.12)', border:'1px solid rgba(245,158,11,.24)' }}>
                   <span style={{ color:'#f59e0b', fontWeight:700, fontSize:14 }}>%</span>
                 </div>
-                <h2 className="premium-heading text-xl font-bold text-[var(--heading-color)]">Subscription Discount</h2>
+                <h2 className="premium-heading text-xl font-bold text-[var(--heading-color)]">{ui.subscriptionDiscount}</h2>
               </div>
-              <p className="text-sm text-[var(--muted-color)] mb-5 ml-11">
-                Percentage discount applied automatically to monthly subscription bookings before any coupon is applied. Valid range: 0–50%.
-              </p>
+              <p className="text-sm text-[var(--muted-color)] mb-5 ml-11">{ui.subscriptionDiscountDesc}</p>
               <div className="mb-5"><div className="spectrum-line" /></div>
 
               {discountError && (
@@ -763,10 +1232,8 @@ export default function AdminSettings() {
               )}
 
               <div className="mb-5">
-                <label className="field-label">Discount Percentage</label>
-                <p className="text-xs text-[var(--muted-color)] mb-3">
-                  A 10% discount means: a QAR 200 monthly plan is billed at QAR 180 before any coupon.
-                </p>
+                <label className="field-label">{ui.discountPercentageLabel}</label>
+                <p className="text-xs text-[var(--muted-color)] mb-3">{ui.discountPercentageDesc}</p>
                 <div className="flex gap-2 mb-3">
                   {[0, 5, 10, 15, 20].map(v => (
                     <button key={v} type="button" onClick={() => setDiscountPct(v)}
@@ -785,17 +1252,14 @@ export default function AdminSettings() {
 
               <div className="rounded-xl border p-4 mb-6"
                 style={{ background:'rgba(245,158,11,.07)', borderColor:'rgba(245,158,11,.25)' }}>
-                <p className="text-sm text-[var(--text-color)]">
-                  Applied in <strong>CreatePaymentIntent</strong> and <strong>CreateBookingV2</strong> endpoints.
-                  Change takes effect on the next booking creation — no restart needed.
-                </p>
+                <p className="text-sm text-[var(--text-color)]">{ui.discountEndpointNote}</p>
               </div>
 
               <div className="cta-prism-glow rounded-xl" style={{ boxShadow:'0 0 0 1.5px rgba(245,158,11,.40)' }}>
                 <button type="button" onClick={handleSaveDiscount} disabled={discountSaving}
                   className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition disabled:opacity-60"
                   style={{ background:'rgba(245,158,11,.15)', border:'1px solid rgba(245,158,11,.35)', color:'#fbbf24' }}>
-                  {discountSaving ? 'Saving…' : discountSaved ? <><CheckCircle size={14} /> Saved</> : <><Save size={14} /> Save Discount</>}
+                  {discountSaving ? ui.saving : discountSaved ? <><CheckCircle size={14} /> {ui.saved}</> : <><Save size={14} /> {ui.saveDiscount}</>}
                 </button>
               </div>
             </div>
@@ -815,11 +1279,9 @@ export default function AdminSettings() {
                   style={{ background:'rgba(139,92,246,.12)', border:'1px solid rgba(139,92,246,.24)' }}>
                   <Gift size={14} style={{ color:'#8b5cf6' }} />
                 </div>
-                <h2 className="premium-heading text-xl font-bold text-[var(--heading-color)]">Referral Settings</h2>
+                <h2 className="premium-heading text-xl font-bold text-[var(--heading-color)]">{ui.referralSettings}</h2>
               </div>
-              <p className="text-sm text-[var(--muted-color)] mb-5 ml-11">
-                Configure referral rewards for the referrer and discount for the referred user.
-              </p>
+              <p className="text-sm text-[var(--muted-color)] mb-5 ml-11">{ui.referralSettingsDesc}</p>
               <div className="mb-5"><div className="spectrum-line" /></div>
 
               {(referralError || referralDiscountError) && (
@@ -838,13 +1300,11 @@ export default function AdminSettings() {
                     <Gift size={10} style={{ color:'#fb923c' }} />
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-[var(--heading-color)]">Referred User Discount</p>
-                    <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color:'#fb923c' }}>First booking only</p>
+                    <p className="text-sm font-bold text-[var(--heading-color)]">{ui.referredUserDiscountLabel}</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color:'#fb923c' }}>{ui.firstBookingOnly}</p>
                   </div>
                 </div>
-                <p className="text-xs text-[var(--muted-color)] mb-4 mt-2">
-                  Discount applied to the referred user's first completed booking.
-                </p>
+                <p className="text-xs text-[var(--muted-color)] mb-4 mt-2">{ui.referredUserDiscountDesc}</p>
                 <div className="flex gap-2 mb-3">
                   {[0, 5, 10, 15, 20, 25].map(v => (
                     <button key={v} type="button" onClick={() => setReferralDiscountPct(v)}
@@ -870,15 +1330,13 @@ export default function AdminSettings() {
                     <Gift size={10} style={{ color:'#a78bfa' }} />
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-[var(--heading-color)]">Referrer Reward</p>
-                    <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color:'#a78bfa' }}>After X completed bookings</p>
+                    <p className="text-sm font-bold text-[var(--heading-color)]">{ui.referrerRewardLabel}</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color:'#a78bfa' }}>{ui.afterXCompletedBookings}</p>
                   </div>
                 </div>
-                <p className="text-xs text-[var(--muted-color)] mb-3 mt-2">
-                  The referrer receives this reward after their referred friend completes this many paid bookings.
-                </p>
+                <p className="text-xs text-[var(--muted-color)] mb-3 mt-2">{ui.referrerRewardDesc}</p>
                 <div className="mb-3">
-                  <label className="field-label text-xs">Completed Bookings Required</label>
+                  <label className="field-label text-xs">{ui.completedBookingsRequiredLabel}</label>
                   <div className="flex gap-2 mb-2">
                     {[1, 3, 5, 10].map(v => (
                       <button key={v} type="button" onClick={() => setReferralRequiredBookings(v)}
@@ -894,9 +1352,7 @@ export default function AdminSettings() {
                     onChange={e => setReferralRequiredBookings(Math.min(100, Math.max(1, parseInt(e.target.value) || 1)))}
                     className="field-input" />
                 </div>
-                <p className="text-xs text-[var(--muted-color)] mb-4">
-                  Reward amount:
-                </p>
+                <p className="text-xs text-[var(--muted-color)] mb-4">{ui.rewardAmountLabel}</p>
                 <div className="flex gap-2 mb-3">
                   {[25, 50, 75, 100].map(v => (
                     <button key={v} type="button" onClick={() => setReferralReward(v)}
@@ -923,13 +1379,13 @@ export default function AdminSettings() {
                       setReferralSaved(true);
                       setReferralDiscountSaved(true);
                       setTimeout(() => { setReferralSaved(false); setReferralDiscountSaved(false); }, 3000);
-                    } catch (err) { setReferralError(err?.response?.data?.message || 'Failed to save referral settings.'); }
+                    } catch (err) { setReferralError(err?.response?.data?.message || ui.failedToSaveReferralSettings); }
                     finally { setReferralSaving(false); setReferralDiscountSaving(false); }
                   }} 
                   disabled={referralSaving || referralDiscountSaving}
                   className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition disabled:opacity-60"
                   style={{ background:'rgba(139,92,246,.15)', border:'1px solid rgba(139,92,246,.35)', color:'#a78bfa' }}>
-                  {(referralSaving || referralDiscountSaving) ? 'Saving…' : (referralSaved || referralDiscountSaved) ? <><CheckCircle size={14} /> Saved</> : <><Save size={14} /> Save Referral Settings</>}
+                  {(referralSaving || referralDiscountSaving) ? ui.saving : (referralSaved || referralDiscountSaved) ? <><CheckCircle size={14} /> {ui.saved}</> : <><Save size={14} /> {ui.saveReferralSettings}</>}
                 </button>
               </div>
             </div>
@@ -949,11 +1405,9 @@ export default function AdminSettings() {
                   style={{ background:'rgba(59,130,246,.12)', border:'1px solid rgba(59,130,246,.24)' }}>
                   <Shield size={14} style={{ color:'#3b82f6' }} />
                 </div>
-                <h2 className="premium-heading text-xl font-bold text-[var(--heading-color)]">Vehicle Price Multipliers</h2>
+                <h2 className="premium-heading text-xl font-bold text-[var(--heading-color)]">{ui.vehiclePriceMultipliers}</h2>
               </div>
-              <p className="text-sm text-[var(--muted-color)] mb-5 ml-11">
-                Configure price multipliers for different vehicle types. These affect the base price of all packages.
-              </p>
+              <p className="text-sm text-[var(--muted-color)] mb-5 ml-11">{ui.vehiclePriceMultipliersDesc}</p>
               <div className="mb-5"><div className="spectrum-line" /></div>
 
               {multipliersError && (
@@ -965,10 +1419,10 @@ export default function AdminSettings() {
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-5">
                 {[
-                  { key: 'motorcycle', label: 'Motorcycle', icon: '🏍️' },
-                  { key: 'sedan', label: 'Sedan', icon: '🚗' },
-                  { key: 'suv', label: 'SUV', icon: '🚙' },
-                  { key: 'pickup', label: 'Pickup', icon: '🛻' },
+                  { key: 'motorcycle', label: ui.vehicles.motorcycle, icon: '🏍️' },
+                  { key: 'sedan', label: ui.vehicles.sedan, icon: '🚗' },
+                  { key: 'suv', label: ui.vehicles.suv, icon: '🚙' },
+                  { key: 'pickup', label: ui.vehicles.pickup, icon: '🛻' },
                 ].map(({ key, label, icon }) => (
                   <div key={key}>
                     <label className="field-label">{icon} {label}</label>
@@ -981,20 +1435,18 @@ export default function AdminSettings() {
 
               <div className="rounded-xl border p-4 mb-6"
                 style={{ background:'rgba(59,130,246,.07)', borderColor:'rgba(59,130,246,.25)' }}>
-                <p className="text-sm text-[var(--text-color)]">
-                  Example: A QAR 100 package costs:{' '}
-                  <strong>QAR {Math.round(100 * vehicleMultipliers.motorcycle)}</strong> for Motorcycle,{' '}
-                  <strong>QAR {Math.round(100 * vehicleMultipliers.sedan)}</strong> for Sedan,{' '}
-                  <strong>QAR {Math.round(100 * vehicleMultipliers.suv)}</strong> for SUV,{' '}
-                  <strong>QAR {Math.round(100 * vehicleMultipliers.pickup)}</strong> for Pickup.
-                </p>
+                <p className="text-sm text-[var(--text-color)]">{ui.vehicleMultiplierExample
+                  .replace('{{motorcycle}}', String(Math.round(100 * vehicleMultipliers.motorcycle)))
+                  .replace('{{sedan}}', String(Math.round(100 * vehicleMultipliers.sedan)))
+                  .replace('{{suv}}', String(Math.round(100 * vehicleMultipliers.suv)))
+                  .replace('{{pickup}}', String(Math.round(100 * vehicleMultipliers.pickup)))}</p>
               </div>
 
               <div className="cta-prism-glow rounded-xl" style={{ boxShadow:'0 0 0 1.5px rgba(59,130,246,.40)' }}>
                 <button type="button" onClick={handleSaveVehicleMultipliers} disabled={multipliersSaving}
                   className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition disabled:opacity-60"
                   style={{ background:'rgba(59,130,246,.15)', border:'1px solid rgba(59,130,246,.35)', color:'#60a5fa' }}>
-                  {multipliersSaving ? 'Saving…' : multipliersSaved ? <><CheckCircle size={14} /> Saved</> : <><Save size={14} /> Save Multipliers</>}
+                  {multipliersSaving ? ui.saving : multipliersSaved ? <><CheckCircle size={14} /> {ui.saved}</> : <><Save size={14} /> {ui.saveMultipliers}</>}
                 </button>
               </div>
             </div>
@@ -1014,12 +1466,9 @@ export default function AdminSettings() {
                   style={{ background:'rgba(6,182,212,.12)', border:'1px solid rgba(6,182,212,.24)' }}>
                   <MessageSquare size={14} style={{ color:'#06b6d4' }} />
                 </div>
-                <h2 className="premium-heading text-xl font-bold text-[var(--heading-color)]">SMS Follow-Up Notifications</h2>
+                <h2 className="premium-heading text-xl font-bold text-[var(--heading-color)]">{ui.smsFollowUps}</h2>
               </div>
-              <p className="text-sm text-[var(--muted-color)] mb-5 ml-11">
-                Enable automated SMS messages for booking reminders, abandoned booking recovery, and win-back campaigns.
-                Keep off during development to avoid carrier costs.
-              </p>
+              <p className="text-sm text-[var(--muted-color)] mb-5 ml-11">{ui.smsFollowUpsDesc}</p>
               <div className="mb-5"><div className="spectrum-line" /></div>
 
               {smsError && (
@@ -1031,11 +1480,8 @@ export default function AdminSettings() {
 
               <div className="flex items-center justify-between p-4 rounded-xl border border-[var(--border-color)] mb-4">
                 <div>
-                  <p className="font-bold text-sm text-[var(--heading-color)] mb-0.5">Enable SMS Follow-Ups</p>
-                  <p className="text-xs text-[var(--muted-color)]">
-                    When enabled, SMS messages will fire for reminders, win-backs, and abandoned bookings.
-                    Requires a Twilio integration to be configured.
-                  </p>
+                  <p className="font-bold text-sm text-[var(--heading-color)] mb-0.5">{ui.enableSmsFollowUps}</p>
+                  <p className="text-xs text-[var(--muted-color)]">{ui.enableSmsFollowUpsDesc}</p>
                 </div>
                 <Toggle checked={smsEnabled} onClick={() => setSmsEnabled(v => !v)} />
               </div>
@@ -1043,19 +1489,14 @@ export default function AdminSettings() {
               {!smsEnabled && (
                 <div className="rounded-xl border p-3 mb-5"
                   style={{ background:'rgba(245,158,11,.07)', borderColor:'rgba(245,158,11,.28)' }}>
-                  <p className="text-xs text-[var(--muted-color)]">
-                    <span style={{ color:'#fbbf24', fontWeight:700 }}>Development mode:</span>{' '}
-                    SMS is off — no messages will be sent and no costs will be incurred.
-                  </p>
+                  <p className="text-xs text-[var(--muted-color)]"><span style={{ color:'#fbbf24', fontWeight:700 }}>{ui.developmentMode}</span>{' '}{ui.smsOffWarning}</p>
                 </div>
               )}
 
               {smsEnabled && (
                 <div className="rounded-xl border p-3 mb-5"
                   style={{ background:'rgba(239,68,68,.07)', borderColor:'rgba(239,68,68,.28)' }}>
-                  <p className="text-xs" style={{ color:'#f87171' }}>
-                    <strong>SMS is active.</strong> Messages will be sent to customers. Ensure Twilio credentials are configured in <code className="bg-white/6 px-1 rounded">appsettings</code>.
-                  </p>
+                  <p className="text-xs" style={{ color:'#f87171' }}><strong>{ui.smsActiveWarning}</strong></p>
                 </div>
               )}
 
@@ -1063,7 +1504,7 @@ export default function AdminSettings() {
                 <button type="button" onClick={handleSaveSms} disabled={smsSaving}
                   className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition disabled:opacity-60"
                   style={{ background:'rgba(6,182,212,.15)', border:'1px solid rgba(6,182,212,.35)', color:'#22d3ee' }}>
-                  {smsSaving ? 'Saving…' : smsSaved ? <><CheckCircle size={14} /> Saved</> : <><Save size={14} /> Save SMS Setting</>}
+                  {smsSaving ? ui.saving : smsSaved ? <><CheckCircle size={14} /> {ui.saved}</> : <><Save size={14} /> {ui.saveSmsSetting}</>}
                 </button>
               </div>
             </div>

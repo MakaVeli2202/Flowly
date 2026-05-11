@@ -12,6 +12,105 @@ import { useLanguage } from '../../context/LanguageContext';
 const ALL_DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 const SHIFT_HOURS = ['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00','21:00'];
 
+const UI_BY_LANG = {
+  en: {
+    loading: 'Loading staff...',
+    subtitle: 'Add, remove, and manage your detailing staff',
+    closeForm: 'Close Form',
+    addDetailer: 'Add Detailer',
+    addFirstDetailer: 'Add First Detailer',
+    addNewDetailer: 'Add New Detailer',
+    firstName: 'First Name',
+    lastName: 'Last Name',
+    email: 'Email Address',
+    phone: 'Phone Number',
+    password: 'Password',
+    adding: 'Adding...',
+    cancel: 'Cancel',
+    active: 'Active',
+    inactive: 'Inactive',
+    schedule: 'Schedule',
+    deactivate: 'Deactivate',
+    activate: 'Activate',
+    removing: 'Removing...',
+    remove: 'Remove',
+    salaryTitle: 'Monthly Salary (QAR)',
+    saveSalary: 'Save Salary',
+    saved: 'Saved',
+    salaryError: 'Enter a valid salary amount.',
+    workingSchedule: 'Working Schedule',
+    saveSchedule: 'Save Schedule',
+    staffStats: 'Staff Statistics',
+    totalDetailers: 'Total Detailers',
+    lastAdded: 'Last Added',
+    noPayrollData: 'No payroll data for this period.',
+  },
+  ar: {
+    loading: 'جارٍ تحميل الفريق...',
+    subtitle: 'إضافة وإزالة وإدارة فريق العناية الخاص بك',
+    closeForm: 'إغلاق النموذج',
+    addDetailer: 'إضافة عامل',
+    addFirstDetailer: 'إضافة أول عامل',
+    addNewDetailer: 'إضافة عامل جديد',
+    firstName: 'الاسم الأول',
+    lastName: 'اسم العائلة',
+    email: 'البريد الإلكتروني',
+    phone: 'رقم الهاتف',
+    password: 'كلمة المرور',
+    adding: 'جارٍ الإضافة...',
+    cancel: 'إلغاء',
+    active: 'نشط',
+    inactive: 'غير نشط',
+    schedule: 'الجدول',
+    deactivate: 'تعطيل',
+    activate: 'تفعيل',
+    removing: 'جارٍ الإزالة...',
+    remove: 'إزالة',
+    salaryTitle: 'الراتب الشهري (ر.ق)',
+    saveSalary: 'حفظ الراتب',
+    saved: 'تم الحفظ',
+    salaryError: 'أدخل قيمة راتب صحيحة.',
+    workingSchedule: 'جدول العمل',
+    saveSchedule: 'حفظ الجدول',
+    staffStats: 'إحصاءات الفريق',
+    totalDetailers: 'إجمالي العاملين',
+    lastAdded: 'آخر إضافة',
+    noPayrollData: 'لا توجد بيانات رواتب لهذه الفترة.',
+  },
+  de: {
+    loading: 'Team wird geladen...',
+    subtitle: 'Detailing-Team hinzufugen, entfernen und verwalten',
+    closeForm: 'Formular schlieBen',
+    addDetailer: 'Mitarbeiter hinzufugen',
+    addFirstDetailer: 'Ersten Mitarbeiter hinzufugen',
+    addNewDetailer: 'Neuen Mitarbeiter hinzufugen',
+    firstName: 'Vorname',
+    lastName: 'Nachname',
+    email: 'E-Mail-Adresse',
+    phone: 'Telefonnummer',
+    password: 'Passwort',
+    adding: 'Wird hinzugefugt...',
+    cancel: 'Abbrechen',
+    active: 'Aktiv',
+    inactive: 'Inaktiv',
+    schedule: 'Zeitplan',
+    deactivate: 'Deaktivieren',
+    activate: 'Aktivieren',
+    removing: 'Wird entfernt...',
+    remove: 'Entfernen',
+    salaryTitle: 'Monatsgehalt (QAR)',
+    saveSalary: 'Gehalt speichern',
+    saved: 'Gespeichert',
+    salaryError: 'Gultigen Gehaltswert eingeben.',
+    workingSchedule: 'Arbeitszeitplan',
+    saveSchedule: 'Zeitplan speichern',
+    staffStats: 'Team-Statistiken',
+    totalDetailers: 'Gesamtmitarbeiter',
+    lastAdded: 'Zuletzt hinzugefugt',
+    noPayrollData: 'Keine Lohndaten fur diesen Zeitraum.',
+  },
+};
+
 /* ── parseSchedule — identical to original ── */
 function parseSchedule(worker) {
   const workingDays = worker.workingDays
@@ -64,7 +163,9 @@ function PrismaticCursorOrb() {
 }
 
 function ManageStaff() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+  const localeKey = String(lang || '').startsWith('ar') ? 'ar' : String(lang || '').startsWith('de') ? 'de' : 'en';
+  const ui = UI_BY_LANG[localeKey] || UI_BY_LANG.en;
   const [workers,            setWorkers]            = useState([]);
   const [loading,            setLoading]            = useState(true);
   const [error,              setError]              = useState('');
@@ -253,7 +354,7 @@ Generated: ${new Date().toLocaleString()}
 
   const handleSaveSalary = async (workerId) => {
     const val = parseFloat(salaryInputs[workerId]);
-    if (!Number.isFinite(val) || val < 0) { setSalaryError('Enter a valid salary amount.'); return; }
+    if (!Number.isFinite(val) || val < 0) { setSalaryError(ui.salaryError); return; }
     try {
       setSalarySavingId(workerId); setSalaryError('');
       await authAPI.updateWorkerSalary(workerId, val);
@@ -278,7 +379,7 @@ Generated: ${new Date().toLocaleString()}
           style={{ background:'rgba(200,169,107,.12)', border:'1px solid rgba(200,169,107,.24)' }}>
           <Users size={28} style={{ color:'#c8a96b' }} />
         </div>
-        <p className="text-[var(--muted-color)] text-sm">Loading staff…</p>
+        <p className="text-[var(--muted-color)] text-sm">{ui.loading}</p>
       </div>
     </>
   );
@@ -307,19 +408,19 @@ Generated: ${new Date().toLocaleString()}
                 <span className="h-px w-7" style={{ background:'linear-gradient(90deg,#c8a96b,transparent)' }} />
               </div>
               <div className="flex items-center gap-3 mb-1.5">
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center"
-                  style={{ background:'rgba(200,169,107,.12)', border:'1px solid rgba(200,169,107,.24)' }}>
-                  <Users size={16} style={{ color:'#c8a96b' }} />
-                </div>
-                <h1 className="premium-heading text-4xl md:text-5xl font-bold text-[var(--heading-color)]">Manage Staff</h1>
+               <div className="w-9 h-9 rounded-xl flex items-center justify-center"
+                 style={{ background:'rgba(200,169,107,.12)', border:'1px solid rgba(200,169,107,.24)' }}>
+                 <Users size={16} style={{ color:'#c8a96b' }} />
+               </div>
+               <h1 className="premium-heading text-4xl md:text-5xl font-bold text-[var(--heading-color)]">{t('manageStaff')}</h1>
               </div>
-              <p className="text-sm text-[var(--muted-color)] ml-12">Add, remove, and manage your detailing staff</p>
+              <p className="text-sm text-[var(--muted-color)] ml-12">{ui.subtitle}</p>
             </div>
             <div className={showAddForm ? '' : 'cta-prism-glow rounded-xl'}>
               <button type="button" onClick={() => setShowAddForm(p => !p)}
                 className="flex items-center gap-2.5 px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-bold hover:bg-primary/90 transition">
                 {showAddForm ? <X size={15} /> : <Plus size={15} />}
-                {showAddForm ? 'Close Form' : 'Add Detailer'}
+                {showAddForm ? ui.closeForm : ui.addDetailer}
               </button>
             </div>
           </div>
@@ -347,7 +448,7 @@ Generated: ${new Date().toLocaleString()}
                       <p className="text-[.58rem] font-bold uppercase tracking-[.24em]" style={{ color:'#c8a96b' }}>New Member</p>
                       <span className="h-px w-5" style={{ background:'linear-gradient(90deg,#c8a96b,transparent)' }} />
                     </div>
-                    <h2 className="premium-heading text-xl font-bold text-[var(--heading-color)]">Add New Detailer</h2>
+                    <h2 className="premium-heading text-xl font-bold text-[var(--heading-color)]">{ui.addNewDetailer}</h2>
                   </div>
                   <button type="button" onClick={() => { setShowAddForm(false); setFormData({ firstName:'', lastName:'', email:'', phone:'', password:'' }); }}
                     className="w-8 h-8 rounded-xl border border-[var(--border-color)] flex items-center justify-center text-[var(--muted-color)] hover:bg-white/5 transition">
@@ -358,22 +459,22 @@ Generated: ${new Date().toLocaleString()}
 
                 <form onSubmit={handleAddWorker} className="space-y-5">
                   <div className="grid md:grid-cols-2 gap-5">
-                    <div><label className="field-label">First Name</label><input type="text" name="firstName" value={formData.firstName} onChange={handleInputChange} className={inp} placeholder="Enter first name" /></div>
-                    <div><label className="field-label">Last Name</label><input type="text" name="lastName" value={formData.lastName} onChange={handleInputChange} className={inp} placeholder="Enter last name" /></div>
+                    <div><label className="field-label">{ui.firstName}</label><input type="text" name="firstName" value={formData.firstName} onChange={handleInputChange} className={inp} placeholder="Enter first name" /></div>
+                    <div><label className="field-label">{ui.lastName}</label><input type="text" name="lastName" value={formData.lastName} onChange={handleInputChange} className={inp} placeholder="Enter last name" /></div>
                     <div>
-                      <label className="field-label">Email Address</label>
+                      <label className="field-label">{ui.email}</label>
                       <div className="relative"><Mail size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--muted-color)]" />
                         <input type="email" name="email" value={formData.email} onChange={handleInputChange} className={inp} style={{ paddingLeft:'2.25rem' }} placeholder="detailer@example.com" />
                       </div>
                     </div>
                     <div>
-                      <label className="field-label">Phone Number</label>
+                      <label className="field-label">{ui.phone}</label>
                       <div className="relative"><Phone size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--muted-color)]" />
                         <input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} className={inp} style={{ paddingLeft:'2.25rem' }} placeholder="+974XXXXXXXX" />
                       </div>
                     </div>
                     <div className="md:col-span-2">
-                      <label className="field-label">Password</label>
+                      <label className="field-label">{ui.password}</label>
                       <div className="relative">
                         <input type={showPassword.newWorker ? 'text' : 'password'} name="password" value={formData.password} onChange={handleInputChange} className={inp} style={{ paddingRight:'2.5rem' }} placeholder="Minimum 8 characters" />
                         <button type="button" onClick={() => setShowPassword(p => ({ ...p, newWorker:!p.newWorker }))}
@@ -387,12 +488,12 @@ Generated: ${new Date().toLocaleString()}
                     <div className="cta-prism-glow rounded-xl">
                       <button type="submit" disabled={savingId === 'new'}
                         className="flex items-center gap-2 bg-primary text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-primary/90 transition disabled:opacity-50">
-                        {savingId === 'new' ? 'Adding…' : <><CheckCircle size={14}/> Add Detailer</>}
+                        {savingId === 'new' ? ui.adding : <><CheckCircle size={14}/> {ui.addDetailer}</>}
                       </button>
                     </div>
                     <button type="button" onClick={() => { setShowAddForm(false); setFormData({ firstName:'', lastName:'', email:'', phone:'', password:'' }); }}
                       className="px-6 py-2.5 rounded-xl border border-[var(--border-color)] text-sm font-bold text-[var(--text-color)] hover:bg-white/5 transition">
-                      Cancel
+                      {ui.cancel}
                     </button>
                   </div>
                 </form>
@@ -414,7 +515,7 @@ Generated: ${new Date().toLocaleString()}
               <div className="cta-prism-glow rounded-xl inline-flex">
                 <button onClick={() => setShowAddForm(true)}
                   className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-bold hover:bg-primary/90 transition">
-                  <Plus size={15}/> Add First Detailer
+                  <Plus size={15}/> {ui.addFirstDetailer}
                 </button>
               </div>
             </div>
@@ -439,7 +540,7 @@ Generated: ${new Date().toLocaleString()}
                           </h3>
                           <span className="inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-bold mb-3"
                             style={isActive ? { background:'rgba(34,197,94,.10)', border:'1px solid rgba(34,197,94,.28)', color:'#22c55e' } : { background:'rgba(148,163,184,.10)', border:'1px solid rgba(148,163,184,.28)', color:'#94a3b8' }}>
-                            {isActive ? 'Active' : 'Inactive'}
+                            {isActive ? ui.active : ui.inactive}
                           </span>
                           <div className="space-y-1.5">
                             <div className="flex items-center gap-2">
@@ -476,20 +577,20 @@ Generated: ${new Date().toLocaleString()}
                           <button
                             onClick={() => editingScheduleId === worker.id ? setEditingScheduleId(null) : openScheduleEdit(worker)}
                             className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-primary/30 text-primary text-xs font-bold hover:bg-primary/10 transition">
-                            <CalendarDays size={13} /> Schedule
+                            <CalendarDays size={13} /> {ui.schedule}
                             {editingScheduleId === worker.id ? <ChevronUp size={12}/> : <ChevronDown size={12}/>}
                           </button>
                           <button
                             onClick={() => handleToggleWorkerStatus(worker)}
                             disabled={savingId === `status-${worker.id}`}
                             className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-bold transition disabled:opacity-50 ${isActive ? 'border-amber-500/30 text-amber-400 hover:bg-amber-500/8' : 'border-green-500/30 text-green-400 hover:bg-green-500/8'}`}>
-                            {savingId === `status-${worker.id}` ? 'Saving…' : isActive ? 'Deactivate' : 'Activate'}
+                            {savingId === `status-${worker.id}` ? 'Saving...' : isActive ? ui.deactivate : ui.activate}
                           </button>
                           <button
                             onClick={() => handleDeleteWorker(worker.id, `${worker.firstName} ${worker.lastName}`)}
                             disabled={deletingId === worker.id}
                             className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-rose-500/28 text-rose-400 text-xs font-bold hover:bg-rose-500/8 transition disabled:opacity-50">
-                            <Trash2 size={13}/> {deletingId === worker.id ? 'Removing…' : 'Remove'}
+                            <Trash2 size={13}/> {deletingId === worker.id ? ui.removing : ui.remove}
                           </button>
                         </div>
                       </div>
@@ -499,7 +600,7 @@ Generated: ${new Date().toLocaleString()}
                         style={{ background:'rgba(200,169,107,.03)' }}>
                         <div className="flex items-center gap-2 mb-1 w-full">
                           <DollarSign size={12} style={{ color:'#c8a96b' }} />
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)]">Monthly Salary (QAR)</p>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)]">{ui.salaryTitle}</p>
                         </div>
                         {salaryError && <p className="text-xs text-rose-400 w-full -mt-1">{salaryError}</p>}
                         <input
@@ -516,7 +617,7 @@ Generated: ${new Date().toLocaleString()}
                           disabled={salarySavingId === worker.id}
                           className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition disabled:opacity-50"
                           style={{ background:'rgba(200,169,107,.14)', border:'1px solid rgba(200,169,107,.40)', color:'#c8a96b' }}>
-                          {salarySavingId === worker.id ? 'Saving…' : salarySavedId === worker.id ? <><CheckCircle size={12}/> Saved</> : <><Save size={12}/> Save Salary</>}
+                          {salarySavingId === worker.id ? 'Saving...' : salarySavedId === worker.id ? <><CheckCircle size={12}/> {ui.saved}</> : <><Save size={12}/> {ui.saveSalary}</>}
                         </button>
                       </div>
 
@@ -527,7 +628,7 @@ Generated: ${new Date().toLocaleString()}
                           <div className="absolute top-0 left-0 right-0 h-[2px]"
                             style={{ background:'linear-gradient(90deg,transparent,rgba(200,169,107,.55) 38%,rgba(14,165,160,.45) 62%,transparent)' }} />
 
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)] mb-4">Working Schedule</p>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)] mb-4">{ui.workingSchedule}</p>
 
                           {/* Default shift */}
                           <div className="mb-5 p-4 rounded-xl border border-[var(--border-color)]" style={{ background:'rgba(200,169,107,.04)' }}>
@@ -593,12 +694,12 @@ Generated: ${new Date().toLocaleString()}
                               <button onClick={() => handleSaveSchedule(worker.id)}
                                 disabled={scheduleSavingId === worker.id || scheduleData.workingDays.length === 0}
                                 className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl text-sm font-bold hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed">
-                                <Save size={13}/> {scheduleSavingId === worker.id ? 'Saving…' : 'Save Schedule'}
+                                <Save size={13}/> {scheduleSavingId === worker.id ? 'Saving...' : ui.saveSchedule}
                               </button>
                             </div>
                             <button onClick={() => setEditingScheduleId(null)}
                               className="px-4 py-2 rounded-xl border border-[var(--border-color)] text-sm font-bold text-[var(--text-color)] hover:bg-white/5 transition">
-                              Cancel
+                              {ui.cancel}
                             </button>
                           </div>
                         </div>
@@ -616,12 +717,12 @@ Generated: ${new Date().toLocaleString()}
               <div className="absolute top-0 left-0 right-0 h-[2px]"
                 style={{ background:'linear-gradient(90deg,transparent,#c8a96b 38%,#0ea5a0 62%,transparent)' }} />
               <div className="p-6">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)] mb-5">Staff Statistics</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)] mb-5">{ui.staffStats}</p>
                 <div className="grid md:grid-cols-3 gap-4">
                   {[
-                    { label:'Total Detailers', value: workers.length,                                                                 color:'var(--heading-color)' },
+                    { label:ui.totalDetailers, value: workers.length,                                                                color:'var(--heading-color)' },
                     { label:'Active',           value: workers.filter(w => w.isActive !== false).length,                              color:'#22c55e' },
-                    { label:'Last Added',       value: workers.length > 0 ? new Date(Math.max(...workers.map(w => new Date(w.createdAt)))).toLocaleDateString() : '—', color:'var(--text-color)', small:true },
+                    { label:ui.lastAdded,       value: workers.length > 0 ? new Date(Math.max(...workers.map(w => new Date(w.createdAt)))).toLocaleDateString() : '—', color:'var(--text-color)', small:true },
                   ].map(({ label, value, color, small }) => (
                     <div key={label} className="rounded-xl border border-[var(--border-color)] p-4" style={{ background:'rgba(200,169,107,.04)' }}>
                       <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)] mb-2">{label}</p>
@@ -642,10 +743,10 @@ Generated: ${new Date().toLocaleString()}
                 style={{ background:'linear-gradient(180deg,#c8a96b 0%,#c8a96b44 60%,transparent 100%)' }} />
               <div className="p-6">
                 <div className="flex flex-wrap items-center justify-between gap-4 mb-5">
-                  <div className="flex items-center gap-2">
-                    <DollarSign size={15} style={{ color:'#c8a96b' }} />
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)]">Payroll Summary</p>
-                  </div>
+                   <div className="flex items-center gap-2">
+                     <DollarSign size={15} style={{ color:'#c8a96b' }} />
+                     <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)]">{t('payrollSummary')}</p>
+                   </div>
                   <div className="flex items-center gap-2">
                     <select value={payrollMonth} onChange={e => setPayrollMonth(Number(e.target.value))}
                       className="px-3 py-1.5 rounded-xl border border-[var(--border-color)] bg-[var(--surface-bg)] text-[var(--text-color)] text-xs font-bold focus:outline-none">
@@ -665,7 +766,7 @@ Generated: ${new Date().toLocaleString()}
                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
                   </div>
                 ) : payroll.length === 0 ? (
-                  <p className="text-xs text-[var(--muted-color)] text-center py-4">{t('noPayrollData')}</p>
+                  <p className="text-xs text-[var(--muted-color)] text-center py-4">{ui.noPayrollData}</p>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">

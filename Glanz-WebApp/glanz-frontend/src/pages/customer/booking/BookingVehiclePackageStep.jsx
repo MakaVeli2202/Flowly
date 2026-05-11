@@ -3,19 +3,73 @@ import { Clock, Car, Zap, AlertCircle } from 'lucide-react';
 import NumberFlow from '@number-flow/react';
 import { formatQAR } from '../../../utils/currency';
 import { SectionHeading } from './BookingShared';
+import { useLanguage } from '../../../context/LanguageContext';
 
-const VEHICLE_OPTIONS = [
-  { value: 'Motorcycle', label: 'Motorcycle', badge: '−20%', badgeCls: 'text-green-400 bg-green-500/10 border-green-500/25' },
-  { value: 'Sedan',      label: 'Sedan',      badge: 'Base',  badgeCls: 'text-[var(--muted-color)] bg-white/5 border-[var(--border-color)]' },
-  { value: 'SUV',        label: 'SUV / 4×4',  badge: '+25%', badgeCls: 'text-amber-400 bg-amber-500/10 border-amber-500/25' },
-  { value: 'Pickup',     label: 'Pickup',     badge: '+50%', badgeCls: 'text-amber-400 bg-amber-500/10 border-amber-500/25' },
-];
+const VEHICLE_OPTIONS = {
+  en: [
+    { value: 'Motorcycle', label: 'Motorcycle', badge: '−20%', badgeCls: 'text-green-400 bg-green-500/10 border-green-500/25' },
+    { value: 'Sedan', label: 'Sedan', badge: 'Base', badgeCls: 'text-[var(--muted-color)] bg-white/5 border-[var(--border-color)]' },
+    { value: 'SUV', label: 'SUV / 4×4', badge: '+25%', badgeCls: 'text-amber-400 bg-amber-500/10 border-amber-500/25' },
+    { value: 'Pickup', label: 'Pickup', badge: '+50%', badgeCls: 'text-amber-400 bg-amber-500/10 border-amber-500/25' },
+  ],
+  ar: [
+    { value: 'Motorcycle', label: 'دراجة نارية', badge: '−20%', badgeCls: 'text-green-400 bg-green-500/10 border-green-500/25' },
+    { value: 'Sedan', label: 'سيدان', badge: 'أساسي', badgeCls: 'text-[var(--muted-color)] bg-white/5 border-[var(--border-color)]' },
+    { value: 'SUV', label: 'SUV / 4×4', badge: '+25%', badgeCls: 'text-amber-400 bg-amber-500/10 border-amber-500/25' },
+    { value: 'Pickup', label: 'بيك أب', badge: '+50%', badgeCls: 'text-amber-400 bg-amber-500/10 border-amber-500/25' },
+  ],
+  de: [
+    { value: 'Motorcycle', label: 'Motorrad', badge: '−20%', badgeCls: 'text-green-400 bg-green-500/10 border-green-500/25' },
+    { value: 'Sedan', label: 'Limousine', badge: 'Basis', badgeCls: 'text-[var(--muted-color)] bg-white/5 border-[var(--border-color)]' },
+    { value: 'SUV', label: 'SUV / 4×4', badge: '+25%', badgeCls: 'text-amber-400 bg-amber-500/10 border-amber-500/25' },
+    { value: 'Pickup', label: 'Pickup', badge: '+50%', badgeCls: 'text-amber-400 bg-amber-500/10 border-amber-500/25' },
+  ],
+};
 
-const VEHICLE_FIELDS = [
-  { label: 'Make',  name: 'vehicleMake',  placeholder: 'Toyota' },
-  { label: 'Model', name: 'vehicleModel', placeholder: 'Camry'  },
-  { label: 'Year',  name: 'vehicleYear',  placeholder: '2022', maxLength: 4 },
-];
+const VEHICLE_FIELDS = {
+  en: [
+    { label: 'Make', name: 'vehicleMake', placeholder: 'Toyota' },
+    { label: 'Model', name: 'vehicleModel', placeholder: 'Camry' },
+    { label: 'Year', name: 'vehicleYear', placeholder: '2022', maxLength: 4 },
+  ],
+  ar: [
+    { label: 'الماركة', name: 'vehicleMake', placeholder: 'Toyota' },
+    { label: 'الموديل', name: 'vehicleModel', placeholder: 'Camry' },
+    { label: 'السنة', name: 'vehicleYear', placeholder: '2022', maxLength: 4 },
+  ],
+  de: [
+    { label: 'Marke', name: 'vehicleMake', placeholder: 'Toyota' },
+    { label: 'Modell', name: 'vehicleModel', placeholder: 'Camry' },
+    { label: 'Jahr', name: 'vehicleYear', placeholder: '2022', maxLength: 4 },
+  ],
+};
+
+const UI_BY_LANG = {
+  en: {
+    vehicleDetails: 'Vehicle Details',
+    vehicleType: 'Vehicle Type',
+    selectPackage: 'Select Package',
+    loadingPackages: 'Loading packages…',
+    noPackages: 'No packages available right now. Please try again later.',
+    minLabel: 'min',
+  },
+  ar: {
+    vehicleDetails: 'تفاصيل المركبة',
+    vehicleType: 'نوع المركبة',
+    selectPackage: 'اختر الباقة',
+    loadingPackages: 'جاري تحميل الباقات…',
+    noPackages: 'لا توجد باقات متاحة حاليا. يرجى المحاولة لاحقا.',
+    minLabel: 'دقيقة',
+  },
+  de: {
+    vehicleDetails: 'Fahrzeugdetails',
+    vehicleType: 'Fahrzeugtyp',
+    selectPackage: 'Paket auswahlen',
+    loadingPackages: 'Pakete werden geladen…',
+    noPackages: 'Derzeit keine Pakete verfugbar. Bitte spater erneut versuchen.',
+    minLabel: 'Min.',
+  },
+};
 
 function BookingVehiclePackageStep({
   formData, setFormData,
@@ -24,6 +78,12 @@ function BookingVehiclePackageStep({
   selectedPackages, setSelectedPackages,
   quote,
 }) {
+  const { lang } = useLanguage();
+  const langKey = String(lang || 'en').toLowerCase().split('-')[0];
+  const ui = UI_BY_LANG[langKey] || UI_BY_LANG.en;
+  const vehicleOptions = VEHICLE_OPTIONS[langKey] || VEHICLE_OPTIONS.en;
+  const vehicleFields = VEHICLE_FIELDS[langKey] || VEHICLE_FIELDS.en;
+
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -36,11 +96,11 @@ function BookingVehiclePackageStep({
       {/* ── 01 Vehicle ──────────────────────────────────────── */}
       <div className="glass-card p-6 relative overflow-hidden">
         <div className="prism-ray" style={{ left: '55%', width: '16%', animation: 'prism-ray-sweep 11s ease-in-out 6s infinite' }} />
-        <SectionHeading icon={Car} step={1}>Vehicle Details</SectionHeading>
+        <SectionHeading icon={Car} step={1}>{ui.vehicleDetails}</SectionHeading>
         <div className="mb-5">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-color)] mb-3">Vehicle Type</p>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-color)] mb-3">{ui.vehicleType}</p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            {VEHICLE_OPTIONS.map(({ value, label, badge, badgeCls }) => (
+            {vehicleOptions.map(({ value, label, badge, badgeCls }) => (
               <button
                 key={value}
                 type="button"
@@ -63,7 +123,7 @@ function BookingVehiclePackageStep({
           </div>
         </div>
         <div className="grid grid-cols-3 gap-3">
-          {VEHICLE_FIELDS.map(({ label, name, placeholder, maxLength }) => (
+          {vehicleFields.map(({ label, name, placeholder, maxLength }) => (
             <div key={name}>
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-color)] mb-2">{label}</p>
               <input type="text" name={name} value={formData[name]} onChange={handleChange}
@@ -77,16 +137,16 @@ function BookingVehiclePackageStep({
       {/* ── 02 Package ──────────────────────────────────────── */}
       <div className="glass-card p-6 relative overflow-hidden">
         <div className="prism-ray" style={{ left: '68%', width: '14%', animation: 'prism-ray-sweep 18s ease-in-out 1s infinite' }} />
-        <SectionHeading icon={Zap} step={2}>Select Package</SectionHeading>
+        <SectionHeading icon={Zap} step={2}>{ui.selectPackage}</SectionHeading>
         {packagesCtxLoading && packages.length === 0 ? (
           <div className="flex items-center gap-3 py-10 justify-center">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
-            <span className="text-[var(--muted-color)] text-sm">Loading packages…</span>
+            <span className="text-[var(--muted-color)] text-sm">{ui.loadingPackages}</span>
           </div>
         ) : packages.length === 0 ? (
           <div className="rounded-xl border border-amber-500/30 bg-amber-500/8 p-4 text-amber-400 text-sm flex items-center gap-3">
             <AlertCircle size={15} className="flex-shrink-0" />
-            No packages available right now. Please try again later.
+            {ui.noPackages}
           </div>
         ) : (
           <div className="rounded-[28px] border-2 border-[var(--border-color)] bg-white/5 p-3 shadow-md space-y-3">
@@ -97,7 +157,7 @@ function BookingVehiclePackageStep({
                 <button
                   key={pkg.id}
                   type="button"
-                  onClick={() => setSelectedPackages([{ packageId: pkg.id, quantity: 1 }])}
+                  onClick={() => setSelectedPackages([{ packageId: pkg.id }])}
                   onMouseMove={(e) => {
                     const r = e.currentTarget.getBoundingClientRect();
                     e.currentTarget.style.setProperty('--px', `${((e.clientX - r.left) / r.width  * 100).toFixed(1)}%`);
@@ -127,7 +187,7 @@ function BookingVehiclePackageStep({
                           <p className="text-sm text-[var(--muted-color)] mt-1 line-clamp-2">{pkg.description}</p>
                         )}
                         <p className="text-xs text-[var(--muted-color)] mt-1.5 flex items-center gap-1">
-                          <Clock size={11} />{pkg.estimatedDurationMinutes} min
+                          <Clock size={11} />{pkg.estimatedDurationMinutes} {ui.minLabel}
                         </p>
                       </div>
                     </div>

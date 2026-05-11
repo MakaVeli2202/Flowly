@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Users, Search, Check, X, Mail, Calendar, FileText, ChevronDown, ChevronUp, Loader2, AlertCircle, Trash2 } from 'lucide-react';
 import { jobsAPI } from '../../api/jobs';
 import AppModal from '../../components/shared/AppModal';
+import { useLanguage } from '../../context/LanguageContext';
 
 const PRISM_CSS = `
   .field-input{width:100%;padding:10px 14px;border-radius:12px;border:1px solid var(--border-color);background:var(--surface-bg);color:var(--text-color);font-size:.875rem}
@@ -21,7 +22,126 @@ const STATUS_COLORS = {
 
 const STATUS_OPTIONS = ['Pending', 'UnderReview', 'InterviewScheduled', 'Offered', 'Hired', 'Rejected', 'Withdrawn'];
 
+const UI_BY_LANG = {
+  en: {
+    loadFailed: 'Failed to load applications',
+    updateFailed: 'Failed to update',
+    generalApplication: 'General Application',
+    title: 'Job Applications',
+    totalApplications: (count) => `${count} total applications`,
+    searchPlaceholder: 'Search by name or email...',
+    allStatuses: 'All Statuses',
+    noApplications: 'No applications found',
+    noPhone: 'No phone',
+    view: 'View',
+    applicationDetails: 'Application Details',
+    name: 'Name',
+    email: 'Email',
+    phone: 'Phone',
+    address: 'Address',
+    position: 'Position',
+    applied: 'Applied',
+    experience: 'Experience',
+    coverLetter: 'Cover Letter',
+    notProvided: 'Not provided',
+    markUnderReview: 'Mark Under Review',
+    scheduleInterview: 'Schedule Interview',
+    hire: 'Hire',
+    reject: 'Reject',
+    confirmStatusChange: 'Confirm Status Change',
+    confirmStatusMessage: (status) => `Change status to "${status}"? An email will be sent to the applicant.`,
+    yesUpdate: 'Yes, Update',
+    status: {
+      Pending: 'Pending',
+      UnderReview: 'Under Review',
+      InterviewScheduled: 'Interview Scheduled',
+      Offered: 'Offered',
+      Hired: 'Hired',
+      Rejected: 'Rejected',
+      Withdrawn: 'Withdrawn',
+    },
+  },
+  ar: {
+    loadFailed: 'فشل تحميل الطلبات',
+    updateFailed: 'فشل التحديث',
+    generalApplication: 'طلب عام',
+    title: 'طلبات التوظيف',
+    totalApplications: (count) => `${count} إجمالي الطلبات`,
+    searchPlaceholder: 'ابحث بالاسم أو البريد الإلكتروني...',
+    allStatuses: 'كل الحالات',
+    noApplications: 'لا توجد طلبات',
+    noPhone: 'لا يوجد رقم هاتف',
+    view: 'عرض',
+    applicationDetails: 'تفاصيل الطلب',
+    name: 'الاسم',
+    email: 'البريد الإلكتروني',
+    phone: 'الهاتف',
+    address: 'العنوان',
+    position: 'الوظيفة',
+    applied: 'تاريخ التقديم',
+    experience: 'الخبرة',
+    coverLetter: 'خطاب التقديم',
+    notProvided: 'غير متوفر',
+    markUnderReview: 'وضع قيد المراجعة',
+    scheduleInterview: 'جدولة مقابلة',
+    hire: 'تعيين',
+    reject: 'رفض',
+    confirmStatusChange: 'تأكيد تغيير الحالة',
+    confirmStatusMessage: (status) => `تغيير الحالة إلى "${status}"؟ سيتم إرسال بريد للمتقدم.`,
+    yesUpdate: 'نعم، تحديث',
+    status: {
+      Pending: 'قيد الانتظار',
+      UnderReview: 'قيد المراجعة',
+      InterviewScheduled: 'تمت جدولة مقابلة',
+      Offered: 'تم تقديم عرض',
+      Hired: 'تم التعيين',
+      Rejected: 'مرفوض',
+      Withdrawn: 'تم السحب',
+    },
+  },
+  de: {
+    loadFailed: 'Bewerbungen konnten nicht geladen werden',
+    updateFailed: 'Aktualisierung fehlgeschlagen',
+    generalApplication: 'Allgemeine Bewerbung',
+    title: 'Bewerbungen',
+    totalApplications: (count) => `${count} Bewerbungen gesamt`,
+    searchPlaceholder: 'Nach Name oder E-Mail suchen...',
+    allStatuses: 'Alle Status',
+    noApplications: 'Keine Bewerbungen gefunden',
+    noPhone: 'Keine Telefonnummer',
+    view: 'Ansehen',
+    applicationDetails: 'Bewerbungsdetails',
+    name: 'Name',
+    email: 'E-Mail',
+    phone: 'Telefon',
+    address: 'Adresse',
+    position: 'Position',
+    applied: 'Eingegangen',
+    experience: 'Erfahrung',
+    coverLetter: 'Anschreiben',
+    notProvided: 'Nicht angegeben',
+    markUnderReview: 'Als in Prufung markieren',
+    scheduleInterview: 'Interview planen',
+    hire: 'Einstellen',
+    reject: 'Ablehnen',
+    confirmStatusChange: 'Statusanderung bestatigen',
+    confirmStatusMessage: (status) => `Status auf "${status}" andern? Eine E-Mail wird an den Bewerber gesendet.`,
+    yesUpdate: 'Ja, aktualisieren',
+    status: {
+      Pending: 'Ausstehend',
+      UnderReview: 'In Prufung',
+      InterviewScheduled: 'Interview geplant',
+      Offered: 'Angebot gesendet',
+      Hired: 'Eingestellt',
+      Rejected: 'Abgelehnt',
+      Withdrawn: 'Zuruckgezogen',
+    },
+  },
+};
+
 export default function AdminJobApplications() {
+  const { lang } = useLanguage();
+  const ui = UI_BY_LANG[lang] || UI_BY_LANG.en;
   const [applications, setApplications] = useState([]);
   const [positions, setPositions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -46,7 +166,7 @@ export default function AdminJobApplications() {
       setApplications(apps || []);
       setPositions(poss || []);
     } catch (err) {
-      setError('Failed to load applications');
+      setError(ui.loadFailed);
     } finally {
       setLoading(false);
     }
@@ -76,7 +196,7 @@ export default function AdminJobApplications() {
       await fetchData();
       setSelectedApp(null);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to update');
+      setError(err.response?.data?.message || ui.updateFailed);
     } finally {
       setUpdating(null);
       setShowConfirmModal({ open: false, app: null, action: null });
@@ -85,8 +205,10 @@ export default function AdminJobApplications() {
 
   const getPositionTitle = (posId) => {
     const pos = positions.find(p => p.id === posId);
-    return pos?.title || pos?.Position || 'General Application';
+    return pos?.title || pos?.Position || ui.generalApplication;
   };
+
+  const getStatusLabel = (status) => ui.status[status] || status;
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center">
@@ -103,8 +225,8 @@ export default function AdminJobApplications() {
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="premium-heading text-3xl font-bold text-[var(--heading-color)]">Job Applications</h1>
-              <p className="text-[var(--muted-color)]">{applications.length} total applications</p>
+              <h1 className="premium-heading text-3xl font-bold text-[var(--heading-color)]">{ui.title}</h1>
+              <p className="text-[var(--muted-color)]">{ui.totalApplications(applications.length)}</p>
             </div>
           </div>
 
@@ -121,14 +243,14 @@ export default function AdminJobApplications() {
           <div className="flex flex-wrap gap-3 mb-6">
             <div className="relative flex-1 min-w-[200px]">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted-color)]" />
-              <input type="text" placeholder="Search by name or email..."
+              <input type="text" placeholder={ui.searchPlaceholder}
                 value={search} onChange={e => setSearch(e.target.value)}
                 className="field-input pl-9" />
             </div>
             <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
               className="field-input w-auto">
-              <option value="">All Statuses</option>
-              {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+              <option value="">{ui.allStatuses}</option>
+              {STATUS_OPTIONS.map(s => <option key={s} value={s}>{getStatusLabel(s)}</option>)}
             </select>
           </div>
 
@@ -140,7 +262,7 @@ export default function AdminJobApplications() {
                 <button key={status} onClick={() => setStatusFilter(status === statusFilter ? '' : status)}
                   className={`p-3 rounded-xl border text-left transition ${statusFilter === status ? 'border-primary' : 'border-[var(--border-color)]'}`}
                   style={{ background: statusFilter === status ? 'rgba(200,169,107,.05)' : 'var(--surface-bg)' }}>
-                  <p className="text-xs text-[var(--muted-color)]">{status}</p>
+                  <p className="text-xs text-[var(--muted-color)]">{getStatusLabel(status)}</p>
                   <p className="text-xl font-bold" style={{ color: getStatusColor(status) }}>{count}</p>
                 </button>
               );
@@ -151,7 +273,7 @@ export default function AdminJobApplications() {
           {filteredApps.length === 0 ? (
             <div className="glass-card p-12 text-center">
               <Users size={48} className="mx-auto mb-4 text-[var(--muted-color)] opacity-40" />
-              <p className="text-[var(--muted-color)]">No applications found</p>
+              <p className="text-[var(--muted-color)]">{ui.noApplications}</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -160,13 +282,13 @@ export default function AdminJobApplications() {
                   <div className="flex-1 min-w-[200px]">
                     <h3 className="font-bold text-[var(--heading-color)]">{app.firstName} {app.lastName}</h3>
                     <p className="text-sm text-[var(--muted-color)]">{app.email}</p>
-                    <p className="text-xs text-[var(--muted-color)]">{app.phone || 'No phone'}</p>
+                    <p className="text-xs text-[var(--muted-color)]">{app.phone || ui.noPhone}</p>
                   </div>
                   
                   <div className="text-sm">
                     <p className="text-[var(--text-color)]">{getPositionTitle(app.jobPositionId)}</p>
                     <p className="text-xs text-[var(--muted-color)]">
-                      {new Date(app.createdAt).toLocaleDateString()}
+                      {new Date(app.createdAt).toLocaleDateString(lang === 'ar' ? 'ar' : lang === 'de' ? 'de-DE' : 'en-US')}
                     </p>
                   </div>
 
@@ -175,18 +297,18 @@ export default function AdminJobApplications() {
                     border: '1px solid ' + getStatusColor(app.status),
                     color: getStatusColor(app.status)
                   }}>
-                    {app.status}
+                    {getStatusLabel(app.status)}
                   </span>
 
                   <div className="flex gap-2">
                     <button onClick={() => setSelectedApp(app)}
                       className="px-3 py-1.5 rounded-lg border border-[var(--border-color)] text-xs hover:bg-white/5">
-                      View
+                      {ui.view}
                     </button>
                     <select value={app.status} onChange={e => handleStatusChange(app, e.target.value)}
                       className="px-2 py-1.5 rounded-lg border border-[var(--border-color)] text-xs bg-[var(--surface-bg)]"
                       disabled={updating === app.id}>
-                      {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+                      {STATUS_OPTIONS.map(s => <option key={s} value={s}>{getStatusLabel(s)}</option>)}
                     </select>
                   </div>
                 </div>
@@ -195,46 +317,46 @@ export default function AdminJobApplications() {
           )}
 
           {/* Detail Modal */}
-          <AppModal isOpen={!!selectedApp} onClose={() => setSelectedApp(null)} title="Application Details" size="lg">
+          <AppModal isOpen={!!selectedApp} onClose={() => setSelectedApp(null)} title={ui.applicationDetails} size="lg">
             {selectedApp && (
               <div className="space-y-4">
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
-                    <label className="field-label">Name</label>
+                    <label className="field-label">{ui.name}</label>
                     <p className="text-[var(--text-color)]">{selectedApp.firstName} {selectedApp.lastName}</p>
                   </div>
                   <div>
-                    <label className="field-label">Email</label>
+                    <label className="field-label">{ui.email}</label>
                     <p className="text-[var(--text-color)]">{selectedApp.email}</p>
                   </div>
                   <div>
-                    <label className="field-label">Phone</label>
-                    <p className="text-[var(--text-color)]">{selectedApp.phone || 'Not provided'}</p>
+                    <label className="field-label">{ui.phone}</label>
+                    <p className="text-[var(--text-color)]">{selectedApp.phone || ui.notProvided}</p>
                   </div>
                   <div>
-                    <label className="field-label">Address</label>
-                    <p className="text-[var(--text-color)]">{selectedApp.address || 'Not provided'}</p>
+                    <label className="field-label">{ui.address}</label>
+                    <p className="text-[var(--text-color)]">{selectedApp.address || ui.notProvided}</p>
                   </div>
                   <div>
-                    <label className="field-label">Position</label>
+                    <label className="field-label">{ui.position}</label>
                     <p className="text-[var(--text-color)]">{getPositionTitle(selectedApp.jobPositionId)}</p>
                   </div>
                   <div>
-                    <label className="field-label">Applied</label>
-                    <p className="text-[var(--text-color)]">{new Date(selectedApp.createdAt).toLocaleString()}</p>
+                    <label className="field-label">{ui.applied}</label>
+                    <p className="text-[var(--text-color)]">{new Date(selectedApp.createdAt).toLocaleString(lang === 'ar' ? 'ar' : lang === 'de' ? 'de-DE' : 'en-US')}</p>
                   </div>
                 </div>
 
                 {selectedApp.experience && (
                   <div>
-                    <label className="field-label">Experience</label>
+                    <label className="field-label">{ui.experience}</label>
                     <p className="text-[var(--text-color)] text-sm whitespace-pre-wrap">{selectedApp.experience}</p>
                   </div>
                 )}
 
                 {selectedApp.coverLetter && (
                   <div>
-                    <label className="field-label">Cover Letter</label>
+                    <label className="field-label">{ui.coverLetter}</label>
                     <p className="text-[var(--text-color)] text-sm whitespace-pre-wrap">{selectedApp.coverLetter}</p>
                   </div>
                 )}
@@ -243,22 +365,22 @@ export default function AdminJobApplications() {
                   <button onClick={() => handleStatusChange(selectedApp, 'UnderReview')}
                     disabled={updating === selectedApp.id}
                     className="px-4 py-2 rounded-lg bg-blue-500/20 text-blue-400 text-sm font-bold hover:bg-blue-500/30 disabled:opacity-50">
-                    Mark Under Review
+                    {ui.markUnderReview}
                   </button>
                   <button onClick={() => handleStatusChange(selectedApp, 'InterviewScheduled')}
                     disabled={updating === selectedApp.id}
                     className="px-4 py-2 rounded-lg bg-purple-500/20 text-purple-400 text-sm font-bold hover:bg-purple-500/30 disabled:opacity-50">
-                    Schedule Interview
+                    {ui.scheduleInterview}
                   </button>
                   <button onClick={() => handleStatusChange(selectedApp, 'Hired')}
                     disabled={updating === selectedApp.id}
                     className="px-4 py-2 rounded-lg bg-green-500/20 text-green-400 text-sm font-bold hover:bg-green-500/30 disabled:opacity-50">
-                    Hire
+                    {ui.hire}
                   </button>
                   <button onClick={() => handleStatusChange(selectedApp, 'Rejected')}
                     disabled={updating === selectedApp.id}
                     className="px-4 py-2 rounded-lg bg-red-500/20 text-red-400 text-sm font-bold hover:bg-red-500/30 disabled:opacity-50">
-                    Reject
+                    {ui.reject}
                   </button>
                 </div>
               </div>
@@ -267,8 +389,8 @@ export default function AdminJobApplications() {
 
           {/* Confirm Modal */}
           <AppModal isOpen={showConfirmModal.open} onClose={() => setShowConfirmModal({ open: false, app: null, action: null })}
-            title="Confirm Status Change" message={`Change status to "${showConfirmModal.action}"? An email will be sent to the applicant.`}
-            confirmLabel="Yes, Update" onConfirm={confirmStatusChange} variant="info" />
+            title={ui.confirmStatusChange} message={ui.confirmStatusMessage(getStatusLabel(showConfirmModal.action || ''))}
+            confirmLabel={ui.yesUpdate} onConfirm={confirmStatusChange} variant="info" />
         </div>
       </div>
     </>

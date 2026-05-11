@@ -37,6 +37,145 @@
       "packages":   "الباقات"
     }
   },
+  "myBookings": {
+    "header": {
+      "eyebrow": "حسابي",
+      "title": "حجوزاتي",
+      "subtitle": "اعرض وأدر مواعيدك"
+    },
+    "empty": {
+      "title": "لا توجد حجوزات بعد",
+      "body": "ستظهر حجوزاتك القادمة هنا بعد إجراء الحجز.",
+      "cta": "احجز خدمتك الأولى"
+    },
+    "actions": {
+      "showPackageDetails": "عرض تفاصيل الباقة",
+      "hidePackageDetails": "إخفاء تفاصيل الباقة",
+      "viewDetails": "عرض التفاصيل",
+      "trackWorker": "تتبع العامل",
+      "bookAgain": "احجز مرة أخرى",
+      "reschedule": "إعادة جدولة",
+      "cancel": "إلغاء"
+    },
+    "modal": {
+      "requestCancellation": "طلب إلغاء",
+      "requestReschedule": "طلب إعادة جدولة",
+      "checkingPolicy": "جارٍ التحقق من سياسة الإلغاء...",
+      "feeMayApply": "قد تُطبّق رسوم إلغاء",
+      "feeWarning": "موعدك بعد {{hoursUntil}} ساعة، خارج نافذة الإلغاء المجاني {{freeWindow}} ساعة. الرسوم: {{fee}} ريال قطري.",
+      "freeCancellation": "إلغاء مجاني",
+      "freeCancellationBody": "أنت ضمن نافذة الإلغاء المجاني، لن تُفرض أي رسوم.",
+      "reason": "السبب",
+      "reasonPlaceholder": "أخبرنا بالسبب...",
+      "preferredDate": "التاريخ المفضل",
+      "preferredDatePlaceholder": "مثال: 15 Apr 2026",
+      "dismiss": "إغلاق",
+      "submit": "إرسال"
+    },
+    "alerts": {
+      "requestSubmittedTitle": "تم إرسال الطلب",
+      "requestSubmittedBody": "سيتواصل فريقنا معك قريباً."
+    },
+    "errors": {
+      "load": "فشل تحميل الحجوزات.",
+      "submitRequest": "فشل إرسال الطلب. يرجى المحاولة مرة أخرى."
+    }
+  },
+  "packagesScreen": {
+    "catalogue": "الكتالوج",
+    "title": "الباقات",
+    "subtitle": "اختر باقة التنظيف المناسبة لك",
+    "servicesIncluded": "الخدمات المشمولة",
+    "serviceFallback": "خدمة",
+    "showLess": "عرض أقل",
+    "moreServices": "+{{count}} خدمات إضافية",
+    "emptyTitle": "لا توجد باقات",
+    "emptyAll": "لا توجد باقات متاحة حالياً.",
+    "emptyTier": "لا توجد باقات ضمن {{tier}}. جرّب فئة مختلفة.",
+    "showAll": "عرض الكل",
+    "startingAt": "ابتداءً من",
+    "minutes": "{{count}} دقيقة",
+    "createCustomerBooking": "إنشاء حجز للعميل",
+    "bookThisPackage": "احجز هذه الباقة",
+    "loadError": "فشل تحميل الباقات",
+    "tiers": {
+      "all": "الكل",
+      "Standard": "قياسي",
+      "Gold": "ذهبي",
+      "Platinum": "بلاتيني",
+      "Premium": "بريميوم"
+    }
+  },
+  "adminDashboard": {
+    "loading": "جارٍ تحميل لوحة التحكم...",
+    "greeting": {
+      "morning": "صباح الخير",
+      "afternoon": "مساء الخير",
+      "evening": "مساء الخير"
+    },
+    "hero": {
+      "liveCount": "{{count}} مباشر",
+      "operationsCenter": "مركز العمليات"
+    },
+    "sections": {
+      "todaysOverview": "نظرة عامة اليوم",
+      "scheduledBookings": "{{count}} حجوزات مجدولة",
+      "revenue": "الإيرادات",
+      "completedOnly": "الحجوزات المكتملة فقط",
+      "operationalStatus": "الحالة التشغيلية",
+      "activeWorkers": "{{count}} عمال نشطون",
+      "alertsIssues": "التنبيهات والمشكلات",
+      "requiresAttention": "تحتاج إلى متابعة",
+      "quickActions": "إجراءات سريعة",
+      "overallStatus": "الحالة العامة",
+      "totalBookings": "إجمالي {{count}} حجوزات"
+    },
+    "stats": {
+      "totalToday": "إجمالي اليوم",
+      "inProgress": "قيد التنفيذ",
+      "jobsRunningNow": "مهام جارية الآن",
+      "noneActive": "لا يوجد نشط",
+      "pending": "قيد الانتظار",
+      "unconfirmed": "{{count}} غير مؤكدة",
+      "allConfirmed": "الكل مؤكد",
+      "completed": "مكتمل",
+      "cancelled": "{{count}} ملغاة",
+      "todaysRevenue": "إيرادات اليوم",
+      "jobsCompleted": "{{count}} مهام مكتملة",
+      "weeklyRevenue": "إيرادات الأسبوع"
+    },
+    "workers": {
+      "onJob": "في مهمة",
+      "available": "متاح",
+      "total": "الإجمالي",
+      "viewAll": "عرض كل العمال {{count}}",
+      "noActiveWorkers": "لا يوجد عمال نشطون",
+      "liveDetailerMap": "خريطة العمال المباشرة",
+      "workerId": "العامل #{{id}}",
+      "live": "مباشر"
+    },
+    "alerts": {
+      "unassignedTitle": "{{count}} مهام غير مسندة اليوم",
+      "unassignedBadge": "غير مسند",
+      "cancellationTitle": "{{count}} طلبات إلغاء",
+      "actionNeededBadge": "إجراء مطلوب",
+      "rescheduleTitle": "{{count}} طلبات إعادة جدولة",
+      "reviewBadge": "مراجعة",
+      "unpaidCompletedTitle": "{{count}} مهام مكتملة غير مدفوعة",
+      "unpaidCompletedBody": "لم يتم تحصيل الدفع للخدمة المكتملة",
+      "paymentIssueBadge": "مشكلة دفع",
+      "allClearTitle": "كل شيء جيد",
+      "allClearSub": "لا توجد مشكلات غير محلولة حالياً"
+    },
+    "quickActions": {
+      "newBooking": "حجز جديد",
+      "todaysJobs": "مهام اليوم",
+      "allJobs": "كل المهام",
+      "workers": "العمال",
+      "reports": "التقارير",
+      "notifications": "الإشعارات"
+    }
+  },
   "common": {
     "cancel":    "إلغاء",
     "close":     "إغلاق",
@@ -280,8 +419,11 @@
         "Notifications": "الإشعارات",
         "Packages": "الباقات",
         "Subscriptions": "الاشتراكات",
+        "Referrals": "الإحالات",
         "Booking": "احجز الآن",
         "My Bookings": "حجوزاتي",
+        "Careers": "الوظائف",
+        "WhatsApp": "واتساب",
         "Assistant": "المساعد الذكي",
         "Profile": "الملف الشخصي"
       }
@@ -303,17 +445,25 @@
         "Admin Home": "لوحة التحكم",
         "Today Jobs": "توزيع اليوم",
         "All Jobs": "كل المهام",
+        "Financial Reports": "التقارير المالية",
+        "Operational Reports": "التقارير التشغيلية",
+        "Admin Payroll": "الرواتب",
+        "Worker Schedule": "جدول العمال",
         "Admin Reports": "التقارير",
         "Admin Products": "المنتجات",
         "Admin Services": "الخدمات",
         "Admin Packages": "الباقات",
         "Admin Offers": "العروض",
+        "Admin Plans": "الخطط",
+        "Admin Skills": "المهارات",
+        "Job Applications": "طلبات التوظيف",
         "Admin Subscriptions": "الاشتراكات",
         "Worker Management": "العمال",
         "Admin Staff": "إدارة الموظفين",
         "Create Worker": "إضافة عامل",
         "Admin Notifications": "الإشعارات",
         "System Settings": "إعدادات النظام",
+        "Dev Settings": "إعدادات المطور",
         "Admin Job Positions": "الوظائف",
         "Admin Content": "المحتوى",
         "Sub Bookings": "حجوزات الاشتراك"

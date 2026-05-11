@@ -15,6 +15,8 @@ import { formatQAR } from '../utils/currency';
 import { theme } from '../theme/theme';
 import { reviewsAPI } from '../api/reviews';
 import PressableScale from '../components/PressableScale';
+import i18n from '../i18n/i18n';
+import { pickLocalizedField, normalizeLangCode } from '../utils/localization';
 
 /* ── Constants ───────────────────────────────────────────── */
 // Keys instead of labels — t() called at render time, not here
@@ -93,6 +95,7 @@ const SectionHeader = ({ title, action, onAction }) => (
 /* ── HomeScreen ──────────────────────────────────────────── */
 export default function HomeScreen({ navigation }) {
   const { t }      = useTranslation();
+  const lang = normalizeLangCode(i18n.language);
   const { user }   = useAuth();
   const headerHeight = useHeaderHeight();
   const scrollHeader = useScrollHeader();
@@ -338,7 +341,7 @@ export default function HomeScreen({ navigation }) {
                       pointerEvents="none"
                     />
                     <View style={s.pkgNameRow}>
-                      <Text style={s.pkgName}>{pkg.name}</Text>
+                      <Text style={s.pkgName}>{pickLocalizedField(pkg, 'name', lang) || pkg.name}</Text>
                       <View style={s.pkgDurationPill}>
                         <Ionicons name="time-outline" size={11} color={theme.colors.textMuted} />
                         <Text style={s.pkgDurationText}>
@@ -347,14 +350,21 @@ export default function HomeScreen({ navigation }) {
                       </View>
                     </View>
                     {!!pkg.description && (
-                      <Text style={s.pkgDesc} numberOfLines={2}>{pkg.description}</Text>
+                      <Text style={s.pkgDesc} numberOfLines={2}>
+                        {pickLocalizedField(pkg, 'description', lang) || pkg.description}
+                      </Text>
                     )}
                     {allServices.length > 0 && (
                       <View style={s.serviceList}>
                         {visibleServices.map((svc, i) => (
                           <View key={i} style={s.serviceRow}>
                             <Ionicons name="checkmark-circle" size={14} color={theme.colors.primary} />
-                            <Text style={s.serviceText}>{svc.serviceName || svc.name}</Text>
+                            <Text style={s.serviceText}>
+                              {pickLocalizedField(svc, 'serviceName', lang)
+                                || pickLocalizedField(svc, 'name', lang)
+                                || svc.serviceName
+                                || svc.name}
+                            </Text>
                           </View>
                         ))}
                         {allServices.length > 2 && (

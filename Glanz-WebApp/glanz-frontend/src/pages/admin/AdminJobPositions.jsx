@@ -33,7 +33,79 @@ function savePositions(positions) {
 const EMPTY_FORM = { title: '', department: '', type: 'Full-Time', location: '', description: '', isOpen: true };
 
 export default function AdminJobPositions() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+  const uiByLang = {
+    en: {
+      titleRequired: 'Position title is required.',
+      deleteConfirm: 'Delete this position?',
+      jobPositions: 'Job Positions',
+      addPosition: 'Add Position',
+      subtitle: 'Manage open job positions shown on the public Careers page.',
+      editPosition: 'Edit Position',
+      newPosition: 'New Position',
+      positionTitle: 'Position Title *',
+      department: 'Department',
+      type: 'Type',
+      location: 'Location',
+      openApplications: 'Open for Applications',
+      jobDescription: 'Job Description',
+      updatePosition: 'Update Position',
+      savePosition: 'Save Position',
+      cancel: 'Cancel',
+      noPositions: 'No positions yet. Click "Add Position" to get started.',
+      open: 'Open',
+      closed: 'Closed',
+      closePosition: 'Close position',
+      openPosition: 'Open position',
+    },
+    ar: {
+      titleRequired: 'عنوان الوظيفة مطلوب.',
+      deleteConfirm: 'هل تريد حذف هذه الوظيفة؟',
+      jobPositions: 'الوظائف',
+      addPosition: 'إضافة وظيفة',
+      subtitle: 'إدارة الوظائف المفتوحة المعروضة في صفحة الوظائف العامة.',
+      editPosition: 'تعديل الوظيفة',
+      newPosition: 'وظيفة جديدة',
+      positionTitle: 'عنوان الوظيفة *',
+      department: 'القسم',
+      type: 'النوع',
+      location: 'الموقع',
+      openApplications: 'مفتوحة للتقديم',
+      jobDescription: 'وصف الوظيفة',
+      updatePosition: 'تحديث الوظيفة',
+      savePosition: 'حفظ الوظيفة',
+      cancel: 'إلغاء',
+      noPositions: 'لا توجد وظائف بعد. اضغط "إضافة وظيفة" للبدء.',
+      open: 'مفتوحة',
+      closed: 'مغلقة',
+      closePosition: 'إغلاق الوظيفة',
+      openPosition: 'فتح الوظيفة',
+    },
+    de: {
+      titleRequired: 'Stellentitel ist erforderlich.',
+      deleteConfirm: 'Diese Stelle loschen?',
+      jobPositions: 'Stellen',
+      addPosition: 'Stelle hinzufugen',
+      subtitle: 'Verwalten Sie offene Stellen auf der offentlichen Karriereseite.',
+      editPosition: 'Stelle bearbeiten',
+      newPosition: 'Neue Stelle',
+      positionTitle: 'Stellentitel *',
+      department: 'Abteilung',
+      type: 'Typ',
+      location: 'Standort',
+      openApplications: 'Fur Bewerbungen offen',
+      jobDescription: 'Stellenbeschreibung',
+      updatePosition: 'Stelle aktualisieren',
+      savePosition: 'Stelle speichern',
+      cancel: 'Abbrechen',
+      noPositions: 'Noch keine Stellen. Klicken Sie auf "Stelle hinzufugen".',
+      open: 'Offen',
+      closed: 'Geschlossen',
+      closePosition: 'Stelle schlieBen',
+      openPosition: 'Stelle offnen',
+    },
+  };
+  const ui = uiByLang[lang] || uiByLang.en;
   const [positions, setPositions] = useState(loadPositions);
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState(null);
@@ -47,7 +119,7 @@ export default function AdminJobPositions() {
   };
 
   const handleSubmit = () => {
-    if (!form.title.trim()) { setError('Position title is required.'); return; }
+    if (!form.title.trim()) { setError(ui.titleRequired); return; }
     setError('');
     if (editId !== null) {
       persist(positions.map(p => p.id === editId ? { ...p, ...form } : p));
@@ -67,7 +139,7 @@ export default function AdminJobPositions() {
   };
 
   const handleDelete = (id) => {
-    if (window.confirm('Delete this position?')) persist(positions.filter(p => p.id !== id));
+    if (window.confirm(ui.deleteConfirm)) persist(positions.filter(p => p.id !== id));
   };
 
   const handleToggleOpen = (id) => {
@@ -97,7 +169,7 @@ export default function AdminJobPositions() {
                   style={{ background: 'rgba(245,158,11,.12)', border: '1px solid rgba(245,158,11,.24)' }}>
                   <Briefcase size={16} style={{ color: '#f59e0b' }} />
                 </div>
-                <h1 className="premium-heading text-4xl md:text-5xl font-bold text-[var(--heading-color)]">Job Positions</h1>
+                <h1 className="premium-heading text-4xl md:text-5xl font-bold text-[var(--heading-color)]">{ui.jobPositions}</h1>
               </div>
               <button
                 type="button"
@@ -106,10 +178,10 @@ export default function AdminJobPositions() {
                 style={{ background: 'linear-gradient(135deg,#c8a96b,#0ea5a0)', color: '#fff' }}
               >
                 <Plus size={15} />
-                Add Position
+                {ui.addPosition}
               </button>
             </div>
-            <p className="text-sm text-[var(--muted-color)] ml-12">Manage open job positions shown on the public Careers page.</p>
+            <p className="text-sm text-[var(--muted-color)] ml-12">{ui.subtitle}</p>
           </div>
 
           {/* Add / Edit Form */}
@@ -119,7 +191,7 @@ export default function AdminJobPositions() {
                 style={{ background: 'linear-gradient(90deg,transparent,#f59e0b 38%,#0ea5a0 62%,transparent)' }} />
               <div className="p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="font-bold text-[var(--heading-color)] text-lg">{editId ? 'Edit Position' : 'New Position'}</h2>
+                  <h2 className="font-bold text-[var(--heading-color)] text-lg">{editId ? ui.editPosition : ui.newPosition}</h2>
                   <button type="button" onClick={() => { setShowForm(false); setEditId(null); setError(''); }} className="p-1.5 rounded-lg hover:bg-white/10 text-[var(--muted-color)]">
                     <X size={16} />
                   </button>
@@ -134,26 +206,26 @@ export default function AdminJobPositions() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                   <div className="sm:col-span-2">
-                    <label className="field-label">Position Title *</label>
+                    <label className="field-label">{ui.positionTitle}</label>
                     <input type="text" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} className="field-input" placeholder="e.g. Senior Detailer" />
                   </div>
                   <div>
-                    <label className="field-label">Department</label>
+                    <label className="field-label">{ui.department}</label>
                     <input type="text" value={form.department} onChange={e => setForm(f => ({ ...f, department: e.target.value }))} className="field-input" placeholder="e.g. Operations" />
                   </div>
                   <div>
-                    <label className="field-label">Type</label>
+                    <label className="field-label">{ui.type}</label>
                     <select value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))}
                       className="field-input">
                       {['Full-Time', 'Part-Time', 'Contract', 'Internship'].map(t => <option key={t}>{t}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="field-label">Location</label>
+                    <label className="field-label">{ui.location}</label>
                     <input type="text" value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} className="field-input" placeholder="e.g. Doha, Qatar" />
                   </div>
                   <div className="flex items-center gap-3 pt-6">
-                    <label className="field-label mb-0">Open for Applications</label>
+                    <label className="field-label mb-0">{ui.openApplications}</label>
                     <button type="button" onClick={() => setForm(f => ({ ...f, isOpen: !f.isOpen }))}>
                       {form.isOpen
                         ? <ToggleRight size={24} style={{ color: '#10b981' }} />
@@ -161,7 +233,7 @@ export default function AdminJobPositions() {
                     </button>
                   </div>
                   <div className="sm:col-span-2">
-                    <label className="field-label">Job Description</label>
+                    <label className="field-label">{ui.jobDescription}</label>
                     <textarea rows={6} value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} className="field-input resize-none" placeholder="Describe responsibilities, requirements, benefits…" />
                   </div>
                 </div>
@@ -171,11 +243,11 @@ export default function AdminJobPositions() {
                     className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all hover:opacity-90"
                     style={{ background: 'linear-gradient(135deg,#c8a96b,#0ea5a0)', color: '#fff' }}>
                     <Save size={14} />
-                    {editId ? 'Update Position' : 'Save Position'}
+                    {editId ? ui.updatePosition : ui.savePosition}
                   </button>
                   <button type="button" onClick={() => { setShowForm(false); setEditId(null); setError(''); }}
                     className="px-5 py-2.5 rounded-xl text-sm font-bold border border-[var(--border-color)] text-[var(--muted-color)] hover:text-[var(--text-color)] transition">
-                    Cancel
+                    {ui.cancel}
                   </button>
                 </div>
               </div>
@@ -186,7 +258,7 @@ export default function AdminJobPositions() {
           {positions.length === 0 ? (
             <div className="glass-card p-10 text-center">
               <Briefcase size={40} className="mx-auto mb-3 text-[var(--muted-color)] opacity-40" />
-              <p className="text-[var(--muted-color)] text-sm">No positions yet. Click "Add Position" to get started.</p>
+              <p className="text-[var(--muted-color)] text-sm">{ui.noPositions}</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -199,7 +271,7 @@ export default function AdminJobPositions() {
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="font-bold text-[var(--heading-color)]">{pos.title}</h3>
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${pos.isOpen !== false ? 'text-emerald-400 bg-emerald-400/10' : 'text-[var(--muted-color)] bg-[var(--border-color)]/30'}`}>
-                          {pos.isOpen !== false ? 'Open' : 'Closed'}
+                          {pos.isOpen !== false ? ui.open : ui.closed}
                         </span>
                       </div>
                       <div className="flex flex-wrap gap-2 text-xs text-[var(--muted-color)]">
@@ -214,7 +286,7 @@ export default function AdminJobPositions() {
                     <div className="flex items-center gap-2 flex-shrink-0">
                       <button type="button" onClick={() => handleToggleOpen(pos.id)}
                         className="p-2 rounded-lg hover:bg-white/10 transition text-[var(--muted-color)] hover:text-[var(--text-color)]"
-                        title={pos.isOpen !== false ? 'Close position' : 'Open position'}>
+                        title={pos.isOpen !== false ? ui.closePosition : ui.openPosition}>
                         {pos.isOpen !== false ? <ToggleRight size={18} style={{ color: '#10b981' }} /> : <ToggleLeft size={18} />}
                       </button>
                       <button type="button" onClick={() => handleEdit(pos)}

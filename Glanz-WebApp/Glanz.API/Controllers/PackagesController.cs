@@ -55,6 +55,12 @@ namespace Glanz.API.Controllers
 
                 var packageTextMap = await _localizationTextResolver.GetPackageTextsAsync(lang, HttpContext.RequestAborted);
                 var serviceTextMap = await _localizationTextResolver.GetServiceTextsAsync(lang, HttpContext.RequestAborted);
+                (packageTextMap, serviceTextMap) = await EnsureMissingTranslationsAsync(
+                    packages,
+                    lang,
+                    packageTextMap,
+                    serviceTextMap,
+                    HttpContext.RequestAborted);
 
                 var packageDtos = packages.Select(p => 
                 {
@@ -134,6 +140,12 @@ namespace Glanz.API.Controllers
 
                 var packageTextMap = await _localizationTextResolver.GetPackageTextsAsync(lang, HttpContext.RequestAborted);
                 var serviceTextMap = await _localizationTextResolver.GetServiceTextsAsync(lang, HttpContext.RequestAborted);
+                (packageTextMap, serviceTextMap) = await EnsureMissingTranslationsAsync(
+                    new List<Package> { package },
+                    lang,
+                    packageTextMap,
+                    serviceTextMap,
+                    HttpContext.RequestAborted);
 
                 var packageDto = new PackageDto
                 {
@@ -474,6 +486,77 @@ namespace Glanz.API.Controllers
                 Console.WriteLine($"Error deleting package: {ex.Message}");
                 return StatusCode(500, new { message = "Failed to delete package" });
             }
+        }
+
+        private async Task<(Dictionary<int, LocalizedText> packageTextMap, Dictionary<int, LocalizedText> serviceTextMap)> EnsureMissingTranslationsAsync(
+            IReadOnlyCollection<Package> packages,
+            string? lang,
+            Dictionary<int, LocalizedText> packageTextMap,
+            Dictionary<int, LocalizedText> serviceTextMap,
+            CancellationToken cancellationToken)
+        {
+            var normalizedLang = (lang ?? "en").Trim().Split(',', ';')[0].Split('-')[0].ToLowerInvariant();
+            if (normalizedLang == "en" || packages.Count == 0)
+            {
+                return (packageTextMap, serviceTextMap);
+            }
+
+            var attemptedBackfill = false;
+
+            try
+            {
+                foreach (var package in packages)
+                {
+                    var hasPackageTranslation = packageTextMap.TryGetValue(package.Id, out var packageText)
+                        && !string.IsNullOrWhiteSpace(packageText?.Name);
+
+                    if (!hasPackageTranslation)
+                    {
+                        attemptedBackfill = true;
+                        await _autoTranslationService.EnsurePackageTranslationsAsync(
+                            package.Id,
+                            package.Name,
+                            package.Description,
+                            cancellationToken);
+                    }
+                }
+
+                var servicesById = packages
+                    .SelectMany(p => p.PackageServices)
+                    .Select(ps => ps.Service)
+                    .Where(s => s != null)
+                    .GroupBy(s => s.Id)
+                    .Select(g => g.First())
+                    .ToList();
+
+                foreach (var service in servicesById)
+                {
+                    var hasServiceTranslation = serviceTextMap.TryGetValue(service.Id, out var serviceText)
+                        && !string.IsNullOrWhiteSpace(serviceText?.Name);
+
+                    if (!hasServiceTranslation)
+                    {
+                        attemptedBackfill = true;
+                        await _autoTranslationService.EnsureServiceTranslationsAsync(
+                            service.Id,
+                            service.Name,
+                            service.Description,
+                            cancellationToken);
+                    }
+                }
+
+                if (attemptedBackfill)
+                {
+                    packageTextMap = await _localizationTextResolver.GetPackageTextsAsync(normalizedLang, cancellationToken);
+                    serviceTextMap = await _localizationTextResolver.GetServiceTextsAsync(normalizedLang, cancellationToken);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Translation ensure-on-read failed: {ex.Message}");
+            }
+
+            return (packageTextMap, serviceTextMap);
         }
     }
 }

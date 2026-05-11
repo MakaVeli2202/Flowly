@@ -9,5 +9,13 @@
   "schedule": "Zeitplan",
   "staff": "Personal",
   "subscriptions": "Abonnements",
-  "reports": "Berichte"
+  "reports": "Berichte",
+  "shifts": "Schichten",
+  "salesKit": "Verkaufskit",
+  "payroll": "Lohnabrechnung",
+  "liveMap": "Live-Karte",
+  "devSettings": "Entwickler-Einstellungen",
+  "translations": "Uebersetzungen",
+  "operations": "Betrieb",
+  "management": "Verwaltung"
 }

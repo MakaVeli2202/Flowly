@@ -2,8 +2,45 @@
 import React, { useEffect, useState } from 'react';
 import { Briefcase, ChevronDown, ChevronUp, MapPin, Clock, Mail } from 'lucide-react';
 import { BUSINESS } from '../../config/business';
+import { useLanguage } from '../../context/LanguageContext';
 
 const STORAGE_KEY = 'adminJobPositions';
+
+const UI_BY_LANG = {
+  en: {
+    joinTeam: 'Join the Team',
+    openPositions: 'Open Positions',
+    intro: (name, location) => `Join ${name} and be part of a passionate team delivering premium car care across ${location}.`,
+    noOpenNow: 'No open positions right now',
+    noOpenDesc: "We're not actively hiring at the moment, but feel free to send us your CV anyway.",
+    speculativeSubject: 'Speculative Application',
+    sendSpeculative: 'Send Speculative Application',
+    applyNow: 'Apply Now',
+    questions: 'Questions? Email us at',
+  },
+  ar: {
+    joinTeam: 'انضم إلى الفريق',
+    openPositions: 'الوظائف المتاحة',
+    intro: (name, location) => `انضم إلى ${name} وكن جزءا من فريق شغوف يقدم عناية متميزة بالسيارات في ${location}.`,
+    noOpenNow: 'لا توجد وظائف متاحة حاليا',
+    noOpenDesc: 'لا نقوم بالتوظيف حاليا، ولكن يمكنك إرسال سيرتك الذاتية وسنحتفظ بها.',
+    speculativeSubject: 'طلب توظيف استباقي',
+    sendSpeculative: 'إرسال طلب توظيف استباقي',
+    applyNow: 'قدّم الآن',
+    questions: 'للاستفسارات؟ راسلنا على',
+  },
+  de: {
+    joinTeam: 'Werde Teil des Teams',
+    openPositions: 'Offene Stellen',
+    intro: (name, location) => `Werde Teil von ${name} und arbeite in einem engagierten Team für Premium-Autopflege in ${location}.`,
+    noOpenNow: 'Derzeit keine offenen Stellen',
+    noOpenDesc: 'Momentan stellen wir nicht aktiv ein, aber sende uns gerne trotzdem deinen Lebenslauf.',
+    speculativeSubject: 'Initiativbewerbung',
+    sendSpeculative: 'Initiativbewerbung senden',
+    applyNow: 'Jetzt bewerben',
+    questions: 'Fragen? Schreib uns an',
+  },
+};
 
 function loadPositions() {
   try {
@@ -15,6 +52,8 @@ function loadPositions() {
 }
 
 export default function Careers() {
+  const { lang } = useLanguage();
+  const ui = UI_BY_LANG[lang] || UI_BY_LANG.en;
   const [positions, setPositions] = useState([]);
   const [expanded, setExpanded] = useState(null);
 
@@ -45,7 +84,7 @@ export default function Careers() {
         <div className="text-center mb-12">
           <div className="flex items-center justify-center gap-3 mb-3">
             <span className="h-px w-8" style={{ background: 'linear-gradient(90deg,transparent,#c8a96b)' }} />
-            <p className="text-[.60rem] font-bold uppercase tracking-[.26em] text-primary">Join the Team</p>
+            <p className="text-[.60rem] font-bold uppercase tracking-[.26em] text-primary">{ui.joinTeam}</p>
             <span className="h-px w-8" style={{ background: 'linear-gradient(90deg,#c8a96b,transparent)' }} />
           </div>
           <div className="flex items-center justify-center gap-3 mb-3">
@@ -53,27 +92,27 @@ export default function Careers() {
               style={{ background: 'rgba(200,169,107,.12)', border: '1px solid rgba(200,169,107,.24)' }}>
               <Briefcase size={18} style={{ color: '#c8a96b' }} />
             </div>
-            <h1 className="premium-heading text-4xl md:text-5xl font-bold text-[var(--heading-color)]">Open Positions</h1>
+            <h1 className="premium-heading text-4xl md:text-5xl font-bold text-[var(--heading-color)]">{ui.openPositions}</h1>
           </div>
           <p className="text-[var(--muted-color)] max-w-xl mx-auto">
-            Join {BUSINESS.name} and be part of a passionate team delivering premium car care across {BUSINESS.location}.
+            {ui.intro(BUSINESS.name, BUSINESS.location)}
           </p>
         </div>
 
         {open.length === 0 ? (
           <div className="glass-card p-12 text-center">
             <Briefcase size={48} className="mx-auto mb-4 text-[var(--muted-color)] opacity-40" />
-            <p className="text-[var(--heading-color)] font-semibold mb-2">No open positions right now</p>
+            <p className="text-[var(--heading-color)] font-semibold mb-2">{ui.noOpenNow}</p>
             <p className="text-[var(--muted-color)] text-sm mb-6">
-              We're not actively hiring at the moment, but feel free to send us your CV anyway.
+              {ui.noOpenDesc}
             </p>
             <a
-              href={`mailto:${BUSINESS.email}?subject=Speculative Application`}
+              href={`mailto:${BUSINESS.email}?subject=${encodeURIComponent(ui.speculativeSubject)}`}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all hover:opacity-90"
               style={{ background: 'rgba(200,169,107,.12)', color: '#c8a96b', border: '1px solid rgba(200,169,107,.3)' }}
             >
               <Mail size={14} />
-              Send Speculative Application
+              {ui.sendSpeculative}
             </a>
           </div>
         ) : (
@@ -123,7 +162,7 @@ export default function Careers() {
                       style={{ background: 'linear-gradient(135deg,#c8a96b,#0ea5a0)', color: '#fff' }}
                     >
                       <Mail size={14} />
-                      Apply Now
+                      {ui.applyNow}
                     </a>
                   </div>
                 )}
@@ -134,7 +173,7 @@ export default function Careers() {
 
         <div className="text-center mt-10">
           <p className="text-[var(--muted-color)] text-sm">
-            Questions? Email us at{' '}
+            {ui.questions}{' '}
             <a href={`mailto:${BUSINESS.email}`} className="text-primary hover:underline">{BUSINESS.email}</a>
           </p>
         </div>

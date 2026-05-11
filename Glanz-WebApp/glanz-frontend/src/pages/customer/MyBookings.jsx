@@ -23,6 +23,114 @@ import { useLanguage } from '../../context/LanguageContext';
 
 const VEHICLE_TYPES = ['Motorcycle', 'Sedan', 'SUV', 'Pickup'];
 
+const UI_BY_LANG = {
+  en: {
+    loadFail: 'Failed to load bookings.',
+    retry: 'Try Again',
+    loadFailTitle: 'Failed to load bookings',
+    emptyTitle: 'No bookings yet',
+    emptyBody: 'Book your first detailing service to get started.',
+    dashboard: 'Dashboard',
+    myBookings: 'My Bookings',
+    subtitle: 'View and manage your appointments',
+    date: 'Date',
+    timeSlot: 'Time Slot',
+    selectSlot: 'Select slot',
+    make: 'Make',
+    model: 'Model',
+    year: 'Year',
+    vehicleType: 'Vehicle Type',
+    serviceAddress: 'Service Address',
+    houseBuilding: 'House / Building',
+    specialInstructions: 'Special Instructions',
+    specialInstructionsPh: 'Any notes for the detailer…',
+    packages: 'Packages',
+    mustSelectPackage: 'At least one package must be selected.',
+    slotNotAvailable: 'Time slot not available',
+    availableSlots: 'Available slots on this date:',
+    noSlots: 'No slots available - please choose a different date.',
+    confirmChanges: 'Confirm these changes?',
+    reviewSave: 'Review & Save',
+    yesSave: 'Yes, save',
+    goBack: 'Go back',
+    cancel: 'Cancel',
+    cancelReqTitle: 'Request Cancellation',
+    keepBooking: 'Keep Booking',
+    submitRequest: 'Submit Request',
+    gotIt: 'Got it',
+  },
+  ar: {
+    loadFail: 'فشل تحميل الحجوزات.',
+    retry: 'حاول مرة أخرى',
+    loadFailTitle: 'فشل تحميل الحجوزات',
+    emptyTitle: 'لا توجد حجوزات بعد',
+    emptyBody: 'احجز أول خدمة لك للبدء.',
+    dashboard: 'لوحة التحكم',
+    myBookings: 'حجوزاتي',
+    subtitle: 'اعرض وأدر مواعيدك',
+    date: 'التاريخ',
+    timeSlot: 'الفترة الزمنية',
+    selectSlot: 'اختر الفترة',
+    make: 'الماركة',
+    model: 'الموديل',
+    year: 'السنة',
+    vehicleType: 'نوع المركبة',
+    serviceAddress: 'عنوان الخدمة',
+    houseBuilding: 'المنزل / المبنى',
+    specialInstructions: 'تعليمات خاصة',
+    specialInstructionsPh: 'أي ملاحظات للفني…',
+    packages: 'الباقات',
+    mustSelectPackage: 'يجب اختيار باقة واحدة على الأقل.',
+    slotNotAvailable: 'الفترة الزمنية غير متاحة',
+    availableSlots: 'الفترات المتاحة في هذا التاريخ:',
+    noSlots: 'لا توجد فترات متاحة - يرجى اختيار تاريخ مختلف.',
+    confirmChanges: 'تأكيد هذه التغييرات؟',
+    reviewSave: 'مراجعة وحفظ',
+    yesSave: 'نعم، حفظ',
+    goBack: 'العودة',
+    cancel: 'إلغاء',
+    cancelReqTitle: 'طلب إلغاء',
+    keepBooking: 'الاحتفاظ بالحجز',
+    submitRequest: 'إرسال الطلب',
+    gotIt: 'حسنا',
+  },
+  de: {
+    loadFail: 'Buchungen konnten nicht geladen werden.',
+    retry: 'Erneut versuchen',
+    loadFailTitle: 'Buchungen konnten nicht geladen werden',
+    emptyTitle: 'Noch keine Buchungen',
+    emptyBody: 'Buchen Sie Ihren ersten Service, um zu starten.',
+    dashboard: 'Dashboard',
+    myBookings: 'Meine Buchungen',
+    subtitle: 'Verwalten Sie Ihre Termine',
+    date: 'Datum',
+    timeSlot: 'Zeitfenster',
+    selectSlot: 'Zeitfenster wahlen',
+    make: 'Marke',
+    model: 'Modell',
+    year: 'Jahr',
+    vehicleType: 'Fahrzeugtyp',
+    serviceAddress: 'Serviceadresse',
+    houseBuilding: 'Haus / Gebaude',
+    specialInstructions: 'Besondere Hinweise',
+    specialInstructionsPh: 'Hinweise fur den Detailer…',
+    packages: 'Pakete',
+    mustSelectPackage: 'Mindestens ein Paket muss ausgewahlt werden.',
+    slotNotAvailable: 'Zeitfenster nicht verfugbar',
+    availableSlots: 'Verfugbare Zeitfenster an diesem Datum:',
+    noSlots: 'Keine Zeitfenster verfugbar - bitte anderes Datum wahlen.',
+    confirmChanges: 'Diese Anderungen bestatigen?',
+    reviewSave: 'Prufen & Speichern',
+    yesSave: 'Ja, speichern',
+    goBack: 'Zuruck',
+    cancel: 'Abbrechen',
+    cancelReqTitle: 'Stornierung anfragen',
+    keepBooking: 'Buchung behalten',
+    submitRequest: 'Anfrage senden',
+    gotIt: 'Verstanden',
+  },
+};
+
 // Status → top-accent color map
 const STATUS_ACCENT = {
   Pending:    '#FBBF24',
@@ -57,6 +165,8 @@ function MyBookings() {
   const navigate = useNavigate();
   const { settings } = useSettings();
   const { lang } = useLanguage();
+  const localeKey = String(lang || '').startsWith('ar') ? 'ar' : String(lang || '').startsWith('de') ? 'de' : 'en';
+  const ui = UI_BY_LANG[localeKey] || UI_BY_LANG.en;
 
   const [bookings,           setBookings]           = useState([]);
   const [loading,            setLoading]            = useState(true);
@@ -133,7 +243,7 @@ function MyBookings() {
       setLoading(true);
       const data = await bookingsAPI.getMyBookings();
       setBookings(Array.isArray(data) ? data : []);
-    } catch { setError('Failed to load bookings.'); }
+    } catch { setError(ui.loadFail); }
     finally { setLoading(false); }
   };
 
@@ -387,7 +497,7 @@ function MyBookings() {
   if (error) {
     return (
       <div className="min-h-screen" style={{ background: 'var(--surface-bg)' }}>
-        <EmptyState icon="alert" title="Failed to load bookings" description={error} actionLabel="Try Again" onAction={retryFetch} />
+        <EmptyState icon="alert" title={ui.loadFailTitle} description={error} actionLabel={ui.retry} onAction={retryFetch} />
       </div>
     );
   }
@@ -396,7 +506,7 @@ function MyBookings() {
   if (!bookings || bookings.length === 0) {
     return (
       <div className="min-h-screen" style={{ background: 'var(--surface-bg)' }}>
-        <EmptyState icon="calendar" title="No bookings yet" description="Book your first detailing service to get started." />
+        <EmptyState icon="calendar" title={ui.emptyTitle} description={ui.emptyBody} />
       </div>
     );
   }
@@ -436,7 +546,7 @@ function MyBookings() {
               {/* Date + time */}
               <div className="grid grid-cols-1 gap-3">
                 <div>
-                  <FieldLabel>Date</FieldLabel>
+                  <FieldLabel>{ui.date}</FieldLabel>
                   <AvailabilityCalendar
                     value={editForm.scheduledDate}
                     onChange={(ds) => handleEditDateChange(ds)}
@@ -444,13 +554,13 @@ function MyBookings() {
                   />
                 </div>
                 <div>
-                  <FieldLabel>Time Slot {editSlotsLoading && <span className="normal-case opacity-60">(loading…)</span>}</FieldLabel>
+                    <FieldLabel>{ui.timeSlot} {editSlotsLoading && <span className="normal-case opacity-60">(loading...)</span>}</FieldLabel>
                   <select
                     value={editForm.timeSlot}
                     onChange={(e) => setEditForm((p) => ({ ...p, timeSlot: e.target.value }))}
                     className="w-full px-3 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--surface-bg)] text-[var(--text-color)] text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition"
                   >
-                    <option value="">Select slot</option>
+                    <option value="">{ui.selectSlot}</option>
                     {Array.from(new Set([editBooking.timeSlot, ...editAvailableSlots].filter(Boolean))).map((slot) => (
                       <option key={slot} value={slot}>{slot}{editAvailableSlots.includes(slot) ? '' : ' (current)'}</option>
                     ))}
@@ -461,9 +571,9 @@ function MyBookings() {
               {/* Vehicle make / model / year */}
               <div className="grid grid-cols-3 gap-3">
                 {[
-                  { key: 'vehicleMake',  label: 'Make',  placeholder: 'Toyota' },
-                  { key: 'vehicleModel', label: 'Model', placeholder: 'Camry'  },
-                  { key: 'vehicleYear',  label: 'Year',  placeholder: '2022', maxLength: 4 },
+                  { key: 'vehicleMake',  label: ui.make,  placeholder: 'Toyota' },
+                  { key: 'vehicleModel', label: ui.model, placeholder: 'Camry'  },
+                  { key: 'vehicleYear',  label: ui.year,  placeholder: '2022', maxLength: 4 },
                 ].map(({ key, label, placeholder, maxLength }) => (
                   <div key={key}>
                     <FieldLabel>{label}</FieldLabel>
@@ -475,7 +585,7 @@ function MyBookings() {
 
               {/* Vehicle type chips */}
               <div>
-                <FieldLabel>Vehicle Type</FieldLabel>
+                <FieldLabel>{ui.vehicleType}</FieldLabel>
                 <div className="flex gap-2 flex-wrap">
                   {VEHICLE_TYPES.map((t) => (
                     <button key={t} type="button"
@@ -498,12 +608,12 @@ function MyBookings() {
               {/* Address */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <FieldLabel>Service Address</FieldLabel>
+                  <FieldLabel>{ui.serviceAddress}</FieldLabel>
                   <DarkInput placeholder="Street / Area" value={editForm.customerAddress}
                     onChange={(e) => setEditForm((p) => ({ ...p, customerAddress: e.target.value }))} />
                 </div>
                 <div>
-                  <FieldLabel>House / Building</FieldLabel>
+                  <FieldLabel>{ui.houseBuilding}</FieldLabel>
                   <DarkInput placeholder="Villa 12" value={editForm.houseNumber}
                     onChange={(e) => setEditForm((p) => ({ ...p, houseNumber: e.target.value }))} />
                 </div>
@@ -511,12 +621,12 @@ function MyBookings() {
 
               {/* Special instructions */}
               <div>
-                <FieldLabel>Special Instructions</FieldLabel>
+                <FieldLabel>{ui.specialInstructions}</FieldLabel>
                 <textarea
                   value={editForm.specialInstructions}
                   onChange={(e) => setEditForm((p) => ({ ...p, specialInstructions: e.target.value }))}
                   rows={2}
-                  placeholder="Any notes for the detailer…"
+                  placeholder={ui.specialInstructionsPh}
                   className="w-full px-3 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--surface-bg)] text-[var(--text-color)] text-sm placeholder:text-[var(--muted-color)] focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition resize-none"
                 />
               </div>
@@ -524,7 +634,7 @@ function MyBookings() {
               {/* Packages */}
               {allPackages.length > 0 && (
                 <div>
-                  <FieldLabel>Packages</FieldLabel>
+                  <FieldLabel>{ui.packages}</FieldLabel>
                   <div className="space-y-2">
                     {allPackages.map((pkg) => {
                       const selected = (editForm.packages || []).find(p => p.packageId === pkg.id);
@@ -560,7 +670,7 @@ function MyBookings() {
                     })}
                   </div>
                   {(editForm.packages || []).length === 0 && (
-                    <p className="text-xs text-red-400 mt-1.5">At least one package must be selected.</p>
+                    <p className="text-xs text-red-400 mt-1.5">{ui.mustSelectPackage}</p>
                   )}
                 </div>
               )}
@@ -568,11 +678,11 @@ function MyBookings() {
               {/* Slot-blocked warning */}
               {editSlotWarning && (
                 <div className="rounded-xl border border-amber-500/30 bg-amber-500/8 p-4">
-                  <p className="text-sm font-bold text-amber-400 mb-1">Time slot not available</p>
+                  <p className="text-sm font-bold text-amber-400 mb-1">{ui.slotNotAvailable}</p>
                   <p className="text-xs text-amber-300/80">{editSlotWarning.message}</p>
                   {editSlotWarning.altSlots?.length > 0 && (
                     <div className="mt-3">
-                      <p className="text-xs text-[var(--muted-color)] mb-2">Available slots on this date:</p>
+                      <p className="text-xs text-[var(--muted-color)] mb-2">{ui.availableSlots}</p>
                       <div className="flex flex-wrap gap-1.5">
                         {editSlotWarning.altSlots.map((slot) => (
                           <button key={slot} type="button"
@@ -585,7 +695,7 @@ function MyBookings() {
                     </div>
                   )}
                   {(!editSlotWarning.altSlots || editSlotWarning.altSlots.length === 0) && (
-                    <p className="text-xs text-amber-400 mt-2">No slots available — please choose a different date.</p>
+                    <p className="text-xs text-amber-400 mt-2">{ui.noSlots}</p>
                   )}
                 </div>
               )}
@@ -593,7 +703,7 @@ function MyBookings() {
               {/* Confirm step */}
               {editConfirm ? (
                 <div className="rounded-xl border border-primary/25 bg-primary/6 p-4">
-                  <p className="text-sm font-bold text-[var(--heading-color)] mb-3">Confirm these changes?</p>
+                  <p className="text-sm font-bold text-[var(--heading-color)] mb-3">{ui.confirmChanges}</p>
                   <ul className="text-xs text-[var(--muted-color)] space-y-1 mb-4">
                     {editForm.scheduledDate !== new Date(editBooking.scheduledDate).toISOString().split('T')[0] && <li>· Date → {editForm.scheduledDate}</li>}
                     {editForm.timeSlot && editForm.timeSlot !== editBooking.timeSlot && <li>· Time → {editForm.timeSlot}</li>}
@@ -607,11 +717,11 @@ function MyBookings() {
                   <div className="flex gap-2">
                     <button type="button" onClick={handleSaveEdit} disabled={editSaving}
                       className="flex items-center gap-2 premium-btn px-5 py-2 text-sm disabled:opacity-60">
-                      <Check size={14} /> {editSaving ? 'Saving…' : 'Yes, save'}
+                      <Check size={14} /> {editSaving ? 'Saving...' : ui.yesSave}
                     </button>
                     <button type="button" onClick={() => setEditConfirm(false)}
                       className="px-5 py-2 rounded-xl text-sm font-semibold border border-[var(--border-color)] text-[var(--muted-color)] hover:bg-white/5 transition">
-                      Go back
+                      {ui.goBack}
                     </button>
                   </div>
                 </div>
@@ -621,11 +731,11 @@ function MyBookings() {
                     onClick={() => setEditConfirm(true)}
                     disabled={editForm.packages !== undefined && editForm.packages.length === 0}
                     className="flex-1 flex items-center justify-center gap-2 premium-btn py-2.5 text-sm disabled:opacity-50 disabled:cursor-not-allowed">
-                    <Check size={14} /> Review &amp; Save
+                    <Check size={14} /> {ui.reviewSave}
                   </button>
                   <button type="button" onClick={() => setEditBooking(null)}
                     className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-[var(--border-color)] text-[var(--muted-color)] hover:bg-white/5 transition">
-                    Cancel
+                    {ui.cancel}
                   </button>
                 </div>
               )}
@@ -643,7 +753,7 @@ function MyBookings() {
                 <XCircle size={18} className="text-red-400" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-[var(--heading-color)]">Request Cancellation</h3>
+                <h3 className="text-lg font-bold text-[var(--heading-color)]">{ui.cancelReqTitle}</h3>
                 <p className="text-sm text-[var(--muted-color)] mt-1">
                   Submit a cancellation request for <span className="font-semibold text-[var(--text-color)]">{pendingCancelBooking.number}</span>. Our team will review it.
                 </p>
@@ -692,11 +802,11 @@ function MyBookings() {
             <div className="flex gap-3">
               <button onClick={() => { setPendingCancelBooking(null); setCancellationFeeInfo(null); setCancelReason(''); }}
                 className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold border border-[var(--border-color)] text-[var(--muted-color)] hover:bg-white/5 transition">
-                Keep Booking
+                {ui.keepBooking}
               </button>
               <button onClick={confirmCancelBooking} disabled={cancellingId === pendingCancelBooking.id || !cancelReason.trim()}
                 className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold bg-red-500/15 border border-red-500/30 text-red-400 hover:bg-red-500/25 transition disabled:opacity-50 disabled:cursor-not-allowed">
-                {cancellingId === pendingCancelBooking.id ? 'Submitting…' : 'Submit Request'}
+                {cancellingId === pendingCancelBooking.id ? 'Submitting...' : ui.submitRequest}
               </button>
             </div>
           </div>
@@ -719,7 +829,7 @@ function MyBookings() {
               onClick={() => setSuccessModal(null)}
               className="w-full px-4 py-2.5 rounded-xl text-sm font-semibold bg-green-500/12 border border-green-500/25 text-green-400 hover:bg-green-500/20 transition"
             >
-              Got it
+              {ui.gotIt}
             </button>
           </div>
         </div>
@@ -733,15 +843,15 @@ function MyBookings() {
           <div className="inline-flex items-center gap-3 mb-5">
             <span className="h-px w-8 bg-gradient-to-r from-transparent to-[rgba(200,169,107,0.6)]" />
             <span className="text-[10px] uppercase tracking-[0.28em] font-bold" style={{ color: 'rgba(200,169,107,0.9)' }}>
-              Dashboard
+              {ui.dashboard}
             </span>
             <span className="h-px w-8 bg-gradient-to-l from-transparent to-[rgba(200,169,107,0.6)]" />
           </div>
 
           <h1 className="premium-heading text-3xl md:text-4xl font-bold text-[var(--heading-color)] mb-4">
-            My Bookings
+            {ui.myBookings}
           </h1>
-          <p className="text-[var(--muted-color)] text-sm md:text-base">View and manage your appointments</p>
+          <p className="text-[var(--muted-color)] text-sm md:text-base">{ui.subtitle}</p>
 
           {/* Spectrum divider */}
           <div className="spectrum-line mx-auto mt-6" />

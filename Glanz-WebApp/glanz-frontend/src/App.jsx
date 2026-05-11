@@ -1,9 +1,8 @@
 import React, { lazy, Suspense, useEffect, useState } from 'react';
-import { ArrowRight } from 'lucide-react';
 import useLenis from './hooks/useLenis';
 import {
   BrowserRouter as Router, Routes, Route, Navigate,
-  useLocation, Link,
+  useLocation,
 } from 'react-router-dom';
 import { AuthProvider }     from './context/AuthContext';
 import { PackagesProvider } from './context/PackagesContext';
@@ -31,6 +30,7 @@ import Profile             from './pages/customer/Profile';
 import Referrals           from './pages/customer/Referrals';
 import Plans               from './pages/customer/Plans';
 import Careers             from './pages/customer/Careers';
+import PrivacyPolicy       from './pages/customer/PrivacyPolicy';
 
 // ─── Customer pages (lazy) ────────────────────────────────────────────────────
 const MySubscription             = lazy(() => import('./pages/customer/MySubscription'));
@@ -61,6 +61,7 @@ const AdminPayroll           = lazy(() => import('./pages/admin/AdminPayroll'));
 const LiveMapTracking        = lazy(() => import('./pages/admin/LiveMapTracking'));
 const AdminDevSettings       = lazy(() => import('./pages/admin/AdminDevSettings'));
 const AdminCrm               = lazy(() => import('./pages/admin/AdminCrm'));
+const AdminTranslations      = lazy(() => import('./pages/admin/AdminTranslations'));
 const SubscriptionBooking    = lazy(() => import('./pages/customer/SubscriptionBooking'));
 
 // ─── Admin fallback ───────────────────────────────────────────────────────────
@@ -185,6 +186,7 @@ function AppRoutes() {
         <Route path="/packages" element={<Packages />} />
         <Route path="/plans"    element={<Plans />}    />
         <Route path="/careers"  element={<Careers />}  />
+        <Route path="/privacy"  element={<PrivacyPolicy />} />
 
         {/* ── Protected customer ─────────────────────────────────────── */}
         <Route path="/booking" element={
@@ -238,6 +240,7 @@ function AppRoutes() {
         {adminRoute('/admin/live-map',             LiveMapTracking)}
         {adminRoute('/admin/dev-settings',         AdminDevSettings)}
         {adminRoute('/admin/crm',                 AdminCrm)}
+        {adminRoute('/admin/translations',        AdminTranslations)}
 
         <Route path="/subscription-booking" element={
           <ProtectedRoute><Suspense fallback={<AdminFallback />}><SubscriptionBooking /></Suspense></ProtectedRoute>
@@ -308,6 +311,7 @@ function App() {
                <AppRoutes />
                <Footer />
                 <WhatsAppWidget />
+                <CookieConsent privacyHref="/privacy" />
               </div>
             </ToastProvider>
           </ErrorBoundary>

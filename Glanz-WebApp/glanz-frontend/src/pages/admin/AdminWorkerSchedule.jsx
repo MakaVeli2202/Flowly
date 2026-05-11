@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { bookingsAPI } from '../../api/bookings';
-import { toDateKey, parseDateKey } from '../../utils/dateUtils';
+import { toDateKey } from '../../utils/dateUtils';
 import { CalendarDays, ChevronLeft, ChevronRight, Clock, Users } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 
@@ -68,6 +68,112 @@ const DAY_CELL_CLS = {
   available: 'bg-green-500/10 border-green-500/30 text-green-400 hover:bg-green-500/20',
   medium:    'bg-amber-500/10 border-amber-500/30 text-amber-400 hover:bg-amber-500/20',
   full:      'bg-red-500/10  border-red-500/30   text-red-400   cursor-not-allowed opacity-50',
+  noData:    'bg-white/5 border-[var(--border-color)] text-[var(--muted-color)] hover:bg-white/10',
+};
+
+const getLocale = (lang) => {
+  if (String(lang || '').startsWith('ar')) return 'ar';
+  if (String(lang || '').startsWith('de')) return 'de-DE';
+  return 'en-US';
+};
+
+const UI_BY_LANG = {
+  en: {
+    dayOff: 'Day off',
+    noBookings: 'No bookings',
+    min: 'min',
+    detailerSchedule: 'Detailer Schedule',
+    headerHint: 'Click a day to view the timeline',
+    good: 'green',
+    medium: 'yellow',
+    full: 'red',
+    loading: 'Loading...',
+    weekdays: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+    availableTooltip: (free, total) => `Available: ${free}/${total}`,
+    noData: 'No data',
+    goodCapacity: 'Good capacity',
+    mediumLoad: 'Medium load',
+    almostFull: 'Almost full',
+    available: 'Available',
+    slots: 'slots',
+    utilization: 'Utilization',
+    capacityUsed: 'capacity used',
+    timeline: 'Timeline',
+    selectDay: 'Select a day',
+    detailersScheduled: (n) => `${n} detailer${n !== 1 ? 's' : ''} scheduled`,
+    bookingsCount: (n) => `${n} booking${n !== 1 ? 's' : ''}`,
+    loadingTimeline: 'Loading timeline...',
+    clickCalendarHint: 'Click a day on the calendar to view the detailed schedule.',
+    noWorkersDay: 'No workers found for this day.',
+    pending: 'Pending',
+    confirmed: 'Confirmed',
+    inProgress: 'In Progress',
+    completed: 'Completed',
+  },
+  ar: {
+    dayOff: 'إجازة',
+    noBookings: 'لا توجد حجوزات',
+    min: 'د',
+    detailerSchedule: 'جدول العمال',
+    headerHint: 'اضغط يوما لعرض المخطط الزمني',
+    good: 'أخضر',
+    medium: 'أصفر',
+    full: 'أحمر',
+    loading: 'جارٍ التحميل...',
+    weekdays: ['ح', 'ن', 'ث', 'ر', 'خ', 'ج', 'س'],
+    availableTooltip: (free, total) => `المتاح: ${free}/${total}`,
+    noData: 'لا توجد بيانات',
+    goodCapacity: 'سعة جيدة',
+    mediumLoad: 'حمل متوسط',
+    almostFull: 'شبه ممتلئ',
+    available: 'متاح',
+    slots: 'فتحات',
+    utilization: 'نسبة الاستخدام',
+    capacityUsed: 'من السعة المستخدمة',
+    timeline: 'المخطط الزمني',
+    selectDay: 'اختر يوما',
+    detailersScheduled: (n) => `${n} عامل(ة) مجدول`,
+    bookingsCount: (n) => `${n} حجز`,
+    loadingTimeline: 'جارٍ تحميل المخطط الزمني...',
+    clickCalendarHint: 'اضغط يوما في التقويم لعرض الجدول التفصيلي.',
+    noWorkersDay: 'لا يوجد عمال لهذا اليوم.',
+    pending: 'قيد الانتظار',
+    confirmed: 'مؤكد',
+    inProgress: 'قيد التنفيذ',
+    completed: 'مكتمل',
+  },
+  de: {
+    dayOff: 'Freier Tag',
+    noBookings: 'Keine Buchungen',
+    min: 'Min',
+    detailerSchedule: 'Mitarbeiterplan',
+    headerHint: 'Tag anklicken, um die Zeitleiste zu sehen',
+    good: 'grun',
+    medium: 'gelb',
+    full: 'rot',
+    loading: 'Wird geladen...',
+    weekdays: ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'],
+    availableTooltip: (free, total) => `Verfugbar: ${free}/${total}`,
+    noData: 'Keine Daten',
+    goodCapacity: 'Gute Kapazitat',
+    mediumLoad: 'Mittlere Auslastung',
+    almostFull: 'Fast voll',
+    available: 'Verfugbar',
+    slots: 'Slots',
+    utilization: 'Auslastung',
+    capacityUsed: 'Kapazitat genutzt',
+    timeline: 'Zeitleiste',
+    selectDay: 'Tag auswahlen',
+    detailersScheduled: (n) => `${n} Mitarbeiter eingeplant`,
+    bookingsCount: (n) => `${n} Buchung${n !== 1 ? 'en' : ''}`,
+    loadingTimeline: 'Zeitleiste wird geladen...',
+    clickCalendarHint: 'Wahlen Sie einen Tag im Kalender fur die Detailansicht.',
+    noWorkersDay: 'Keine Mitarbeiter fur diesen Tag gefunden.',
+    pending: 'Ausstehend',
+    confirmed: 'Bestatigt',
+    inProgress: 'In Bearbeitung',
+    completed: 'Abgeschlossen',
+  },
 };
 
 /* ══════════════════════════════════════════════════════════════
@@ -157,7 +263,7 @@ function PrismCard({ children, accentColor = '#c8a96b', secondaryColor = '#0ea5a
 /* ══════════════════════════════════════════════════════════════
    BOOKING BLOCK — identical positioning math, refined tooltip
 ══════════════════════════════════════════════════════════════ */
-function BookingBlock({ booking, dayStartMins, totalMins }) {
+function BookingBlock({ booking, dayStartMins, totalMins, ui }) {
   const [tip, setTip] = useState(false);
   const startMins = timeToMins(booking.startTime);
   const leftPct   = ((startMins - dayStartMins) / totalMins) * 100;
@@ -196,7 +302,7 @@ function BookingBlock({ booking, dayStartMins, totalMins }) {
           <p className="font-bold text-white text-[11px] mb-1">{booking.bookingNumber}</p>
           <p className="text-gray-300 text-[11px]">
             {booking.startTime} – {endStr}
-            <span className="text-gray-500"> ({booking.estimatedDurationMinutes} min)</span>
+            <span className="text-gray-500"> ({booking.estimatedDurationMinutes} {ui.min})</span>
           </p>
           <p className="text-gray-300 text-[11px] mt-1">{booking.customerName}</p>
           <p className="text-gray-500 text-[10px]">{booking.vehicleType}</p>
@@ -215,7 +321,7 @@ function BookingBlock({ booking, dayStartMins, totalMins }) {
 /* ══════════════════════════════════════════════════════════════
    WORKER ROW — identical math, gold shift band, refined day-off
 ══════════════════════════════════════════════════════════════ */
-function WorkerRow({ worker, dayStartMins, dayEndMins }) {
+function WorkerRow({ worker, dayStartMins, dayEndMins, ui }) {
   const totalMins      = dayEndMins - dayStartMins;
   const shiftStartMins = timeToMins(worker.shiftStart);
   const shiftEndMins   = timeToMins(worker.shiftEnd);
@@ -233,7 +339,7 @@ function WorkerRow({ worker, dayStartMins, dayEndMins }) {
             backgroundColor: 'rgba(255,255,255,0.02)',
             border: '1px dashed rgba(255,255,255,0.08)',
           }}>
-          <span className="text-[10px] text-[var(--muted-color)] italic font-medium">Day off</span>
+          <span className="text-[10px] text-[var(--muted-color)] italic font-medium">{ui.dayOff}</span>
         </div>
       </div>
     );
@@ -265,11 +371,11 @@ function WorkerRow({ worker, dayStartMins, dayEndMins }) {
         )}
         {/* Booking blocks */}
         {worker.bookings.map(b => (
-          <BookingBlock key={b.bookingId} booking={b} dayStartMins={dayStartMins} totalMins={totalMins} />
+          <BookingBlock key={b.bookingId} booking={b} dayStartMins={dayStartMins} totalMins={totalMins} ui={ui} />
         ))}
         {worker.bookings.length === 0 && (
           <div className="absolute inset-0 flex items-center px-3">
-            <span className="text-[10px] text-[var(--muted-color)] italic">No bookings</span>
+            <span className="text-[10px] text-[var(--muted-color)] italic">{ui.noBookings}</span>
           </div>
         )}
       </div>
@@ -306,7 +412,9 @@ function HourGrid({ dayStartMins, dayEndMins }) {
    WORKER SCHEDULE — MAIN
 ══════════════════════════════════════════════════════════════ */
 function WorkerSchedule() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+  const localeKey = String(lang || '').startsWith('ar') ? 'ar' : String(lang || '').startsWith('de') ? 'de' : 'en';
+  const ui = UI_BY_LANG[localeKey] || UI_BY_LANG.en;
   /* ── State & logic — all identical to original ─────────────── */
   const [monthDate,       setMonthDate]       = useState(() => { const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), 1); });
   const [days,            setDays]            = useState([]);
@@ -326,13 +434,14 @@ function WorkerSchedule() {
       try {
         const from = toDateKey(new Date(monthDate.getFullYear(), monthDate.getMonth(), 1));
         const to   = toDateKey(new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0));
-        const duration = 60;
-        const data = await bookingsAPI.getCalendarAvailability(from, to, duration);
+        const data = await bookingsAPI.getCalendarAvailability(from, to);
         setDays(data || []);
         if ((data || []).length > 0) {
           const todayKey = toDateKey(new Date());
           const hasToday = (data || []).some(d => String(d.date).split('T')[0] === todayKey);
-          setSelectedDateKey(prev => prev || (hasToday ? todayKey : String(data[0].date).split('T')[0]));
+          setSelectedDateKey(hasToday ? todayKey : String(data[0].date).split('T')[0]);
+        } else {
+          setSelectedDateKey('');
         }
       } finally { setLoading(false); }
     };
@@ -376,7 +485,7 @@ function WorkerSchedule() {
   const dayEndMins   = timeToMins(constraints?.businessHoursEnd   || '18:00');
 
   const selectedDateLabel = selectedDateKey
-    ? new Date(selectedDateKey + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+    ? new Date(selectedDateKey + 'T12:00:00').toLocaleDateString(getLocale(lang), { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
     : '';
 
   const scheduledCount = timeline.filter(w => w.worksOnDay).length;
@@ -391,10 +500,10 @@ function WorkerSchedule() {
     : '#22c55e';
 
   const statusLegend = [
-    { label: 'Pending',     color: 'bg-blue-500'   },
-    { label: 'Confirmed',   color: 'bg-indigo-500'  },
-    { label: 'In Progress', color: 'bg-amber-400'   },
-    { label: 'Completed',   color: 'bg-green-500'   },
+    { label: ui.pending,     color: 'bg-blue-500'   },
+    { label: ui.confirmed,   color: 'bg-indigo-500'  },
+    { label: ui.inProgress,  color: 'bg-amber-400'   },
+    { label: ui.completed,   color: 'bg-green-500'   },
   ];
 
   /* ── Render ─────────────────────────────────────────────────── */
@@ -429,10 +538,10 @@ function WorkerSchedule() {
                 style={{ background: 'rgba(200,169,107,0.12)', border: '1px solid rgba(200,169,107,0.24)' }}>
                 <CalendarDays size={16} style={{ color: '#c8a96b' }} />
               </div>
-              <h1 className="premium-heading text-4xl md:text-5xl font-bold text-[var(--heading-color)]">Detailer Schedule</h1>
+              <h1 className="premium-heading text-4xl md:text-5xl font-bold text-[var(--heading-color)]">{ui.detailerSchedule}</h1>
             </div>
             <p className="text-sm text-[var(--muted-color)] ml-12">
-              Click a day to view the timeline · <span className="text-green-600 font-semibold">green</span> = good · <span className="text-amber-500 font-semibold">yellow</span> = medium · <span className="text-red-500 font-semibold">red</span> = full
+              {ui.headerHint} · <span className="text-green-600 font-semibold">{ui.good}</span> = good · <span className="text-amber-500 font-semibold">{ui.medium}</span> = medium · <span className="text-red-500 font-semibold">{ui.full}</span> = full
             </p>
           </div>
 
@@ -454,10 +563,10 @@ function WorkerSchedule() {
                   </button>
                   <div className="text-center">
                     <h2 className="premium-heading text-base font-bold text-[var(--heading-color)]">
-                      {monthDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                      {monthDate.toLocaleDateString(getLocale(lang), { month: 'long', year: 'numeric' })}
                     </h2>
                     {loading && (
-                      <p className="text-[10px] text-[var(--muted-color)] mt-0.5 animate-pulse">Loading…</p>
+                      <p className="text-[10px] text-[var(--muted-color)] mt-0.5 animate-pulse">{ui.loading}</p>
                     )}
                   </div>
                   <button type="button"
@@ -469,7 +578,7 @@ function WorkerSchedule() {
 
                 {/* Day-of-week headers */}
                 <div className="grid grid-cols-7 gap-1 text-center mb-2">
-                  {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(n => (
+                  {ui.weekdays.map(n => (
                     <div key={n} className="text-[9px] font-bold uppercase tracking-wider text-[var(--muted-color)] py-1">{n}</div>
                   ))}
                 </div>
@@ -480,13 +589,13 @@ function WorkerSchedule() {
                     if (!date) return <div key={`b-${idx}`} className="h-10" />;
                     const key      = toDateKey(date);
                     const day      = daysByKey[key];
-                    const status   = normalizeStatus(day?.status, day);
+                    const status   = day ? normalizeStatus(day?.status, day) : 'noData';
                     const selected = key === selectedDateKey;
                     const isToday  = key === todayKey;
                     return (
                       <button key={key} type="button"
                         onClick={() => setSelectedDateKey(key)}
-                        title={day ? `Available: ${day.freeSlots ?? day.availableStarts}/${day.totalSlots ?? day.totalStartsCapacity}` : 'No data'}
+                        title={day ? ui.availableTooltip(day.freeSlots ?? day.availableStarts, day.totalSlots ?? day.totalStartsCapacity) : ui.noData}
                         className={`relative h-10 rounded-lg border text-xs font-bold transition
                           ${DAY_CELL_CLS[status]}
                           ${selected ? 'ring-2 ring-primary ring-offset-1' : ''}
@@ -506,9 +615,9 @@ function WorkerSchedule() {
                 {/* Capacity legend */}
                 <div className="flex flex-wrap gap-1.5 mb-4">
                   {[
-                    { label: 'Good capacity', cls: 'bg-green-500/10 border-green-500/30 text-green-400' },
-                    { label: 'Medium load',   cls: 'bg-amber-500/10 border-amber-500/30 text-amber-400' },
-                    { label: 'Almost full',   cls: 'bg-red-500/10 border-red-500/30 text-red-400'   },
+                    { label: ui.goodCapacity, cls: 'bg-green-500/10 border-green-500/30 text-green-400' },
+                    { label: ui.mediumLoad,   cls: 'bg-amber-500/10 border-amber-500/30 text-amber-400' },
+                    { label: ui.almostFull,   cls: 'bg-red-500/10 border-red-500/30 text-red-400'   },
                   ].map(({ label, cls }) => (
                     <span key={label} className={`px-2 py-0.5 rounded-full border text-[10px] font-semibold ${cls}`}>{label}</span>
                   ))}
@@ -519,15 +628,15 @@ function WorkerSchedule() {
                   <div className="grid grid-cols-2 gap-2">
                     <div className="rounded-xl p-3 text-center"
                       style={{ background: 'rgba(200,169,107,0.08)', border: '1px solid rgba(200,169,107,0.24)' }}>
-                      <p className="text-[9px] font-bold uppercase tracking-widest text-[var(--muted-color)] mb-1.5">Available</p>
+                      <p className="text-[9px] font-bold uppercase tracking-widest text-[var(--muted-color)] mb-1.5">{ui.available}</p>
                       <p className="text-2xl font-black" style={{ color: '#c8a96b' }}>{selectedDay.freeSlots ?? selectedDay.availableStarts}</p>
-                      <p className="text-[9px] text-[var(--muted-color)] mt-0.5">of {selectedDay.totalSlots ?? selectedDay.totalStartsCapacity} slots</p>
+                      <p className="text-[9px] text-[var(--muted-color)] mt-0.5">of {selectedDay.totalSlots ?? selectedDay.totalStartsCapacity} {ui.slots}</p>
                     </div>
                     <div className="rounded-xl p-3 text-center"
                       style={{ background: `${utilColor}10`, border: `1px solid ${utilColor}30` }}>
-                      <p className="text-[9px] font-bold uppercase tracking-widest text-[var(--muted-color)] mb-1.5">Utilization</p>
+                      <p className="text-[9px] font-bold uppercase tracking-widest text-[var(--muted-color)] mb-1.5">{ui.utilization}</p>
                       <p className="text-2xl font-black" style={{ color: utilColor }}>{selectedDay.utilizationPercent}%</p>
-                      <p className="text-[9px] text-[var(--muted-color)] mt-0.5">capacity used</p>
+                      <p className="text-[9px] text-[var(--muted-color)] mt-0.5">{ui.capacityUsed}</p>
                     </div>
                   </div>
                 )}
@@ -550,15 +659,15 @@ function WorkerSchedule() {
                   <div>
                     <div className="flex items-center gap-2 mb-1">
                       <Clock size={12} style={{ color: '#0ea5a0' }} />
-                      <p className="text-[0.58rem] font-bold uppercase tracking-[0.22em]" style={{ color: '#0ea5a0' }}>Timeline</p>
+                      <p className="text-[0.58rem] font-bold uppercase tracking-[0.22em]" style={{ color: '#0ea5a0' }}>{ui.timeline}</p>
                     </div>
                     <h2 className="premium-heading text-xl font-bold text-[var(--heading-color)]">
-                      {selectedDateLabel || 'Select a day'}
+                      {selectedDateLabel || ui.selectDay}
                     </h2>
                     {!timelineLoading && timeline.length > 0 && (
                       <p className="text-xs text-[var(--muted-color)] mt-0.5">
-                        {scheduledCount} detailer{scheduledCount !== 1 ? 's' : ''} scheduled
-                        · {bookingCount} booking{bookingCount !== 1 ? 's' : ''}
+                        {ui.detailersScheduled(scheduledCount)}
+                        · {ui.bookingsCount(bookingCount)}
                       </p>
                     )}
                   </div>
@@ -580,7 +689,7 @@ function WorkerSchedule() {
                 {timelineLoading && (
                   <div className="flex flex-col items-center justify-center py-16 gap-3">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-                    <p className="text-xs text-[var(--muted-color)]">Loading timeline…</p>
+                    <p className="text-xs text-[var(--muted-color)]">{ui.loadingTimeline}</p>
                   </div>
                 )}
 
@@ -590,7 +699,7 @@ function WorkerSchedule() {
                       style={{ background: 'rgba(14,165,160,0.10)', border: '1px solid rgba(14,165,160,0.22)' }}>
                       <CalendarDays size={24} style={{ color: '#0ea5a0' }} />
                     </div>
-                    <p className="text-sm text-[var(--muted-color)] text-center max-w-xs">Click a day on the calendar to view the detailed schedule.</p>
+                    <p className="text-sm text-[var(--muted-color)] text-center max-w-xs">{ui.clickCalendarHint}</p>
                   </div>
                 )}
 
@@ -600,7 +709,7 @@ function WorkerSchedule() {
                       style={{ background: 'rgba(14,165,160,0.10)', border: '1px solid rgba(14,165,160,0.22)' }}>
                       <Users size={24} style={{ color: '#0ea5a0' }} />
                     </div>
-                    <p className="text-sm text-[var(--muted-color)]">No workers found for this day.</p>
+                    <p className="text-sm text-[var(--muted-color)]">{ui.noWorkersDay}</p>
                   </div>
                 )}
 
@@ -619,6 +728,7 @@ function WorkerSchedule() {
                           worker={worker}
                           dayStartMins={dayStartMins}
                           dayEndMins={dayEndMins}
+                          ui={ui}
                         />
                       ))}
                     </div>

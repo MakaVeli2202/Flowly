@@ -432,7 +432,7 @@ function CustomerDrawer() {
       <Drawer.Screen name="Subscriptions" component={SubscriptionPlansScreen} options={{ title: t('navigation.customer.items.Subscriptions') }} />
       <Drawer.Screen name="Booking"       component={BookingScreen}       options={{ title: t('navigation.customer.items.Booking')     }} />
       <Drawer.Screen name="My Bookings"   component={MyBookingsScreen}    options={{ title: t('navigation.customer.items.My Bookings')  }} />
-      <Drawer.Screen name="Referrals"     component={ReferralScreen}     options={{ title: 'Referrals' }} />
+      <Drawer.Screen name="Referrals"     component={ReferralScreen}     options={{ title: t('navigation.customer.items.Referrals') }} />
       <Drawer.Screen name="WhatsApp"      component={WhatsAppScreen}      options={{ title: t('navigation.customer.items.WhatsApp') || 'WhatsApp' }} />
       <Drawer.Screen name="Profile"       component={ProfileScreen}       options={{ title: t('navigation.customer.items.Profile')      }} />
     </Drawer.Navigator>
@@ -461,7 +461,7 @@ function CustomerStack() {
       <Stack.Screen name="SubscriptionCheckout"    component={SubscriptionCheckoutScreen} options={{ title: t('navigation.customer.checkout') }} />
       <Stack.Screen name="Live Tracking"           component={LiveWorkerMapScreen}        options={{ title: t('navigation.customer.liveTracking') }} />
       <Stack.Screen name="Careers"                component={CareersScreen}              options={{ title: t('careers.title', 'Careers') }} />
-      <Stack.Screen name="Referrals"             component={ReferralScreen}             options={{ title: 'Referrals' }} />
+      <Stack.Screen name="Referrals"             component={ReferralScreen}             options={{ title: t('navigation.customer.items.Referrals') }} />
     </Stack.Navigator>
   );
 }

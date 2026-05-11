@@ -9,5 +9,13 @@
   "schedule": "Schedule",
   "staff": "Staff",
   "subscriptions": "Subscriptions",
-  "reports": "Reports"
+  "reports": "Reports",
+  "shifts": "Shifts",
+  "salesKit": "Sales Kit",
+  "payroll": "Payroll",
+  "liveMap": "Live Map",
+  "devSettings": "Dev Settings",
+  "translations": "Translations",
+  "operations": "Operations",
+  "management": "Management"
 }
