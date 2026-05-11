@@ -333,7 +333,7 @@ namespace Glanz.API.Controllers
         public async Task<IActionResult> VerifyGateAccess([FromBody] GateVerifyDto dto)
         {
             if (dto == null || string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.Password))
-                return BadRequest(new { message = "Email and password are required.", reasonCode = "missing_input" });
+                return BadRequest(new { message = "Email and password are required." });
 
             try
             {
@@ -344,7 +344,7 @@ namespace Glanz.API.Controllers
                     .FirstOrDefaultAsync(u => u.Email.ToLower() == normalizedEmail);
 
                 if (user == null)
-                    return Unauthorized(new { message = "Invalid credentials.", reasonCode = "user_not_found" });
+                    return Unauthorized(new { message = "Invalid credentials." });
 
                 var storedHash = user.PasswordHash?.Trim() ?? string.Empty;
                 var isPasswordValid = false;
@@ -367,14 +367,14 @@ namespace Glanz.API.Controllers
                 }
 
                 if (!isPasswordValid)
-                    return Unauthorized(new { message = "Invalid credentials.", reasonCode = "password_mismatch" });
+                    return Unauthorized(new { message = "Invalid credentials." });
 
                 // Only Admins can unlock the gate
                 if (!string.Equals(user.Role?.Trim(), "Admin", StringComparison.OrdinalIgnoreCase))
-                    return StatusCode(403, new { message = "Only admins can access the site gate.", reasonCode = "not_admin" });
+                    return StatusCode(403, new { message = "Only admins can access the site gate." });
 
                 if (!user.IsActive) 
-                    return Unauthorized(new { message = "Account is disabled.", reasonCode = "inactive_account" });
+                    return Unauthorized(new { message = "Account is disabled." });
 
                 // Generate a simple gate token (can be any string; frontend just stores it)
                 // In production, this could be a JWT with expiration
@@ -385,7 +385,7 @@ namespace Glanz.API.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Gate verify failed for email {Email}", dto.Email);
-                return StatusCode(500, new { message = "Verification failed.", reasonCode = "server_error" });
+                return StatusCode(500, new { message = "Verification failed." });
             }
         }
     }
