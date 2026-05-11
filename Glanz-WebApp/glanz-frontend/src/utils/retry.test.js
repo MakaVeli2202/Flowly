@@ -70,9 +70,10 @@ describe('withRetry', () => {
     const fn = vi.fn().mockRejectedValue(error);
 
     const resultPromise = withRetry(fn, 3);
+    const assertion = expect(resultPromise).rejects.toEqual(error);
 
     await vi.advanceTimersByTimeAsync(700);
-    await expect(resultPromise).rejects.toEqual(error);
+    await assertion;
     expect(fn).toHaveBeenCalledTimes(3);
   });
 
@@ -81,13 +82,10 @@ describe('withRetry', () => {
     const fn = vi.fn().mockRejectedValue(error);
 
     const resultPromise = withRetry(fn, 2);
+    const assertion = expect(resultPromise).rejects.toEqual(error);
 
     await vi.advanceTimersByTimeAsync(700);
-    try {
-      await resultPromise;
-    } catch (e) {
-      expect(e).toBe(error);
-    }
+    await assertion;
     expect(fn).toHaveBeenCalledTimes(2);
   });
 });

@@ -1,2 +1,37 @@
 
-.env*.local
+.env
+.env.*
+!.env.example
+!.env.production.example
+
+# Node / frontend
+node_modules/
+dist/
+coverage/
+.vite/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# .NET / backend
+**/bin/
+**/obj/
+*.user
+*.suo
+
+# Python
+__pycache__/
+*.pyc
+
+# Mobile / Expo
+.expo/
+.expo-shared/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json

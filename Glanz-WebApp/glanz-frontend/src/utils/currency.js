@@ -39,7 +39,7 @@ export const formatQAR = (value) =>
  * @example formatCompactQAR(12500)   → "QAR 12.5K"
  */
 export const formatCompactQAR = (value) =>
-  _compact.format(toSafeNumber(value));
+  _compact.format(toSafeNumber(value)).replace('.0K', 'K').replace('.0M', 'M').replace('.0B', 'B');
 
 /**
  * Format a QAR difference with an explicit sign prefix.

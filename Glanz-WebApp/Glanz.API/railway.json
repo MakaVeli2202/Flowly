@@ -5,7 +5,7 @@
   },
   "deploy": {
     "startCommand": "dotnet Glanz.API.dll",
-    "healthcheckPath": "/swagger/index.html",
+    "healthcheckPath": "/healthz",
     "restartPolicyType": "ON_FAILURE"
   }
 }

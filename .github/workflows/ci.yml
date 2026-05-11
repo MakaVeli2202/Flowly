@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Glanz-WebApp/glanz-frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: Glanz-WebApp/glanz-frontend/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Lint
+        run: npm run lint
+        continue-on-error: true
+      - name: Test
+        run: npm run test
+      - name: Build
+        run: npm run build
+
+  api:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Glanz-WebApp/Glanz.API
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: Restore
+        run: dotnet restore
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+      - name: Test
+        run: dotnet test --configuration Release --no-build

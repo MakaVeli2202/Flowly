@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.HttpOverrides;
 using System.Text;
 using System.Data.Common;
 using Amazon.S3;
@@ -52,6 +53,14 @@ builder.Services.AddControllers(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHttpClient();
+builder.Services.AddHealthChecks();
+
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
 
 // Rate limiting - only enabled in production
 if (!builder.Environment.IsDevelopment())
@@ -318,6 +327,13 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseForwardedHeaders();
+
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
+
 // ── Security response headers ─────────────────────────────────────────────
 // Applied before any controller response so every endpoint benefits.
 // CSP allows Stripe.js, fonts, and same-origin assets. Tighten per environment as needed.
@@ -349,6 +365,7 @@ app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHealthChecks("/healthz");
 app.MapHub<GlanzHub>("/hubs/glanz");
 
 app.Run();
