@@ -22,6 +22,12 @@ RUN if [ -f Glanz.API.csproj ]; then \
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
+
+# Needed by PostgreSQL driver/native auth paths on some hosts.
+RUN apt-get update \
+	&& apt-get install -y --no-install-recommends libgssapi-krb5-2 \
+	&& rm -rf /var/lib/apt/lists/*
+
 COPY --from=build /app/publish ./
 
 EXPOSE 10000
