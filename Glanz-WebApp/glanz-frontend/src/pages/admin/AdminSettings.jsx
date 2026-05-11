@@ -91,6 +91,12 @@ export default function AdminSettings() {
       saveReferralSettings: 'Save Referral Settings',
       saveMultipliers: 'Save Multipliers',
       saveSmsSetting: 'Save SMS Setting',
+      siteVisibility: 'Site Visibility',
+      siteVisibilityDesc: 'Publish the website for everyone, or keep it hidden behind the private countdown page.',
+      siteVisible: 'Public site',
+      siteHidden: 'Private countdown page',
+      siteVisibilityHelp: 'When public, anyone can browse the website. When private, only people with the password can enter.',
+      failedToSaveSiteVisibility: 'Failed to save site visibility.',
       saving: 'Saving...',
       saved: 'Saved',
       to: 'to',
@@ -212,6 +218,12 @@ export default function AdminSettings() {
       saveReferralSettings: 'حفظ إعدادات الإحالة',
       saveMultipliers: 'حفظ المعاملات',
       saveSmsSetting: 'حفظ إعداد SMS',
+      siteVisibility: 'إظهار الموقع',
+      siteVisibilityDesc: 'انشر الموقع للجميع أو اتركه مخفيا خلف صفحة العد التنازلي الخاصة.',
+      siteVisible: 'موقع عام',
+      siteHidden: 'صفحة خاصة بعداد تنازلي',
+      siteVisibilityHelp: 'عند النشر يمكن لأي شخص تصفح الموقع. وعند الإخفاء لن يدخل إلا من يملك كلمة المرور.',
+      failedToSaveSiteVisibility: 'فشل حفظ حالة ظهور الموقع.',
       saving: 'جارٍ الحفظ...',
       saved: 'تم الحفظ',
       to: 'إلى',
@@ -333,6 +345,12 @@ export default function AdminSettings() {
       saveReferralSettings: 'Empfehlungseinstellungen speichern',
       saveMultipliers: 'Multiplikatoren speichern',
       saveSmsSetting: 'SMS-Einstellung speichern',
+      siteVisibility: 'Sichtbarkeit der Website',
+      siteVisibilityDesc: 'Veröffentlichen Sie die Website für alle oder halten Sie sie hinter der privaten Countdown-Seite verborgen.',
+      siteVisible: 'Öffentliche Website',
+      siteHidden: 'Private Countdown-Seite',
+      siteVisibilityHelp: 'Im öffentlichen Modus kann jeder die Website sehen. Im privaten Modus brauchen Besucher das Passwort.',
+      failedToSaveSiteVisibility: 'Sichtbarkeit der Website konnte nicht gespeichert werden.',
       saving: 'Speichern...',
       saved: 'Gespeichert',
       to: 'bis',
@@ -566,6 +584,12 @@ export default function AdminSettings() {
   const [smsSaved,         setSmsSaved]         = useState(false);
   const [smsError,         setSmsError]         = useState('');
 
+  // Site visibility state
+  const [sitePublished,    setSitePublished]    = useState(false);
+  const [siteSaving,       setSiteSaving]       = useState(false);
+  const [siteSaved,        setSiteSaved]        = useState(false);
+  const [siteError,        setSiteError]        = useState('');
+
   // Subscription discount state
   const [discountPct,      setDiscountPct]      = useState(10);
   const [discountSaving,   setDiscountSaving]   = useState(false);
@@ -619,6 +643,7 @@ export default function AdminSettings() {
         setWorkerTravelMinutes(data?.booking?.workerTravelBufferMinutes ?? data?.workerTravelBufferMinutes ?? 30);
         setDiscountPct(data?.subscriptionDiscountPercent ?? 10);
         setSmsEnabled(data?.sms?.followUpEnabled ?? false);
+        setSitePublished(data?.site?.published ?? false);
         setReferralReward(data?.referralRewardAmount ?? 50);
         setReferralDiscountPct(data?.referralDiscountPercent ?? 0);
         setReferralRequiredBookings(data?.referralRequiredBookings ?? 1);
@@ -692,6 +717,18 @@ export default function AdminSettings() {
       setTimeout(() => setSmsSaved(false), 3000);
     } catch (err) { setSmsError(err?.response?.data?.message || ui.failedToSaveSms); }
     finally { setSmsSaving(false); }
+  };
+
+  const handleToggleSitePublished = async () => {
+    const next = !sitePublished;
+    try {
+      setSiteSaving(true); setSiteError('');
+      await settingsAPI.updateSystemSettings({ SitePublished: next });
+      setSitePublished(next);
+      setSiteSaved(true);
+      setTimeout(() => setSiteSaved(false), 3000);
+    } catch (err) { setSiteError(err?.response?.data?.message || ui.failedToSaveSiteVisibility); }
+    finally { setSiteSaving(false); }
   };
 
   const handleSaveDiscount = async () => {
@@ -1506,6 +1543,64 @@ export default function AdminSettings() {
                   style={{ background:'rgba(6,182,212,.15)', border:'1px solid rgba(6,182,212,.35)', color:'#22d3ee' }}>
                   {smsSaving ? ui.saving : smsSaved ? <><CheckCircle size={14} /> {ui.saved}</> : <><Save size={14} /> {ui.saveSmsSetting}</>}
                 </button>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Site Visibility card ── */}
+          <div className="glass-card relative overflow-hidden card-stagger">
+            <div className="absolute top-0 left-0 right-0 h-[2px]"
+              style={{ background:'linear-gradient(90deg,transparent,#f59e0b 38%,#c8a96b 62%,transparent)' }} />
+            <div className="absolute top-0 left-0 w-[3px] h-full"
+              style={{ background:'linear-gradient(180deg,#f59e0b 0%,#f59e0b44 60%,transparent 100%)' }} />
+
+            <div className="p-7">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center"
+                  style={{ background:'rgba(245,158,11,.12)', border:'1px solid rgba(245,158,11,.24)' }}>
+                  <Shield size={14} style={{ color:'#f59e0b' }} />
+                </div>
+                <h2 className="premium-heading text-xl font-bold text-[var(--heading-color)]">{ui.siteVisibility}</h2>
+              </div>
+              <p className="text-sm text-[var(--muted-color)] mb-5 ml-11">{ui.siteVisibilityDesc}</p>
+              <div className="mb-5"><div className="spectrum-line" /></div>
+
+              {siteError && (
+                <div className="flex items-start gap-3 rounded-xl border border-rose-500/25 bg-rose-500/8 px-4 py-3 mb-5">
+                  <AlertCircle size={14} className="text-rose-400 flex-shrink-0 mt-0.5" />
+                  <p className="text-rose-300 text-sm font-semibold">{siteError}</p>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between p-4 rounded-xl border border-[var(--border-color)] mb-4">
+                <div>
+                  <p className="font-bold text-sm text-[var(--heading-color)] mb-0.5">{sitePublished ? ui.siteVisible : ui.siteHidden}</p>
+                  <p className="text-xs text-[var(--muted-color)]">{ui.siteVisibilityHelp}</p>
+                </div>
+                <Toggle checked={sitePublished} onClick={handleToggleSitePublished} />
+              </div>
+
+              <div className="rounded-xl border p-3 mb-5"
+                style={{ background: sitePublished ? 'rgba(16,185,129,.07)' : 'rgba(245,158,11,.07)', borderColor: sitePublished ? 'rgba(16,185,129,.28)' : 'rgba(245,158,11,.28)' }}>
+                <p className="text-xs text-[var(--muted-color)]">
+                  <span style={{ color: sitePublished ? '#34d399' : '#fbbf24', fontWeight:700 }}>{sitePublished ? ui.siteVisible : ui.siteHidden}</span>
+                  {' '}
+                  {sitePublished ? 'Anyone can browse the full website.' : 'Only the private password gate is shown to visitors.'}
+                </p>
+              </div>
+
+              <div className="rounded-xl border p-3"
+                style={{ background:'rgba(245,158,11,.06)', borderColor:'rgba(245,158,11,.22)' }}>
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-xs text-[var(--muted-color)]">
+                    <span style={{ color:'#fbbf24', fontWeight:700 }}>
+                      {siteSaving ? ui.saving : siteSaved ? ui.saved : sitePublished ? ui.siteVisible : ui.siteHidden}
+                    </span>
+                    {' '}
+                    {sitePublished ? 'The website is public.' : 'Flip the switch to publish it.'}
+                  </p>
+                  {siteSaved && !siteSaving && <CheckCircle size={14} className="text-emerald-400 flex-shrink-0" />}
+                </div>
               </div>
             </div>
           </div>

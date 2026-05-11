@@ -9,6 +9,7 @@ import { PackagesProvider } from './context/PackagesContext';
 import { LanguageProvider } from './context/LanguageContext';
 import { FeaturesProvider } from './context/FeaturesContext';
 import { SettingsProvider } from './context/SettingsContext';
+import SiteAccessGate from './components/shared/SiteAccessGate';
 import ErrorBoundary        from './components/shared/ErrorBoundary';
 import { ToastProvider }    from './components/shared/Toast';
 import Navbar               from './components/layout/Navbar';
@@ -306,10 +307,12 @@ function App() {
               <div className="scroll-progress-bar" style={{ width: `${scrollProgress}%` }} aria-hidden="true" />
               <div className="pointer-events-none absolute -left-24 top-20 h-72 w-72 rounded-full bg-primary/20 blur-3xl bg-orb-1" aria-hidden="true" />
               <div className="pointer-events-none absolute right-0 top-1/3 h-80 w-80 rounded-full bg-secondary/20 blur-3xl bg-orb-2" aria-hidden="true" />
-               <Navbar theme={theme} onToggleTheme={toggleTheme} />
-               <AppRoutes />
-               <Footer />
-                <WhatsAppWidget />
+               <SiteAccessGate>
+                 <Navbar theme={theme} onToggleTheme={toggleTheme} />
+                 <AppRoutes />
+                 <Footer />
+                 <WhatsAppWidget />
+               </SiteAccessGate>
               </div>
             </ToastProvider>
           </ErrorBoundary>

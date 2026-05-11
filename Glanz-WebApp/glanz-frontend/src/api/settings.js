@@ -19,6 +19,9 @@ export const settingsAPI = {
 
   updateSystemSettings: async (data) => withRetry(async () => {
     const response = await apiClient.put('/Settings', data);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('system-settings-changed'));
+    }
     return response.data;
   }),
 
@@ -28,12 +31,10 @@ export const settingsAPI = {
   }),
 
   updateSmsSettings: async ({ followUpEnabled }) => withRetry(async () => {
-    const response = await apiClient.put('/Settings', { smsFollowUpEnabled: followUpEnabled });
-    return response.data;
+    return settingsAPI.updateSystemSettings({ SmsFollowUpEnabled: followUpEnabled });
   }),
 
   updateBusinessConfig: async (config) => withRetry(async () => {
-    const response = await apiClient.put('/Settings', { businessConfig: config });
-    return response.data;
+    return settingsAPI.updateSystemSettings({ BusinessConfig: config });
   }),
 };

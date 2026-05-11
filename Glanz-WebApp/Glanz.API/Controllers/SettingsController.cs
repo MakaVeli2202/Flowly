@@ -26,6 +26,7 @@ namespace Glanz.API.Controllers
         private const string WorkerTravelKey      = "booking.workerTravelBufferMinutes";
         private const string DiscountKey          = "subscription.discountPercent";
         private const string SmsFollowUpKey       = "sms.followUpEnabled";
+        private const string SitePublishedKey     = "site.published";
         private const string BusinessHoursKey     = "booking.businessHours";
         private const string BusinessConfigKey    = "business.config";
         private const string ReferralRewardKey    = "referral.rewardAmount";
@@ -70,7 +71,7 @@ namespace Glanz.API.Controllers
         [HttpGet]
         public async Task<IActionResult> GetSettings()
         {
-            var keys = new[] { MultipliersKey, WorkerTravelKey, SmsFollowUpKey, DiscountKey, BusinessHoursKey, BusinessConfigKey };
+            var keys = new[] { MultipliersKey, WorkerTravelKey, SmsFollowUpKey, SitePublishedKey, DiscountKey, BusinessHoursKey, BusinessConfigKey };
             var rows = await _context.SystemSettings
                 .AsNoTracking()
                 .Where(s => keys.Contains(s.Key))
@@ -100,6 +101,10 @@ namespace Glanz.API.Controllers
             bool smsFollowUpEnabled = false;
             if (bool.TryParse(GetVal(SmsFollowUpKey), out var parsedSms))
                 smsFollowUpEnabled = parsedSms;
+
+            bool sitePublished = false;
+            if (bool.TryParse(GetVal(SitePublishedKey), out var parsedSitePublished))
+                sitePublished = parsedSitePublished;
 
             // ── subscription discount ────────────────────────────────────────────
             decimal subscriptionDiscountPercent = 10;
@@ -182,6 +187,7 @@ namespace Glanz.API.Controllers
                 pricing = new { vehicleMultipliers },
                 booking = new { workerTravelBufferMinutes },
                 sms     = new { followUpEnabled = smsFollowUpEnabled },
+                site    = new { published = sitePublished },
                 subscriptionDiscountPercent,
                 businessHours,
                 businessConfig,
@@ -218,6 +224,9 @@ namespace Glanz.API.Controllers
 
             if (dto.SmsFollowUpEnabled.HasValue)
                 updates.Add((SmsFollowUpKey, dto.SmsFollowUpEnabled.Value.ToString()));
+
+            if (dto.SitePublished.HasValue)
+                updates.Add((SitePublishedKey, dto.SitePublished.Value.ToString()));
 
             // Handle referral reward amount
             if (dto.ReferralRewardAmount.HasValue)
@@ -288,6 +297,50 @@ namespace Glanz.API.Controllers
 
             return Ok(new { message = "Settings updated successfully." });
         }
+
+        // ── POST api/Settings/gate/verify ───────────────────────────────────
+        /// <summary>
+        /// Verify admin credentials for site access gate (unlock countdown page).
+        /// No auth required, but only admin-level user credentials are accepted.
+        /// Returns a gate token that should be stored in localStorage.
+        /// </summary>
+        [HttpPost("gate/verify")]
+        [AllowAnonymous]
+        public async Task<IActionResult> VerifyGateAccess([FromBody] GateVerifyDto dto)
+        {
+            if (dto == null || string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.Password))
+                return BadRequest(new { message = "Email and password are required." });
+
+            try
+            {
+                var normalizedEmail = dto.Email.Trim().ToLowerInvariant();
+
+                // Check Users table for Admin role
+                var user = await _context.Users
+                    .FirstOrDefaultAsync(u => u.Email.ToLower() == normalizedEmail);
+
+                if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
+                    return Unauthorized(new { message = "Invalid credentials." });
+
+                // Only Admins can unlock the gate
+                if (user.Role != "Admin")
+                    return StatusCode(403, new { message = "Only admins can access the site gate." });
+
+                if (!user.IsActive) 
+                    return Unauthorized(new { message = "Account is disabled." });
+
+                // Generate a simple gate token (can be any string; frontend just stores it)
+                // In production, this could be a JWT with expiration
+                var gateToken = $"gate_{user.Id}_{DateTime.UtcNow.Ticks}_{Guid.NewGuid().ToString("N").Substring(0, 8)}";
+
+                return Ok(new { token = gateToken });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Gate verify error: {ex.Message}");
+                return StatusCode(500, new { message = "Verification failed." });
+            }
+        }
     }
 
     public class UpdateSettingsDto
@@ -295,6 +348,7 @@ namespace Glanz.API.Controllers
         public int?              WorkerTravelBufferMinutes   { get; set; }
         public decimal?          SubscriptionDiscountPercent { get; set; }
         public bool?             SmsFollowUpEnabled          { get; set; }
+        public bool?             SitePublished               { get; set; }
         public int?              ReferralRewardAmount        { get; set; } // Referral reward in QAR for referrer
         public decimal?         ReferralDiscountPercent     { get; set; } // Discount % for referred user
         public int?             ReferralRequiredBookings   { get; set; } // Number of bookings needed for referrer reward
@@ -320,5 +374,15 @@ namespace Glanz.API.Controllers
         public string?       Email        { get; set; }
         public string?       Location     { get; set; }
         public List<string>? ServiceAreas { get; set; }
+    }
+
+    public class GateVerifyDto
+    {
+        [System.ComponentModel.DataAnnotations.Required]
+        [System.ComponentModel.DataAnnotations.EmailAddress]
+        public string Email { get; set; } = string.Empty;
+
+        [System.ComponentModel.DataAnnotations.Required]
+        public string Password { get; set; } = string.Empty;
     }
 }

@@ -16,42 +16,64 @@ export const DEFAULT_SETTINGS = {
   vehicleMultipliers:      { Motorcycle: 0.8, Sedan: 1.0, SUV: 1.25, Pickup: 1.5 },
   defaultBufferMinutes:    90, // customer same-day lead time
   workerTravelBufferMinutes: 30, // gap between worker jobs
+  sitePublished: false,
 };
 
 const SettingsContext = createContext(DEFAULT_SETTINGS);
 
 export function SettingsProvider({ children }) {
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    settingsAPI.getSystemSettings()
-      .then((data) => {
-        if (cancelled || !data || typeof data !== 'object') return;
-        setSettings((prev) => ({
-          vehicleMultipliers: (
-            data.pricing?.vehicleMultipliers &&
-            typeof data.pricing.vehicleMultipliers === 'object'
-          )
-            ? { ...DEFAULT_SETTINGS.vehicleMultipliers, ...data.pricing.vehicleMultipliers }
-            : prev.vehicleMultipliers,
 
-          defaultBufferMinutes: Number.isFinite(data.booking?.defaultBufferMinutes)
-            ? data.booking.defaultBufferMinutes
-            : prev.defaultBufferMinutes,
+    const loadSettings = () => {
+      settingsAPI.getSystemSettings()
+        .then((data) => {
+          if (cancelled || !data || typeof data !== 'object') return;
+          setSettings((prev) => ({
+            vehicleMultipliers: (
+              data.pricing?.vehicleMultipliers &&
+              typeof data.pricing.vehicleMultipliers === 'object'
+            )
+              ? { ...DEFAULT_SETTINGS.vehicleMultipliers, ...data.pricing.vehicleMultipliers }
+              : prev.vehicleMultipliers,
 
-          workerTravelBufferMinutes: Number.isFinite(data.booking?.workerTravelBufferMinutes)
-            ? data.booking.workerTravelBufferMinutes
-            : prev.workerTravelBufferMinutes,
-        }));
-      })
-      .catch(() => {
-      });
-    return () => { cancelled = true; };
+            defaultBufferMinutes: Number.isFinite(data.booking?.defaultBufferMinutes)
+              ? data.booking.defaultBufferMinutes
+              : prev.defaultBufferMinutes,
+
+            workerTravelBufferMinutes: Number.isFinite(data.booking?.workerTravelBufferMinutes)
+              ? data.booking.workerTravelBufferMinutes
+              : prev.workerTravelBufferMinutes,
+
+            sitePublished: typeof data.site?.published === 'boolean'
+              ? data.site.published
+              : prev.sitePublished,
+          }));
+        })
+        .catch(() => {
+        })
+        .finally(() => {
+          if (!cancelled) setIsLoaded(true);
+        });
+    };
+
+    const handleSettingsChanged = () => {
+      loadSettings();
+    };
+
+    loadSettings();
+    window.addEventListener('system-settings-changed', handleSettingsChanged);
+    return () => {
+      cancelled = true;
+      window.removeEventListener('system-settings-changed', handleSettingsChanged);
+    };
   }, []);
 
   return (
-    <SettingsContext.Provider value={settings}>
+    <SettingsContext.Provider value={{ ...settings, isLoaded }}>
       {children}
     </SettingsContext.Provider>
   );
