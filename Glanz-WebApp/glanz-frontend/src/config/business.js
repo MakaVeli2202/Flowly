@@ -13,7 +13,7 @@ export const BUSINESS = {
   namePrefix: 'G',
   /** Second part of the logo word-mark (receives gradient / accent colour) */
   nameSuffix: 'lanz',
-  tagline: 'Professional car detailing services in Qatar. Quality you can trust.',
+  tagline: '',
   phone: '+974 4444 4444',
   email: 'info@Glanz.qa',
   location: 'Doha, Qatar',
