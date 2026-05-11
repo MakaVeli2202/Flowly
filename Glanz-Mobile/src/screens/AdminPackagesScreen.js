@@ -7,6 +7,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useHeaderHeight } from '@react-navigation/elements';
+import { useTranslation } from 'react-i18next';
 import { packagesAPI } from '../api/packages';
 import { servicesAPI } from '../api/services';
 import { formatQAR } from '../utils/currency';
@@ -48,6 +49,7 @@ const PrismLeftBar = ({ color }) => (
 
 export default function AdminPackagesScreen() {
   const headerHeight = useHeaderHeight();
+  const { t } = useTranslation();
 
   const [packages,  setPackages]  = useState([]);
   const [services,  setServices]  = useState([]);
@@ -65,7 +67,7 @@ export default function AdminPackagesScreen() {
       setPackages(pkgs);
       setServices(svcs);
     } catch {
-      Alert.alert('Error', 'Failed to load packages');
+      Alert.alert(t('common.error'), t('adminPackages.failedLoadPackages'));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -106,12 +108,12 @@ export default function AdminPackagesScreen() {
   const handleSave = async () => {
     const { name, price, tier } = form;
     if (!name.trim() || !price.trim()) {
-      Alert.alert('Validation', 'Name and price are required');
+      Alert.alert(t('adminPackages.validationTitle'), t('adminPackages.namePriceRequired'));
       return;
     }
     const p = parseFloat(price);
     if (isNaN(p) || p < 0) {
-      Alert.alert('Validation', 'Price must be a valid number');
+      Alert.alert(t('adminPackages.validationTitle'), t('adminPackages.priceMustBeValid'));
       return;
     }
     setSaving(true);
@@ -132,7 +134,7 @@ export default function AdminPackagesScreen() {
       setModalVisible(false);
       load();
     } catch (err) {
-      Alert.alert('Error', err?.response?.data?.message || 'Failed to save package');
+      Alert.alert(t('common.error'), err?.response?.data?.message || t('adminPackages.failedSavePackage'));
     } finally {
       setSaving(false);
     }
@@ -143,21 +145,21 @@ export default function AdminPackagesScreen() {
       await packagesAPI.toggleActive(pkg.id);
       load();
     } catch {
-      Alert.alert('Error', 'Failed to toggle package status');
+      Alert.alert(t('common.error'), t('adminPackages.failedTogglePackageStatus'));
     }
   };
 
   const handleDelete = (pkg) => {
-    Alert.alert('Delete Package', `Delete "${pkg.name}"? This cannot be undone.`, [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(t('adminPackages.deletePackage'), t('adminPackages.deletePackageConfirm', { name: pkg.name }), [
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: 'Delete', style: 'destructive',
+        text: t('adminPackages.delete'), style: 'destructive',
         onPress: async () => {
           try {
             await packagesAPI.delete(pkg.id);
             load();
           } catch {
-            Alert.alert('Error', 'Failed to delete package');
+            Alert.alert(t('common.error'), t('adminPackages.failedDeletePackage'));
           }
         },
       },
@@ -185,8 +187,8 @@ export default function AdminPackagesScreen() {
             <Ionicons name="layers" size={20} color={theme.colors.primary} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={s.pageTitle}>Packages</Text>
-            <Text style={s.pageSubtitle}>{packages.length} package{packages.length !== 1 ? 's' : ''} total</Text>
+            <Text style={s.pageTitle}>{t('adminPackages.packages')}</Text>
+            <Text style={s.pageSubtitle}>{t('adminPackages.totalPackages', { count: packages.length })}</Text>
           </View>
           <TouchableOpacity style={s.addBtn} onPress={openCreate} activeOpacity={0.75}>
             <Ionicons name="add" size={20} color={theme.colors.ink} />
@@ -198,7 +200,7 @@ export default function AdminPackagesScreen() {
         {packages.length === 0 ? (
           <View style={s.emptyBox}>
             <Ionicons name="layers-outline" size={42} color={theme.colors.textMuted} />
-            <Text style={s.emptyText}>No packages yet. Tap + to add one.</Text>
+            <Text style={s.emptyText}>{t('adminPackages.noPackagesYet')}</Text>
           </View>
         ) : (
           packages.map((pkg) => {
@@ -213,7 +215,7 @@ export default function AdminPackagesScreen() {
                         <Text style={s.cardTitle}>{pkg.name}</Text>
                         {!pkg.isActive && (
                           <View style={s.inactiveBadge}>
-                            <Text style={s.inactiveBadgeText}>Inactive</Text>
+                            <Text style={s.inactiveBadgeText}>{t('adminPackages.inactive')}</Text>
                           </View>
                         )}
                       </View>
@@ -227,7 +229,7 @@ export default function AdminPackagesScreen() {
                       </View>
                       {!!pkg.description && <Text style={s.desc} numberOfLines={2}>{pkg.description}</Text>}
                       {(pkg.services || []).length > 0 && (
-                        <Text style={s.svcCount}>{(pkg.services || []).length} service{(pkg.services || []).length !== 1 ? 's' : ''}</Text>
+                        <Text style={s.svcCount}>{t('adminPackages.totalServices', { count: (pkg.services || []).length })}</Text>
                       )}
                     </View>
                     <View style={s.cardActions}>
@@ -260,24 +262,24 @@ export default function AdminPackagesScreen() {
             <ScrollView style={s.sheet} contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
               <View style={s.sheetHandle} />
               <View style={s.sheetHeader}>
-                <Text style={s.sheetTitle}>{editing ? 'Edit Package' : 'New Package'}</Text>
+                <Text style={s.sheetTitle}>{editing ? t('adminPackages.editPackage') : t('adminPackages.newPackage')}</Text>
                 <TouchableOpacity onPress={() => setModalVisible(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                   <Ionicons name="close" size={22} color={theme.colors.textMuted} />
                 </TouchableOpacity>
               </View>
               <SpectrumLine style={{ marginBottom: 18 }} />
 
-              <Text style={s.fieldLabel}>Package Name *</Text>
-              <TextInput style={s.input} value={form.name} onChangeText={(v) => setForm((f) => ({ ...f, name: v }))} placeholder="e.g. Gold Wash" placeholderTextColor={theme.colors.textMuted} />
+              <Text style={s.fieldLabel}>{t('adminPackages.packageNameRequiredLabel')}</Text>
+              <TextInput style={s.input} value={form.name} onChangeText={(v) => setForm((f) => ({ ...f, name: v }))} placeholder={t('adminPackages.packageNamePlaceholder')} placeholderTextColor={theme.colors.textMuted} />
 
-              <Text style={[s.fieldLabel, { marginTop: 12 }]}>Price (QAR) *</Text>
+              <Text style={[s.fieldLabel, { marginTop: 12 }]}>{t('adminPackages.priceQarRequiredLabel')}</Text>
               <TextInput style={s.input} value={form.price} onChangeText={(v) => setForm((f) => ({ ...f, price: v }))} placeholder="0.00" placeholderTextColor={theme.colors.textMuted} keyboardType="decimal-pad" />
 
-              <Text style={[s.fieldLabel, { marginTop: 12 }]}>Description</Text>
-              <TextInput style={[s.input, { minHeight: 64, textAlignVertical: 'top' }]} value={form.description} onChangeText={(v) => setForm((f) => ({ ...f, description: v }))} placeholder="Package description…" placeholderTextColor={theme.colors.textMuted} multiline />
+              <Text style={[s.fieldLabel, { marginTop: 12 }]}>{t('adminPackages.description')}</Text>
+              <TextInput style={[s.input, { minHeight: 64, textAlignVertical: 'top' }]} value={form.description} onChangeText={(v) => setForm((f) => ({ ...f, description: v }))} placeholder={t('adminPackages.packageDescriptionPlaceholder')} placeholderTextColor={theme.colors.textMuted} multiline />
 
               {/* Tier selector */}
-              <Text style={[s.fieldLabel, { marginTop: 12 }]}>Tier</Text>
+              <Text style={[s.fieldLabel, { marginTop: 12 }]}>{t('adminPackages.tier')}</Text>
               <View style={s.tierRow}>
                 {TIERS.map((t) => (
                   <TouchableOpacity
@@ -293,7 +295,7 @@ export default function AdminPackagesScreen() {
 
               {/* Active toggle */}
               <View style={s.activeRow}>
-                <Text style={s.fieldLabel}>Active</Text>
+                <Text style={s.fieldLabel}>{t('adminPackages.active')}</Text>
                 <Switch
                   value={form.isActive}
                   onValueChange={(v) => setForm((f) => ({ ...f, isActive: v }))}
@@ -303,7 +305,7 @@ export default function AdminPackagesScreen() {
               </View>
 
               {/* Services */}
-              <Text style={[s.fieldLabel, { marginTop: 12, marginBottom: 10 }]}>Services ({form.serviceIds.length} selected)</Text>
+              <Text style={[s.fieldLabel, { marginTop: 12, marginBottom: 10 }]}>{t('adminPackages.servicesSelected', { count: form.serviceIds.length })}</Text>
               {services.map((svc) => {
                 const selected = form.serviceIds.includes(String(svc.id));
                 return (
@@ -318,7 +320,7 @@ export default function AdminPackagesScreen() {
                     </View>
                     <View style={{ flex: 1 }}>
                       <Text style={s.svcName}>{svc.name}</Text>
-                      <Text style={s.svcMeta}>{svc.defaultDurationMinutes} min</Text>
+                      <Text style={s.svcMeta}>{t('bookingFlow.common.minutesShort', { count: svc.defaultDurationMinutes })}</Text>
                     </View>
                   </TouchableOpacity>
                 );
@@ -326,10 +328,10 @@ export default function AdminPackagesScreen() {
 
               <View style={[s.sheetActions, { marginTop: 20 }]}>
                 <TouchableOpacity style={s.cancelBtn} onPress={() => setModalVisible(false)} activeOpacity={0.7}>
-                  <Text style={s.cancelBtnText}>Cancel</Text>
+                  <Text style={s.cancelBtnText}>{t('common.cancel')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={s.saveBtn} onPress={handleSave} activeOpacity={0.75} disabled={saving}>
-                  {saving ? <ActivityIndicator color={theme.colors.ink} size="small" /> : <Text style={s.saveBtnText}>{editing ? 'Update' : 'Create'}</Text>}
+                  {saving ? <ActivityIndicator color={theme.colors.ink} size="small" /> : <Text style={s.saveBtnText}>{editing ? t('adminPackages.update') : t('adminPackages.create')}</Text>}
                 </TouchableOpacity>
               </View>
             </ScrollView>

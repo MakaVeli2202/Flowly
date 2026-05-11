@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { theme } from '../theme/theme';
 
 /**
@@ -22,7 +23,8 @@ import { theme } from '../theme/theme';
  *   meta     string   Optional right-side meta text
  *   badge    string   Optional badge label
  */
-export default function AlertsPanel({ alerts = [], onPress, title = 'Alerts & Issues', max = 5, onViewAll }) {
+export default function AlertsPanel({ alerts = [], onPress, title, max = 5, onViewAll }) {
+  const { t } = useTranslation();
   if (alerts.length === 0) return null;
 
   const visible = alerts.slice(0, max);
@@ -43,14 +45,14 @@ export default function AlertsPanel({ alerts = [], onPress, title = 'Alerts & Is
           <View style={a.titleIconBox}>
             <Ionicons name="warning" size={14} color={theme.colors.warning} />
           </View>
-          <Text style={a.title}>{title}</Text>
+          <Text style={a.title}>{title || t('alertsPanel.title')}</Text>
           <View style={a.badge}>
             <Text style={a.badgeText}>{alerts.length}</Text>
           </View>
         </View>
         {!!onViewAll && (
           <TouchableOpacity onPress={onViewAll} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Text style={a.viewAll}>View all</Text>
+            <Text style={a.viewAll}>{t('alertsPanel.viewAll')}</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -101,7 +103,7 @@ export default function AlertsPanel({ alerts = [], onPress, title = 'Alerts & Is
 
       {overflow > 0 && (
         <TouchableOpacity style={a.overflowRow} onPress={onViewAll} activeOpacity={0.7}>
-          <Text style={a.overflowText}>+{overflow} more issue{overflow !== 1 ? 's' : ''}</Text>
+          <Text style={a.overflowText}>{t('alertsPanel.moreIssues', { count: overflow })}</Text>
           <Ionicons name="chevron-forward" size={12} color={theme.colors.primary} />
         </TouchableOpacity>
       )}

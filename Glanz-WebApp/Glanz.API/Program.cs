@@ -124,8 +124,10 @@ else
     builder.Services.AddInMemoryRateLimiting();
 }
 
+var postgresConnectionString = ResolvePostgresConnectionString(builder.Configuration);
+
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(postgresConnectionString));
 
 builder.Services.Configure<ObjectStorageOptions>(builder.Configuration.GetSection(ObjectStorageOptions.SectionName));
 builder.Services.AddSingleton<IAmazonS3>(serviceProvider =>
@@ -446,6 +448,112 @@ WHERE bi.""PackageId"" = p.""Id""
             await connection.CloseAsync();
         }
     }
+}
+
+static string ResolvePostgresConnectionString(IConfiguration configuration)
+{
+    var configured = configuration.GetConnectionString("DefaultConnection");
+    var fromEnvConnectionStrings = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
+    var fromDatabaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+
+    var candidate = FirstNonEmpty(fromEnvConnectionStrings, configured);
+
+    if (!string.IsNullOrWhiteSpace(fromDatabaseUrl))
+    {
+        candidate = TryConvertDatabaseUrlToNpgsql(fromDatabaseUrl) ?? fromDatabaseUrl;
+    }
+
+    if (string.IsNullOrWhiteSpace(candidate) || LooksLikePlaceholder(candidate))
+    {
+        throw new InvalidOperationException(
+            "PostgreSQL connection string missing. Set ConnectionStrings__DefaultConnection or DATABASE_URL.");
+    }
+
+    if (!candidate.Contains('=') && !candidate.StartsWith("Host", StringComparison.OrdinalIgnoreCase))
+    {
+        throw new InvalidOperationException(
+            "Invalid PostgreSQL connection string format. Use key/value format (Host=...;Database=...;Username=...;Password=...) or set DATABASE_URL as postgres://... URI.");
+    }
+
+    return candidate;
+}
+
+static bool LooksLikePlaceholder(string value)
+{
+    return value.Trim().Equals("SET_IN_ENV_CONNECTIONSTRING", StringComparison.OrdinalIgnoreCase);
+}
+
+static string FirstNonEmpty(params string?[] values)
+{
+    foreach (var value in values)
+    {
+        if (!string.IsNullOrWhiteSpace(value))
+        {
+            return value;
+        }
+    }
+
+    return string.Empty;
+}
+
+static string? TryConvertDatabaseUrlToNpgsql(string databaseUrl)
+{
+    var raw = databaseUrl.Trim().Trim('"');
+    if (!Uri.TryCreate(raw, UriKind.Absolute, out var uri))
+    {
+        return null;
+    }
+
+    if (!uri.Scheme.Equals("postgres", StringComparison.OrdinalIgnoreCase)
+        && !uri.Scheme.Equals("postgresql", StringComparison.OrdinalIgnoreCase))
+    {
+        return null;
+    }
+
+    var userInfoParts = uri.UserInfo.Split(':', 2);
+    var username = userInfoParts.Length > 0 ? Uri.UnescapeDataString(userInfoParts[0]) : string.Empty;
+    var password = userInfoParts.Length > 1 ? Uri.UnescapeDataString(userInfoParts[1]) : string.Empty;
+    var database = uri.AbsolutePath.Trim('/');
+
+    var builder = new Npgsql.NpgsqlConnectionStringBuilder
+    {
+        Host = uri.Host,
+        Port = uri.IsDefaultPort ? 5432 : uri.Port,
+        Username = username,
+        Password = password,
+        Database = database
+    };
+
+    if (!string.IsNullOrWhiteSpace(uri.Query))
+    {
+        var query = uri.Query.TrimStart('?').Split('&', StringSplitOptions.RemoveEmptyEntries);
+        foreach (var part in query)
+        {
+            var kv = part.Split('=', 2);
+            if (kv.Length != 2)
+            {
+                continue;
+            }
+
+            var key = Uri.UnescapeDataString(kv[0]);
+            var value = Uri.UnescapeDataString(kv[1]);
+
+            if (key.Equals("sslmode", StringComparison.OrdinalIgnoreCase)
+                && Enum.TryParse<Npgsql.SslMode>(value, true, out var sslMode))
+            {
+                builder.SslMode = sslMode;
+                continue;
+            }
+
+        }
+    }
+
+    if (builder.SslMode == Npgsql.SslMode.Disable && !builder.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase))
+    {
+        builder.SslMode = Npgsql.SslMode.Require;
+    }
+
+    return builder.ConnectionString;
 }
 
 static async Task EnsureSubscriptionsTableAsync(DbConnection connection)

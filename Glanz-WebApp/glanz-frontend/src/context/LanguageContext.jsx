@@ -63,7 +63,7 @@ const getPluralForm = (lang, count) => {
   return count === 1 ? 'one' : 'other';
 };
 
-const LanguageContext = createContext({
+export const LanguageContext = createContext({
   lang: 'en',
   t: (key) => key,
   setLang: () => {},

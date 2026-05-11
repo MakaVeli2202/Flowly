@@ -84,5 +84,44 @@
   "completedBookingsRequired": "Completed Bookings Required",
   "vehiclePriceMultipliers": "Vehicle Price Multipliers",
   "enableSmsFollowUps": "Enable SMS Follow-Ups",
-  "developmentMode": "Development mode"
+  "developmentMode": "Development mode",
+  "avatarPicker": {
+    "title": "Choose an avatar",
+    "subtitle": "Arab-world styled avatars - click one to apply instantly.",
+    "labels": {
+      "gulfMale": "Gulf Male",
+      "gulfFemale": "Gulf Female",
+      "arabMale": "Arab Male",
+      "arabFemale": "Arab Female",
+      "expatMale": "Expat Male",
+      "expatFemale": "Expat Female"
+    },
+    "desc": {
+      "kufiyaAgal": "Kufiya and agal",
+      "kufiya": "Kufiya",
+      "kufiyaBeard": "Kufiya and beard",
+      "blackHijab": "Black hijab",
+      "tealHijab": "Teal hijab",
+      "burgundyHijab": "Burgundy hijab",
+      "wavyHair": "Wavy hair",
+      "shortHair": "Short hair",
+      "purpleHijab": "Purple hijab",
+      "coralHijab": "Coral hijab",
+      "casual": "Casual"
+    }
+  },
+  "chat": {
+    "welcome": "Hi! I'm the Glanz assistant. Ask me about services, pricing, booking, or cancellations.",
+    "errorReply": "Sorry, I could not process your request right now. Please try again or contact support@glanz.qa.",
+    "openAria": "Open chat assistant",
+    "title": "Glanz Assistant",
+    "subtitle": "Usually replies instantly",
+    "placeholder": "Ask a question..."
+  },
+  "errorBoundary": {
+    "title": "Oops! Something went wrong",
+    "fallbackMessage": "Something unexpected happened",
+    "tryAgain": "Try Again",
+    "goHome": "Go Home"
+  }
 }

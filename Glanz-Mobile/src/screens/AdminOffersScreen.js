@@ -7,6 +7,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useHeaderHeight } from '@react-navigation/elements';
+import { useTranslation } from 'react-i18next';
 import { offersAPI } from '../api/offers';
 import { theme } from '../theme/theme';
 
@@ -15,20 +16,14 @@ const T = (a) => `rgba(14,165,160,${a})`;
 
 const DISCOUNT_TYPES = ['Percentage', 'FixedAmount', 'FreeBooking'];
 const DISCOUNT_META = {
-  Percentage:  { color: theme.colors.primary, label: 'Percent', icon: 'trending-down' },
-  FixedAmount: { color: '#0EA5A0',            label: 'Fixed',   icon: 'cash-outline'  },
-  FreeBooking: { color: '#22c55e',            label: 'Free',    icon: 'gift-outline'  },
+  Percentage:  { color: theme.colors.primary, labelKey: 'adminOffers.discountTypeLabels.percent', icon: 'trending-down' },
+  FixedAmount: { color: '#0EA5A0',            labelKey: 'adminOffers.discountTypeLabels.fixed',   icon: 'cash-outline'  },
+  FreeBooking: { color: '#22c55e',            labelKey: 'adminOffers.discountTypeLabels.free',    icon: 'gift-outline'  },
 };
 
 const BLANK_FORM = {
   name: '', code: '', discountType: 'Percentage',
   discountValue: '', maxUsages: '', isActive: true,
-};
-
-const fmtValue = (type, value) => {
-  if (type === 'FreeBooking') return 'Free booking';
-  if (type === 'Percentage')  return `${value}%`;
-  return `${value} QAR`;
 };
 
 const SpectrumLine = ({ style }) => (
@@ -51,6 +46,13 @@ const PrismLeftBar = ({ color }) => (
 
 export default function AdminOffersScreen() {
   const headerHeight = useHeaderHeight();
+  const { t } = useTranslation();
+
+  const fmtValue = (type, value) => {
+    if (type === 'FreeBooking') return t('adminOffers.freeBooking');
+    if (type === 'Percentage') return t('adminOffers.percentageValue', { value });
+    return t('adminOffers.qarValue', { value });
+  };
 
   const [offers,    setOffers]    = useState([]);
   const [loading,   setLoading]   = useState(true);
@@ -65,7 +67,7 @@ export default function AdminOffersScreen() {
     try {
       setOffers(await offersAPI.getAll());
     } catch {
-      Alert.alert('Error', 'Failed to load offers');
+      Alert.alert(t('common.error'), t('adminOffers.failedLoadOffers'));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -95,10 +97,10 @@ export default function AdminOffersScreen() {
 
   const handleSave = async () => {
     const { name, discountType, discountValue, maxUsages } = form;
-    if (!name.trim()) { Alert.alert('Validation', 'Name is required'); return; }
+    if (!name.trim()) { Alert.alert(t('adminOffers.validationTitle'), t('adminOffers.nameRequired')); return; }
     if (discountType !== 'FreeBooking') {
       const v = parseFloat(discountValue);
-      if (isNaN(v) || v <= 0) { Alert.alert('Validation', 'Discount value must be > 0'); return; }
+      if (isNaN(v) || v <= 0) { Alert.alert(t('adminOffers.validationTitle'), t('adminOffers.discountValuePositive')); return; }
     }
     setSaving(true);
     try {
@@ -118,20 +120,20 @@ export default function AdminOffersScreen() {
       setModalVisible(false);
       load();
     } catch (err) {
-      Alert.alert('Error', err?.response?.data?.message || 'Failed to save offer');
+      Alert.alert(t('common.error'), err?.response?.data?.message || t('adminOffers.failedSaveOffer'));
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = (offer) => {
-    Alert.alert('Delete Offer', `Delete "${offer.name}"?`, [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(t('adminOffers.deleteOffer'), t('adminOffers.deleteOfferConfirm', { name: offer.name }), [
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: 'Delete', style: 'destructive',
+        text: t('adminOffers.delete'), style: 'destructive',
         onPress: async () => {
           try { await offersAPI.delete(offer.id); load(); }
-          catch { Alert.alert('Error', 'Failed to delete offer'); }
+          catch { Alert.alert(t('common.error'), t('adminOffers.failedDeleteOffer')); }
         },
       },
     ]);
@@ -158,8 +160,8 @@ export default function AdminOffersScreen() {
             <Ionicons name="ticket" size={20} color={theme.colors.primary} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={s.pageTitle}>Offers & Discounts</Text>
-            <Text style={s.pageSubtitle}>{offers.length} offer{offers.length !== 1 ? 's' : ''} total</Text>
+            <Text style={s.pageTitle}>{t('adminOffers.offersDiscounts')}</Text>
+            <Text style={s.pageSubtitle}>{t('adminOffers.totalOffers', { count: offers.length })}</Text>
           </View>
           <TouchableOpacity style={s.addBtn} onPress={openCreate} activeOpacity={0.75}>
             <Ionicons name="add" size={20} color={theme.colors.ink} />
@@ -171,7 +173,7 @@ export default function AdminOffersScreen() {
         {offers.length === 0 ? (
           <View style={s.emptyBox}>
             <Ionicons name="ticket-outline" size={42} color={theme.colors.textMuted} />
-            <Text style={s.emptyText}>No offers yet. Tap + to create one.</Text>
+            <Text style={s.emptyText}>{t('adminOffers.noOffersYet')}</Text>
           </View>
         ) : (
           offers.map((offer) => {
@@ -186,7 +188,7 @@ export default function AdminOffersScreen() {
                       <View style={s.tagRow}>
                         <View style={[s.tag, { backgroundColor: `${meta.color}18`, borderColor: `${meta.color}40` }]}>
                           <Ionicons name={meta.icon} size={11} color={meta.color} />
-                          <Text style={[s.tagText, { color: meta.color }]}>{meta.label}</Text>
+                          <Text style={[s.tagText, { color: meta.color }]}>{t(meta.labelKey)}</Text>
                         </View>
                         <View style={[s.tag, { backgroundColor: G(0.10), borderColor: G(0.22) }]}>
                           <Text style={[s.tagText, { color: theme.colors.primary }]}>
@@ -195,7 +197,7 @@ export default function AdminOffersScreen() {
                         </View>
                         {!offer.isActive && (
                           <View style={[s.tag, { backgroundColor: theme.colors.warningBg, borderColor: theme.colors.warningBorder }]}>
-                            <Text style={[s.tagText, { color: theme.colors.warning }]}>Inactive</Text>
+                            <Text style={[s.tagText, { color: theme.colors.warning }]}>{t('adminOffers.inactive')}</Text>
                           </View>
                         )}
                       </View>
@@ -207,7 +209,7 @@ export default function AdminOffersScreen() {
                       )}
                       {offer.maxUsages != null && (
                         <Text style={s.usageText}>
-                          {offer.usageCount ?? 0}/{offer.maxUsages} uses
+                          {t('adminOffers.usesSummary', { used: offer.usageCount ?? 0, max: offer.maxUsages })}
                         </Text>
                       )}
                     </View>
@@ -235,34 +237,34 @@ export default function AdminOffersScreen() {
             <ScrollView style={s.sheet} contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
               <View style={s.sheetHandle} />
               <View style={s.sheetHeader}>
-                <Text style={s.sheetTitle}>{editing ? 'Edit Offer' : 'New Offer'}</Text>
+                <Text style={s.sheetTitle}>{editing ? t('adminOffers.editOffer') : t('adminOffers.newOffer')}</Text>
                 <TouchableOpacity onPress={() => setModalVisible(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                   <Ionicons name="close" size={22} color={theme.colors.textMuted} />
                 </TouchableOpacity>
               </View>
               <SpectrumLine style={{ marginBottom: 18 }} />
 
-              <Text style={s.fieldLabel}>Offer Name *</Text>
-              <TextInput style={s.input} value={form.name} onChangeText={(v) => setForm((f) => ({ ...f, name: v }))} placeholder="e.g. Welcome Discount" placeholderTextColor={theme.colors.textMuted} />
+              <Text style={s.fieldLabel}>{t('adminOffers.offerNameRequiredLabel')}</Text>
+              <TextInput style={s.input} value={form.name} onChangeText={(v) => setForm((f) => ({ ...f, name: v }))} placeholder={t('adminOffers.offerNamePlaceholder')} placeholderTextColor={theme.colors.textMuted} />
 
-              <Text style={[s.fieldLabel, { marginTop: 12 }]}>Coupon Code (optional)</Text>
-              <TextInput style={s.input} value={form.code} onChangeText={(v) => setForm((f) => ({ ...f, code: v.toUpperCase() }))} placeholder="e.g. SUMMER20" placeholderTextColor={theme.colors.textMuted} autoCapitalize="characters" />
+              <Text style={[s.fieldLabel, { marginTop: 12 }]}>{t('adminOffers.couponCodeOptional')}</Text>
+              <TextInput style={s.input} value={form.code} onChangeText={(v) => setForm((f) => ({ ...f, code: v.toUpperCase() }))} placeholder={t('adminOffers.couponCodePlaceholder')} placeholderTextColor={theme.colors.textMuted} autoCapitalize="characters" />
 
               {/* Discount type */}
-              <Text style={[s.fieldLabel, { marginTop: 12 }]}>Discount Type</Text>
+              <Text style={[s.fieldLabel, { marginTop: 12 }]}>{t('adminOffers.discountType')}</Text>
               <View style={s.typeRow}>
-                {DISCOUNT_TYPES.map((t) => {
-                  const meta = DISCOUNT_META[t];
-                  const active = form.discountType === t;
+                {DISCOUNT_TYPES.map((discountType) => {
+                  const meta = DISCOUNT_META[discountType];
+                  const active = form.discountType === discountType;
                   return (
                     <TouchableOpacity
-                      key={t}
+                      key={discountType}
                       style={[s.typeChip, active && { backgroundColor: `${meta.color}22`, borderColor: meta.color }]}
-                      onPress={() => setForm((f) => ({ ...f, discountType: t }))}
+                      onPress={() => setForm((f) => ({ ...f, discountType }))}
                       activeOpacity={0.75}
                     >
                       <Ionicons name={meta.icon} size={13} color={active ? meta.color : theme.colors.textMuted} />
-                      <Text style={[s.typeText, active && { color: meta.color }]}>{meta.label}</Text>
+                      <Text style={[s.typeText, active && { color: meta.color }]}>{t(meta.labelKey)}</Text>
                     </TouchableOpacity>
                   );
                 })}
@@ -271,28 +273,28 @@ export default function AdminOffersScreen() {
               {form.discountType !== 'FreeBooking' && (
                 <>
                   <Text style={[s.fieldLabel, { marginTop: 12 }]}>
-                    {form.discountType === 'Percentage' ? 'Percentage (%)' : 'Amount (QAR)'} *
+                    {form.discountType === 'Percentage' ? t('adminOffers.percentageRequiredLabel') : t('adminOffers.amountQarRequiredLabel')}
                   </Text>
                   <TextInput
                     style={s.input}
                     value={form.discountValue}
                     onChangeText={(v) => setForm((f) => ({ ...f, discountValue: v }))}
-                    placeholder={form.discountType === 'Percentage' ? '10' : '50.00'}
+                    placeholder={form.discountType === 'Percentage' ? t('adminOffers.percentagePlaceholder') : t('adminOffers.amountPlaceholder')}
                     placeholderTextColor={theme.colors.textMuted}
                     keyboardType="decimal-pad"
                   />
                 </>
               )}
 
-              <Text style={[s.fieldLabel, { marginTop: 12 }]}>Max Usages (blank = unlimited)</Text>
-              <TextInput style={s.input} value={form.maxUsages} onChangeText={(v) => setForm((f) => ({ ...f, maxUsages: v }))} placeholder="e.g. 100" placeholderTextColor={theme.colors.textMuted} keyboardType="number-pad" />
+              <Text style={[s.fieldLabel, { marginTop: 12 }]}>{t('adminOffers.maxUsagesOptional')}</Text>
+              <TextInput style={s.input} value={form.maxUsages} onChangeText={(v) => setForm((f) => ({ ...f, maxUsages: v }))} placeholder={t('adminOffers.maxUsagesPlaceholder')} placeholderTextColor={theme.colors.textMuted} keyboardType="number-pad" />
 
               <View style={[s.sheetActions, { marginTop: 20 }]}>
                 <TouchableOpacity style={s.cancelBtn} onPress={() => setModalVisible(false)} activeOpacity={0.7}>
-                  <Text style={s.cancelBtnText}>Cancel</Text>
+                  <Text style={s.cancelBtnText}>{t('common.cancel')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={s.saveBtn} onPress={handleSave} activeOpacity={0.75} disabled={saving}>
-                  {saving ? <ActivityIndicator color={theme.colors.ink} size="small" /> : <Text style={s.saveBtnText}>{editing ? 'Update' : 'Create'}</Text>}
+                  {saving ? <ActivityIndicator color={theme.colors.ink} size="small" /> : <Text style={s.saveBtnText}>{editing ? t('adminOffers.update') : t('adminOffers.create')}</Text>}
                 </TouchableOpacity>
               </View>
             </ScrollView>

@@ -3,6 +3,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { theme } from '../../theme/theme';
 import { formatQAR } from '../../utils/currency';
 import { SectionHeader, Card, FieldLabel, adjustedPrice, s } from './BookingShared';
@@ -22,17 +23,19 @@ function BookingPackageStep({
   subscriptionMatchesVehicle,
   navigation,
 }) {
+  const { t } = useTranslation();
+
   return (
     <>
       {/* ══════════════ 1. PACKAGE ══════════════════════════════ */}
       <Card>
-        <SectionHeader icon="cube-outline" step={1}>Select Package</SectionHeader>
+        <SectionHeader icon="cube-outline" step={1}>{t('bookingFlow.packageStep.selectPackage')}</SectionHeader>
         {packagesLoading ? (
           <ActivityIndicator color={theme.colors.primary} style={{ marginVertical: 12 }} />
         ) : packages.length === 0 ? (
           <View style={s.emptyBox}>
             <Ionicons name="cube-outline" size={20} color={theme.colors.textMuted} />
-            <Text style={s.emptyText}>No packages available right now.</Text>
+            <Text style={s.emptyText}>{t('bookingFlow.packageStep.noPackages')}</Text>
           </View>
         ) : null}
         {packages.map((pkg) => {
@@ -57,7 +60,7 @@ function BookingPackageStep({
                     <Text style={s.tierPillText}>{pkg.tier}</Text>
                   </View>
                   <Ionicons name="time-outline" size={11} color={theme.colors.textMuted} />
-                  <Text style={s.pkgDuration}>{pkg.estimatedDurationMinutes} min</Text>
+                  <Text style={s.pkgDuration}>{t('bookingFlow.common.minutesShort', { count: pkg.estimatedDurationMinutes })}</Text>
                 </View>
               </View>
               <View style={s.priceCol}>
@@ -73,9 +76,9 @@ function BookingPackageStep({
 
       {/* ══════════════ 2. VEHICLE + SUBSCRIPTION ═══════════════ */}
       <Card>
-        <SectionHeader icon="car-outline" step={2}>Vehicle &amp; Service Type</SectionHeader>
+        <SectionHeader icon="car-outline" step={2}>{t('bookingFlow.packageStep.vehicleServiceType')}</SectionHeader>
 
-        <FieldLabel>Vehicle Type</FieldLabel>
+        <FieldLabel>{t('bookingFlow.packageStep.vehicleType')}</FieldLabel>
         <View style={s.vehicleGrid}>
           {vehicleTypeOptions.map((opt) => {
             const active = form.vehicleType === opt.value;
@@ -102,7 +105,7 @@ function BookingPackageStep({
           })}
         </View>
 
-        <FieldLabel>Subscription</FieldLabel>
+        <FieldLabel>{t('bookingFlow.packageStep.subscription')}</FieldLabel>
         <View style={s.subscriptionPanel}>
           {subLoading ? (
             <ActivityIndicator size="small" color={theme.colors.primary} />
@@ -116,21 +119,21 @@ function BookingPackageStep({
                   </Text>
                 </View>
                 <TouchableOpacity style={s.subscriptionPanelBtn} onPress={() => navigation.navigate('Subscriptions')} activeOpacity={0.8}>
-                  <Text style={s.subscriptionPanelBtnText}>Manage</Text>
+                  <Text style={s.subscriptionPanelBtnText}>{t('bookingFlow.packageStep.manage')}</Text>
                 </TouchableOpacity>
               </View>
               <Text style={s.subscriptionPanelBody}>
                 {subscriptionMatchesVehicle
-                  ? `${activeSubscription.discountPercent}% discount will apply to this ${form.vehicleType} booking.`
-                  : `This plan only applies to ${activeSubscription.vehicleType} bookings.`}
+                  ? t('bookingFlow.packageStep.subscriptionDiscountApplied', { percent: activeSubscription.discountPercent, vehicleType: form.vehicleType })
+                  : t('bookingFlow.packageStep.subscriptionOnlyFor', { vehicleType: activeSubscription.vehicleType })}
               </Text>
             </>
           ) : (
             <>
-              <Text style={s.subscriptionPanelTitle}>No active subscription</Text>
-              <Text style={s.subscriptionPanelBody}>Browse plans for your vehicle type to unlock recurring discounts without touching slot or worker selection.</Text>
+              <Text style={s.subscriptionPanelTitle}>{t('bookingFlow.packageStep.noActiveSubscription')}</Text>
+              <Text style={s.subscriptionPanelBody}>{t('bookingFlow.packageStep.noActiveSubscriptionBody')}</Text>
               <TouchableOpacity style={s.subscriptionPanelBtn} onPress={() => navigation.navigate('Subscriptions')} activeOpacity={0.8}>
-                <Text style={s.subscriptionPanelBtnText}>Browse Plans</Text>
+                <Text style={s.subscriptionPanelBtnText}>{t('bookingFlow.packageStep.browsePlans')}</Text>
               </TouchableOpacity>
             </>
           )}

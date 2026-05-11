@@ -60,6 +60,17 @@ Glanz is a vehicle-detailing marketplace. Customers book detailing services for 
 
 The web and mobile apps are separate clients talking to the same REST API. **All business logic lives in the backend.** Frontend apps are thin display layers.
 
+### Localization architecture (important)
+
+- **Web:** custom translation provider in `glanz-frontend/src/context/LanguageContext.jsx`.
+- **Mobile:** `react-i18next` with locale JSON files in `Glanz-Mobile/src/locales/`.
+- **Fallback behavior:** missing translation keys render the key string; this is intentional for fast gap detection during QA.
+- **Current convention:**
+  - Web keys grouped by domain files (for example `common`, `bookings`).
+  - Mobile keys grouped in top-level namespaces (for example `bookingFlow`, `adminPackages`, `adminJobs`).
+
+If you add any user-facing text, add keys in all supported locales (`en`, `de`, `ar`) in the same change.
+
 ### Database
 
 - **Development**: SQLite (`glanz.db` in repo root)
@@ -1346,6 +1357,11 @@ Worker finishes:
 ---
 
 ## 8. Known Edge Cases & Race Conditions
+
+### 8.x i18n coverage risk (May 2026)
+
+- High-traffic screens are mostly localized, but some long admin/worker screens can still contain hardcoded literals.
+- Before release, perform a repository-wide i18n gap scan and patch remaining text literals in admin surfaces first.
 
 ### 8.1 Double booking (slot race condition)
 

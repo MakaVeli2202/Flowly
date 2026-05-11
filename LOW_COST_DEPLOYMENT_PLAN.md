@@ -11,6 +11,16 @@
 
 ## What Was Changed In Code
 
+### Connection-string startup reliability
+
+`Program.cs` now resolves PostgreSQL connection strings with an environment-first strategy and supports `DATABASE_URL` conversion.
+
+Benefits:
+
+- safer low-cost platform deploys (Railway/Fly/Render style `DATABASE_URL`)
+- clear startup failures when connection config is missing or placeholder
+- lower incident/debug time during first production boot
+
 ### Upload storage
 
 The API no longer needs app-instance disk for production uploads.
@@ -256,3 +266,11 @@ If cost minimization is the main goal, this is the best default mix:
 - add CDN in front of object storage if public media traffic grows
 - add lifecycle rules for old booking photos if business policy allows
 - move long-running non-request work off the API instance if traffic grows
+
+## Operational Note: Translation Coverage
+
+Localization work has expanded across web/mobile admin flows. This has negligible infra cost impact but a meaningful QA impact.
+
+Recommended low-cost practice:
+
+- add a lightweight i18n gap scan in release QA to catch hardcoded literals early and avoid expensive post-release hotfix cycles.

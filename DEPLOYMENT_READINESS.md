@@ -97,6 +97,24 @@ Use the interactive checklist at `/admin/dev-settings`. Items:
 - [ ] Tested on real mobile device (iOS + Android)
 - [ ] End-to-end booking flow tested with live payment
 
+## May 2026 Status Update
+
+### Backend startup hardening
+
+- API startup now resolves Postgres connection from `ConnectionStrings__DefaultConnection` or `DATABASE_URL`.
+- `DATABASE_URL` values (`postgres://...`) are converted to Npgsql format at startup.
+- Placeholder or invalid connection strings fail fast with clear startup errors instead of opaque Npgsql parsing failures.
+
+### Localization readiness snapshot
+
+- Web app: shared UI and major admin booking detail flows are translation-aware.
+- Mobile app: booking flow and key admin screens (`AdminJobPositions`, `AdminPackages`, `AdminOffers`, `AdminServices`) are translation-aware.
+- Mobile app: `AdminJobs` received a high-impact localization pass (alerts/errors/status labels/actions), but residual hardcoded strings still exist in deep worker/admin modal text.
+
+### Recommended pre-release gate
+
+- Run a final i18n gap scan on both web and mobile admin surfaces and close remaining hardcoded UI literals before production release.
+
 ---
 
 ## What You Might Be Missing

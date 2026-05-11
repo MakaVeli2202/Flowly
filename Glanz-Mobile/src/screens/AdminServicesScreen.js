@@ -7,6 +7,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useHeaderHeight } from '@react-navigation/elements';
+import { useTranslation } from 'react-i18next';
 import { servicesAPI } from '../api/services';
 import { productsAPI } from '../api/products';
 import { formatQAR } from '../utils/currency';
@@ -37,6 +38,7 @@ const PrismLeftBar = ({ color }) => (
 
 export default function AdminServicesScreen() {
   const headerHeight = useHeaderHeight();
+  const { t } = useTranslation();
 
   const [services,   setServices]   = useState([]);
   const [products,   setProducts]   = useState([]);
@@ -57,7 +59,7 @@ export default function AdminServicesScreen() {
       setServices(svc);
       setProducts(prod);
     } catch {
-      Alert.alert('Error', 'Failed to load data');
+      Alert.alert(t('common.error'), t('adminServices.failedLoadData'));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -102,17 +104,17 @@ export default function AdminServicesScreen() {
   const handleSave = async () => {
     const { name, defaultDurationMinutes, serviceProducts } = form;
     if (!name.trim() || !defaultDurationMinutes.trim()) {
-      Alert.alert('Validation', 'Name and duration are required');
+      Alert.alert(t('adminServices.validationTitle'), t('adminServices.nameDurationRequired'));
       return;
     }
     const dur = parseInt(defaultDurationMinutes, 10);
     if (isNaN(dur) || dur <= 0) {
-      Alert.alert('Validation', 'Duration must be a positive integer');
+      Alert.alert(t('adminServices.validationTitle'), t('adminServices.durationPositiveInteger'));
       return;
     }
     for (const sp of serviceProducts) {
       if (!sp.productId || !sp.quantityUsed) {
-        Alert.alert('Validation', 'Fill in all product rows or remove them');
+        Alert.alert(t('adminServices.validationTitle'), t('adminServices.fillOrRemoveProductRows'));
         return;
       }
     }
@@ -135,23 +137,23 @@ export default function AdminServicesScreen() {
       setModalVisible(false);
       load();
     } catch (err) {
-      Alert.alert('Error', err?.response?.data?.message || 'Failed to save service');
+      Alert.alert(t('common.error'), err?.response?.data?.message || t('adminServices.failedSaveService'));
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = (item) => {
-    Alert.alert('Delete Service', `Delete "${item.name}"? This cannot be undone.`, [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(t('adminServices.deleteService'), t('adminServices.deleteServiceConfirm', { name: item.name }), [
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: 'Delete', style: 'destructive',
+        text: t('adminServices.delete'), style: 'destructive',
         onPress: async () => {
           try {
             await servicesAPI.delete(item.id);
             load();
           } catch {
-            Alert.alert('Error', 'Failed to delete service');
+            Alert.alert(t('common.error'), t('adminServices.failedDeleteService'));
           }
         },
       },
@@ -182,8 +184,8 @@ export default function AdminServicesScreen() {
             <Ionicons name="construct" size={20} color={theme.colors.primary} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={s.pageTitle}>Services</Text>
-            <Text style={s.pageSubtitle}>{services.length} service{services.length !== 1 ? 's' : ''} total</Text>
+            <Text style={s.pageTitle}>{t('adminServices.services')}</Text>
+            <Text style={s.pageSubtitle}>{t('adminServices.totalServices', { count: services.length })}</Text>
           </View>
           <TouchableOpacity style={s.addBtn} onPress={openCreate} activeOpacity={0.75}>
             <Ionicons name="add" size={20} color={theme.colors.ink} />
@@ -195,7 +197,7 @@ export default function AdminServicesScreen() {
         {services.length === 0 ? (
           <View style={s.emptyBox}>
             <Ionicons name="construct-outline" size={42} color={theme.colors.textMuted} />
-            <Text style={s.emptyText}>No services yet. Tap + to add one.</Text>
+            <Text style={s.emptyText}>{t('adminServices.noServicesYet')}</Text>
           </View>
         ) : (
           services.map((svc) => (
@@ -208,11 +210,11 @@ export default function AdminServicesScreen() {
                     <View style={s.tagRow}>
                       <View style={[s.tag, { backgroundColor: T(0.10), borderColor: T(0.22) }]}>
                         <Ionicons name="time-outline" size={11} color="#0EA5A0" />
-                        <Text style={[s.tagText, { color: '#0EA5A0' }]}>{svc.defaultDurationMinutes} min</Text>
+                        <Text style={[s.tagText, { color: '#0EA5A0' }]}>{t('bookingFlow.common.minutesShort', { count: svc.defaultDurationMinutes })}</Text>
                       </View>
                       <View style={[s.tag, { backgroundColor: G(0.10), borderColor: G(0.22) }]}>
                         <Text style={[s.tagText, { color: theme.colors.primary }]}>
-                          {(svc.products || []).length} product{(svc.products || []).length !== 1 ? 's' : ''}
+                          {t('adminServices.totalProducts', { count: (svc.products || []).length })}
                         </Text>
                       </View>
                     </View>
@@ -242,7 +244,7 @@ export default function AdminServicesScreen() {
 
                 {svc.estimatedCost != null && (
                   <View style={s.costRow}>
-                    <Text style={s.costLabel}>Est. Cost</Text>
+                    <Text style={s.costLabel}>{t('adminServices.estimatedCost')}</Text>
                     <Text style={s.costValue}>{formatQAR(svc.estimatedCost)}</Text>
                   </View>
                 )}
@@ -260,28 +262,28 @@ export default function AdminServicesScreen() {
             <ScrollView style={s.sheet} contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
               <View style={s.sheetHandle} />
               <View style={s.sheetHeader}>
-                <Text style={s.sheetTitle}>{editing ? 'Edit Service' : 'New Service'}</Text>
+                <Text style={s.sheetTitle}>{editing ? t('adminServices.editService') : t('adminServices.newService')}</Text>
                 <TouchableOpacity onPress={() => setModalVisible(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                   <Ionicons name="close" size={22} color={theme.colors.textMuted} />
                 </TouchableOpacity>
               </View>
               <SpectrumLine style={{ marginBottom: 18 }} />
 
-              <Text style={s.fieldLabel}>Service Name *</Text>
-              <TextInput style={s.input} value={form.name} onChangeText={(v) => setForm((f) => ({ ...f, name: v }))} placeholder="e.g. Hand Wash" placeholderTextColor={theme.colors.textMuted} />
+              <Text style={s.fieldLabel}>{t('adminServices.serviceNameRequiredLabel')}</Text>
+              <TextInput style={s.input} value={form.name} onChangeText={(v) => setForm((f) => ({ ...f, name: v }))} placeholder={t('adminServices.serviceNamePlaceholder')} placeholderTextColor={theme.colors.textMuted} />
 
-              <Text style={[s.fieldLabel, { marginTop: 12 }]}>Duration (minutes) *</Text>
+              <Text style={[s.fieldLabel, { marginTop: 12 }]}>{t('adminServices.durationMinutesRequiredLabel')}</Text>
               <TextInput style={s.input} value={form.defaultDurationMinutes} onChangeText={(v) => setForm((f) => ({ ...f, defaultDurationMinutes: v }))} placeholder="30" placeholderTextColor={theme.colors.textMuted} keyboardType="number-pad" />
 
-              <Text style={[s.fieldLabel, { marginTop: 12 }]}>Description</Text>
-              <TextInput style={[s.input, { minHeight: 72, textAlignVertical: 'top' }]} value={form.description} onChangeText={(v) => setForm((f) => ({ ...f, description: v }))} placeholder="Service description…" placeholderTextColor={theme.colors.textMuted} multiline />
+              <Text style={[s.fieldLabel, { marginTop: 12 }]}>{t('adminServices.description')}</Text>
+              <TextInput style={[s.input, { minHeight: 72, textAlignVertical: 'top' }]} value={form.description} onChangeText={(v) => setForm((f) => ({ ...f, description: v }))} placeholder={t('adminServices.serviceDescriptionPlaceholder')} placeholderTextColor={theme.colors.textMuted} multiline />
 
               {/* Products */}
               <View style={s.sectionRow}>
-                <Text style={s.sectionLabel}>Products Used ({form.serviceProducts.length})</Text>
+                <Text style={s.sectionLabel}>{t('adminServices.productsUsed', { count: form.serviceProducts.length })}</Text>
                 <TouchableOpacity style={s.smallAddBtn} onPress={addServiceProduct} activeOpacity={0.75}>
                   <Ionicons name="add" size={14} color={theme.colors.ink} />
-                  <Text style={s.smallAddText}>Add</Text>
+                  <Text style={s.smallAddText}>{t('adminServices.add')}</Text>
                 </TouchableOpacity>
               </View>
 
@@ -293,7 +295,7 @@ export default function AdminServicesScreen() {
                     activeOpacity={0.75}
                   >
                     <Text style={sp.productId ? s.pickerText : s.pickerPlaceholder} numberOfLines={1}>
-                      {sp.productId ? (products.find((p) => String(p.id) === sp.productId)?.name || 'Unknown') : 'Select product'}
+                      {sp.productId ? (products.find((p) => String(p.id) === sp.productId)?.name || t('adminServices.unknown')) : t('adminServices.selectProduct')}
                     </Text>
                     <Ionicons name="chevron-down" size={14} color={theme.colors.textMuted} />
                   </TouchableOpacity>
@@ -301,7 +303,7 @@ export default function AdminServicesScreen() {
                     style={[s.input, { width: 72 }]}
                     value={sp.quantityUsed}
                     onChangeText={(v) => updateServiceProduct(idx, 'quantityUsed', v)}
-                    placeholder="Qty"
+                    placeholder={t('adminServices.qty')}
                     placeholderTextColor={theme.colors.textMuted}
                     keyboardType="decimal-pad"
                   />
@@ -313,10 +315,10 @@ export default function AdminServicesScreen() {
 
               <View style={[s.sheetActions, { marginTop: 20 }]}>
                 <TouchableOpacity style={s.cancelBtn} onPress={() => setModalVisible(false)} activeOpacity={0.7}>
-                  <Text style={s.cancelBtnText}>Cancel</Text>
+                  <Text style={s.cancelBtnText}>{t('common.cancel')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={s.saveBtn} onPress={handleSave} activeOpacity={0.75} disabled={saving}>
-                  {saving ? <ActivityIndicator color={theme.colors.ink} size="small" /> : <Text style={s.saveBtnText}>{editing ? 'Update' : 'Create'}</Text>}
+                  {saving ? <ActivityIndicator color={theme.colors.ink} size="small" /> : <Text style={s.saveBtnText}>{editing ? t('adminServices.update') : t('adminServices.create')}</Text>}
                 </TouchableOpacity>
               </View>
             </ScrollView>
@@ -330,7 +332,7 @@ export default function AdminServicesScreen() {
           <View style={s.sheet}>
             <View style={s.sheetHandle} />
             <View style={s.sheetHeader}>
-              <Text style={s.sheetTitle}>Select Product</Text>
+              <Text style={s.sheetTitle}>{t('adminServices.selectProduct')}</Text>
               <TouchableOpacity onPress={() => setPickerVisible(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                 <Ionicons name="close" size={22} color={theme.colors.textMuted} />
               </TouchableOpacity>

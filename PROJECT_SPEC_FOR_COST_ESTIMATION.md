@@ -29,7 +29,8 @@
 - **Auth:** JWT Bearer tokens (60min access, 30-day refresh tokens in HttpOnly cookies)
 - **Roles:** Admin, Customer, Employee (was "Worker")
 - **Real-time:** HTTP polling (SignalR removed for cost reasons)
-- **File Uploads:** Local `wwwroot/uploads/` directory (profile images, vehicles, booking photos, loyalty screenshots)
+- **File Uploads:** Object-storage abstraction (`S3` provider for production, `Local` fallback for development)
+- **Startup config hardening:** connection string resolution supports both `ConnectionStrings__DefaultConnection` and `DATABASE_URL`
 
 ### Frontend (glanz-frontend)
 - **Framework:** React 19 with Vite 8.0.8
@@ -153,6 +154,8 @@
 ---
 
 ## 5. File Upload Storage Needs
+
+Production assumption: media should be stored in S3-compatible object storage, not app-instance disk.
 
 | Type | Location | Est. Size/File | Est. Count | Total Storage |
 |------|----------|------------------|-------------|---------------|
@@ -314,7 +317,7 @@ CORS__AllowedOrigins__0=https://yourdomain.com
 
 ### Storage
 - **File Uploads:** 5-20GB (images, screenshots, videos)
-- **Static Assets:** 13.5GB (including 2 large background videos)
+- **Static Assets:** ~13.5MB initial bundle (including current large background videos)
 
 ### Bandwidth
 - **Est. Monthly Transfer:** 100-500GB (depends on video hosting)
@@ -333,7 +336,7 @@ CORS__AllowedOrigins__0=https://yourdomain.com
 | **Users** | 500-5,000 customers, 10-50 employees |
 | **Bookings/Month** | 200-2,000 bookings |
 | **API Requests/Month** | ~50,000-500,000 (including polling) |
-| **Storage** | 5-20GB (uploads) + 13.5GB (static assets) |
+| **Storage** | 5-20GB (uploads, object storage) + ~13.5MB (static assets) |
 | **Bandwidth** | 100-500GB/month |
 | **Database** | 2 vCPU, 4GB RAM, 20-50GB storage |
 | **Compute** | 1-2 vCPU, 2-4GB RAM (API) |

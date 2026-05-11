@@ -84,5 +84,44 @@
   "completedBookingsRequired": "عدد الحجوزات المطلوبة",
   "vehiclePriceMultipliers": "معاملات أسعار المركبات",
   "enableSmsFollowUps": "تفعيل متابعة SMS",
-  "developmentMode": "وضع التطوير"
+  "developmentMode": "وضع التطوير",
+  "avatarPicker": {
+    "title": "اختر صورة رمزية",
+    "subtitle": "صور رمزية بطابع عربي - اضغط لاستخدامها فورا.",
+    "labels": {
+      "gulfMale": "خليجي - رجل",
+      "gulfFemale": "خليجية - امراة",
+      "arabMale": "عربي - رجل",
+      "arabFemale": "عربية - امراة",
+      "expatMale": "مقيم - رجل",
+      "expatFemale": "مقيمة - امراة"
+    },
+    "desc": {
+      "kufiyaAgal": "كوفية وعقال",
+      "kufiya": "كوفية",
+      "kufiyaBeard": "كوفية ولحية",
+      "blackHijab": "حجاب اسود",
+      "tealHijab": "حجاب تركوازي",
+      "burgundyHijab": "حجاب خمري",
+      "wavyHair": "شعر متموج",
+      "shortHair": "شعر قصير",
+      "purpleHijab": "حجاب بنفسجي",
+      "coralHijab": "حجاب مرجاني",
+      "casual": "كاجوال"
+    }
+  },
+  "chat": {
+    "welcome": "اهلا! انا مساعد Glanz. اسالني عن الخدمات والاسعار والحجوزات او الالغاء.",
+    "errorReply": "عذرا، لم استطع معالجة طلبك حاليا. حاول مرة اخرى او تواصل مع support@glanz.qa.",
+    "openAria": "فتح مساعد الدردشة",
+    "title": "مساعد Glanz",
+    "subtitle": "يرد عادة بسرعة",
+    "placeholder": "اطرح سؤالا..."
+  },
+  "errorBoundary": {
+    "title": "عذرا! حدث خطا ما",
+    "fallbackMessage": "حدث امر غير متوقع",
+    "tryAgain": "حاول مرة اخرى",
+    "goHome": "العودة للرئيسية"
+  }
 }

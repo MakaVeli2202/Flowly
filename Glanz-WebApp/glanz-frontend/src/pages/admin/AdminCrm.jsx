@@ -107,6 +107,74 @@ const UI_BY_LANG = {
     customers: 'Customers',
     leads: 'Leads',
     feedback: 'Feedback',
+    totalCustomers: 'Total Customers',
+    activeThisMonth: 'Active (This Month)',
+    atRisk: 'At Risk',
+    noBooking60Days: "Haven't booked in 60+ days",
+    vip: 'VIP',
+    highValueCustomers: 'High-value customers',
+    newLabel: 'New',
+    last30Days: 'Last 30 days',
+    revenueOverview: 'Revenue Overview',
+    totalRevenueAllTime: 'Total Revenue (All Time)',
+    averageCustomerValue: 'Average Customer Value',
+    atRiskNeedAction: 'At-Risk Customers - Need Action!',
+    lastLabel: 'Last',
+    daysAgo: 'days ago',
+    sendOffer: 'Send Offer',
+    noAtRiskCustomers: 'No at-risk customers!',
+    topSpenders: 'Top Spenders',
+    bookings: 'Bookings',
+    totalSpent: 'Total Spent',
+    segment: 'Segment',
+    actions: 'Actions',
+    editTag: 'Edit / Tag',
+    searchCustomers: 'Search customers...',
+    selected: 'selected',
+    contact: 'Contact',
+    lastBooking: 'Last Booking',
+    never: 'Never',
+    allStatus: 'All Status',
+    allSources: 'All Sources',
+    addLead: 'Add Lead',
+    leadSources: 'Lead Sources',
+    noLeadsYet: 'No leads yet. Leads come from external sources like Facebook Lead Ads, Google LSA, or manual entry.',
+    edit: 'Edit',
+    delete: 'Delete',
+    totalLeads: 'Total Leads',
+    booked: 'Booked',
+    lost: 'Lost',
+    totalFeedback: 'Total Feedback',
+    complaints: 'Complaints',
+    unresolved: 'Unresolved',
+    anonymous: 'Anonymous',
+    booking: 'Booking',
+    worker: 'Worker',
+    resolved: 'Resolved',
+    markResolved: 'Mark Resolved',
+    noFeedbackYet: 'No feedback yet',
+    editCustomer: 'Edit Customer',
+    quickTagsToggle: 'Quick Tags (click to toggle)',
+    customTags: 'Custom Tags (comma separated)',
+    notesInternal: 'Notes (internal)',
+    notesPlaceholder: 'Add internal notes about this customer...',
+    totalBookings: 'Total Bookings',
+    currentSegment: 'Current Segment',
+    cancel: 'Cancel',
+    saveChanges: 'Save Changes',
+    editLead: 'Edit Lead',
+    addNewLead: 'Add New Lead',
+    nameRequired: 'Name *',
+    phoneRequired: 'Phone *',
+    email: 'Email',
+    source: 'Source',
+    status: 'Status',
+    notes: 'Notes',
+    save: 'Save',
+    quickAction1: 'Select customers -> Use the checkbox to select multiple customers',
+    quickAction2: 'Quick Tag -> Click VIP, Fleet, or Commercial buttons to tag selected customers',
+    quickAction3: 'Add Custom Tag -> Type a tag and click the tag icon to apply',
+    quickAction4: 'Edit Customer -> Click the edit icon to add notes or manually set tags'
   },
   ar: {
     title: 'لوحة CRM',
@@ -120,6 +188,74 @@ const UI_BY_LANG = {
     customers: 'العملاء',
     leads: 'العملاء المحتملون',
     feedback: 'الملاحظات',
+    totalCustomers: 'إجمالي العملاء',
+    activeThisMonth: 'النشطون هذا الشهر',
+    atRisk: 'معرضون للخطر',
+    noBooking60Days: 'لم يحجزوا منذ 60+ يومًا',
+    vip: 'كبار العملاء',
+    highValueCustomers: 'عملاء ذوو قيمة عالية',
+    newLabel: 'جديد',
+    last30Days: 'آخر 30 يومًا',
+    revenueOverview: 'نظرة عامة على الإيرادات',
+    totalRevenueAllTime: 'إجمالي الإيراد (كل الوقت)',
+    averageCustomerValue: 'متوسط قيمة العميل',
+    atRiskNeedAction: 'عملاء معرضون للخطر - يحتاجون إجراء!',
+    lastLabel: 'آخر',
+    daysAgo: 'منذ أيام',
+    sendOffer: 'إرسال عرض',
+    noAtRiskCustomers: 'لا يوجد عملاء معرضون للخطر!',
+    topSpenders: 'أعلى العملاء إنفاقًا',
+    bookings: 'الحجوزات',
+    totalSpent: 'إجمالي الإنفاق',
+    segment: 'التصنيف',
+    actions: 'الإجراءات',
+    editTag: 'تعديل / وسم',
+    searchCustomers: 'ابحث عن العملاء...',
+    selected: 'محدد',
+    contact: 'التواصل',
+    lastBooking: 'آخر حجز',
+    never: 'أبدًا',
+    allStatus: 'كل الحالات',
+    allSources: 'كل المصادر',
+    addLead: 'إضافة عميل محتمل',
+    leadSources: 'مصادر العملاء المحتملين',
+    noLeadsYet: 'لا يوجد عملاء محتملون بعد. تأتي العملاء المحتملون من مصادر خارجية أو إدخال يدوي.',
+    edit: 'تعديل',
+    delete: 'حذف',
+    totalLeads: 'إجمالي العملاء المحتملين',
+    booked: 'محجوز',
+    lost: 'مفقود',
+    totalFeedback: 'إجمالي الملاحظات',
+    complaints: 'الشكاوى',
+    unresolved: 'غير محلول',
+    anonymous: 'مجهول',
+    booking: 'الحجز',
+    worker: 'العامل',
+    resolved: 'تم الحل',
+    markResolved: 'تحديد كمحلول',
+    noFeedbackYet: 'لا توجد ملاحظات بعد',
+    editCustomer: 'تعديل العميل',
+    quickTagsToggle: 'وسوم سريعة (انقر للتبديل)',
+    customTags: 'وسوم مخصصة (مفصولة بفواصل)',
+    notesInternal: 'ملاحظات داخلية',
+    notesPlaceholder: 'أضف ملاحظات داخلية عن هذا العميل...',
+    totalBookings: 'إجمالي الحجوزات',
+    currentSegment: 'التصنيف الحالي',
+    cancel: 'إلغاء',
+    saveChanges: 'حفظ التغييرات',
+    editLead: 'تعديل عميل محتمل',
+    addNewLead: 'إضافة عميل محتمل جديد',
+    nameRequired: 'الاسم *',
+    phoneRequired: 'الهاتف *',
+    email: 'البريد الإلكتروني',
+    source: 'المصدر',
+    status: 'الحالة',
+    notes: 'ملاحظات',
+    save: 'حفظ',
+    quickAction1: 'اختيار العملاء -> استخدم مربع الاختيار لتحديد عدة عملاء',
+    quickAction2: 'وسم سريع -> انقر ازرار VIP او Fleet او Commercial لوسم العملاء المحددين',
+    quickAction3: 'إضافة وسم مخصص -> اكتب الوسم ثم انقر ايقونة الوسم للتطبيق',
+    quickAction4: 'تعديل العميل -> انقر ايقونة التعديل لإضافة ملاحظات او تحديد الوسوم يدويًا'
   },
   de: {
     title: 'CRM-Dashboard',
@@ -133,6 +269,74 @@ const UI_BY_LANG = {
     customers: 'Kunden',
     leads: 'Leads',
     feedback: 'Feedback',
+    totalCustomers: 'Kunden gesamt',
+    activeThisMonth: 'Aktiv (diesen Monat)',
+    atRisk: 'Gefahrdet',
+    noBooking60Days: 'Seit 60+ Tagen keine Buchung',
+    vip: 'VIP',
+    highValueCustomers: 'Wertvolle Kunden',
+    newLabel: 'Neu',
+    last30Days: 'Letzte 30 Tage',
+    revenueOverview: 'Umsatzubersicht',
+    totalRevenueAllTime: 'Gesamtumsatz (alle Zeit)',
+    averageCustomerValue: 'Durchschnittlicher Kundenwert',
+    atRiskNeedAction: 'Gefahrdete Kunden - Handlungsbedarf!',
+    lastLabel: 'Zuletzt',
+    daysAgo: 'Tage her',
+    sendOffer: 'Angebot senden',
+    noAtRiskCustomers: 'Keine gefahrdeten Kunden!',
+    topSpenders: 'Top-Kunden nach Ausgaben',
+    bookings: 'Buchungen',
+    totalSpent: 'Gesamtausgaben',
+    segment: 'Segment',
+    actions: 'Aktionen',
+    editTag: 'Bearbeiten / Tag',
+    searchCustomers: 'Kunden suchen...',
+    selected: 'ausgewahlt',
+    contact: 'Kontakt',
+    lastBooking: 'Letzte Buchung',
+    never: 'Nie',
+    allStatus: 'Alle Status',
+    allSources: 'Alle Quellen',
+    addLead: 'Lead hinzufugen',
+    leadSources: 'Lead-Quellen',
+    noLeadsYet: 'Noch keine Leads. Leads kommen aus externen Quellen oder manueller Eingabe.',
+    edit: 'Bearbeiten',
+    delete: 'Loschen',
+    totalLeads: 'Leads gesamt',
+    booked: 'Gebucht',
+    lost: 'Verloren',
+    totalFeedback: 'Feedback gesamt',
+    complaints: 'Beschwerden',
+    unresolved: 'Ungelost',
+    anonymous: 'Anonym',
+    booking: 'Buchung',
+    worker: 'Mitarbeiter',
+    resolved: 'Gelost',
+    markResolved: 'Als gelost markieren',
+    noFeedbackYet: 'Noch kein Feedback',
+    editCustomer: 'Kunde bearbeiten',
+    quickTagsToggle: 'Schnell-Tags (zum Umschalten klicken)',
+    customTags: 'Benutzerdefinierte Tags (kommagetrennt)',
+    notesInternal: 'Notizen (intern)',
+    notesPlaceholder: 'Interne Notizen zu diesem Kunden hinzufugen...',
+    totalBookings: 'Buchungen gesamt',
+    currentSegment: 'Aktuelles Segment',
+    cancel: 'Abbrechen',
+    saveChanges: 'Anderungen speichern',
+    editLead: 'Lead bearbeiten',
+    addNewLead: 'Neuen Lead hinzufugen',
+    nameRequired: 'Name *',
+    phoneRequired: 'Telefon *',
+    email: 'E-Mail',
+    source: 'Quelle',
+    status: 'Status',
+    notes: 'Notizen',
+    save: 'Speichern',
+    quickAction1: 'Kunden auswahlen -> Mit der Checkbox mehrere Kunden auswahlen',
+    quickAction2: 'Schnell-Tag -> Klicke VIP-, Fleet- oder Commercial-Buttons fur ausgewahlte Kunden',
+    quickAction3: 'Benutzerdefinierten Tag hinzufugen -> Tag eingeben und auf das Tag-Symbol klicken',
+    quickAction4: 'Kunde bearbeiten -> Auf das Bearbeiten-Symbol klicken, um Notizen oder Tags zu setzen'
   },
 };
 
@@ -368,10 +572,10 @@ export default function AdminCrm() {
           <div className="mt-4 p-3 rounded-lg" style={{ background: 'var(--surface-bg)' }}>
             <p className="text-sm font-medium" style={{ color: 'var(--heading-color)' }}>💡 {ui.quickActions}</p>
             <ul className="text-xs mt-2 space-y-1" style={{ color: 'var(--muted-color)' }}>
-              <li>• <b>Select customers</b> → Use the checkbox to select multiple customers</li>
-              <li>• <b>Quick Tag</b> → Click VIP, Fleet, or Commercial buttons to tag selected customers</li>
-              <li>• <b>Add Custom Tag</b> → Type a tag and click the tag icon to apply</li>
-              <li>• <b>Edit Customer</b> → Click the edit icon to add notes or manually set tags</li>
+              <li>• {ui.quickAction1}</li>
+              <li>• {ui.quickAction2}</li>
+              <li>• {ui.quickAction3}</li>
+              <li>• {ui.quickAction4}</li>
             </ul>
           </div>
         </div>
@@ -408,7 +612,7 @@ export default function AdminCrm() {
             <div className="stat-card">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium" style={{ color: 'var(--muted-color)' }}>Total Customers</p>
+                  <p className="text-sm font-medium" style={{ color: 'var(--muted-color)' }}>{ui.totalCustomers}</p>
                   <p className="text-3xl font-bold" style={{ color: 'var(--heading-color)' }}>{stats.totalCustomers}</p>
                 </div>
                 <div className="p-3 rounded-full bg-[var(--cta-color)] bg-opacity-10">
@@ -420,7 +624,7 @@ export default function AdminCrm() {
             <div className="stat-card">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium" style={{ color: 'var(--muted-color)' }}>Active (This Month)</p>
+                  <p className="text-sm font-medium" style={{ color: 'var(--muted-color)' }}>{ui.activeThisMonth}</p>
                   <p className="text-3xl font-bold" style={{ color: '#22c55e' }}>{stats.activeThisMonth}</p>
                 </div>
                 <div className="p-3 rounded-full bg-green-500 bg-opacity-10">
@@ -432,57 +636,57 @@ export default function AdminCrm() {
             <div className="stat-card">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium" style={{ color: 'var(--muted-color)' }}>⚠️ At Risk</p>
+                  <p className="text-sm font-medium" style={{ color: 'var(--muted-color)' }}>⚠️ {ui.atRisk}</p>
                   <p className="text-3xl font-bold" style={{ color: '#ef4444' }}>{stats.atRiskCustomers}</p>
                 </div>
                 <div className="p-3 rounded-full bg-red-500 bg-opacity-10">
                   <AlertTriangle size={24} className="text-red-500" />
                 </div>
               </div>
-              <p className="text-xs mt-2" style={{ color: 'var(--muted-color)' }}>Haven't booked in 60+ days</p>
+              <p className="text-xs mt-2" style={{ color: 'var(--muted-color)' }}>{ui.noBooking60Days}</p>
             </div>
 
             <div className="stat-card">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium" style={{ color: 'var(--muted-color)' }}>⭐ VIP</p>
+                  <p className="text-sm font-medium" style={{ color: 'var(--muted-color)' }}>⭐ {ui.vip}</p>
                   <p className="text-3xl font-bold" style={{ color: '#c8a96b' }}>{stats.vipCustomers}</p>
                 </div>
                 <div className="p-3 rounded-full bg-yellow-500 bg-opacity-10">
                   <Crown size={24} style={{ color: '#c8a96b' }} />
                 </div>
               </div>
-              <p className="text-xs mt-2" style={{ color: 'var(--muted-color)' }}>High-value customers</p>
+              <p className="text-xs mt-2" style={{ color: 'var(--muted-color)' }}>{ui.highValueCustomers}</p>
             </div>
 
             <div className="stat-card">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium" style={{ color: 'var(--muted-color)' }}>🆕 New</p>
+                  <p className="text-sm font-medium" style={{ color: 'var(--muted-color)' }}>🆕 {ui.newLabel}</p>
                   <p className="text-3xl font-bold" style={{ color: '#22c55e' }}>{stats.newCustomers}</p>
                 </div>
                 <div className="p-3 rounded-full bg-green-500 bg-opacity-10">
                   <UserPlus size={24} className="text-green-500" />
                 </div>
               </div>
-              <p className="text-xs mt-2" style={{ color: 'var(--muted-color)' }}>Last 30 days</p>
+              <p className="text-xs mt-2" style={{ color: 'var(--muted-color)' }}>{ui.last30Days}</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="p-5 rounded-xl" style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)' }}>
               <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--heading-color)' }}>
-                💰 Revenue Overview
+                💰 {ui.revenueOverview}
               </h3>
               <div className="space-y-4">
                 <div className="flex justify-between items-center p-3 rounded-lg" style={{ background: 'var(--surface-bg)' }}>
-                  <span style={{ color: 'var(--muted-color)' }}>Total Revenue (All Time)</span>
+                  <span style={{ color: 'var(--muted-color)' }}>{ui.totalRevenueAllTime}</span>
                   <span className="font-bold text-xl" style={{ color: 'var(--heading-color)' }}>
                     {formatCurrency(stats.totalRevenue)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center p-3 rounded-lg" style={{ background: 'var(--surface-bg)' }}>
-                  <span style={{ color: 'var(--muted-color)' }}>Average Customer Value</span>
+                  <span style={{ color: 'var(--muted-color)' }}>{ui.averageCustomerValue}</span>
                   <span className="font-semibold" style={{ color: 'var(--text-color)' }}>
                     {formatCurrency(stats.averageCustomerValue)}
                   </span>
@@ -492,7 +696,7 @@ export default function AdminCrm() {
 
             <div className="p-5 rounded-xl" style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)' }}>
               <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--heading-color)' }}>
-                ⚠️ At-Risk Customers - Need Action!
+                ⚠️ {ui.atRiskNeedAction}
               </h3>
               <div className="space-y-3">
                 {stats.recentAtRisk?.slice(0, 5).map(c => (
@@ -503,10 +707,10 @@ export default function AdminCrm() {
                   >
                     <div>
                       <p className="font-medium" style={{ color: 'var(--text-color)' }}>{c.name}</p>
-                      <p className="text-sm" style={{ color: 'var(--muted-color)' }}>Last: {formatDate(c.lastBookedDate)}</p>
+                      <p className="text-sm" style={{ color: 'var(--muted-color)' }}>{ui.lastLabel}: {formatDate(c.lastBookedDate)}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-bold" style={{ color: '#ef4444' }}>{c.daysSinceLastBooking} days ago</p>
+                      <p className="text-sm font-bold" style={{ color: '#ef4444' }}>{c.daysSinceLastBooking} {ui.daysAgo}</p>
                       <button 
                         className="text-xs mt-1 px-2 py-1 rounded bg-[var(--cta-color)] text-white"
                         onClick={(e) => {
@@ -514,13 +718,13 @@ export default function AdminCrm() {
                           openCustomerEdit(c);
                         }}
                       >
-                        Send Offer
+                        {ui.sendOffer}
                       </button>
                     </div>
                   </div>
                 ))}
                 {(!stats.recentAtRisk || stats.recentAtRisk.length === 0) && (
-                  <p className="text-center py-4" style={{ color: 'var(--muted-color)' }}>🎉 No at-risk customers!</p>
+                  <p className="text-center py-4" style={{ color: 'var(--muted-color)' }}>🎉 {ui.noAtRiskCustomers}</p>
                 )}
               </div>
             </div>
@@ -534,11 +738,11 @@ export default function AdminCrm() {
               <table className="w-full">
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
-                    <th className="text-left py-3 px-4" style={{ color: 'var(--muted-color)' }}>Customer</th>
-                    <th className="text-left py-3 px-4" style={{ color: 'var(--muted-color)' }}>Bookings</th>
-                    <th className="text-left py-3 px-4" style={{ color: 'var(--muted-color)' }}>Total Spent</th>
-                    <th className="text-left py-3 px-4" style={{ color: 'var(--muted-color)' }}>Segment</th>
-                    <th className="text-left py-3 px-4" style={{ color: 'var(--muted-color)' }}>Actions</th>
+                    <th className="text-left py-3 px-4" style={{ color: 'var(--muted-color)' }}>{ui.customers}</th>
+                    <th className="text-left py-3 px-4" style={{ color: 'var(--muted-color)' }}>{ui.bookings}</th>
+                    <th className="text-left py-3 px-4" style={{ color: 'var(--muted-color)' }}>{ui.totalSpent}</th>
+                    <th className="text-left py-3 px-4" style={{ color: 'var(--muted-color)' }}>{ui.segment}</th>
+                    <th className="text-left py-3 px-4" style={{ color: 'var(--muted-color)' }}>{ui.actions}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -578,7 +782,7 @@ export default function AdminCrm() {
                           className="text-xs px-2 py-1 rounded"
                           style={{ background: 'var(--surface-bg)', color: 'var(--text-color)' }}
                         >
-                          Edit / Tag
+                          {ui.editTag}
                         </button>
                       </td>
                     </tr>
@@ -616,7 +820,7 @@ export default function AdminCrm() {
                 <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--muted-color)' }} />
                 <input
                   type="text"
-                  placeholder="Search customers..."
+                  placeholder={ui.searchCustomers}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10 pr-4 py-2 rounded-lg"
@@ -631,7 +835,7 @@ export default function AdminCrm() {
               {selectedCustomers.length > 0 && (
                 <div className="flex items-center gap-2 p-2 rounded-lg" style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)' }}>
                   <span className="text-sm" style={{ color: 'var(--muted-color)' }}>
-                    {selectedCustomers.length} selected
+                    {selectedCustomers.length} {ui.selected}
                   </span>
                   <div className="flex gap-1">
                     {QUICK_TAGS.map(tag => (
@@ -663,13 +867,13 @@ export default function AdminCrm() {
                       className="rounded"
                     />
                   </th>
-                  <th className="text-left py-4 px-4" style={{ color: 'var(--muted-color)' }}>Customer</th>
-                  <th className="text-left py-4 px-4" style={{ color: 'var(--muted-color)' }}>Contact</th>
-                  <th className="text-left py-4 px-4" style={{ color: 'var(--muted-color)' }}>Bookings</th>
-                  <th className="text-left py-4 px-4" style={{ color: 'var(--muted-color)' }}>Total Spent</th>
-                  <th className="text-left py-4 px-4" style={{ color: 'var(--muted-color)' }}>Last Booking</th>
-                  <th className="text-left py-4 px-4" style={{ color: 'var(--muted-color)' }}>Segment</th>
-                  <th className="text-left py-4 px-4" style={{ color: 'var(--muted-color)' }}>Actions</th>
+                  <th className="text-left py-4 px-4" style={{ color: 'var(--muted-color)' }}>{ui.customers}</th>
+                  <th className="text-left py-4 px-4" style={{ color: 'var(--muted-color)' }}>{ui.contact}</th>
+                  <th className="text-left py-4 px-4" style={{ color: 'var(--muted-color)' }}>{ui.bookings}</th>
+                  <th className="text-left py-4 px-4" style={{ color: 'var(--muted-color)' }}>{ui.totalSpent}</th>
+                  <th className="text-left py-4 px-4" style={{ color: 'var(--muted-color)' }}>{ui.lastBooking}</th>
+                  <th className="text-left py-4 px-4" style={{ color: 'var(--muted-color)' }}>{ui.segment}</th>
+                  <th className="text-left py-4 px-4" style={{ color: 'var(--muted-color)' }}>{ui.actions}</th>
                 </tr>
               </thead>
               <tbody>
@@ -718,11 +922,11 @@ export default function AdminCrm() {
                     </td>
                     <td className="py-3 px-4">
                       <p className="text-sm" style={{ color: 'var(--text-color)' }}>
-                        {c.lastBookedDate ? formatDate(c.lastBookedDate) : 'Never'}
+                        {c.lastBookedDate ? formatDate(c.lastBookedDate) : ui.never}
                       </p>
                       {c.daysSinceLastBooking > 0 && (
                         <p className="text-xs" style={{ color: c.daysSinceLastBooking > 60 ? '#ef4444' : 'var(--muted-color)' }}>
-                          {c.daysSinceLastBooking} days ago
+                          {c.daysSinceLastBooking} {ui.daysAgo}
                         </p>
                       )}
                     </td>
@@ -756,19 +960,19 @@ export default function AdminCrm() {
         <div className="space-y-4">
           <div className="flex gap-4">
             <div className="p-4 rounded-xl flex-1" style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)' }}>
-              <p className="text-sm" style={{ color: 'var(--muted-color)' }}>Total Leads</p>
+              <p className="text-sm" style={{ color: 'var(--muted-color)' }}>{ui.totalLeads}</p>
               <p className="text-2xl font-bold" style={{ color: 'var(--heading-color)' }}>{leadStats?.total || 0}</p>
             </div>
             <div className="p-4 rounded-xl flex-1" style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)' }}>
-              <p className="text-sm" style={{ color: 'var(--muted-color)' }}>New</p>
+              <p className="text-sm" style={{ color: 'var(--muted-color)' }}>{ui.newLabel}</p>
               <p className="text-2xl font-bold" style={{ color: '#22c55e' }}>{leadStats?.new || 0}</p>
             </div>
             <div className="p-4 rounded-xl flex-1" style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)' }}>
-              <p className="text-sm" style={{ color: 'var(--muted-color)' }}>Booked</p>
+              <p className="text-sm" style={{ color: 'var(--muted-color)' }}>{ui.booked}</p>
               <p className="text-2xl font-bold" style={{ color: '#3b82f6' }}>{leadStats?.booked || 0}</p>
             </div>
             <div className="p-4 rounded-xl flex-1" style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)' }}>
-              <p className="text-sm" style={{ color: 'var(--muted-color)' }}>Lost</p>
+              <p className="text-sm" style={{ color: 'var(--muted-color)' }}>{ui.lost}</p>
               <p className="text-2xl font-bold" style={{ color: '#ef4444' }}>{leadStats?.lost || 0}</p>
             </div>
           </div>
@@ -780,7 +984,7 @@ export default function AdminCrm() {
               className="px-4 py-2 rounded-lg border"
               style={{ background: 'var(--card-bg)', borderColor: 'var(--border-color)' }}
             >
-              <option value="">All Status</option>
+              <option value="">{ui.allStatus}</option>
               <option value="New">New</option>
               <option value="Contacted">Contacted</option>
               <option value="Interested">Interested</option>
@@ -793,7 +997,7 @@ export default function AdminCrm() {
               className="px-4 py-2 rounded-lg border"
               style={{ background: 'var(--card-bg)', borderColor: 'var(--border-color)' }}
             >
-              <option value="">All Sources</option>
+              <option value="">{ui.allSources}</option>
               <option value="Direct">Direct</option>
               <option value="GoogleSearch">Google Search</option>
               <option value="GoogleMaps">Google Maps</option>
@@ -808,13 +1012,13 @@ export default function AdminCrm() {
               className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium"
               style={{ background: 'var(--cta-color)', color: 'white' }}
             >
-              <Plus size={18} /> Add Lead
+              <Plus size={18} /> {ui.addLead}
             </button>
           </div>
 
           {leadStats?.sourceBreakdown && leadStats.sourceBreakdown.length > 0 && (
             <div className="p-4 rounded-xl" style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)' }}>
-              <p className="text-sm font-medium mb-3" style={{ color: 'var(--muted-color)' }}>Lead Sources</p>
+              <p className="text-sm font-medium mb-3" style={{ color: 'var(--muted-color)' }}>{ui.leadSources}</p>
               <div className="flex flex-wrap gap-2">
                 {leadStats.sourceBreakdown.map(s => (
                   <span key={s.source} className="px-3 py-1 rounded-full text-sm" style={{ background: 'var(--cta-soft-bg)', color: 'var(--text-color)' }}>
@@ -829,7 +1033,7 @@ export default function AdminCrm() {
             {leads.length === 0 ? (
               <div className="p-8 text-center rounded-xl" style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)' }}>
                 <Target size={48} className="mx-auto mb-4" style={{ color: 'var(--muted-color)' }} />
-                <p style={{ color: 'var(--muted-color)' }}>No leads yet. Leads come from external sources like Facebook Lead Ads, Google LSA, or manual entry.</p>
+                <p style={{ color: 'var(--muted-color)' }}>{ui.noLeadsYet}</p>
               </div>
             ) : (
               leads.map(lead => (
@@ -861,14 +1065,14 @@ export default function AdminCrm() {
                       <button 
                         onClick={() => setEditingLead(lead)}
                         className="p-2 rounded-lg hover:bg-[var(--cta-soft-bg)]"
-                        title="Edit"
+                        title={ui.edit}
                       >
                         <Edit size={16} style={{ color: 'var(--muted-color)' }} />
                       </button>
                       <button 
                         onClick={() => handleDeleteLead(lead.id)}
                         className="p-2 rounded-lg hover:bg-red-500/10"
-                        title="Delete"
+                        title={ui.delete}
                       >
                         <Trash2 size={16} style={{ color: '#ef4444' }} />
                       </button>
@@ -883,17 +1087,17 @@ export default function AdminCrm() {
         <div className="space-y-4">
           <div className="flex gap-4">
             <div className="p-4 rounded-xl flex-1" style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)' }}>
-              <p className="text-sm" style={{ color: 'var(--muted-color)' }}>Total Feedback</p>
+              <p className="text-sm" style={{ color: 'var(--muted-color)' }}>{ui.totalFeedback}</p>
               <p className="text-2xl font-bold" style={{ color: 'var(--heading-color)' }}>{feedback.length}</p>
             </div>
             <div className="p-4 rounded-xl flex-1" style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)' }}>
-              <p className="text-sm" style={{ color: 'var(--muted-color)' }}>Complaints</p>
+              <p className="text-sm" style={{ color: 'var(--muted-color)' }}>{ui.complaints}</p>
               <p className="text-2xl font-bold" style={{ color: '#ef4444' }}>
                 {feedback.filter(f => f.type === 'Complaint').length}
               </p>
             </div>
             <div className="p-4 rounded-xl flex-1" style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)' }}>
-              <p className="text-sm" style={{ color: 'var(--muted-color)' }}>Unresolved</p>
+              <p className="text-sm" style={{ color: 'var(--muted-color)' }}>{ui.unresolved}</p>
               <p className="text-2xl font-bold" style={{ color: '#f59e0b' }}>
                 {feedback.filter(f => f.type === 'Complaint' && !f.isResolved).length}
               </p>
@@ -920,7 +1124,7 @@ export default function AdminCrm() {
                         {f.type}
                       </span>
                       {f.isAnonymous && (
-                        <span className="text-xs" style={{ color: 'var(--muted-color)' }}>Anonymous</span>
+                        <span className="text-xs" style={{ color: 'var(--muted-color)' }}>{ui.anonymous}</span>
                       )}
                       {f.rating > 0 && (
                         <div className="flex items-center gap-1">
@@ -935,13 +1139,13 @@ export default function AdminCrm() {
                       )}
                     </div>
                     <p className="font-medium" style={{ color: 'var(--text-color)' }}>
-                      {f.isAnonymous ? 'Anonymous' : f.userName || f.userId}
+                      {f.isAnonymous ? ui.anonymous : f.userName || f.userId}
                     </p>
                     {f.bookingNumber && (
-                      <p className="text-sm" style={{ color: 'var(--muted-color)' }}>Booking: {f.bookingNumber}</p>
+                      <p className="text-sm" style={{ color: 'var(--muted-color)' }}>{ui.booking}: {f.bookingNumber}</p>
                     )}
                     {f.workerName && (
-                      <p className="text-sm" style={{ color: 'var(--muted-color)' }}>Worker: {f.workerName}</p>
+                      <p className="text-sm" style={{ color: 'var(--muted-color)' }}>{ui.worker}: {f.workerName}</p>
                     )}
                   </div>
                   <div className="text-right">
@@ -949,13 +1153,13 @@ export default function AdminCrm() {
                       {formatDate(f.createdAt)}
                     </p>
                     {f.isResolved ? (
-                      <span className="text-xs text-green-500">✓ Resolved</span>
+                      <span className="text-xs text-green-500">✓ {ui.resolved}</span>
                     ) : (
                       <button
                         onClick={() => resolveFeedback(f.id, 'Resolved via CRM')}
                         className="text-xs px-2 py-1 rounded bg-[var(--cta-color)] text-white mt-2"
                       >
-                        Mark Resolved
+                        {ui.markResolved}
                       </button>
                     )}
                   </div>
@@ -968,7 +1172,7 @@ export default function AdminCrm() {
               </div>
             ))}
             {feedback.length === 0 && (
-              <p className="text-center py-8" style={{ color: 'var(--muted-color)' }}>No feedback yet</p>
+              <p className="text-center py-8" style={{ color: 'var(--muted-color)' }}>{ui.noFeedbackYet}</p>
             )}
           </div>
         </div>
@@ -978,13 +1182,13 @@ export default function AdminCrm() {
         <div className="fixed inset-0 flex items-center justify-center p-4 z-50" style={{ background: 'rgba(0,0,0,0.5)' }}>
           <div className="rounded-xl p-6 w-full max-w-md" style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)' }}>
             <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--heading-color)' }}>
-              Edit Customer: {editingCustomer.name}
+              {ui.editCustomer}: {editingCustomer.name}
             </h3>
             
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1" style={{ color: 'var(--muted-color)' }}>
-                  Quick Tags (click to toggle)
+                  {ui.quickTagsToggle}
                 </label>
                 <div className="flex gap-2 flex-wrap">
                   {QUICK_TAGS.map(tag => {
@@ -1017,7 +1221,7 @@ export default function AdminCrm() {
               
               <div>
                 <label className="block text-sm font-medium mb-1" style={{ color: 'var(--muted-color)' }}>
-                  Custom Tags (comma separated)
+                  {ui.customTags}
                 </label>
                 <input
                   type="text"
@@ -1031,38 +1235,38 @@ export default function AdminCrm() {
               
               <div>
                 <label className="block text-sm font-medium mb-1" style={{ color: 'var(--muted-color)' }}>
-                  Notes (internal)
+                  {ui.notesInternal}
                 </label>
                 <textarea
                   value={customerForm.notes}
                   onChange={(e) => setCustomerForm({ ...customerForm, notes: e.target.value })}
                   className="w-full px-4 py-2 rounded-lg h-32"
                   style={{ background: 'var(--surface-bg)', border: '1px solid var(--border-color)', color: 'var(--text-color)' }}
-                  placeholder="Add internal notes about this customer..."
+                  placeholder={ui.notesPlaceholder}
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4 pt-2">
                 <div>
-                  <p className="text-xs" style={{ color: 'var(--muted-color)' }}>Total Spent</p>
+                  <p className="text-xs" style={{ color: 'var(--muted-color)' }}>{ui.totalSpent}</p>
                   <p className="font-semibold" style={{ color: 'var(--heading-color)' }}>
                     {formatCurrency(editingCustomer.totalSpent)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs" style={{ color: 'var(--muted-color)' }}>Total Bookings</p>
+                  <p className="text-xs" style={{ color: 'var(--muted-color)' }}>{ui.totalBookings}</p>
                   <p className="font-semibold" style={{ color: 'var(--heading-color)' }}>
                     {editingCustomer.totalBookings}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs" style={{ color: 'var(--muted-color)' }}>Last Booking</p>
+                  <p className="text-xs" style={{ color: 'var(--muted-color)' }}>{ui.lastBooking}</p>
                   <p className="font-semibold" style={{ color: 'var(--heading-color)' }}>
-                    {editingCustomer.lastBookedDate ? formatDate(editingCustomer.lastBookedDate) : 'Never'}
+                    {editingCustomer.lastBookedDate ? formatDate(editingCustomer.lastBookedDate) : ui.never}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs" style={{ color: 'var(--muted-color)' }}>Current Segment</p>
+                  <p className="text-xs" style={{ color: 'var(--muted-color)' }}>{ui.currentSegment}</p>
                   <span 
                     className="segment-badge"
                     style={{ 
@@ -1082,13 +1286,13 @@ export default function AdminCrm() {
                 className="flex-1 py-2 rounded-lg"
                 style={{ border: '1px solid var(--border-color)', color: 'var(--text-color)' }}
               >
-                Cancel
+                {ui.cancel}
               </button>
               <button
                 onClick={saveCustomerEdit}
                 className="flex-1 py-2 rounded-lg bg-[var(--cta-color)] text-white font-medium"
               >
-                Save Changes
+                {ui.saveChanges}
               </button>
             </div>
           </div>
@@ -1099,12 +1303,12 @@ export default function AdminCrm() {
         <div className="fixed inset-0 flex items-center justify-center p-4 z-50" style={{ background: 'rgba(0,0,0,0.5)' }}>
           <div className="rounded-xl p-6 w-full max-w-md" style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)' }}>
             <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--heading-color)' }}>
-              {editingLead.id ? 'Edit Lead' : 'Add New Lead'}
+              {editingLead.id ? ui.editLead : ui.addNewLead}
             </h3>
             
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1" style={{ color: 'var(--muted-color)' }}>Name *</label>
+                <label className="block text-sm font-medium mb-1" style={{ color: 'var(--muted-color)' }}>{ui.nameRequired}</label>
                 <input 
                   type="text" 
                   value={leadForm.name}
@@ -1114,7 +1318,7 @@ export default function AdminCrm() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1" style={{ color: 'var(--muted-color)' }}>Phone *</label>
+                <label className="block text-sm font-medium mb-1" style={{ color: 'var(--muted-color)' }}>{ui.phoneRequired}</label>
                 <input 
                   type="tel" 
                   value={leadForm.phone}
@@ -1124,7 +1328,7 @@ export default function AdminCrm() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1" style={{ color: 'var(--muted-color)' }}>Email</label>
+                <label className="block text-sm font-medium mb-1" style={{ color: 'var(--muted-color)' }}>{ui.email}</label>
                 <input 
                   type="email" 
                   value={leadForm.email}
@@ -1134,7 +1338,7 @@ export default function AdminCrm() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1" style={{ color: 'var(--muted-color)' }}>Source</label>
+                <label className="block text-sm font-medium mb-1" style={{ color: 'var(--muted-color)' }}>{ui.source}</label>
                 <select 
                   value={leadForm.source}
                   onChange={(e) => setLeadForm({ ...leadForm, source: e.target.value })}
@@ -1154,7 +1358,7 @@ export default function AdminCrm() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1" style={{ color: 'var(--muted-color)' }}>Status</label>
+                <label className="block text-sm font-medium mb-1" style={{ color: 'var(--muted-color)' }}>{ui.status}</label>
                 <select 
                   value={leadForm.status}
                   onChange={(e) => setLeadForm({ ...leadForm, status: e.target.value })}
@@ -1170,7 +1374,7 @@ export default function AdminCrm() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1" style={{ color: 'var(--muted-color)' }}>Notes</label>
+                <label className="block text-sm font-medium mb-1" style={{ color: 'var(--muted-color)' }}>{ui.notes}</label>
                 <textarea 
                   value={leadForm.notes}
                   onChange={(e) => setLeadForm({ ...leadForm, notes: e.target.value })}
@@ -1187,14 +1391,14 @@ export default function AdminCrm() {
                 className="flex-1 py-2 rounded-lg"
                 style={{ border: '1px solid var(--border-color)', color: 'var(--text-color)' }}
               >
-                Cancel
+                {ui.cancel}
               </button>
               <button
                 onClick={handleSaveLead}
                 className="flex-1 py-2 rounded-lg bg-[var(--cta-color)] text-white font-medium"
                 disabled={!leadForm.name || !leadForm.phone}
               >
-                Save
+                {ui.save}
               </button>
             </div>
           </div>

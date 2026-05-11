@@ -7,16 +7,26 @@
  */
 import React, { useState, useRef, useEffect } from 'react';
 import { chatbotAPI } from '../../api/chatbot';
-
-const WELCOME = "Hi! I'm the Glanz assistant. Ask me about services, pricing, booking, or cancellations.";
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function ChatWidget() {
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState([{ role: 'bot', text: WELCOME }]);
+  const [messages, setMessages] = useState([{ role: 'bot', text: t('common.chat.welcome') }]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
+
+  useEffect(() => {
+    setMessages((prev) => {
+      if (prev.length === 0) return [{ role: 'bot', text: t('common.chat.welcome') }];
+      if (prev.length === 1 && prev[0].role === 'bot') {
+        return [{ role: 'bot', text: t('common.chat.welcome') }];
+      }
+      return prev;
+    });
+  }, [t]);
 
   useEffect(() => {
     if (open) {
@@ -37,7 +47,7 @@ export default function ChatWidget() {
       const data = await chatbotAPI.sendMessage(text);
       setMessages((prev) => [...prev, { role: 'bot', text: data.reply }]);
     } catch {
-      setMessages((prev) => [...prev, { role: 'bot', text: 'Sorry, I could not process your request right now. Please try again or contact support@glanz.qa.' }]);
+      setMessages((prev) => [...prev, { role: 'bot', text: t('common.chat.errorReply') }]);
     } finally {
       setLoading(false);
     }
@@ -55,7 +65,7 @@ export default function ChatWidget() {
       {/* Floating button */}
       <button
         type="button"
-        aria-label="Open chat assistant"
+        aria-label={t('common.chat.openAria')}
         onClick={() => setOpen((o) => !o)}
         className="fixed bottom-6 left-6 z-40 flex items-center justify-center w-14 h-14 rounded-full bg-primary text-white shadow-xl hover:bg-primary/90 transition-all"
         style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.18)' }}
@@ -77,8 +87,8 @@ export default function ChatWidget() {
           <div className="flex items-center gap-3 px-4 py-3 bg-primary text-white">
             <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white/20 text-white text-xs font-bold">AI</div>
             <div>
-              <p className="font-bold text-sm leading-tight">Glanz Assistant</p>
-              <p className="text-xs text-white/70">Usually replies instantly</p>
+              <p className="font-bold text-sm leading-tight">{t('common.chat.title')}</p>
+              <p className="text-xs text-white/70">{t('common.chat.subtitle')}</p>
             </div>
           </div>
 
@@ -123,7 +133,7 @@ export default function ChatWidget() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKey}
-              placeholder="Ask a question…"
+              placeholder={t('common.chat.placeholder')}
               disabled={loading}
               className="flex-1 px-3 py-2 text-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
               style={{

@@ -8,6 +8,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useHeaderHeight } from '@react-navigation/elements';
 import * as ImagePicker from 'expo-image-picker';
+import { useTranslation } from 'react-i18next';
 import { bookingsAPI } from '../api/bookings';
 import { authAPI } from '../api/auth';
 import { servicesAPI } from '../api/services';
@@ -173,10 +174,11 @@ const SectionLabel = ({ children, icon }) => (
 );
 
 const StatusBadge = ({ status }) => {
+  const { t } = useTranslation();
   const color = statusColors[status] || '#6B7280';
   return (
     <View style={[u.badge, { backgroundColor: color + '22', borderColor: color }]}>
-      <Text style={[u.badgeText, { color }]}>{status}</Text>
+      <Text style={[u.badgeText, { color }]}>{t(`status.${status}`)}</Text>
     </View>
   );
 };
@@ -191,6 +193,7 @@ export default function AdminJobsScreen({ route, navigation }) {
   const { user, logout } = useAuth();
   const { startTracking } = useLocationTracking();
   const settings = useSettings();
+  const { t } = useTranslation();
   const headerHeight = useHeaderHeight(); // ← used to push content below transparent nav
   const shouldEnsureLocalTracking = isWorkerView && user?.role !== 'Employee';
 
@@ -525,7 +528,7 @@ export default function AdminJobsScreen({ route, navigation }) {
       const data = await authAPI.getWorkers();
       setAssignWorkersList((data || []).filter((w) => w.isActive));
     } catch {
-      Alert.alert('Error', 'Failed to load workers. Please try again.');
+      Alert.alert(t('common.error'), t('adminJobs.failedLoadWorkers'));
     } finally {
       setLoadingWorkers(false);
     }
@@ -543,13 +546,13 @@ export default function AdminJobsScreen({ route, navigation }) {
       if (err?.response?.status === 409) {
         const conflict = err.response.data?.conflictingBookingNumber;
         Alert.alert(
-          'Worker Unavailable',
+          t('adminJobs.workerUnavailable'),
           conflict
-            ? `This detailer already has a booking (${conflict}) that overlaps this slot. Please choose a different detailer or reschedule.`
-            : 'This detailer has a conflicting booking for this time slot. Please choose a different detailer.',
+            ? t('adminJobs.workerOverlapBooking', { bookingNumber: conflict })
+            : t('adminJobs.workerConflictGeneric'),
         );
       } else {
-        Alert.alert('Assignment Failed', err?.response?.data?.message || 'Failed to assign worker.');
+        Alert.alert(t('adminJobs.assignmentFailed'), err?.response?.data?.message || t('adminJobs.failedAssignWorker'));
       }
     } finally {
       setAssigningWorkerId(null);
@@ -558,10 +561,10 @@ export default function AdminJobsScreen({ route, navigation }) {
 
   const openInGoogleMaps = async (address) => {
     const addr = String(address || '').trim();
-    if (!addr) { Alert.alert('Address unavailable', 'This booking does not have a saved service address yet.'); return; }
+    if (!addr) { Alert.alert(t('alerts.addressUnavailable.title'), t('alerts.addressUnavailable.message')); return; }
     try {
       await Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addr)}&travelmode=driving`);
-    } catch { Alert.alert('Unable to open maps', 'Google Maps could not be opened on this device.'); }
+    } catch { Alert.alert(t('alerts.mapsError.title'), t('alerts.mapsError.message')); }
   };
 
   const updateStatus = async (bookingId, status) => {
@@ -573,8 +576,8 @@ export default function AdminJobsScreen({ route, navigation }) {
       // ── State machine guard ─────────────────────────────────────────────────
       if (b && !canTransition(b.status, status, 'admin')) {
         Alert.alert(
-          'Invalid Status Change',
-          `A "${b.status}" booking cannot be moved to "${status}".`,
+          t('adminJobs.invalidStatusChange'),
+          t('adminJobs.invalidStatusChangeMessage', { fromStatus: b.status, toStatus: status }),
         );
         endAction(key);
         setUpdatingId(null);
@@ -589,18 +592,18 @@ export default function AdminJobsScreen({ route, navigation }) {
       await bookingsAPI.updateStatus(bookingId, status);
       await loadBookings();
     } catch (err) {
-      setError(err?.response?.data?.message || 'Failed to update booking status.');
+      setError(err?.response?.data?.message || t('errors.updateStatus'));
     } finally { setUpdatingId(null); endAction(key); }
   };
 
   const handleApproveCancellation = (booking) => {
     Alert.alert(
-      'Approve Cancellation',
-      `Cancel booking for ${booking.customerName}? This cannot be undone.`,
+      t('adminJobs.approveCancellation'),
+      t('adminJobs.cancelBookingConfirm', { customerName: booking.customerName }),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Approve & Cancel',
+          text: t('adminJobs.approveAndCancel'),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -609,7 +612,7 @@ export default function AdminJobsScreen({ route, navigation }) {
               await loadBookings();
               setDetailBooking(null);
             } catch (err) {
-              Alert.alert('Error', err?.response?.data?.message || 'Failed to cancel booking.');
+              Alert.alert(t('common.error'), err?.response?.data?.message || t('adminJobs.failedCancelBooking'));
             } finally {
               setRequestActionLoading(null);
             }
@@ -626,7 +629,7 @@ export default function AdminJobsScreen({ route, navigation }) {
       await loadBookings();
       setDetailBooking((prev) => prev ? { ...prev, cancellationRequested: false, cancellationRequestReason: null } : null);
     } catch (err) {
-      Alert.alert('Error', err?.response?.data?.message || 'Failed to reject cancellation request.');
+      Alert.alert(t('common.error'), err?.response?.data?.message || t('adminJobs.failedRejectCancellationRequest'));
     } finally {
       setRequestActionLoading(null);
     }
@@ -637,14 +640,14 @@ export default function AdminJobsScreen({ route, navigation }) {
       ? new Date(booking.reschedulePreferredDate).toLocaleDateString()
       : null;
     Alert.alert(
-      'Approve Reschedule',
+      t('adminJobs.approveReschedule'),
       preferredDate
-        ? `Update booking date to ${preferredDate}?`
-        : 'No preferred date provided. Update booking date to today?',
+        ? t('adminJobs.updateBookingDateTo', { date: preferredDate })
+        : t('adminJobs.noPreferredDateProvided'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Confirm',
+          text: t('adminJobs.confirm'),
           onPress: async () => {
             try {
               setRequestActionLoading('approve-reschedule');
@@ -655,7 +658,7 @@ export default function AdminJobsScreen({ route, navigation }) {
               await loadBookings();
               setDetailBooking((prev) => prev ? { ...prev, rescheduleRequested: false, scheduledDate: newDate } : null);
             } catch (err) {
-              Alert.alert('Error', err?.response?.data?.message || 'Failed to approve reschedule.');
+              Alert.alert(t('common.error'), err?.response?.data?.message || t('adminJobs.failedApproveReschedule'));
             } finally {
               setRequestActionLoading(null);
             }
@@ -672,7 +675,7 @@ export default function AdminJobsScreen({ route, navigation }) {
       await loadBookings();
       setDetailBooking((prev) => prev ? { ...prev, rescheduleRequested: false, reschedulePreferredDate: null, rescheduleRequestNote: null } : null);
     } catch (err) {
-      Alert.alert('Error', err?.response?.data?.message || 'Failed to reject reschedule request.');
+      Alert.alert(t('common.error'), err?.response?.data?.message || t('adminJobs.failedRejectRescheduleRequest'));
     } finally {
       setRequestActionLoading(null);
     }
@@ -685,17 +688,17 @@ export default function AdminJobsScreen({ route, navigation }) {
       setUpdatingId(bookingId);
       await bookingsAPI.claim(bookingId);
       await loadBookings();
-      Alert.alert('Success', 'Job claimed successfully!');
+      Alert.alert(t('alerts.claimSuccess.title'), t('alerts.claimSuccess.message'));
     } catch (err) {
-      const msg = err?.response?.data?.message || 'Failed to claim booking.';
-      setError(msg); Alert.alert('Cannot Claim Job', msg);
+      const msg = err?.response?.data?.message || t('errors.claimBooking');
+      setError(msg); Alert.alert(t('alerts.cannotClaim.title'), msg);
     } finally { setUpdatingId(null); endAction(key); }
   };
 
   const claimBookingWithAvailabilityCheck = async (booking) => {
     const conflict = getClaimConflict(booking);
     if (conflict) {
-      Alert.alert('Cannot claim this job', `You are not free at that time. This job overlaps with ${conflict.bookingNumber} (${formatTimeAMPM(conflict.timeSlot)}).`);
+      Alert.alert(t('adminJobs.cannotClaimThisJob'), t('adminJobs.claimOverlapMessage', { bookingNumber: conflict.bookingNumber, timeSlot: formatTimeAMPM(conflict.timeSlot) }));
       return;
     }
     await claimBooking(booking.id);
@@ -714,7 +717,7 @@ export default function AdminJobsScreen({ route, navigation }) {
   const handlePickPhoto = async () => {
     const granted = await requestCameraPermission();
     if (!granted) {
-      Alert.alert('Camera Permission', 'Camera access is required to take job photos.');
+      Alert.alert(t('adminJobs.cameraPermission'), t('adminJobs.cameraPermissionRequired'));
       return;
     }
     const result = await ImagePicker.launchCameraAsync({
@@ -759,7 +762,7 @@ export default function AdminJobsScreen({ route, navigation }) {
         // Stop customer-visible tracking — job is now In Progress
         await realtimeService.stopCustomerStream(bookingId);
         await loadBookings();
-      } catch (err) { setError(err?.response?.data?.message || 'Failed to start job.'); }
+      } catch (err) { setError(err?.response?.data?.message || t('errors.startJob')); }
       finally { setUpdatingId(null); endAction(key); }
     });
   };
@@ -773,7 +776,7 @@ export default function AdminJobsScreen({ route, navigation }) {
       // Customer tracking must end when worker arrives.
       await realtimeService.stopCustomerStream(bookingId);
       await loadBookings();
-    } catch (err) { setError(err?.response?.data?.message || 'Failed to notify customer about arrival.'); }
+    } catch (err) { setError(err?.response?.data?.message || t('errors.markArrived')); }
     finally { setUpdatingId(null); endAction(key); }
   };
 
@@ -795,20 +798,20 @@ export default function AdminJobsScreen({ route, navigation }) {
         await Linking.openURL(mapsUrl).catch(() => {});
       }
       await loadBookings();
-    } catch (err) { setError(err?.response?.data?.message || 'Failed to notify customer.'); }
+    } catch (err) { setError(err?.response?.data?.message || t('adminJobs.failedNotifyCustomer')); }
     finally { setUpdatingId(null); endAction(key); }
   };
 
   const openRunningLateModal = (bookingId) => {
-    setLateBookingId(bookingId); setLateMinutes('10'); setLateReason('Traffic delay'); setLateModalVisible(true);
+    setLateBookingId(bookingId); setLateMinutes('10'); setLateReason(t('adminJobs.trafficDelayDefault')); setLateModalVisible(true);
   };
 
   const submitRunningLate = async () => {
     if (lateBookingId == null) return;
     const mins = Number.parseInt(String(lateMinutes).trim(), 10);
-    if (!Number.isFinite(mins) || mins < 5 || mins > 120) { Alert.alert('Invalid Delay', 'Delay minutes must be between 5 and 120.'); return; }
+    if (!Number.isFinite(mins) || mins < 5 || mins > 120) { Alert.alert(t('alerts.invalidDelay.title'), t('alerts.invalidDelay.message')); return; }
     const reason = String(lateReason || '').trim();
-    if (!reason) { Alert.alert('Reason Required', 'Please enter a short reason before notifying the customer.'); return; }
+    if (!reason) { Alert.alert(t('alerts.reasonRequired.title'), t('alerts.reasonRequired.message')); return; }
     const key = `late-${lateBookingId}`;
     if (!beginAction(key)) return;
     try {
@@ -816,7 +819,7 @@ export default function AdminJobsScreen({ route, navigation }) {
       await bookingsAPI.markRunningLate(lateBookingId, mins, reason);
       await loadBookings();
       setLateModalVisible(false); setLateBookingId(null);
-    } catch (err) { setError(err?.response?.data?.message || 'Failed to notify customer about delay.'); }
+    } catch (err) { setError(err?.response?.data?.message || t('errors.markLate')); }
     finally { setUpdatingId(null); endAction(key); }
   };
 
@@ -843,13 +846,13 @@ export default function AdminJobsScreen({ route, navigation }) {
       setSelectedWorkerBookingId(null);
       setCompletionSummary({
         bookingNumber: booking?.bookingNumber || `#${bookingId}`,
-        customerName:  booking?.customerName || 'Customer',
+        customerName:  booking?.customerName || t('adminJobs.customerFallback'),
         durationText:  result?.workDurationSeconds
           ? formatWorkDuration(result.workDurationSeconds)
           : (elapsedMinutes ? `${String(elapsedMinutes).padStart(2, '0')}:00` : null),
       });
       setFinishConfirmVisible(false); setFinishBookingId(null);
-    } catch (err) { setError(err?.response?.data?.message || 'Failed to finish job.'); }
+    } catch (err) { setError(err?.response?.data?.message || t('errors.finishJob')); }
     finally { setUpdatingId(null); endAction(key); }
   };
 
@@ -858,7 +861,7 @@ export default function AdminJobsScreen({ route, navigation }) {
     try {
       const services = await servicesAPI.getAll();
       setAvailableServices(services || []);
-    } catch { Alert.alert('Error', 'Failed to load available services.'); }
+    } catch { Alert.alert(t('common.error'), t('errors.loadServices')); }
     finally { setLoadingPackages(false); setSalesKitModalVisible(true); }
   };
 
@@ -883,10 +886,10 @@ export default function AdminJobsScreen({ route, navigation }) {
       else await loadBookings();
       setSelectedSalesKitServiceIds([]); setSalesKitModalVisible(false);
       Alert.alert(
-        'Upsells Confirmed',
-        'Services have been added. The booking end time has been extended and future availability updated.',
+        t('adminJobs.upsellsConfirmed'),
+        t('adminJobs.upsellsConfirmedMessage'),
       );
-    } catch (err) { Alert.alert('Error', err?.response?.data?.message || 'Failed to apply selected services.'); }
+    } catch (err) { Alert.alert(t('common.error'), err?.response?.data?.message || t('errors.applyServices')); }
     finally { setUpdatingId(null); endAction(key); }
   };
 
@@ -932,7 +935,7 @@ export default function AdminJobsScreen({ route, navigation }) {
           it.id !== checklistItemId ? it : { ...it, ...updatedItem, completedDuration, accumulatedDuration: completedDuration, startTime: lockedStartTime, finishTime, firstCompletedAt, lastUncheckedAt, isCompleted }
         ),
       }));
-    } catch (err) { setError(err?.response?.data?.message || 'Failed to update checklist item.'); }
+    } catch (err) { setError(err?.response?.data?.message || t('errors.updateChecklist')); }
     finally { setUpdatingChecklistId(null); endAction(key); }
   };
 
@@ -959,7 +962,7 @@ export default function AdminJobsScreen({ route, navigation }) {
     try {
       await bookingsAPI.pauseJob(pauseBookingId, pauseReason);
     } catch (err) {
-      setError(err?.response?.data?.message || 'Failed to pause job.');
+      setError(err?.response?.data?.message || t('adminJobs.failedPauseJob'));
       // Revert optimistic timer update on failure
       setPausedAtByBooking((p) => { const n = { ...p }; delete n[pauseBookingId]; return n; });
     }
@@ -977,7 +980,7 @@ export default function AdminJobsScreen({ route, navigation }) {
     try {
       setUpdatingId(bookingId);
       await bookingsAPI.resumeJob(bookingId);
-    } catch (err) { setError(err?.response?.data?.message || 'Failed to notify resume event.'); }
+    } catch (err) { setError(err?.response?.data?.message || t('errors.resumeJob')); }
     finally { setUpdatingId(null); endAction(key); }
   };
 
@@ -1006,7 +1009,12 @@ export default function AdminJobsScreen({ route, navigation }) {
         const start   = new Date(job.scheduledDate);
         start.setHours(Math.floor(slot.start / 60), slot.start % 60);
         const minutes = Math.round((start - now) / 60000);
-        Alert.alert('Upcoming Job', `${job.customerName} — ${job.vehicleYear || ''} ${job.vehicleMake || ''}\n\nJob starts in ${minutes} min\nTime: ${formatTimeAMPM(job.timeSlot)}`, [{ text: 'OK' }]);
+        Alert.alert(t('alerts.upcomingJob.title'), t('alerts.upcomingJob.message', {
+          customerName: job.customerName,
+          vehicle: `${job.vehicleYear || ''} ${job.vehicleMake || ''}`.trim(),
+          minutes,
+          time: formatTimeAMPM(job.timeSlot)
+        }), [{ text: t('common.ok') }]);
       }
     };
     const id = setInterval(check, 60000);
@@ -1034,23 +1042,23 @@ export default function AdminJobsScreen({ route, navigation }) {
             <View style={m.successRing}>
               <Ionicons name="checkmark" size={32} color="#052E16" />
             </View>
-            <Text style={m.eyebrow}>Job Finished</Text>
+            <Text style={m.eyebrow}>{t('adminJobs.jobFinished')}</Text>
             <Text style={m.title}>{completionSummary.bookingNumber}</Text>
-            <Text style={m.body}>Detailing for {completionSummary.customerName} is complete and the customer has been notified.</Text>
+            <Text style={m.body}>{t('adminJobs.detailingCompleteNotified', { customerName: completionSummary.customerName })}</Text>
             <View style={m.statsRow}>
               {completionSummary.durationText && (
                 <View style={m.statCard}>
-                  <Text style={m.statLabel}>Duration</Text>
+                  <Text style={m.statLabel}>{t('adminJobs.duration')}</Text>
                   <Text style={m.statValue}>{completionSummary.durationText}</Text>
                 </View>
               )}
               <View style={m.statCard}>
-                <Text style={m.statLabel}>Status</Text>
-                <Text style={m.statValue}>Customer Updated</Text>
+                <Text style={m.statLabel}>{t('adminJobs.status')}</Text>
+                <Text style={m.statValue}>{t('adminJobs.customerUpdated')}</Text>
               </View>
             </View>
             <TouchableOpacity style={m.primaryBtn} onPress={() => setCompletionSummary(null)}>
-              <Text style={m.primaryBtnText}>Back to Jobs</Text>
+              <Text style={m.primaryBtnText}>{t('adminJobs.backToJobs')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -1061,23 +1069,23 @@ export default function AdminJobsScreen({ route, navigation }) {
       <Modal transparent animationType="fade" visible onRequestClose={() => setLateModalVisible(false)}>
         <View style={m.backdrop}>
           <View style={m.card}>
-            <Text style={m.eyebrow}>Notify Delay</Text>
-            <Text style={m.title}>Running Late</Text>
-            <Text style={m.body}>Tell the customer how late you are and why.</Text>
+            <Text style={m.eyebrow}>{t('adminJobs.notifyDelay')}</Text>
+            <Text style={m.title}>{t('adminJobs.runningLate')}</Text>
+            <Text style={m.body}>{t('adminJobs.tellCustomerDelayWhy')}</Text>
             <View style={m.fieldWrap}>
-              <Text style={m.fieldLabel}>Delay Minutes</Text>
+              <Text style={m.fieldLabel}>{t('adminJobs.delayMinutes')}</Text>
               <TextInput value={lateMinutes} onChangeText={setLateMinutes} keyboardType="number-pad" placeholder="10" placeholderTextColor="#64748B" style={m.input} maxLength={3} />
             </View>
             <View style={m.fieldWrap}>
-              <Text style={m.fieldLabel}>Reason</Text>
-              <TextInput value={lateReason} onChangeText={setLateReason} placeholder="Traffic delay" placeholderTextColor="#64748B" style={[m.input, m.inputMulti]} multiline numberOfLines={3} maxLength={250} />
+              <Text style={m.fieldLabel}>{t('adminJobs.reason')}</Text>
+              <TextInput value={lateReason} onChangeText={setLateReason} placeholder={t('adminJobs.trafficDelayDefault')} placeholderTextColor="#64748B" style={[m.input, m.inputMulti]} multiline numberOfLines={3} maxLength={250} />
             </View>
             <View style={m.btnRow}>
               <TouchableOpacity style={m.cancelBtn} onPress={() => setLateModalVisible(false)}>
-                <Text style={m.cancelBtnText}>Cancel</Text>
+                <Text style={m.cancelBtnText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[m.primaryBtn, { flex: 1, marginTop: 0 }]} onPress={submitRunningLate} disabled={lateBookingId != null && updatingId === lateBookingId}>
-                <Text style={m.primaryBtnText}>{lateBookingId != null && updatingId === lateBookingId ? 'Sending…' : 'Send Notice'}</Text>
+                <Text style={m.primaryBtnText}>{lateBookingId != null && updatingId === lateBookingId ? t('common.sending') : t('adminJobs.sendNotice')}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -1092,12 +1100,12 @@ export default function AdminJobsScreen({ route, navigation }) {
       }}>
         <View style={m.backdrop}>
           <View style={[m.card, { maxHeight: '90%' }]}>
-            <Text style={m.eyebrow}>{photoModal.photoType === 'Before' ? 'Before Job' : 'After Job'} Photo</Text>
-            <Text style={m.title}>{photoModal.photoType === 'Before' ? 'Capture Before State' : 'Capture After State'}</Text>
+            <Text style={m.eyebrow}>{photoModal.photoType === 'Before' ? t('adminJobs.beforeJobPhoto') : t('adminJobs.afterJobPhoto')}</Text>
+            <Text style={m.title}>{photoModal.photoType === 'Before' ? t('adminJobs.captureBeforeState') : t('adminJobs.captureAfterState')}</Text>
             <Text style={[m.body, { marginBottom: 12 }]}>
               {photoModal.photoType === 'Before'
-                ? 'Take a photo of the vehicle before starting work. Align the car within the frame.'
-                : 'Take a photo of the completed work. Show the full vehicle clearly.'}
+                ? t('adminJobs.takePhotoBeforeWork')
+                : t('adminJobs.takePhotoAfterWork')}
             </Text>
 
             {/* Alignment overlay placeholder */}
@@ -1119,7 +1127,7 @@ export default function AdminJobsScreen({ route, navigation }) {
                     <Ionicons name="car-outline" size={32} color="rgba(200,169,107,0.6)" />
                   </View>
                   <Text style={{ color: 'rgba(200,169,107,0.7)', fontSize: 11, textAlign: 'center' }}>
-                    Align vehicle within frame
+                    {t('adminJobs.alignVehicleWithinFrame')}
                   </Text>
                 </View>
               )}
@@ -1129,7 +1137,7 @@ export default function AdminJobsScreen({ route, navigation }) {
               onPress={handlePickPhoto}
               style={[m.primaryBtn, { backgroundColor: '#1e293b', borderWidth: 1, borderColor: 'rgba(200,169,107,0.4)', marginBottom: 8 }]}>
               <Ionicons name="camera-outline" size={18} color="#c8a96b" style={{ marginRight: 6 }} />
-              <Text style={[m.primaryBtnText, { color: '#c8a96b' }]}>{capturedPhoto ? 'Retake Photo' : 'Open Camera'}</Text>
+              <Text style={[m.primaryBtnText, { color: '#c8a96b' }]}>{capturedPhoto ? t('adminJobs.retakePhoto') : t('adminJobs.openCamera')}</Text>
             </TouchableOpacity>
 
             <View style={m.btnRow}>
@@ -1137,14 +1145,14 @@ export default function AdminJobsScreen({ route, navigation }) {
                 setPhotoModal({ visible: false, bookingId: null, photoType: 'Before', onDone: null });
                 setCapturedPhoto(null);
               }}>
-                <Text style={m.cancelBtnText}>Cancel</Text>
+                <Text style={m.cancelBtnText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[m.primaryBtn, { flex: 1, marginTop: 0 }]}
                 onPress={handleUploadAndProceed}
                 disabled={photoUploading}>
                 <Text style={m.primaryBtnText}>
-                  {photoUploading ? 'Uploading…' : capturedPhoto ? 'Save & Continue' : 'Skip Photo'}
+                  {photoUploading ? t('adminJobs.uploading') : capturedPhoto ? t('adminJobs.saveContinue') : t('adminJobs.skipPhoto')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -1157,15 +1165,15 @@ export default function AdminJobsScreen({ route, navigation }) {
       <Modal transparent animationType="fade" visible onRequestClose={() => setFinishConfirmVisible(false)}>
         <View style={m.backdrop}>
           <View style={m.card}>
-            <Text style={m.eyebrow}>Confirm Action</Text>
-            <Text style={m.title}>Finish Job?</Text>
-            <Text style={m.body}>This will mark the job as completed and notify the customer and admin.</Text>
+            <Text style={m.eyebrow}>{t('adminJobs.confirmAction')}</Text>
+            <Text style={m.title}>{t('adminJobs.finishJobQuestion')}</Text>
+            <Text style={m.body}>{t('adminJobs.finishJobExplain')}</Text>
             <View style={m.btnRow}>
               <TouchableOpacity style={m.cancelBtn} onPress={() => setFinishConfirmVisible(false)}>
-                <Text style={m.cancelBtnText}>Cancel</Text>
+                <Text style={m.cancelBtnText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[m.primaryBtn, { flex: 1, marginTop: 0 }]} onPress={confirmFinishJob} disabled={finishBookingId != null && updatingId === finishBookingId}>
-                <Text style={m.primaryBtnText}>{finishBookingId != null && updatingId === finishBookingId ? 'Finishing…' : 'Yes, Finish'}</Text>
+                <Text style={m.primaryBtnText}>{finishBookingId != null && updatingId === finishBookingId ? t('common.finishing') : t('adminJobs.yesFinish')}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -1177,19 +1185,19 @@ export default function AdminJobsScreen({ route, navigation }) {
       <Modal transparent animationType="fade" visible onRequestClose={() => setPauseModalVisible(false)}>
         <View style={m.backdrop}>
           <View style={m.card}>
-            <Text style={m.eyebrow}>Pause Job</Text>
-            <Text style={m.title}>Reason for Pause</Text>
-            <Text style={m.body}>Both admin and customer will be notified.</Text>
+            <Text style={m.eyebrow}>{t('adminJobs.pauseJob')}</Text>
+            <Text style={m.title}>{t('adminJobs.reasonForPause')}</Text>
+            <Text style={m.body}>{t('adminJobs.pauseNotifyBoth')}</Text>
             <View style={m.fieldWrap}>
-              <Text style={m.fieldLabel}>Reason</Text>
-              <TextInput value={pauseReason} onChangeText={setPauseReason} placeholder="Prayer break, emergency, etc." placeholderTextColor="#64748B" style={[m.input, m.inputMulti]} multiline numberOfLines={3} maxLength={250} />
+              <Text style={m.fieldLabel}>{t('adminJobs.reason')}</Text>
+              <TextInput value={pauseReason} onChangeText={setPauseReason} placeholder={t('adminJobs.pauseReasonPlaceholder')} placeholderTextColor="#64748B" style={[m.input, m.inputMulti]} multiline numberOfLines={3} maxLength={250} />
             </View>
             <View style={m.btnRow}>
               <TouchableOpacity style={m.cancelBtn} onPress={() => setPauseModalVisible(false)}>
-                <Text style={m.cancelBtnText}>Cancel</Text>
+                <Text style={m.cancelBtnText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[m.primaryBtn, { flex: 1, marginTop: 0 }]} onPress={confirmPauseJob} disabled={!pauseReason.trim()}>
-                <Text style={m.primaryBtnText}>Pause Job</Text>
+                <Text style={m.primaryBtnText}>{t('adminJobs.pauseJob')}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -1203,22 +1211,22 @@ export default function AdminJobsScreen({ route, navigation }) {
           <View style={sk.card}>
             <View style={sk.header}>
               <View style={{ flex: 1 }}>
-                <Text style={sk.eyebrow}>Service Add-Ons</Text>
-                <Text style={sk.title}>Sales Kit</Text>
-                <Text style={sk.subtitle}>Add extras not already in the booked package.</Text>
+                <Text style={sk.eyebrow}>{t('adminJobs.serviceAddOns')}</Text>
+                <Text style={sk.title}>{t('adminJobs.salesKit')}</Text>
+                <Text style={sk.subtitle}>{t('adminJobs.addExtrasNotIncluded')}</Text>
               </View>
               <TouchableOpacity style={sk.closeBtn} onPress={() => setSalesKitModalVisible(false)}>
                 <Ionicons name="close" size={16} color={theme.colors.textMuted} />
               </TouchableOpacity>
             </View>
             <View style={sk.metaCard}>
-              <Text style={sk.metaPrimary}>{salesKitBooking?.bookingNumber || 'Current Job'}</Text>
-              <Text style={sk.metaSecondary}>{salesKitBooking?.customerName || 'Customer'}</Text>
+              <Text style={sk.metaPrimary}>{salesKitBooking?.bookingNumber || t('adminJobs.currentJob')}</Text>
+              <Text style={sk.metaSecondary}>{salesKitBooking?.customerName || t('adminJobs.customerFallback')}</Text>
               <View style={sk.statsRow}>
                 {[
-                  { label: 'Items',    value: (salesKitBooking?.items || []).reduce((s, i) => s + (i.quantity || 1), 0) },
-                  { label: 'Total',    value: formatQAR(salesKitBooking?.totalAmount || 0) },
-                  { label: 'Est. Time',value: `${salesKitBooking?.estimatedDurationMinutes || 0}m` },
+                  { label: t('adminJobs.items'), value: (salesKitBooking?.items || []).reduce((s, i) => s + (i.quantity || 1), 0) },
+                  { label: t('adminJobs.total'), value: formatQAR(salesKitBooking?.totalAmount || 0) },
+                  { label: t('adminJobs.estimatedTime'), value: t('adminJobs.minutesShort', { count: salesKitBooking?.estimatedDurationMinutes || 0 }) },
                 ].map(({ label, value }) => (
                   <View key={label} style={sk.statChip}>
                     <Text style={sk.statLabel}>{label}</Text>
@@ -1232,7 +1240,7 @@ export default function AdminJobsScreen({ route, navigation }) {
             ) : (
               <ScrollView style={sk.list}>
                 {salesKitServices.length === 0 ? (
-                  <Text style={sk.emptyText}>All services are already included in this booking.</Text>
+                  <Text style={sk.emptyText}>{t('adminJobs.allServicesAlreadyIncluded')}</Text>
                 ) : (
                   salesKitServices.map((svc) => {
                     const isSelected = selectedSalesKitServiceIds.includes(svc.id);
@@ -1240,8 +1248,8 @@ export default function AdminJobsScreen({ route, navigation }) {
                       <TouchableOpacity key={svc.id} style={[sk.svcCard, isSelected && sk.svcCardSelected]} onPress={() => toggleSalesKitService(svc.id)} activeOpacity={0.8}>
                         <View style={{ flex: 1, marginRight: 10 }}>
                           <Text style={sk.svcName}>{svc.name}</Text>
-                          <Text style={sk.svcDesc}>{svc.description || 'Professional detailing service.'}</Text>
-                          <Text style={sk.svcMeta}>+~{Number(svc.defaultDurationMinutes || 0)} min</Text>
+                          <Text style={sk.svcDesc}>{svc.description || t('adminJobs.professionalDetailingService')}</Text>
+                          <Text style={sk.svcMeta}>{t('adminJobs.plusApproxMinutes', { count: Number(svc.defaultDurationMinutes || 0) })}</Text>
                         </View>
                         <View style={[sk.selectBadge, isSelected && sk.selectBadgeActive]}>
                           <Ionicons name={isSelected ? 'checkmark-circle' : 'add-circle-outline'} size={16} color={isSelected ? '#22C55E' : theme.colors.textMuted} />
@@ -1258,11 +1266,11 @@ export default function AdminJobsScreen({ route, navigation }) {
               disabled={updatingId === salesKitBookingId || selectedSalesKitServiceIds.length === 0}
             >
               <Text style={sk.confirmBtnText}>
-                {updatingId === salesKitBookingId ? 'Applying…' : `Confirm Selection (${selectedSalesKitServiceIds.length})`}
+                {updatingId === salesKitBookingId ? t('common.applying') : t('adminJobs.confirmSelectionCount', { count: selectedSalesKitServiceIds.length })}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity style={m.cancelBtn} onPress={() => setSalesKitModalVisible(false)}>
-              <Text style={m.cancelBtnText}>Close</Text>
+              <Text style={m.cancelBtnText}>{t('common.close')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -1308,7 +1316,7 @@ export default function AdminJobsScreen({ route, navigation }) {
                     </View>
                     <Text style={w.jobNumber}>{b.bookingNumber}</Text>
                     <Text style={w.jobCustomer}>{b.customerName}</Text>
-                    <Text style={w.jobMeta} numberOfLines={1}>{b.customerAddress || 'No address saved'}</Text>
+                    <Text style={w.jobMeta} numberOfLines={1}>{b.customerAddress || t('adminJobs.noAddressSavedShort')}</Text>
                   </View>
                   <Ionicons name="chevron-forward" size={16} color={theme.colors.textMuted} style={{ alignSelf: 'center' }} />
                 </TouchableOpacity>
@@ -1353,7 +1361,7 @@ export default function AdminJobsScreen({ route, navigation }) {
                     </View>
                     <Text style={w.jobNumber}>{b.bookingNumber}</Text>
                     <Text style={w.jobCustomer}>{b.customerName}</Text>
-                    <Text style={w.jobMeta} numberOfLines={1}>{b.customerAddress || 'No address saved'}</Text>
+                    <Text style={w.jobMeta} numberOfLines={1}>{b.customerAddress || t('adminJobs.noAddressSavedShort')}</Text>
                     <Text style={w.estimatedDuration}>~{b.estimatedDurationMinutes || 60} min estimated</Text>
                     <TouchableOpacity style={[w.claimBtn, updatingId === b.id && s.btnDisabled]} onPress={() => claimBookingWithAvailabilityCheck(b)} disabled={updatingId === b.id}>
                       <Text style={w.claimBtnText}>{updatingId === b.id ? 'Claiming…' : 'Claim This Job'}</Text>
@@ -1366,7 +1374,7 @@ export default function AdminJobsScreen({ route, navigation }) {
           {myJobs.length === 0 && unassigned.length === 0 && (
             <View style={s.emptyCard}>
               <Ionicons name="calendar-outline" size={28} color={theme.colors.textMuted} style={{ marginBottom: 8 }} />
-              <Text style={s.emptyText}>No jobs for today.</Text>
+              <Text style={s.emptyText}>{t('adminJobs.noJobsToday')}</Text>
             </View>
           )}
         </>
@@ -1394,7 +1402,7 @@ const DetailView = () => {
         <View style={w.detailCard}>
           <TouchableOpacity style={w.backBtn} onPress={() => setSelectedWorkerBookingId(null)}>
             <Ionicons name="arrow-back" size={15} color={theme.colors.primary} />
-            <Text style={w.backBtnText}>Back to Overview</Text>
+            <Text style={w.backBtnText}>{t('adminJobs.backToOverview')}</Text>
           </TouchableOpacity>
           <View style={w.detailHeader}>
             <View style={{ flex: 1 }}>
@@ -1432,7 +1440,7 @@ const DetailView = () => {
           </View>
           <TouchableOpacity style={w.salesKitBtn} onPress={() => openSalesKit(booking.id)} disabled={updatingId === booking.id}>
             <Ionicons name="bag-add-outline" size={16} color="#fff" />
-            <Text style={w.salesKitBtnText}>Sales Kit</Text>
+            <Text style={w.salesKitBtnText}>{t('adminJobs.salesKit')}</Text>
           </TouchableOpacity>
           <View style={w.timerCard}>
             <View style={{ flex: 1 }}>
@@ -1445,11 +1453,11 @@ const DetailView = () => {
           <View style={w.quickRow}>
             <TouchableOpacity style={[w.quickBtn, w.quickBtnGreen]} onPress={() => callCustomer(booking.customerPhone)}>
               <Ionicons name="call-outline" size={15} color="#fff" />
-              <Text style={w.quickBtnText}>Call Customer</Text>
+              <Text style={w.quickBtnText}>{t('adminJobs.callCustomer')}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[w.quickBtn, w.quickBtnPurple]} onPress={callDispatch}>
               <Ionicons name="call-outline" size={15} color="#fff" />
-              <Text style={w.quickBtnText}>Dispatch</Text>
+              <Text style={w.quickBtnText}>{t('adminJobs.dispatch')}</Text>
             </TouchableOpacity>
           </View>
           {!booking.assignedWorkerId && (
@@ -1462,23 +1470,23 @@ const DetailView = () => {
               {!hasOnMyWay && (
                 <TouchableOpacity style={[w.actionBtn, w.actionBtnBlue, updatingId === booking.id && s.btnDisabled]} onPress={() => markOnMyWay(booking.id)} disabled={updatingId === booking.id}>
                   <Ionicons name="car-outline" size={15} color="#fff" />
-                  <Text style={w.actionBtnText}>{updatingId === booking.id ? 'Notifying…' : 'On My Way'}</Text>
+                  <Text style={w.actionBtnText}>{updatingId === booking.id ? t('common.notifying') : t('adminJobs.onMyWay')}</Text>
                 </TouchableOpacity>
               )}
               <TouchableOpacity style={[w.actionBtn, w.actionBtnTeal, (!canMarkArrived || updatingId === booking.id) && s.btnDisabled]} onPress={() => markArrived(booking.id)} disabled={updatingId === booking.id || !canMarkArrived}>
                 <Ionicons name="location-outline" size={15} color="#fff" />
-                <Text style={w.actionBtnText}>{updatingId === booking.id ? 'Notifying…' : 'I Am Here'}</Text>
+                <Text style={w.actionBtnText}>{updatingId === booking.id ? t('common.notifying') : t('adminJobs.iAmHere')}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[w.actionBtn, w.actionBtnAmber, (!canMarkRunningLate || updatingId === booking.id) && s.btnDisabled]} onPress={() => openRunningLateModal(booking.id)} disabled={updatingId === booking.id || !canMarkRunningLate}>
                 <Ionicons name="time-outline" size={15} color="#fff" />
-                <Text style={w.actionBtnText}>{updatingId === booking.id ? 'Notifying…' : 'Running Late'}</Text>
+                <Text style={w.actionBtnText}>{updatingId === booking.id ? t('common.notifying') : t('adminJobs.runningLate')}</Text>
               </TouchableOpacity>
             </>
           )}
           {hasOnMyWay && (
             <View style={[w.noticeCard, { borderColor: '#3B82F6' }]}>
-              <Text style={w.noticeTitle}>On my way</Text>
-              <Text style={w.noticeText}>Notified at {new Date(booking.workerOnMyWayAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
+              <Text style={w.noticeTitle}>{t('adminJobs.onMyWay')}</Text>
+              <Text style={w.noticeText}>{t('adminJobs.notifiedAt', { time: new Date(booking.workerOnMyWayAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) })}</Text>
             </View>
           )}
           {hasArrived && (
@@ -1499,7 +1507,7 @@ const DetailView = () => {
               {!hasArrived && (
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6, marginTop: 4, paddingHorizontal: 2 }}>
                   <Ionicons name="information-circle-outline" size={14} color="#64748B" />
-                  <Text style={{ fontSize: 12, color: '#64748B' }}>Press "I Am Here" to unlock job start</Text>
+                  <Text style={{ fontSize: 12, color: '#64748B' }}>{t('adminJobs.pressIAmHereToUnlock')}</Text>
                 </View>
               )}
               <TouchableOpacity
@@ -1508,7 +1516,7 @@ const DetailView = () => {
                 disabled={!hasArrived || updatingId === booking.id}
               >
                 <Ionicons name="play-circle-outline" size={17} color="#fff" />
-                <Text style={w.actionBtnText}>{updatingId === booking.id ? 'Starting…' : 'Start Job'}</Text>
+                <Text style={w.actionBtnText}>{updatingId === booking.id ? t('common.starting') : t('adminJobs.startJob')}</Text>
               </TouchableOpacity>
             </>
           )}
@@ -1516,34 +1524,34 @@ const DetailView = () => {
             <View style={w.controlRow}>
               <TouchableOpacity style={[w.controlBtn, w.controlBtnFinish, updatingId === booking.id && s.btnDisabled]} onPress={() => finishJob(booking.id)} disabled={updatingId === booking.id}>
                 <Ionicons name="checkmark-circle-outline" size={15} color="#fff" />
-                <Text style={w.controlBtnText}>{updatingId === booking.id ? 'Finishing…' : 'Finish'}</Text>
+                <Text style={w.controlBtnText}>{updatingId === booking.id ? t('common.finishing') : t('adminJobs.finish')}</Text>
               </TouchableOpacity>
               {pausedAtByBooking[booking.id] ? (
                 <TouchableOpacity style={[w.controlBtn, w.controlBtnResume, updatingId === booking.id && s.btnDisabled]} onPress={() => resumeJob(booking.id)} disabled={updatingId === booking.id}>
                   <Ionicons name="play-outline" size={15} color="#fff" />
-                  <Text style={w.controlBtnText}>Resume</Text>
+                  <Text style={w.controlBtnText}>{t('adminJobs.resume')}</Text>
                 </TouchableOpacity>
               ) : (
                 <TouchableOpacity style={[w.controlBtn, w.controlBtnPause, updatingId === booking.id && s.btnDisabled]} onPress={() => pauseJob(booking.id)} disabled={updatingId === booking.id}>
                   <Ionicons name="pause-outline" size={15} color="#fff" />
-                  <Text style={w.controlBtnText}>Pause</Text>
+                  <Text style={w.controlBtnText}>{t('adminJobs.pause')}</Text>
                 </TouchableOpacity>
               )}
             </View>
           )}
           <SectionLabel icon="location-outline">Location</SectionLabel>
           <View style={w.locationCard}>
-            <Text style={w.locationText}>{booking.customerAddress ? `${booking.addressType || 'Service'}: ${booking.customerAddress}` : 'No address saved. Use customer phone to confirm.'}</Text>
+            <Text style={w.locationText}>{booking.customerAddress ? `${booking.addressType || t('adminJobs.service')}: ${booking.customerAddress}` : t('adminJobs.noAddressSaved')}</Text>
             <TouchableOpacity style={w.mapsBtn} onPress={() => openInGoogleMaps(booking.customerAddress)}>
               <Ionicons name="map-outline" size={13} color={theme.colors.primary} />
-              <Text style={w.mapsBtnText}>Open in Maps</Text>
+              <Text style={w.mapsBtnText}>{t('adminJobs.openInMaps')}</Text>
             </TouchableOpacity>
           </View>
           <View style={w.checklistCard}>
             <View style={w.checklistHeader}>
               <View>
-                <Text style={w.checklistTitle}>Work Steps</Text>
-                <Text style={w.checklistSubtitle}>Complete each task in order</Text>
+                <Text style={w.checklistTitle}>{t('adminJobs.workSteps')}</Text>
+                <Text style={w.checklistSubtitle}>{t('adminJobs.completeEachTaskInOrder')}</Text>
               </View>
               <View style={w.progressBadge}>
                 <Text style={w.progressValue}>{completedCount}</Text>
@@ -1553,7 +1561,7 @@ const DetailView = () => {
             {!canToggleChecklist && (
               <View style={w.checklistHint}>
                 <Ionicons name="time-outline" size={13} color="#BAE6FD" />
-                <Text style={w.checklistHintText}>Start the job to enable checklist items</Text>
+                <Text style={w.checklistHintText}>{t('adminJobs.startJobToEnableChecklist')}</Text>
               </View>
             )}
             {checklistItems.length > 0 ? checklistItems.map((item, idx) => {
@@ -1580,9 +1588,9 @@ const DetailView = () => {
                     <Text style={[w.checkItemLabel, item.isCompleted && w.checkItemLabelDone]}>{item.label}</Text>
                     <View style={w.checkTimings}>
                       {[
-                        { label: 'Time',     value: `${Math.floor(duration / 60)}m ${duration % 60}s` },
-                        { label: 'Started',  value: fmt(startTime) },
-                        { label: 'Finished', value: fmt(finishTime) },
+                        { label: t('adminJobs.time'), value: `${Math.floor(duration / 60)}m ${duration % 60}s` },
+                        { label: t('adminJobs.started'), value: fmt(startTime) },
+                        { label: t('adminJobs.finished'), value: fmt(finishTime) },
                       ].map(({ label, value }) => (
                         <View key={label} style={w.checkTiming}>
                           <Text style={w.checkTimingLabel}>{label}</Text>
@@ -1603,12 +1611,12 @@ const DetailView = () => {
             }) : (
               <View style={w.checklistEmpty}>
                 <Ionicons name="list-outline" size={28} color={theme.colors.textMuted} />
-                <Text style={w.checklistEmptyText}>No checklist items</Text>
+                <Text style={w.checklistEmptyText}>{t('adminJobs.noChecklistItems')}</Text>
               </View>
             )}
           </View>
           {!isMyJob && booking.assignedWorkerId && (
-            <Text style={w.assignedHint}>This job is assigned to another worker.</Text>
+            <Text style={w.assignedHint}>{t('adminJobs.assignedToAnotherWorker')}</Text>
           )}
         </View>
       );
@@ -1631,20 +1639,20 @@ const DetailView = () => {
                 <View style={m.successRing}>
                   <Ionicons name="alarm-outline" size={28} color="#0E165F" />
                 </View>
-                <Text style={m.eyebrow}>Time to Leave</Text>
-                <Text style={m.title}>Leave in {minutesUntilNextJob} min</Text>
+                <Text style={m.eyebrow}>{t('adminJobs.timeToLeave')}</Text>
+                <Text style={m.title}>{t('adminJobs.leaveInMinutes', { count: minutesUntilNextJob })}</Text>
                 <Text style={m.body}>
                   {nextUpcomingJob.customerName} · {nextUpcomingJob.vehicleMake} {nextUpcomingJob.vehicleModel}{'\n'}
                   {nextUpcomingJob.customerAddress || nextUpcomingJob.addressType}
                 </Text>
                 <View style={m.statsRow}>
                   <View style={m.statCard}>
-                    <Text style={m.statLabel}>Job at</Text>
+                    <Text style={m.statLabel}>{t('adminJobs.jobAt')}</Text>
                     <Text style={m.statValue}>{String(nextUpcomingJob.timeSlot || '').split('-')[0].trim()}</Text>
                   </View>
                   <View style={m.statCard}>
-                    <Text style={m.statLabel}>Travel</Text>
-                    <Text style={m.statValue}>{settings?.workerTravelBufferMinutes || 30} min</Text>
+                    <Text style={m.statLabel}>{t('adminJobs.travel')}</Text>
+                    <Text style={m.statValue}>{t('adminJobs.minutesShort', { count: settings?.workerTravelBufferMinutes || 30 })}</Text>
                   </View>
                 </View>
                 <TouchableOpacity style={[m.primaryBtn, { backgroundColor: '#15803d' }]} onPress={() => {
@@ -1652,17 +1660,17 @@ const DetailView = () => {
                   Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(nextUpcomingJob.customerAddress || nextUpcomingJob.addressType || '')}`);
                 }}>
                   <Ionicons name="navigate-outline" size={16} color="#fff" style={{ marginRight: 6 }} />
-                  <Text style={m.primaryBtnText}>Open in Maps</Text>
+                  <Text style={m.primaryBtnText}>{t('adminJobs.openInMaps')}</Text>
                 </TouchableOpacity>
                 <View style={m.btnRow}>
                   <TouchableOpacity style={m.cancelBtn} onPress={() => setReminderDismissed((p) => ({ ...p, [nextUpcomingJob.id]: true }))}>
-                    <Text style={m.cancelBtnText}>Dismiss</Text>
+                    <Text style={m.cancelBtnText}>{t('adminJobs.dismiss')}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={[m.primaryBtn, { flex: 1, marginTop: 0, backgroundColor: '#0ea5e9' }]} onPress={() => {
                     setReminderDismissed((p) => ({ ...p, [nextUpcomingJob.id]: true }));
                     setSelectedWorkerBookingId(nextUpcomingJob.id);
                   }}>
-                    <Text style={m.primaryBtnText}>View Job</Text>
+                    <Text style={m.primaryBtnText}>{t('adminJobs.viewJob')}</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -1671,17 +1679,17 @@ const DetailView = () => {
         )}
         <View style={w.header}>
           <View style={{ flex: 1 }}>
-            <Text style={s.heading}>{selectedWorkerBooking ? 'Job Detail' : "Today's Work"}</Text>
-            <Text style={s.sub}>{selectedWorkerBooking ? 'Full details, location, work steps, live timer.' : 'Your active worker queue.'}</Text>
+            <Text style={s.heading}>{selectedWorkerBooking ? t('worker.header.titleDetail') : t('worker.header.titleQueue')}</Text>
+            <Text style={s.sub}>{selectedWorkerBooking ? t('worker.header.subtitleDetail') : t('worker.header.subtitleQueue')}</Text>
             {!selectedWorkerBooking && (
               <View style={w.profileCard}>
                 <Image source={{ uri: resolveProfileImageUrl(user?.profileImageUrl) || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200' }} style={w.avatar} />
                 <View style={{ flex: 1 }}>
                   <Text style={w.profileName}>{`${user?.firstName || 'Worker'} ${user?.lastName || ''}`.trim()}</Text>
-                  <Text style={w.profileRole}>Detailer</Text>
+                  <Text style={w.profileRole}>{t('worker.header.role')}</Text>
                 </View>
                 <TouchableOpacity style={w.profileBtn} onPress={() => navigation.navigate('Worker Profile')}>
-                  <Text style={w.profileBtnText}>Profile</Text>
+                  <Text style={w.profileBtnText}>{t('worker.header.profileBtn')}</Text>
                 </TouchableOpacity>
               </View>
             )}

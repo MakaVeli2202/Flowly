@@ -7,6 +7,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useHeaderHeight } from '@react-navigation/elements';
+import { useTranslation } from 'react-i18next';
 import { theme } from '../theme/theme';
 
 const PADDING = 20;
@@ -62,6 +63,7 @@ const Eyebrow = ({ children }) => (
 ══════════════════════════════════════════════════════════ */
 export default function AdminJobPositionsScreen() {
   const headerHeight = useHeaderHeight();
+  const { t } = useTranslation();
 
   const loadPositions = () => {
     try {
@@ -91,7 +93,7 @@ export default function AdminJobPositionsScreen() {
 
   const handleSubmit = () => {
     if (!form.title.trim()) {
-      Alert.alert('Validation', 'Position title is required.'); return;
+      Alert.alert(t('adminJobPositions.validationTitle'), t('adminJobPositions.positionTitleRequired')); return;
     }
     setError('');
     if (editId !== null) {
@@ -122,10 +124,10 @@ export default function AdminJobPositionsScreen() {
   };
 
   const handleDelete = (pos) => {
-    Alert.alert('Delete Position', `Delete "${pos.title}"?`, [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(t('adminJobPositions.deletePosition'), t('adminJobPositions.deletePositionConfirm', { title: pos.title }), [
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: 'Delete',
+        text: t('adminJobPositions.delete'),
         style: 'destructive',
         onPress: () => {
           const updated = positions.filter(p => p.id !== pos.id);
@@ -163,14 +165,14 @@ export default function AdminJobPositionsScreen() {
       >
         {/* ── Page header ─────────────────────────────────── */}
         <View style={s.pageHeader}>
-          <Eyebrow>ADMIN PANEL</Eyebrow>
+          <Eyebrow>{t('adminJobPositions.adminPanel')}</Eyebrow>
           <View style={s.titleRow}>
             <LinearGradient colors={[G(0.14), T(0.09)]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.titleIconBox}>
               <Ionicons name="briefcase-outline" size={18} color={theme.colors.primary} />
             </LinearGradient>
-            <Text style={s.heading}>Job Positions</Text>
+            <Text style={s.heading}>{t('adminJobPositions.jobPositions')}</Text>
           </View>
-          <Text style={s.sub}>Manage open positions and hiring</Text>
+          <Text style={s.sub}>{t('adminJobPositions.manageOpenPositions')}</Text>
           <SpectrumLine style={{ marginTop: 14 }} />
         </View>
 
@@ -178,7 +180,7 @@ export default function AdminJobPositionsScreen() {
         <TouchableOpacity onPress={openCreate} activeOpacity={0.8} style={s.addBtnOuter}>
           <LinearGradient colors={[theme.colors.primary, G(0.82)]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={s.addBtnGradient}>
             <Ionicons name="add" size={16} color={theme.colors.ink} />
-            <Text style={s.addBtnText}>Add Position</Text>
+            <Text style={s.addBtnText}>{t('adminJobPositions.addPosition')}</Text>
           </LinearGradient>
         </TouchableOpacity>
 
@@ -190,8 +192,8 @@ export default function AdminJobPositionsScreen() {
                 <Ionicons name="briefcase-outline" size={28} color={theme.colors.primary} />
               </View>
             </LinearGradient>
-            <Text style={s.emptyTitle}>No positions yet</Text>
-            <Text style={s.emptyBody}>Create your first job position to start hiring</Text>
+            <Text style={s.emptyTitle}>{t('adminJobPositions.noPositionsYet')}</Text>
+            <Text style={s.emptyBody}>{t('adminJobPositions.createFirstPosition')}</Text>
           </View>
         ) : (
           /* ── Positions list ──────────────────────────────── */
@@ -210,7 +212,7 @@ export default function AdminJobPositionsScreen() {
                 <View style={{ flex: 1 }}>
                   <Text style={s.positionTitle}>{pos.title}</Text>
                   <View style={s.positionMeta}>
-                    <Text style={s.positionMetaText}>{pos.department || 'No dept'}</Text>
+                    <Text style={s.positionMetaText}>{pos.department || t('adminJobPositions.noDepartment')}</Text>
                     <Text style={s.positionMetaDot}>·</Text>
                     <Text style={s.positionMetaText}>{pos.type}</Text>
                   </View>
@@ -221,7 +223,7 @@ export default function AdminJobPositionsScreen() {
                   onPress={() => handleToggleOpen(pos)}
                 >
                   <Text style={[s.toggleText, pos.isOpen ? s.toggleTextOpen : s.toggleTextClosed]}>
-                    {pos.isOpen ? 'Open' : 'Closed'}
+                    {pos.isOpen ? t('adminJobPositions.open') : t('adminJobPositions.closed')}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -231,11 +233,11 @@ export default function AdminJobPositionsScreen() {
               <View style={s.positionActions}>
                 <TouchableOpacity style={s.actionBtn} onPress={() => handleEdit(pos)}>
                   <Ionicons name="pencil-outline" size={14} color={theme.colors.primary} />
-                  <Text style={s.actionBtnText}>Edit</Text>
+                  <Text style={s.actionBtnText}>{t('adminJobPositions.edit')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={s.actionBtnDanger} onPress={() => handleDelete(pos)}>
                   <Ionicons name="trash-outline" size={14} color="#FCA5A5" />
-                  <Text style={s.actionBtnTextDanger}>Delete</Text>
+                  <Text style={s.actionBtnTextDanger}>{t('adminJobPositions.delete')}</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -251,8 +253,8 @@ export default function AdminJobPositionsScreen() {
             <View style={m.handle} />
             <View style={m.header}>
               <View style={{ flex: 1 }}>
-                <Text style={m.eyebrow}>{editId !== null ? 'Edit' : 'New'} Position</Text>
-                <Text style={m.title}>{editId !== null ? 'Edit Position' : 'Add Position'}</Text>
+                <Text style={m.eyebrow}>{editId !== null ? t('adminJobPositions.edit') : t('adminJobPositions.new')}</Text>
+                <Text style={m.title}>{editId !== null ? t('adminJobPositions.editPosition') : t('adminJobPositions.addPosition')}</Text>
               </View>
               <TouchableOpacity style={m.closeBtn} onPress={() => setShowForm(false)} activeOpacity={0.75}>
                 <Ionicons name="close" size={16} color={theme.colors.textMuted} />
@@ -261,16 +263,16 @@ export default function AdminJobPositionsScreen() {
             <SpectrumLine />
 
             <ScrollView style={m.body} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-              <Text style={m.fieldLabel}>Position Title *</Text>
+              <Text style={m.fieldLabel}>{t('adminJobPositions.positionTitleRequiredLabel')}</Text>
               <TextInput
                 style={m.input}
                 value={form.title}
                 onChangeText={(v) => setForm(p => ({ ...p, title: v }))}
-                placeholder="e.g. Senior Detailer"
+                placeholder={t('adminJobPositions.positionTitlePlaceholder')}
                 placeholderTextColor={theme.colors.textMuted}
               />
 
-              <Text style={m.fieldLabel}>Department</Text>
+              <Text style={m.fieldLabel}>{t('adminJobPositions.department')}</Text>
               <View style={m.chipRow}>
                 {DEPARTMENTS.map(dept => (
                   <TouchableOpacity
@@ -283,7 +285,7 @@ export default function AdminJobPositionsScreen() {
                 ))}
               </View>
 
-              <Text style={m.fieldLabel}>Job Type</Text>
+              <Text style={m.fieldLabel}>{t('adminJobPositions.jobType')}</Text>
               <View style={m.chipRow}>
                 {JOB_TYPES.map(type => (
                   <TouchableOpacity
@@ -296,21 +298,21 @@ export default function AdminJobPositionsScreen() {
                 ))}
               </View>
 
-              <Text style={m.fieldLabel}>Location</Text>
+              <Text style={m.fieldLabel}>{t('adminJobPositions.location')}</Text>
               <TextInput
                 style={m.input}
                 value={form.location}
                 onChangeText={(v) => setForm(p => ({ ...p, location: v }))}
-                placeholder="e.g. Doha, Qatar"
+                placeholder={t('adminJobPositions.locationPlaceholder')}
                 placeholderTextColor={theme.colors.textMuted}
               />
 
-              <Text style={m.fieldLabel}>Description</Text>
+              <Text style={m.fieldLabel}>{t('adminJobPositions.description')}</Text>
               <TextInput
                 style={[m.input, m.textArea]}
                 value={form.description}
                 onChangeText={(v) => setForm(p => ({ ...p, description: v }))}
-                placeholder="Job responsibilities, requirements..."
+                placeholder={t('adminJobPositions.descriptionPlaceholder')}
                 placeholderTextColor={theme.colors.textMuted}
                 multiline
                 numberOfLines={4}
@@ -319,13 +321,13 @@ export default function AdminJobPositionsScreen() {
 
             <View style={m.actions}>
               <TouchableOpacity style={m.cancelBtn} onPress={() => setShowForm(false)} disabled={!!error} activeOpacity={0.75}>
-                <Text style={m.cancelBtnText}>Cancel</Text>
+                <Text style={m.cancelBtnText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
               <View style={[m.saveBtnWrap, !!error && m.saveBtnDisabled]}>
                 <LinearGradient colors={[theme.colors.primary, G(0.82)]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={StyleSheet.absoluteFillObject} pointerEvents="none" />
                 <TouchableOpacity style={m.saveBtnTouch} onPress={handleSubmit} activeOpacity={0.85}>
                   <Ionicons name="checkmark-done" size={15} color={theme.colors.ink} />
-                  <Text style={m.saveBtnText}>{editId !== null ? 'Save Changes' : 'Add Position'}</Text>
+                  <Text style={m.saveBtnText}>{editId !== null ? t('adminJobPositions.saveChanges') : t('adminJobPositions.addPosition')}</Text>
                 </TouchableOpacity>
               </View>
             </View>

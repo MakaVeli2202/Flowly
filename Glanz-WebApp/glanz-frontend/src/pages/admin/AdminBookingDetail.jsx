@@ -12,6 +12,7 @@ import { formatQAR } from '../../utils/currency';
 import { statusColors as statusConfig, paymentStatusColors as paymentStatusConfig } from '../../utils/statusConfig';
 import { useToast } from '../../components/shared/Toast';
 import AvailabilityCalendar from '../../components/shared/AvailabilityCalendar';
+import { useLanguage } from '../../context/LanguageContext';
 
 const VEHICLE_TYPES = ['Motorcycle', 'Sedan', 'SUV', 'Pickup'];
 const TIME_SLOTS    = ['09:00-10:00','10:00-11:00','11:00-12:00','12:00-13:00','13:00-14:00','14:00-15:00','15:00-16:00','16:00-17:00','17:00-18:00'];
@@ -139,6 +140,7 @@ export default function AdminBookingDetail() {
   const { id }    = useParams();
 
   const toast   = useToast();
+  const { t } = useLanguage();
   const [booking, setBooking] = useState(location.state?.booking ?? null);
   const [loading, setLoading] = useState(!location.state?.booking);
   const [workers, setWorkers] = useState([]);
@@ -213,9 +215,9 @@ export default function AdminBookingDetail() {
   };
   const workerLabelById = (workerId) => {
     const w = workers.find(w => w.id === workerId);
-    if (!w) return 'Unassigned';
-    const label = `${w.firstName || ''} ${w.lastName || ''}`.trim() || w.email || `Worker #${w.id}`;
-    return w.isActive === false ? `${label} (Inactive)` : label;
+    if (!w) return t('bookings.adminDetail.unassigned');
+    const label = `${w.firstName || ''} ${w.lastName || ''}`.trim() || w.email || `${t('bookings.adminDetail.worker')} #${w.id}`;
+    return w.isActive === false ? `${label} (${t('bookings.adminDetail.inactive')})` : label;
   };
   const workerOptions = availableWorkers
     ? availableWorkers.map(w => ({
@@ -226,9 +228,9 @@ export default function AdminBookingDetail() {
       }))
     : workers.map(w => ({
         workerId: w.id,
-        label: `${w.firstName || ''} ${w.lastName || ''}`.trim() || w.email || `Worker #${w.id}`,
+        label: `${w.firstName || ''} ${w.lastName || ''}`.trim() || w.email || `${t('bookings.adminDetail.worker')} #${w.id}`,
         isAvailable: w.isActive !== false,
-        note: w.isActive === false ? 'Inactive worker' : null,
+        note: w.isActive === false ? t('bookings.adminDetail.inactiveWorker') : null,
       }));
 
   const handleAssignWorker = async (workerId) => {
@@ -237,16 +239,16 @@ export default function AdminBookingDetail() {
       if (parsed !== null && availableWorkers) {
         const info = availableWorkers.find(w => w.workerId === parsed);
         if (info && !info.isAvailable) {
-          alert(`Cannot assign: ${info.note || 'Schedule conflict at this booking time.'}`);
+          alert(`${t('bookings.adminDetail.cannotAssign')}: ${info.note || t('bookings.adminDetail.scheduleConflict')}`);
           return;
         }
       }
       await bookingsAPI.assignWorker(booking.id, parsed, false);
       await refreshBooking();
       setAvailableWorkers(null);
-      toast(parsed === null ? 'Worker unassigned' : 'Worker assigned', 'success');
+      toast(parsed === null ? t('bookings.adminDetail.workerUnassigned') : t('bookings.adminDetail.workerAssigned'), 'success');
     } catch (err) {
-      toast(err?.response?.data?.message || 'Failed to assign worker', 'error');
+      toast(err?.response?.data?.message || t('bookings.adminDetail.failedAssignWorker'), 'error');
     }
   };
 
@@ -255,15 +257,15 @@ export default function AdminBookingDetail() {
     try {
       await bookingsAPI.updateStatus(booking.id, newStatus);
       await refreshBooking();
-      toast(`Status updated to ${newStatus}`, 'success');
-    } catch { toast('Failed to update status', 'error'); }
+      toast(t('bookings.adminDetail.statusUpdated', { status: newStatus }), 'success');
+    } catch { toast(t('bookings.adminDetail.failedUpdateStatus'), 'error'); }
   };
   const handlePaymentStatusUpdate = async (newPaymentStatus) => {
     try {
       await bookingsAPI.updatePaymentStatus(booking.id, newPaymentStatus);
       await refreshBooking();
-      toast(`Payment status updated to ${newPaymentStatus}`, 'success');
-    } catch { toast('Failed to update payment status', 'error'); }
+      toast(t('bookings.adminDetail.paymentStatusUpdated', { status: newPaymentStatus }), 'success');
+    } catch { toast(t('bookings.adminDetail.failedUpdatePaymentStatus'), 'error'); }
   };
 
   /* ── Edit helpers ──────────────────────────────────────── */
@@ -328,14 +330,14 @@ export default function AdminBookingDetail() {
       if (editForm.packages?.length > 0)           dto.packages             = editForm.packages;
       const updated = await bookingsAPI.adminEdit(booking.id, dto);
       setBooking(updated); setEditMode(false); setEditConfirm(false);
-      toast('Booking updated successfully', 'success');
+      toast(t('bookings.adminDetail.bookingUpdated'), 'success');
     } catch (err) {
       const data = err?.response?.data;
       if (data?.availableSlots && Array.isArray(data.availableSlots)) {
         setEditPackageSlotWarning({ message: data.message, altSlots: data.availableSlots });
         setEditConfirm(false);
       } else {
-        setEditError(data?.message || 'Failed to save changes.');
+        setEditError(data?.message || t('bookings.adminDetail.failedSaveChanges'));
       }
     } finally { setEditSaving(false); }
   };
@@ -349,7 +351,7 @@ export default function AdminBookingDetail() {
       const data = await bookingsAPI.getCancellationFee(booking.id);
       setFeeInfo(data);
       setRefundOverride(String(Math.max(0, data.bookingTotal - data.calculatedFee)));
-    } catch { setCancelRefundError('Could not load cancellation fee info.'); }
+    } catch { setCancelRefundError(t('bookings.adminDetail.failedLoadFeeInfo')); }
     finally { setFeeInfoLoading(false); }
   };
 
@@ -362,9 +364,9 @@ export default function AdminBookingDetail() {
       setRequestActionLoading('reject-cancel');
       await bookingsAPI.rejectCancellationRequest(booking.id);
       await refreshBooking();
-      toast('Cancellation request rejected. Customer has been notified.', 'success');
+      toast(t('bookings.adminDetail.cancellationRejected'), 'success');
     } catch (err) {
-      toast(err?.response?.data?.message || 'Failed to reject cancellation request', 'error');
+      toast(err?.response?.data?.message || t('bookings.adminDetail.failedRejectCancellation'), 'error');
     } finally {
       setRequestActionLoading(null);
     }
@@ -378,7 +380,7 @@ export default function AdminBookingDetail() {
       scheduledDate: preferredDate ? preferredDate.split('T')[0] : prev.scheduledDate,
     }));
     setEditMode(true);
-    toast("Edit form pre-filled with customer's preferred date — adjust and save to confirm.", 'info');
+    toast(t('bookings.adminDetail.reschedulePrefillInfo'), 'info');
   };
 
   /* Reject reschedule request → clear the flag, notify customer */
@@ -387,9 +389,9 @@ export default function AdminBookingDetail() {
       setRequestActionLoading('reject-reschedule');
       await bookingsAPI.rejectRescheduleRequest(booking.id);
       await refreshBooking();
-      toast('Reschedule request rejected. Customer has been notified.', 'success');
+      toast(t('bookings.adminDetail.rescheduleRejected'), 'success');
     } catch (err) {
-      toast(err?.response?.data?.message || 'Failed to reject reschedule request', 'error');
+      toast(err?.response?.data?.message || t('bookings.adminDetail.failedRejectReschedule'), 'error');
     } finally {
       setRequestActionLoading(null);
     }
@@ -410,9 +412,9 @@ export default function AdminBookingDetail() {
       const result = await bookingsAPI.adminCancelRefund(booking.id, dto);
       setCancelRefundResult(result);
       await refreshBooking();
-      toast('Booking cancelled & refund issued', 'success');
+      toast(t('bookings.adminDetail.bookingCancelledRefundIssued'), 'success');
     } catch (err) {
-      setCancelRefundError(err?.response?.data?.message || 'Cancel & refund failed.');
+      setCancelRefundError(err?.response?.data?.message || t('bookings.adminDetail.cancelRefundFailed'));
     } finally { setCancelRefundLoading(false); }
   };
 
@@ -420,7 +422,7 @@ export default function AdminBookingDetail() {
   if (loading) return (
     <div className="flex flex-col items-center justify-center min-h-screen gap-4">
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
-      <p className="text-[var(--muted-color)] text-sm">Loading booking…</p>
+      <p className="text-[var(--muted-color)] text-sm">{t('bookings.adminDetail.loadingBooking')}</p>
     </div>
   );
   if (!booking) return null;
@@ -445,7 +447,7 @@ export default function AdminBookingDetail() {
           {/* Back button */}
           <button type="button" onClick={() => navigate('/admin/bookings')}
             className="flex items-center gap-2 text-[var(--muted-color)] hover:text-[var(--text-color)] text-sm font-semibold mb-8 transition">
-            <ArrowLeft size={16} /> Back to Bookings
+            <ArrowLeft size={16} /> {t('bookings.adminDetail.backToBookings')}
           </button>
 
           {/* Header */}
@@ -456,7 +458,7 @@ export default function AdminBookingDetail() {
               <div>
                 <div className="flex items-center gap-3 mb-2">
                   <span className="h-px w-6" style={{ background: 'linear-gradient(90deg, transparent, #c8a96b)' }} />
-                  <p className="text-[0.58rem] font-bold uppercase tracking-[0.26em] text-[var(--muted-color)]">Booking Details</p>
+                  <p className="text-[0.58rem] font-bold uppercase tracking-[0.26em] text-[var(--muted-color)]">{t('bookings.adminDetail.bookingDetails')}</p>
                   <span className="h-px w-6" style={{ background: 'linear-gradient(90deg, #c8a96b, transparent)' }} />
                 </div>
                 <h1 className="premium-heading text-3xl font-bold text-[var(--heading-color)] mb-1">{booking.customerName}</h1>
@@ -466,13 +468,13 @@ export default function AdminBookingDetail() {
                 {!editMode && booking.status !== 'Completed' && booking.status !== 'Cancelled' && (
                   <button type="button" onClick={openEditMode}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-primary/35 text-primary text-xs font-bold hover:bg-primary/10 transition">
-                    <Edit2 size={12} /> Edit
+                    <Edit2 size={12} /> {t('common.edit')}
                   </button>
                 )}
                 {editMode && (
                   <button type="button" onClick={() => { setEditMode(false); setEditError(''); setEditConfirm(false); }}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[var(--border-color)] text-[var(--muted-color)] text-xs font-bold hover:bg-white/5 transition">
-                    <X size={12} /> Cancel Edit
+                    <X size={12} /> {t('bookings.adminDetail.cancelEdit')}
                   </button>
                 )}
               </div>
@@ -490,7 +492,7 @@ export default function AdminBookingDetail() {
                   <div className="w-7 h-7 rounded-lg bg-primary/15 border border-primary/28 flex items-center justify-center">
                     <Edit2 size={13} className="text-primary" />
                   </div>
-                  <h3 className="text-sm font-bold text-primary">Edit Booking</h3>
+                  <h3 className="text-sm font-bold text-primary">{t('bookings.adminDetail.editBooking')}</h3>
                 </div>
                 {editError && (
                   <div className="mb-4 flex items-start gap-3 rounded-xl border border-rose-500/25 bg-rose-500/8 p-3">
@@ -500,7 +502,7 @@ export default function AdminBookingDetail() {
                 )}
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="md:col-span-2">
-                    <label className="block text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)] mb-2">Scheduled Date</label>
+                    <label className="block text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)] mb-2">{t('bookings.adminDetail.scheduledDate')}</label>
                     <AvailabilityCalendar
                       value={editForm.scheduledDate}
                       onChange={handleEditDateChange}
@@ -509,7 +511,7 @@ export default function AdminBookingDetail() {
                   </div>
                   <div className="md:col-span-2">
                     <label className="block text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)] mb-2">
-                      Time Slot{editSlotsLoading && <span className="ml-1.5 opacity-50 normal-case font-normal text-[10px]">checking availability…</span>}
+                      {t('bookings.adminDetail.timeSlot')}{editSlotsLoading && <span className="ml-1.5 opacity-50 normal-case font-normal text-[10px]">{t('bookings.adminDetail.checkingAvailability')}</span>}
                     </label>
                     {editSlotsLoading ? (
                       <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
@@ -525,7 +527,7 @@ export default function AdminBookingDetail() {
                         : editSlots.filter(Boolean);
                       if (!slots.length) return (
                         <p className="text-xs text-[var(--muted-color)] py-3">
-                          {editForm.scheduledDate ? 'No slots available on this date.' : 'Select a date above to see available slots.'}
+                          {editForm.scheduledDate ? t('bookings.adminDetail.noSlotsOnDate') : t('bookings.adminDetail.selectDateForSlots')}
                         </p>
                       );
                       return (
@@ -552,7 +554,7 @@ export default function AdminBookingDetail() {
                               >
                                 {slot}
                                 {isCurrent && !isAvail && (
-                                  <span className="block text-[9px] font-normal opacity-60 mt-0.5">current</span>
+                                  <span className="block text-[9px] font-normal opacity-60 mt-0.5">{t('bookings.adminDetail.current')}</span>
                                 )}
                               </button>
                             );
@@ -562,28 +564,28 @@ export default function AdminBookingDetail() {
                     })()}
                   </div>
                   <div>
-                    <label className="block text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)] mb-1.5">Vehicle Make</label>
-                    <input type="text" value={editForm.vehicleMake} placeholder="e.g. Toyota"
+                    <label className="block text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)] mb-1.5">{t('bookings.adminDetail.vehicleMake')}</label>
+                    <input type="text" value={editForm.vehicleMake} placeholder={t('bookings.adminDetail.vehicleMakePlaceholder')}
                       onChange={(e) => setEditForm(p => ({ ...p, vehicleMake: e.target.value }))}
                       className="w-full px-3 py-2.5 border border-[var(--border-color)] bg-[var(--card-bg)] text-[var(--text-color)] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)] mb-1.5">Vehicle Model</label>
-                    <input type="text" value={editForm.vehicleModel} placeholder="e.g. Camry"
+                    <label className="block text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)] mb-1.5">{t('bookings.adminDetail.vehicleModel')}</label>
+                    <input type="text" value={editForm.vehicleModel} placeholder={t('bookings.adminDetail.vehicleModelPlaceholder')}
                       onChange={(e) => setEditForm(p => ({ ...p, vehicleModel: e.target.value }))}
                       className="w-full px-3 py-2.5 border border-[var(--border-color)] bg-[var(--card-bg)] text-[var(--text-color)] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)] mb-1.5">Year</label>
-                    <input type="text" value={editForm.vehicleYear} placeholder="e.g. 2022" maxLength={4}
+                    <label className="block text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)] mb-1.5">{t('bookings.adminDetail.year')}</label>
+                    <input type="text" value={editForm.vehicleYear} placeholder={t('bookings.adminDetail.yearPlaceholder')} maxLength={4}
                       onChange={(e) => setEditForm(p => ({ ...p, vehicleYear: e.target.value }))}
                       className="w-full px-3 py-2.5 border border-[var(--border-color)] bg-[var(--card-bg)] text-[var(--text-color)] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)] mb-1.5">Vehicle Type</label>
+                    <label className="block text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)] mb-1.5">{t('bookings.adminDetail.vehicleType')}</label>
                     <select value={editForm.vehicleType}
                       onChange={(e) => setEditForm(p => ({ ...p, vehicleType: e.target.value }))}
                       className="w-full px-3 py-2.5 border border-[var(--border-color)] rounded-xl text-sm bg-[var(--card-bg)] text-[var(--text-color)] focus:outline-none focus:ring-2 focus:ring-primary/50"
@@ -592,21 +594,21 @@ export default function AdminBookingDetail() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)] mb-1.5">Service Address</label>
-                    <input type="text" value={editForm.customerAddress} placeholder="Street / Area"
+                    <label className="block text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)] mb-1.5">{t('bookings.adminDetail.serviceAddress')}</label>
+                    <input type="text" value={editForm.customerAddress} placeholder={t('bookings.adminDetail.serviceAddressPlaceholder')}
                       onChange={(e) => setEditForm(p => ({ ...p, customerAddress: e.target.value }))}
                       className="w-full px-3 py-2.5 border border-[var(--border-color)] bg-[var(--card-bg)] text-[var(--text-color)] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)] mb-1.5">House / Building No.</label>
-                    <input type="text" value={editForm.houseNumber} placeholder="e.g. Villa 12"
+                    <label className="block text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)] mb-1.5">{t('bookings.adminDetail.houseBuildingNo')}</label>
+                    <input type="text" value={editForm.houseNumber} placeholder={t('bookings.adminDetail.houseBuildingNoPlaceholder')}
                       onChange={(e) => setEditForm(p => ({ ...p, houseNumber: e.target.value }))}
                       className="w-full px-3 py-2.5 border border-[var(--border-color)] bg-[var(--card-bg)] text-[var(--text-color)] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                     />
                   </div>
                   <div className="md:col-span-2">
-                    <label className="block text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)] mb-1.5">Address Type</label>
+                    <label className="block text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)] mb-1.5">{t('bookings.adminDetail.addressType')}</label>
                     <div className="flex gap-2">
                       {['Home', 'Work', 'Other'].map(t => (
                         <button key={t} type="button" onClick={() => setEditForm(p => ({ ...p, addressType: t }))}
@@ -617,8 +619,8 @@ export default function AdminBookingDetail() {
                     </div>
                   </div>
                   <div className="md:col-span-2">
-                    <label className="block text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)] mb-1.5">Special Instructions</label>
-                    <textarea value={editForm.specialInstructions} rows={2} placeholder="Notes for the detailer…"
+                    <label className="block text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)] mb-1.5">{t('bookings.adminDetail.specialInstructions')}</label>
+                    <textarea value={editForm.specialInstructions} rows={2} placeholder={t('bookings.adminDetail.specialInstructionsPlaceholder')}
                       onChange={(e) => setEditForm(p => ({ ...p, specialInstructions: e.target.value }))}
                       className="w-full px-3 py-2.5 border border-[var(--border-color)] bg-[var(--card-bg)] text-[var(--text-color)] rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
                     />
@@ -628,7 +630,7 @@ export default function AdminBookingDetail() {
                 {/* Package selection */}
                 {allPackages.length > 0 && (
                   <div className="mt-5">
-                    <label className="block text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)] mb-3">Package</label>
+                    <label className="block text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)] mb-3">{t('bookings.adminDetail.package')}</label>
                     <div className="space-y-2">
                       {allPackages.map(pkg => {
                         const selected = (editForm.packages || []).some(p => p.packageId === pkg.id);
@@ -651,7 +653,7 @@ export default function AdminBookingDetail() {
                       })}
                     </div>
                     {(editForm.packages || []).length === 0 && (
-                      <p className="text-xs text-amber-400 mt-2">At least one package must be selected.</p>
+                      <p className="text-xs text-amber-400 mt-2">{t('bookings.adminDetail.atLeastOnePackage')}</p>
                     )}
                   </div>
                 )}
@@ -659,7 +661,7 @@ export default function AdminBookingDetail() {
                 {/* Slot-blocked warning */}
                 {editPackageSlotWarning && (
                   <div className="mt-4 rounded-xl border border-amber-400/35 bg-amber-500/8 p-4">
-                    <p className="text-sm font-bold text-amber-400 mb-1">Slot unavailable after package change</p>
+                    <p className="text-sm font-bold text-amber-400 mb-1">{t('bookings.adminDetail.slotUnavailableAfterPackage')}</p>
                     <p className="text-xs text-[var(--muted-color)]">{editPackageSlotWarning.message}</p>
                     {editPackageSlotWarning.altSlots?.length > 0 && (
                       <div className="mt-3">

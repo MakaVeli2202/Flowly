@@ -84,5 +84,44 @@
   "completedBookingsRequired": "Erforderliche abgeschlossene Buchungen",
   "vehiclePriceMultipliers": "Fahrzeugpreisfaktoren",
   "enableSmsFollowUps": "SMS-Follow-ups aktivieren",
-  "developmentMode": "Entwicklungsmodus"
+  "developmentMode": "Entwicklungsmodus",
+  "avatarPicker": {
+    "title": "Avatar auswahlen",
+    "subtitle": "Avatar im arabischen Stil - klicke zum sofortigen Anwenden.",
+    "labels": {
+      "gulfMale": "Golf Mann",
+      "gulfFemale": "Golf Frau",
+      "arabMale": "Arabischer Mann",
+      "arabFemale": "Arabische Frau",
+      "expatMale": "Expat Mann",
+      "expatFemale": "Expat Frau"
+    },
+    "desc": {
+      "kufiyaAgal": "Kufiya und Agal",
+      "kufiya": "Kufiya",
+      "kufiyaBeard": "Kufiya und Bart",
+      "blackHijab": "Schwarzer Hijab",
+      "tealHijab": "Turkiser Hijab",
+      "burgundyHijab": "Bordeauxfarbener Hijab",
+      "wavyHair": "Welliges Haar",
+      "shortHair": "Kurzes Haar",
+      "purpleHijab": "Lila Hijab",
+      "coralHijab": "Korallenfarbener Hijab",
+      "casual": "Lassig"
+    }
+  },
+  "chat": {
+    "welcome": "Hi! Ich bin der Glanz-Assistent. Frag mich nach Services, Preisen, Buchung oder Stornierungen.",
+    "errorReply": "Entschuldigung, ich konnte deine Anfrage gerade nicht verarbeiten. Bitte versuche es erneut oder kontaktiere support@glanz.qa.",
+    "openAria": "Chat-Assistent offnen",
+    "title": "Glanz-Assistent",
+    "subtitle": "Antwortet normalerweise sofort",
+    "placeholder": "Eine Frage stellen..."
+  },
+  "errorBoundary": {
+    "title": "Ups! Etwas ist schiefgelaufen",
+    "fallbackMessage": "Etwas Unerwartetes ist passiert",
+    "tryAgain": "Erneut versuchen",
+    "goHome": "Zur Startseite"
+  }
 }

@@ -8,6 +8,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useHeaderHeight } from '@react-navigation/elements';
+import { useTranslation } from 'react-i18next';
 import { authAPI } from '../api/auth';
 import { theme } from '../theme/theme';
 
@@ -76,6 +77,7 @@ const SectionLabel = ({ children }) => (
 ══════════════════════════════════════════════════════════ */
 export default function AdminStaffScreen() {
   const headerHeight = useHeaderHeight();
+  const { t } = useTranslation();
 
   const [workers,      setWorkers]      = useState([]);
   const [loading,      setLoading]    = useState(true);
@@ -106,12 +108,12 @@ export default function AdminStaffScreen() {
       setWorkers(data || []);
       setError('');
     } catch (err) {
-      setError(err?.response?.data?.message || 'Failed to load staff');
+      setError(err?.response?.data?.message || t('adminStaff.failedLoadStaff'));
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [t]);
 
   const loadPayroll = useCallback(async () => {
     if (workers.length === 0) return;
@@ -134,7 +136,7 @@ export default function AdminStaffScreen() {
 
   const handleAddWorker = async () => {
     if (!form.firstName.trim() || !form.lastName.trim() || !form.email.trim() || !form.password.trim() || !form.phone.trim()) {
-      Alert.alert('Validation', 'Please fill in all fields'); return;
+      Alert.alert(t('adminStaff.validationTitle'), t('adminStaff.fillAllFields')); return;
     }
     try {
       setSaving('new');
@@ -149,18 +151,18 @@ export default function AdminStaffScreen() {
       setShowAddForm(false);
       await load();
     } catch (err) {
-      Alert.alert('Error', err?.response?.data?.message || 'Failed to add worker');
+      Alert.alert(t('common.error'), err?.response?.data?.message || t('adminStaff.failedAddWorker'));
     } finally { setSaving(null); }
   };
 
   const handleDeleteWorker = (worker) => {
     Alert.alert(
-      'Remove Detailer',
-      `Are you sure you want to remove ${worker.firstName} ${worker.lastName}? This cannot be undone.`,
+      t('adminStaff.removeDetailer'),
+      t('adminStaff.removeDetailerConfirm', { name: `${worker.firstName} ${worker.lastName}` }),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Remove',
+          text: t('adminStaff.remove'),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -168,7 +170,7 @@ export default function AdminStaffScreen() {
               await authAPI.deleteWorker(worker.id);
               await load();
             } catch (err) {
-              Alert.alert('Error', err?.response?.data?.message || 'Failed to delete worker');
+              Alert.alert(t('common.error'), err?.response?.data?.message || t('adminStaff.failedDeleteWorker'));
             } finally { setDeletingId(null); }
           },
         },
@@ -178,21 +180,21 @@ export default function AdminStaffScreen() {
 
   const handleToggleWorkerStatus = (worker) => {
     const nextStatus = !worker.isActive;
-    const actionText = nextStatus ? 'activate' : 'deactivate';
+    const actionText = nextStatus ? t('adminStaff.activateAction') : t('adminStaff.deactivateAction');
     Alert.alert(
-      `${nextStatus ? 'Activate' : 'Deactivate'} Detailer`,
-      `Are you sure you want to ${actionText} ${worker.firstName} ${worker.lastName}?`,
+      `${nextStatus ? t('adminStaff.activate') : t('adminStaff.deactivate')} ${t('adminStaff.detailer')}`,
+      t('adminStaff.confirmStatusChange', { action: actionText, name: `${worker.firstName} ${worker.lastName}` }),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Confirm',
+          text: t('adminStaff.confirm'),
           onPress: async () => {
             try {
               setSaving(`status-${worker.id}`);
               await authAPI.updateWorkerStatus(worker.id, nextStatus);
               await load();
             } catch (err) {
-              Alert.alert('Error', err?.response?.data?.message || `Failed to ${actionText} worker`);
+              Alert.alert(t('common.error'), err?.response?.data?.message || t('adminStaff.failedStatusChange', { action: actionText }));
             } finally { setSaving(null); }
           },
         },
@@ -203,7 +205,7 @@ export default function AdminStaffScreen() {
   const handleSaveSalary = async (workerId) => {
     const val = parseFloat(salaryInputs[workerId]);
     if (!Number.isFinite(val) || val < 0) {
-      Alert.alert('Validation', 'Enter a valid salary amount.'); return;
+      Alert.alert(t('adminStaff.validationTitle'), t('adminStaff.enterValidSalary')); return;
     }
     try {
       setSalarySaving(workerId);
@@ -212,7 +214,7 @@ export default function AdminStaffScreen() {
       setTimeout(() => setSalarySaved(null), 2500);
       await load();
     } catch (err) {
-      Alert.alert('Error', err?.response?.data?.message || 'Failed to save salary.');
+      Alert.alert(t('common.error'), err?.response?.data?.message || t('adminStaff.failedSaveSalary'));
     } finally { setSalarySaving(null); }
   };
 
@@ -276,7 +278,7 @@ export default function AdminStaffScreen() {
       setSelectedWorker(null);
       await load();
     } catch (err) {
-      Alert.alert('Error', err?.response?.data?.message || 'Failed to save schedule');
+      Alert.alert(t('common.error'), err?.response?.data?.message || t('adminStaff.failedSaveSchedule'));
     } finally { setSaving(null); }
   };
 
@@ -296,14 +298,14 @@ export default function AdminStaffScreen() {
       >
         {/* ── Page header ─────────────────────────────────── */}
         <View style={s.pageHeader}>
-          <Eyebrow>ADMIN PANEL</Eyebrow>
+          <Eyebrow>{t('adminStaff.adminPanel')}</Eyebrow>
           <View style={s.titleRow}>
             <LinearGradient colors={[G(0.14), T(0.09)]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.titleIconBox}>
               <Ionicons name="people-outline" size={18} color={theme.colors.primary} />
             </LinearGradient>
-            <Text style={s.heading}>Manage Staff</Text>
+            <Text style={s.heading}>{t('adminStaff.manageStaff')}</Text>
           </View>
-          <Text style={s.sub}>Add, remove, and manage your detailing staff</Text>
+          <Text style={s.sub}>{t('adminStaff.manageStaffSubtitle')}</Text>
           <SpectrumLine style={{ marginTop: 14 }} />
         </View>
 
@@ -322,7 +324,7 @@ export default function AdminStaffScreen() {
         <TouchableOpacity onPress={() => setShowAddForm(true)} activeOpacity={0.8} style={s.addBtnOuter}>
           <LinearGradient colors={[theme.colors.primary, G(0.82)]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={s.addBtnGradient}>
             <Ionicons name="add" size={16} color={theme.colors.ink} />
-            <Text style={s.addBtnText}>Add Detailer</Text>
+            <Text style={s.addBtnText}>{t('adminStaff.addDetailer')}</Text>
           </LinearGradient>
         </TouchableOpacity>
 
@@ -334,11 +336,11 @@ export default function AdminStaffScreen() {
                 <Ionicons name="people-outline" size={28} color={theme.colors.primary} />
               </View>
             </LinearGradient>
-            <Text style={s.emptyTitle}>No staff members yet</Text>
-            <Text style={s.emptyBody}>Start by adding your first detailer to the system</Text>
+            <Text style={s.emptyTitle}>{t('adminStaff.noStaffMembers')}</Text>
+            <Text style={s.emptyBody}>{t('adminStaff.addFirstDetailerHint')}</Text>
             <TouchableOpacity onPress={() => setShowAddForm(true)} style={s.emptyAction} activeOpacity={0.8}>
               <LinearGradient colors={[theme.colors.primary, G(0.82)]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={StyleSheet.absoluteFillObject} pointerEvents="none" />
-              <Text style={s.emptyActionText}>Add First Detailer</Text>
+              <Text style={s.emptyActionText}>{t('adminStaff.addFirstDetailer')}</Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -369,21 +371,21 @@ export default function AdminStaffScreen() {
                     <View style={{ flex: 1 }}>
                       <Text style={s.workerName}>{worker.firstName} {worker.lastName}</Text>
                       <View style={s.statusChip}>
-                        <Text style={[s.statusChipText, { color: accentColor }]}>{isActive ? 'Active' : 'Inactive'}</Text>
+                        <Text style={[s.statusChipText, { color: accentColor }]}>{isActive ? t('adminStaff.active') : t('adminStaff.inactive')}</Text>
                       </View>
                       <Text style={s.workerEmail}>{worker.email}</Text>
                       {worker.phone && <Text style={s.workerPhone}>{worker.phone}</Text>}
-                      <Text style={s.workerAdded}>Added {new Date(worker.createdAt).toLocaleDateString()}</Text>
+                      <Text style={s.workerAdded}>{t('adminStaff.addedOn', { date: new Date(worker.createdAt).toLocaleDateString() })}</Text>
                       <View style={s.scheduleInfo}>
                         <Ionicons name="time-outline" size={11} color={theme.colors.textMuted} />
                         <Text style={s.scheduleText}>{worker.shiftStart || '09:00'} – {worker.shiftEnd || '18:00'}</Text>
                         {Array.isArray(worker.daySchedules) && worker.daySchedules.length > 0 && (
                           <View style={s.customDayBadge}>
-                            <Text style={s.customDayText}>{worker.daySchedules.length} custom</Text>
+                            <Text style={s.customDayText}>{t('adminStaff.customCount', { count: worker.daySchedules.length })}</Text>
                           </View>
                         )}
                         <Text style={s.scheduleText}> · </Text>
-                        <Text style={s.scheduleText}>{workingDays.length} days</Text>
+                        <Text style={s.scheduleText}>{t('adminStaff.daysCount', { count: workingDays.length })}</Text>
                       </View>
                     </View>
                   </View>
@@ -396,7 +398,7 @@ export default function AdminStaffScreen() {
                       activeOpacity={0.75}
                     >
                       <Ionicons name="calendar-outline" size={12} color={theme.colors.primary} />
-                      <Text style={s.actionBtnText}>Schedule</Text>
+                      <Text style={s.actionBtnText}>{t('adminStaff.schedule')}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={s.actionBtn}
@@ -405,7 +407,7 @@ export default function AdminStaffScreen() {
                       activeOpacity={0.75}
                     >
                       <Text style={[s.actionBtnText, { color: isActive ? '#FBBF24' : '#86EFAC' }]}>
-                        {saving === `status-${worker.id}` ? 'Saving...' : isActive ? 'Deactivate' : 'Activate'}
+                        {saving === `status-${worker.id}` ? t('adminStaff.saving') : isActive ? t('adminStaff.deactivate') : t('adminStaff.activate')}
                       </Text>
                     </TouchableOpacity>
                     <TouchableOpacity
@@ -415,7 +417,7 @@ export default function AdminStaffScreen() {
                       activeOpacity={0.75}
                     >
                       <Text style={s.actionBtnTextDanger}>
-                        {deletingId === worker.id ? 'Removing...' : 'Remove'}
+                        {deletingId === worker.id ? t('adminStaff.removing') : t('adminStaff.remove')}
                       </Text>
                     </TouchableOpacity>
                   </View>
@@ -424,12 +426,12 @@ export default function AdminStaffScreen() {
                   <View style={s.salaryBox}>
                     <View style={s.salaryHeader}>
                       <Ionicons name="cash-outline" size={12} color={theme.colors.primary} />
-                      <Text style={s.salaryLabel}>Monthly Salary (QAR)</Text>
+                      <Text style={s.salaryLabel}>{t('adminStaff.monthlySalaryQar')}</Text>
                     </View>
                     <View style={s.salaryRow}>
                       <TextInput
                         style={s.salaryInput}
-                        placeholder="e.g. 2500"
+                        placeholder={t('adminStaff.salaryPlaceholder')}
                         value={salaryInputs[worker.id] ?? (worker.monthlySalary ?? '').toString()}
                         onChangeText={(v) => setSalaryInputs(p => ({ ...p, [worker.id]: v }))}
                         keyboardType="numeric"
@@ -449,7 +451,7 @@ export default function AdminStaffScreen() {
                           <Ionicons name="save-outline" size={12} color={theme.colors.ink} />
                         )}
                         <Text style={s.salarySaveText}>
-                          {salarySaving === worker.id ? 'Saving...' : salarySaved === worker.id ? 'Saved' : 'Save'}
+                          {salarySaving === worker.id ? t('adminStaff.saving') : salarySaved === worker.id ? t('adminStaff.saved') : t('adminStaff.save')}
                         </Text>
                       </TouchableOpacity>
                     </View>
@@ -462,23 +464,23 @@ export default function AdminStaffScreen() {
             <View style={s.statsCard}>
               <PrismTopLine />
               <PrismLeftBar />
-              <SectionLabel>Staff Statistics</SectionLabel>
+              <SectionLabel>{t('adminStaff.staffStatistics')}</SectionLabel>
               <View style={s.statsRow}>
                 <View style={s.statItem}>
                   <Text style={s.statValue}>{workers.length}</Text>
-                  <Text style={s.statLabel}>Total Detailers</Text>
+                  <Text style={s.statLabel}>{t('adminStaff.totalDetailers')}</Text>
                 </View>
                 <View style={s.statDivider} />
                 <View style={s.statItem}>
                   <Text style={[s.statValue, { color: '#22c55e' }]}>{workers.filter(w => w.isActive !== false).length}</Text>
-                  <Text style={s.statLabel}>Active</Text>
+                  <Text style={s.statLabel}>{t('adminStaff.active')}</Text>
                 </View>
                 <View style={s.statDivider} />
                 <View style={s.statItem}>
                   <Text style={[s.statValue, { color: theme.colors.primary }]}>
                     {workers.length > 0 ? new Date(Math.max(...workers.map(w => new Date(w.createdAt)))).toLocaleDateString() : '—'}
                   </Text>
-                  <Text style={s.statLabel}>Last Added</Text>
+                  <Text style={s.statLabel}>{t('adminStaff.lastAdded')}</Text>
                 </View>
               </View>
             </View>
@@ -488,16 +490,18 @@ export default function AdminStaffScreen() {
               <PrismTopLine />
               <PrismLeftBar />
               <View style={s.payrollHeader}>
-                <SectionLabel>Payroll Summary</SectionLabel>
+                <SectionLabel>{t('adminStaff.payrollSummary')}</SectionLabel>
                 <View style={s.payrollSelectRow}>
                   <View style={s.payrollSelect}>
-                    {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((m, i) => (
+                    {Array.from({ length: 12 }, (_, i) => i + 1).map((monthNumber) => (
                       <TouchableOpacity
-                        key={i}
-                        style={[s.payrollMonthBtn, payrollMonth === i + 1 && s.payrollMonthBtnActive]}
-                        onPress={() => setPayrollMonth(i + 1)}
+                        key={monthNumber}
+                        style={[s.payrollMonthBtn, payrollMonth === monthNumber && s.payrollMonthBtnActive]}
+                        onPress={() => setPayrollMonth(monthNumber)}
                       >
-                        <Text style={[s.payrollMonthText, payrollMonth === i + 1 && s.payrollMonthTextActive]}>{m}</Text>
+                        <Text style={[s.payrollMonthText, payrollMonth === monthNumber && s.payrollMonthTextActive]}>
+                          {t(`adminStaff.monthShort.${monthNumber}`)}
+                        </Text>
                       </TouchableOpacity>
                     ))}
                   </View>
@@ -516,16 +520,16 @@ export default function AdminStaffScreen() {
                   <ActivityIndicator size="small" color={theme.colors.primary} />
                 </View>
               ) : payroll.length === 0 ? (
-                <Text style={s.payrollEmpty}>No payroll data for this period.</Text>
+                <Text style={s.payrollEmpty}>{t('adminStaff.noPayrollDataForPeriod')}</Text>
               ) : (
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.payrollTableWrap}>
                   <View style={s.payrollTable}>
                     <View style={s.payrollTableHead}>
-                      <Text style={s.payrollTableHeadCell}>Worker</Text>
-                      <Text style={s.payrollTableHeadCell}>Salary</Text>
-                      <Text style={s.payrollTableHeadCell}>Jobs</Text>
-                      <Text style={s.payrollTableHeadCell}>Revenue</Text>
-                      <Text style={s.payrollTableHeadCell}>Status</Text>
+                      <Text style={s.payrollTableHeadCell}>{t('adminStaff.worker')}</Text>
+                      <Text style={s.payrollTableHeadCell}>{t('adminStaff.salary')}</Text>
+                      <Text style={s.payrollTableHeadCell}>{t('adminStaff.jobs')}</Text>
+                      <Text style={s.payrollTableHeadCell}>{t('adminStaff.revenue')}</Text>
+                      <Text style={s.payrollTableHeadCell}>{t('adminStaff.status')}</Text>
                     </View>
                     {payroll.map((p) => (
                       <View key={p.workerId} style={s.payrollTableRow}>
@@ -534,12 +538,12 @@ export default function AdminStaffScreen() {
                         <Text style={s.payrollTableCell}>{p.jobsCompleted}</Text>
                         <Text style={[s.payrollTableCell, { color: '#86EFAC' }]}>QAR {p.totalRevenue?.toLocaleString() || 0}</Text>
                         <View style={p.isPaid ? s.statusPaid : s.statusUnpaid}>
-                          <Text style={s.statusPaidText}>{p.isPaid ? 'Paid' : 'Unpaid'}</Text>
+                          <Text style={s.statusPaidText}>{p.isPaid ? t('adminStaff.paid') : t('adminStaff.unpaid')}</Text>
                         </View>
                       </View>
                     ))}
                     <View style={s.payrollTableFoot}>
-                      <Text style={s.payrollTableFootCell}>Total</Text>
+                      <Text style={s.payrollTableFootCell}>{t('adminStaff.total')}</Text>
                       <Text style={s.payrollTableFootCell}>QAR {payroll.reduce((s, p) => s + (p.monthlySalary ?? 0), 0).toLocaleString()}</Text>
                       <Text style={s.payrollTableFootCell}>{payroll.reduce((s, p) => s + p.jobsCompleted, 0)}</Text>
                       <Text style={[s.payrollTableFootCell, { color: '#86EFAC' }]}>QAR {payroll.reduce((s, p) => s + p.totalRevenue, 0).toLocaleString()}</Text>
@@ -561,8 +565,8 @@ export default function AdminStaffScreen() {
             <View style={m.handle} />
             <View style={m.header}>
               <View style={{ flex: 1 }}>
-                <Text style={m.eyebrow}>New Member</Text>
-                <Text style={m.title}>Add New Detailer</Text>
+                <Text style={m.eyebrow}>{t('adminStaff.newMember')}</Text>
+                <Text style={m.title}>{t('adminStaff.addNewDetailer')}</Text>
               </View>
               <TouchableOpacity style={m.closeBtn} onPress={() => setShowAddForm(false)} activeOpacity={0.75}>
                 <Ionicons name="close" size={16} color={theme.colors.textMuted} />
@@ -571,32 +575,32 @@ export default function AdminStaffScreen() {
             <SpectrumLine />
 
             <ScrollView style={m.body} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-              <SectionLabel>Personal Info</SectionLabel>
+              <SectionLabel>{t('adminStaff.personalInfo')}</SectionLabel>
               <View style={m.row}>
                 <View style={m.col}>
-                  <Text style={m.fieldLabel}>First Name</Text>
-                  <TextInput style={m.input} value={form.firstName} onChangeText={(v) => handleInputChange('firstName', v)} placeholder="Enter first name" placeholderTextColor={theme.colors.textMuted} />
+                  <Text style={m.fieldLabel}>{t('adminStaff.firstName')}</Text>
+                  <TextInput style={m.input} value={form.firstName} onChangeText={(v) => handleInputChange('firstName', v)} placeholder={t('adminStaff.enterFirstName')} placeholderTextColor={theme.colors.textMuted} />
                 </View>
                 <View style={m.col}>
-                  <Text style={m.fieldLabel}>Last Name</Text>
-                  <TextInput style={m.input} value={form.lastName} onChangeText={(v) => handleInputChange('lastName', v)} placeholder="Enter last name" placeholderTextColor={theme.colors.textMuted} />
+                  <Text style={m.fieldLabel}>{t('adminStaff.lastName')}</Text>
+                  <TextInput style={m.input} value={form.lastName} onChangeText={(v) => handleInputChange('lastName', v)} placeholder={t('adminStaff.enterLastName')} placeholderTextColor={theme.colors.textMuted} />
                 </View>
               </View>
 
-              <SectionLabel>Contact</SectionLabel>
-              <Text style={m.fieldLabel}>Email Address</Text>
-              <TextInput style={m.input} value={form.email} onChangeText={(v) => handleInputChange('email', v)} placeholder="detailer@example.com" placeholderTextColor={theme.colors.textMuted} keyboardType="email-address" autoCapitalize="none" />
-              <Text style={m.fieldLabel}>Phone Number</Text>
-              <TextInput style={m.input} value={form.phone} onChangeText={(v) => handleInputChange('phone', v)} placeholder="+974XXXXXXXX" placeholderTextColor={theme.colors.textMuted} keyboardType="phone-pad" />
+              <SectionLabel>{t('adminStaff.contact')}</SectionLabel>
+              <Text style={m.fieldLabel}>{t('adminStaff.emailAddress')}</Text>
+              <TextInput style={m.input} value={form.email} onChangeText={(v) => handleInputChange('email', v)} placeholder={t('adminStaff.emailPlaceholder')} placeholderTextColor={theme.colors.textMuted} keyboardType="email-address" autoCapitalize="none" />
+              <Text style={m.fieldLabel}>{t('adminStaff.phoneNumber')}</Text>
+              <TextInput style={m.input} value={form.phone} onChangeText={(v) => handleInputChange('phone', v)} placeholder={t('adminStaff.phonePlaceholder')} placeholderTextColor={theme.colors.textMuted} keyboardType="phone-pad" />
 
-              <SectionLabel>Security</SectionLabel>
-              <Text style={m.fieldLabel}>Password</Text>
+              <SectionLabel>{t('adminStaff.security')}</SectionLabel>
+              <Text style={m.fieldLabel}>{t('adminStaff.password')}</Text>
               <View style={m.passwordRow}>
                 <TextInput
                   style={[m.input, { flex: 1 }]}
                   value={form.password}
                   onChangeText={(v) => handleInputChange('password', v)}
-                  placeholder="Minimum 8 characters"
+                  placeholder={t('adminStaff.minimumEightCharacters')}
                   placeholderTextColor={theme.colors.textMuted}
                   secureTextEntry={!showPassword}
                 />
@@ -608,7 +612,7 @@ export default function AdminStaffScreen() {
 
             <View style={m.actions}>
               <TouchableOpacity style={m.cancelBtn} onPress={() => setShowAddForm(false)} disabled={saving === 'new'} activeOpacity={0.75}>
-                <Text style={m.cancelBtnText}>Cancel</Text>
+                <Text style={m.cancelBtnText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
               <View style={[m.saveBtnWrap, saving === 'new' && m.saveBtnDisabled]}>
                 <LinearGradient colors={[theme.colors.primary, G(0.82)]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={StyleSheet.absoluteFillObject} pointerEvents="none" />
@@ -618,7 +622,7 @@ export default function AdminStaffScreen() {
                   ) : (
                     <>
                       <Ionicons name="checkmark-done" size={15} color={theme.colors.ink} />
-                      <Text style={m.saveBtnText}>Add Detailer</Text>
+                      <Text style={m.saveBtnText}>{t('adminStaff.addDetailer')}</Text>
                     </>
                   )}
                 </TouchableOpacity>
@@ -636,7 +640,7 @@ export default function AdminStaffScreen() {
             <View style={m.handle} />
             <View style={m.header}>
               <View style={{ flex: 1 }}>
-                <Text style={m.eyebrow}>Edit Schedule</Text>
+                <Text style={m.eyebrow}>{t('adminStaff.editSchedule')}</Text>
                 <Text style={m.title}>{selectedWorker?.firstName} {selectedWorker?.lastName}</Text>
               </View>
               <TouchableOpacity style={m.closeBtn} onPress={() => setSelectedWorker(null)} activeOpacity={0.75}>
@@ -647,10 +651,10 @@ export default function AdminStaffScreen() {
 
             <ScrollView style={m.body} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
               {/* Default shift */}
-              <SectionLabel>Default Shift</SectionLabel>
+              <SectionLabel>{t('adminStaff.defaultShift')}</SectionLabel>
               <View style={m.shiftRow}>
                 <View style={{ flex: 1 }}>
-                  <Text style={m.fieldLabel}>Start</Text>
+                  <Text style={m.fieldLabel}>{t('adminStaff.start')}</Text>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} style={m.shiftScroll}>
                     <View style={m.shiftChips}>
                       {SHIFT_HOURS.map(h => (
@@ -666,7 +670,7 @@ export default function AdminStaffScreen() {
                   </ScrollView>
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={m.fieldLabel}>End</Text>
+                  <Text style={m.fieldLabel}>{t('adminStaff.end')}</Text>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} style={m.shiftScroll}>
                     <View style={m.shiftChips}>
                       {SHIFT_HOURS.map(h => (
@@ -684,7 +688,7 @@ export default function AdminStaffScreen() {
               </View>
 
               {/* Days */}
-              <SectionLabel>Working Days</SectionLabel>
+              <SectionLabel>{t('adminStaff.workingDays')}</SectionLabel>
               <View style={m.daysGrid}>
                 {ALL_DAYS.map(day => {
                   const active = selectedWorker?.schedule?.workingDays.includes(day);
@@ -692,7 +696,7 @@ export default function AdminStaffScreen() {
                   return (
                     <View key={day} style={[m.dayCard, active && m.dayCardActive]}>
                       <TouchableOpacity style={m.dayBtn} onPress={() => toggleDay(day)}>
-                        <Text style={[m.dayBtnText, active && m.dayBtnTextActive]}>{day}</Text>
+                        <Text style={[m.dayBtnText, active && m.dayBtnTextActive]}>{t(`adminStaff.days.${day.toLowerCase()}`)}</Text>
                       </TouchableOpacity>
                       {active && (
                         <View style={m.dayOverrideRow}>
@@ -707,7 +711,7 @@ export default function AdminStaffScreen() {
                               </TouchableOpacity>
                             ))}
                           </View>
-                          <Text style={m.dayOverrideTo}>to</Text>
+                          <Text style={m.dayOverrideTo}>{t('adminStaff.to')}</Text>
                           <View style={m.dayOverrideSelect}>
                             {SHIFT_HOURS.map(h => (
                               <TouchableOpacity
@@ -729,7 +733,7 @@ export default function AdminStaffScreen() {
 
             <View style={m.actions}>
               <TouchableOpacity style={m.cancelBtn} onPress={() => setSelectedWorker(null)} disabled={saving} activeOpacity={0.75}>
-                <Text style={m.cancelBtnText}>Cancel</Text>
+                <Text style={m.cancelBtnText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
               <View style={[m.saveBtnWrap, saving && m.saveBtnDisabled]}>
                 <LinearGradient colors={[theme.colors.primary, G(0.82)]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={StyleSheet.absoluteFillObject} pointerEvents="none" />
@@ -739,7 +743,7 @@ export default function AdminStaffScreen() {
                   ) : (
                     <>
                       <Ionicons name="save-outline" size={15} color={theme.colors.ink} />
-                      <Text style={m.saveBtnText}>Save Schedule</Text>
+                      <Text style={m.saveBtnText}>{t('adminStaff.saveSchedule')}</Text>
                     </>
                   )}
                 </TouchableOpacity>

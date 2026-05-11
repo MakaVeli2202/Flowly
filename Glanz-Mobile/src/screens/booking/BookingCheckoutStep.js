@@ -3,6 +3,7 @@
 import React from 'react';
 import { View, Text, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { theme } from '../../theme/theme';
 import { formatQAR } from '../../utils/currency';
 import { SectionHeader, Card, FieldLabel, PAYMENT_METHODS, s } from './BookingShared';
@@ -22,11 +23,13 @@ function BookingCheckoutStep({
   submitting,
   onSubmit,
 }) {
+  const { t } = useTranslation();
+
   return (
     <>
       {/* ══════════════ 7. OFFERS ════════════════════════════════ */}
       <Card>
-        <SectionHeader icon="pricetag-outline" step={7}>Offers &amp; Coupon</SectionHeader>
+        <SectionHeader icon="pricetag-outline" step={7}>{t('bookingFlow.checkoutStep.offersCoupon')}</SectionHeader>
         {myCoupons.slice(0, 4).map((c) => (
           <TouchableOpacity
             key={c.id}
@@ -45,12 +48,12 @@ function BookingCheckoutStep({
             )}
           </TouchableOpacity>
         ))}
-        <FieldLabel>Enter Code Manually</FieldLabel>
+        <FieldLabel>{t('bookingFlow.checkoutStep.enterCodeManually')}</FieldLabel>
         <TextInput
           style={s.input}
           value={form.offerCode}
           onChangeText={(v) => setForm((p) => ({ ...p, offerCode: v }))}
-          placeholder="Offer / promo code"
+          placeholder={t('bookingFlow.checkoutStep.offerPromoPlaceholder')}
           placeholderTextColor={theme.colors.textMuted}
           autoCapitalize="characters"
         />
@@ -58,12 +61,12 @@ function BookingCheckoutStep({
 
       {/* ══════════════ 8. SPECIAL INSTRUCTIONS ══════════════════ */}
       <Card>
-        <SectionHeader icon="chatbox-ellipses-outline" step={8}>Special Instructions</SectionHeader>
+        <SectionHeader icon="chatbox-ellipses-outline" step={8}>{t('bookingFlow.checkoutStep.specialInstructions')}</SectionHeader>
         <TextInput
           style={[s.input, s.textArea]}
           value={form.specialInstructions}
           onChangeText={(v) => setForm((p) => ({ ...p, specialInstructions: v }))}
-          placeholder="Any special requests or notes for the detailer…"
+          placeholder={t('bookingFlow.checkoutStep.specialInstructionsPlaceholder')}
           placeholderTextColor={theme.colors.textMuted}
           multiline
         />
@@ -71,10 +74,10 @@ function BookingCheckoutStep({
 
       {/* ══════════════ 9. PAYMENT METHOD ════════════════════════ */}
       <Card>
-        <SectionHeader icon="card-outline" step={9}>Payment Method</SectionHeader>
+        <SectionHeader icon="card-outline" step={9}>{t('bookingFlow.checkoutStep.paymentMethod')}</SectionHeader>
         <View style={s.mockBadge}>
           <Ionicons name="construct-outline" size={11} color="#92400E" />
-          <Text style={s.mockBadgeText}>Mock — Stripe will be integrated before launch</Text>
+          <Text style={s.mockBadgeText}>{t('bookingFlow.checkoutStep.mockStripe')}</Text>
         </View>
         {PAYMENT_METHODS.map((method) => {
           const active = form.paymentMethod === method.id;
@@ -99,15 +102,15 @@ function BookingCheckoutStep({
       <View style={s.summaryCard}>
         <View style={s.summaryCardHeader}>
           <Ionicons name="receipt-outline" size={15} color={theme.colors.primary} />
-          <Text style={s.summaryCardTitle}>Booking Summary</Text>
+          <Text style={s.summaryCardTitle}>{t('bookingFlow.checkoutStep.bookingSummary')}</Text>
         </View>
         <View style={s.summaryRow}>
           <View>
-            <Text style={s.summaryLabel}>Estimated Duration</Text>
-            <Text style={s.summaryDuration}>{totalDuration} min</Text>
+            <Text style={s.summaryLabel}>{t('bookingFlow.checkoutStep.estimatedDuration')}</Text>
+            <Text style={s.summaryDuration}>{t('bookingFlow.common.minutesShort', { count: totalDuration })}</Text>
           </View>
           <View style={{ alignItems: 'flex-end' }}>
-            <Text style={s.summaryLabel}>Total</Text>
+            <Text style={s.summaryLabel}>{t('bookingFlow.checkoutStep.total')}</Text>
             {quoteLoading
               ? <ActivityIndicator size="small" color={theme.colors.primary} />
               : <Text style={s.summaryAmount}>{formatQAR(totalAmount)}</Text>
@@ -119,8 +122,8 @@ function BookingCheckoutStep({
             <Ionicons name="information-circle-outline" size={13} color={theme.colors.primary} />
             <Text style={s.multiplierNoteText}>
               {vehicleMultiplier < 1
-                ? `${form.vehicleType} discount applied (×${vehicleMultiplier})`
-                : `${form.vehicleType} surcharge applied (×${vehicleMultiplier})`}
+                ? t('bookingFlow.checkoutStep.vehicleDiscountApplied', { vehicleType: form.vehicleType, multiplier: vehicleMultiplier })
+                : t('bookingFlow.checkoutStep.vehicleSurchargeApplied', { vehicleType: form.vehicleType, multiplier: vehicleMultiplier })}
             </Text>
           </View>
         )}
@@ -128,14 +131,17 @@ function BookingCheckoutStep({
           <View style={s.discountNote}>
             <Ionicons name="checkmark-circle" size={13} color="#10B981" />
             <Text style={s.discountNoteText}>
-              {subscriptionDiscountPercent}% {mySubscription?.planName || 'subscription'} discount applied
+              {t('bookingFlow.checkoutStep.subscriptionDiscountApplied', {
+                percent: subscriptionDiscountPercent,
+                planName: mySubscription?.planName || t('bookingFlow.checkoutStep.subscriptionFallback')
+              })}
             </Text>
           </View>
         )}
         {activeSubscription && !subscriptionMatchesVehicle && (
           <View style={s.discountNote}>
             <Ionicons name="information-circle-outline" size={13} color={theme.colors.primary} />
-            <Text style={s.discountNoteText}>Switch to {activeSubscription.vehicleType} to use your current plan discount.</Text>
+            <Text style={s.discountNoteText}>{t('bookingFlow.checkoutStep.switchVehicleForPlan', { vehicleType: activeSubscription.vehicleType })}</Text>
           </View>
         )}
       </View>
@@ -150,7 +156,7 @@ function BookingCheckoutStep({
           <ActivityIndicator color={theme.colors.ink} size="small" />
         ) : (
           <>
-            <Text style={s.submitText}>Confirm Booking</Text>
+            <Text style={s.submitText}>{t('bookingFlow.checkoutStep.confirmBooking')}</Text>
             <Ionicons name="arrow-forward" size={17} color={theme.colors.ink} />
           </>
         )}
@@ -158,9 +164,9 @@ function BookingCheckoutStep({
 
       <View style={s.submitTrustRow}>
         {[
-          { icon: 'shield-checkmark-outline', label: 'Secure Checkout'      },
-          { icon: 'checkmark-circle-outline', label: 'Instant Confirmation' },
-          { icon: 'time-outline',             label: 'Free Reschedule'       },
+          { icon: 'shield-checkmark-outline', label: t('bookingFlow.checkoutStep.trust.secureCheckout')      },
+          { icon: 'checkmark-circle-outline', label: t('bookingFlow.checkoutStep.trust.instantConfirmation') },
+          { icon: 'time-outline',             label: t('bookingFlow.checkoutStep.trust.freeReschedule')       },
         ].map(({ icon, label }) => (
           <View key={label} style={s.submitTrustItem}>
             <Ionicons name={icon} size={11} color={theme.colors.primary} />

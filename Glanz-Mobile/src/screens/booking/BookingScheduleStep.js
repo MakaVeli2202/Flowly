@@ -3,6 +3,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { theme } from '../../theme/theme';
 import { toDateKey, parseDateKey } from '../../utils/dateUtils';
 import {
@@ -28,9 +29,11 @@ function BookingScheduleStep({
   calendarCells,
   onSelectDate,
 }) {
+  const { t } = useTranslation();
+
   return (
     <Card>
-      <SectionHeader icon="calendar-outline" step={3}>Schedule</SectionHeader>
+      <SectionHeader icon="calendar-outline" step={3}>{t('bookingFlow.scheduleStep.schedule')}</SectionHeader>
 
       {/* Calendar nav */}
       <View style={s.calHeader}>
@@ -108,13 +111,13 @@ function BookingScheduleStep({
       </View>
 
       {/* Time slots */}
-      <FieldLabel>Time Slot</FieldLabel>
+      <FieldLabel>{t('bookingFlow.scheduleStep.timeSlot')}</FieldLabel>
       {slotsLoading || availableSlots === null ? (
         <ActivityIndicator color={theme.colors.primary} style={{ marginVertical: 8 }} />
       ) : availableSlots.length === 0 ? (
         <View style={s.noSlots}>
           <Ionicons name="time-outline" size={15} color="#FCA5A5" />
-          <Text style={s.noSlotsText}>No slots available for this date. Try another day.</Text>
+          <Text style={s.noSlotsText}>{t('bookingFlow.scheduleStep.noSlots')}</Text>
         </View>
       ) : (
         <View style={s.slotGrid}>
@@ -140,14 +143,14 @@ function BookingScheduleStep({
         <View style={s.timeConfirmStrip}>
           <View style={s.timeConfirmBlock}>
             <Text style={s.timeConfirmValue}>{getSlotStartTime(form.timeSlot)}</Text>
-            <Text style={s.timeConfirmMeta}>Start</Text>
+            <Text style={s.timeConfirmMeta}>{t('bookingFlow.scheduleStep.start')}</Text>
           </View>
           <Ionicons name="arrow-forward" size={16} color={theme.colors.primary} />
           <View style={s.timeConfirmBlock}>
             <Text style={s.timeConfirmValue}>
               {calculateEndTime(getSlotStartTime(form.timeSlot), totalDuration)}
             </Text>
-            <Text style={s.timeConfirmMeta}>Est. End · {totalDuration} min</Text>
+            <Text style={s.timeConfirmMeta}>{t('bookingFlow.scheduleStep.estimatedEnd', { count: totalDuration })}</Text>
           </View>
         </View>
       )}

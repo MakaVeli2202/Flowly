@@ -3,6 +3,7 @@
 import React from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { theme } from '../../theme/theme';
 import AddressAutocompleteInput from '../../components/AddressAutocompleteInput';
 import { SectionHeader, Card, FieldLabel, s } from './BookingShared';
@@ -19,43 +20,45 @@ function BookingDetailsStep({
   onLoadSavedAddress,
   navigation,
 }) {
+  const { t } = useTranslation();
+
   return (
     <>
       {/* ══════════════ 4. CUSTOMER DETAILS ══════════════════════ */}
       <Card>
-        <SectionHeader icon="person-outline" step={4}>Customer Details</SectionHeader>
+        <SectionHeader icon="person-outline" step={4}>{t('bookingFlow.detailsStep.customerDetails')}</SectionHeader>
         {canAutofillCustomerData ? (
           <>
             {[
-              { label: 'Name',  value: form.customerName  },
-              { label: 'Email', value: form.customerEmail },
-              { label: 'Phone', value: form.customerPhone },
+              { label: t('bookingFlow.detailsStep.name'),  value: form.customerName  },
+              { label: t('bookingFlow.detailsStep.email'), value: form.customerEmail },
+              { label: t('bookingFlow.detailsStep.phone'), value: form.customerPhone },
             ].map(({ label, value }) => (
               <View key={label} style={s.readRow}>
                 <Text style={s.readLabel}>{label}</Text>
-                <Text style={s.readValue}>{value || '—'}</Text>
+                <Text style={s.readValue}>{value || t('bookingFlow.detailsStep.emptyValue')}</Text>
               </View>
             ))}
             <TouchableOpacity style={s.editProfileBtn} onPress={() => navigation.navigate('Profile')}>
               <Ionicons name="pencil-outline" size={13} color={theme.colors.primary} />
-              <Text style={s.editProfileText}>Edit in Profile</Text>
+              <Text style={s.editProfileText}>{t('bookingFlow.detailsStep.editInProfile')}</Text>
             </TouchableOpacity>
           </>
         ) : (
           <>
-            <FieldLabel>Full Name</FieldLabel>
-            <TextInput style={s.input} value={form.customerName}  onChangeText={(v) => setForm((p) => ({ ...p, customerName: v }))}  placeholder="Customer name"  placeholderTextColor={theme.colors.textMuted} />
-            <FieldLabel>Email</FieldLabel>
-            <TextInput style={s.input} value={form.customerEmail} onChangeText={(v) => setForm((p) => ({ ...p, customerEmail: v }))} placeholder="Email address" placeholderTextColor={theme.colors.textMuted} autoCapitalize="none" keyboardType="email-address" />
-            <FieldLabel>Phone</FieldLabel>
-            <TextInput style={s.input} value={form.customerPhone} onChangeText={(v) => setForm((p) => ({ ...p, customerPhone: v }))} placeholder="Phone number"  placeholderTextColor={theme.colors.textMuted} keyboardType="phone-pad" />
+            <FieldLabel>{t('bookingFlow.detailsStep.fullName')}</FieldLabel>
+            <TextInput style={s.input} value={form.customerName}  onChangeText={(v) => setForm((p) => ({ ...p, customerName: v }))}  placeholder={t('bookingFlow.detailsStep.customerNamePlaceholder')}  placeholderTextColor={theme.colors.textMuted} />
+            <FieldLabel>{t('bookingFlow.detailsStep.email')}</FieldLabel>
+            <TextInput style={s.input} value={form.customerEmail} onChangeText={(v) => setForm((p) => ({ ...p, customerEmail: v }))} placeholder={t('bookingFlow.detailsStep.emailPlaceholder')} placeholderTextColor={theme.colors.textMuted} autoCapitalize="none" keyboardType="email-address" />
+            <FieldLabel>{t('bookingFlow.detailsStep.phone')}</FieldLabel>
+            <TextInput style={s.input} value={form.customerPhone} onChangeText={(v) => setForm((p) => ({ ...p, customerPhone: v }))} placeholder={t('bookingFlow.detailsStep.phonePlaceholder')}  placeholderTextColor={theme.colors.textMuted} keyboardType="phone-pad" />
           </>
         )}
       </Card>
 
       {/* ══════════════ 5. DELIVERY ADDRESS ══════════════════════ */}
       <Card>
-        <SectionHeader icon="location-outline" step={5}>Delivery Address</SectionHeader>
+        <SectionHeader icon="location-outline" step={5}>{t('bookingFlow.detailsStep.deliveryAddress')}</SectionHeader>
         {canAutofillCustomerData && savedAddress.address ? (
           <>
             {Object.values(savedAddresses).some(a => a.address) && (
@@ -81,17 +84,17 @@ function BookingDetailsStep({
             </View>
             <TouchableOpacity style={s.editProfileBtn} onPress={() => navigation.navigate('Profile')}>
               <Ionicons name="pencil-outline" size={13} color={theme.colors.primary} />
-              <Text style={s.editProfileText}>Edit addresses in Profile</Text>
+              <Text style={s.editProfileText}>{t('bookingFlow.detailsStep.editAddressesInProfile')}</Text>
             </TouchableOpacity>
           </>
         ) : (
           <>
             {!savedAddress.address && canAutofillCustomerData && (
-              <Text style={s.helperText}>No default address saved. Add one below or manage in Profile.</Text>
+              <Text style={s.helperText}>{t('bookingFlow.detailsStep.noDefaultAddress')}</Text>
             )}
             {canAutofillCustomerData && Object.values(savedAddresses).some(a => a.address) && (
               <>
-                <FieldLabel>Quick Select Saved Address</FieldLabel>
+                <FieldLabel>{t('bookingFlow.detailsStep.quickSelectSavedAddress')}</FieldLabel>
                 <View style={s.chipRow}>
                   {['Home', 'Work', 'Other'].map((type) => {
                     const saved  = savedAddresses[type];
@@ -107,15 +110,15 @@ function BookingDetailsStep({
               </>
             )}
             <AddressAutocompleteInput
-              label="Area / Street"
+              label={t('bookingFlow.detailsStep.areaStreet')}
               value={form.customerAddress}
               onChangeText={(v) => setForm((p) => ({ ...p, customerAddress: v }))}
-              placeholder="Search area or street name"
-              helperText="Select your service area or street."
+              placeholder={t('bookingFlow.detailsStep.searchAreaStreet')}
+              helperText={t('bookingFlow.detailsStep.selectServiceArea')}
             />
-            <FieldLabel>House / Building Number</FieldLabel>
-            <TextInput style={s.input} value={form.houseNumber || ''} onChangeText={(v) => setForm((p) => ({ ...p, houseNumber: v }))} placeholder="e.g. 53, Villa 12" placeholderTextColor={theme.colors.textMuted} />
-            <FieldLabel>Address Type</FieldLabel>
+            <FieldLabel>{t('bookingFlow.detailsStep.houseBuildingNumber')}</FieldLabel>
+            <TextInput style={s.input} value={form.houseNumber || ''} onChangeText={(v) => setForm((p) => ({ ...p, houseNumber: v }))} placeholder={t('bookingFlow.detailsStep.houseBuildingPlaceholder')} placeholderTextColor={theme.colors.textMuted} />
+            <FieldLabel>{t('bookingFlow.detailsStep.addressType')}</FieldLabel>
             <View style={s.chipRow}>
               {['Home', 'Work', 'Other'].map((type) => {
                 const active = form.addressType === type;
@@ -132,10 +135,10 @@ function BookingDetailsStep({
 
       {/* ══════════════ 6. VEHICLE DETAILS ═══════════════════════ */}
       <Card>
-        <SectionHeader icon="speedometer-outline" step={6}>Vehicle Details</SectionHeader>
+        <SectionHeader icon="speedometer-outline" step={6}>{t('bookingFlow.detailsStep.vehicleDetails')}</SectionHeader>
         {savedVehicles.length > 0 && (
           <>
-            <FieldLabel>Saved Vehicles</FieldLabel>
+            <FieldLabel>{t('bookingFlow.detailsStep.savedVehicles')}</FieldLabel>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 14 }}>
               <View style={{ flexDirection: 'row', gap: 8 }}>
                 {savedVehicles.map((v) => {
@@ -144,7 +147,7 @@ function BookingDetailsStep({
                     form.vehicleModel === (v.model || '') &&
                     form.vehicleYear  === (v.year  || '') &&
                     form.vehicleType  === (v.vehicleType || 'Sedan');
-                  const label = v.nickname || [v.make, v.model].filter(Boolean).join(' ') || 'Vehicle';
+                  const label = v.nickname || [v.make, v.model].filter(Boolean).join(' ') || t('bookingFlow.detailsStep.vehicle');
                   return (
                     <TouchableOpacity
                       key={v.id}
@@ -176,12 +179,12 @@ function BookingDetailsStep({
             </ScrollView>
           </>
         )}
-        <FieldLabel>Make</FieldLabel>
-        <TextInput style={s.input} value={form.vehicleMake}  onChangeText={(v) => setForm((p) => ({ ...p, vehicleMake: v }))}  placeholder="e.g. Toyota" placeholderTextColor={theme.colors.textMuted} />
-        <FieldLabel>Model</FieldLabel>
-        <TextInput style={s.input} value={form.vehicleModel} onChangeText={(v) => setForm((p) => ({ ...p, vehicleModel: v }))} placeholder="e.g. Camry"  placeholderTextColor={theme.colors.textMuted} />
-        <FieldLabel>Year</FieldLabel>
-        <TextInput style={s.input} value={form.vehicleYear}  onChangeText={(v) => setForm((p) => ({ ...p, vehicleYear: v }))}  placeholder="e.g. 2022"  placeholderTextColor={theme.colors.textMuted} keyboardType="number-pad" />
+        <FieldLabel>{t('bookingFlow.detailsStep.make')}</FieldLabel>
+        <TextInput style={s.input} value={form.vehicleMake}  onChangeText={(v) => setForm((p) => ({ ...p, vehicleMake: v }))}  placeholder={t('bookingFlow.detailsStep.makePlaceholder')} placeholderTextColor={theme.colors.textMuted} />
+        <FieldLabel>{t('bookingFlow.detailsStep.model')}</FieldLabel>
+        <TextInput style={s.input} value={form.vehicleModel} onChangeText={(v) => setForm((p) => ({ ...p, vehicleModel: v }))} placeholder={t('bookingFlow.detailsStep.modelPlaceholder')}  placeholderTextColor={theme.colors.textMuted} />
+        <FieldLabel>{t('bookingFlow.detailsStep.year')}</FieldLabel>
+        <TextInput style={s.input} value={form.vehicleYear}  onChangeText={(v) => setForm((p) => ({ ...p, vehicleYear: v }))}  placeholder={t('bookingFlow.detailsStep.yearPlaceholder')}  placeholderTextColor={theme.colors.textMuted} keyboardType="number-pad" />
       </Card>
     </>
   );
