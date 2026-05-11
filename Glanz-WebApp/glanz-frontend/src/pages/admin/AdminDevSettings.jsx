@@ -39,6 +39,15 @@ const DEV_FLAGS = [
     accent: '#c8a96b',
     warning: 'Backend sends are not suppressed. Disable before production.',
   },
+  {
+    key: 'DEV_REVIEWS_TOGGLE',
+    label: 'Review Mode Toggle',
+    description: 'Switch between real API reviews and hardcoded fallback reviews. Enables the tiger (🔴 REAL / 🟡 HARDCODED) toggle button on the homepage for testing review display without waiting for API data.',
+    category: 'Reviews',
+    icon: Star,
+    accent: '#f59e0b',
+    warning: null,
+  },
 ];
 
 /* ─── Backend feature flags (read-only display) ──────────────────────────── */

@@ -43,7 +43,7 @@ function buildLocalBusinessLd() {
 
 gsap.registerPlugin(ScrollTrigger);
 
-/* ── Reviews API ─────────────────────────────────────────── */
+/* ── Fallback Hardcoded Reviews ────────────────────────────────────── */
 const FALLBACK_REVIEWS = [
   { id: 1, author: 'jack stoker', avatar: 'https://lh3.googleusercontent.com/a-/ALV-UjUZTLRAS10KNOwUGa7UlniVgxZBSd6CeXLZ4wNTZ7u1eSh3RSPowQ=w80-h80-c-rp-mo-ba3-br100', fallbackInitials: 'JS', rating: 5, date: '6 days ago', text: 'Noah and Bert are the bomb! They came out and made my car look better than when I first bought it! I would use these guys again and again!' },
   { id: 2, author: 'Jaden Reynolds', avatar: 'https://lh3.googleusercontent.com/a-/ALV-UjVl-8iYeGys1-Y_sH4qLenRZxbAinRyVbKEQeYn5v2822Exyi6JKw=w80-h80-c-rp-mo-br100', fallbackInitials: 'JR', rating: 5, date: '1 week ago', text: 'Thank you Bert and Noah for working with me on 2 separate days in getting the vehicle cleaned. Everything turned out great and CLEAN 🧼.' },
@@ -56,6 +56,7 @@ const FALLBACK_REVIEWS = [
   { id: 9, author: 'Sean Gregg', avatar: 'https://lh3.googleusercontent.com/a-/ALV-UjWh_GK5UQ55wa0CVx1irt1q29HXCLlBSxCXu81hoSWF4N03ei4c=w80-h80-c-rp-mo-br100', fallbackInitials: 'SG', rating: 5, date: '1 month ago', text: 'The detailers did a very good job. They got my truck looking like I bought it yesterday.' },
 ];
 
+/* ── Reviews API (Real + Fallback Logic) ─────────────────────────────── */
 const reviewsAPI = {
   getPublic: async () => {
     try {
@@ -63,10 +64,11 @@ const reviewsAPI = {
       if (!response.ok) throw new Error('Failed to fetch reviews');
       const data = await response.json();
       const apiReviews = Array.isArray(data?.reviews) ? data.reviews : [];
-      return apiReviews.length > 0 ? apiReviews : FALLBACK_REVIEWS;
+      // Return real reviews or empty array (fallback handled in component)
+      return apiReviews;
     } catch (error) {
       console.error('Failed to fetch reviews:', error);
-      return FALLBACK_REVIEWS;
+      return [];
     }
   },
 };
@@ -736,50 +738,7 @@ const SERVICE_AREA_LABELS = {
   'Al Shahaniya': { ar: 'الشحانية', de: 'Asch-Schahaniyya' },
 };
 const CARD_ACCENTS  = ['#c8a96b','#0ea5a0'];
-const SERVICE_HIGHLIGHTS_BY_LANG = {
-  en: [
-    {
-      title: 'Exterior Care That Speaks for Itself',
-      description: 'Your paintwork is the first thing anyone sees. We protect it with precision from wash and decontamination to machine correction and ceramic coating. Every step is calibrated to your finish and Qatar\'s climate.',
-      features: ['Premium Wash & Hand Wax', 'Clay Bar & Paint Decontamination', 'Machine Polish & Paint Correction', 'Headlight Restoration', 'Engine Bay Cleaning', 'Ceramic Coating & PPF'],
-      cta: 'Book Now', link: '/booking',
-    },
-    {
-      title: 'An Interior Worthy of the Drive',
-      description: 'The inside of your car deserves the same attention as the outside. We restore, protect, and refresh every surface for a clean, premium cabin feel.',
-      features: ['Full Interior Deep Clean', 'Seat & Upholstery Treatment', 'Stain & Spot Removal', 'Odor Elimination', 'Dashboard & Panel Detailing', 'Interior Ceramic Coating'],
-      cta: 'Book Now', link: '/booking',
-    },
-  ],
-  ar: [
-    {
-      title: 'عناية خارجية تترك انطباعا فوريا',
-      description: 'المظهر الخارجي هو اول ما يلاحظه الجميع. نحمي الطلاء بدقة من الغسيل العميق وازالة الملوثات حتى التصحيح والتغليف الخزفي بما يناسب مناخ قطر.',
-      features: ['غسيل فاخر مع شمع يدوي', 'تنظيف الطلاء بالطين', 'تلميع وتصحيح الطلاء', 'استعادة المصابيح الامامية', 'تنظيف حجرة المحرك', 'تغليف خزفي وحماية الطلاء'],
-      cta: 'احجز الآن', link: '/booking',
-    },
-    {
-      title: 'مقصورة داخلية بمستوى راق',
-      description: 'المقصورة الداخلية تستحق نفس الاهتمام. نقوم بالتنظيف العميق والحماية والإنعاش لكل الاسطح لتجربة قيادة نظيفة ومريحة.',
-      features: ['تنظيف داخلي عميق كامل', 'العناية بالمقاعد والمفروشات', 'ازالة البقع', 'إزالة الروائح', 'تفصيل التابلوه واللوحات', 'حماية خزفية داخلية'],
-      cta: 'احجز الآن', link: '/booking',
-    },
-  ],
-  de: [
-    {
-      title: 'Aussenpflege, die sofort auffaellt',
-      description: 'Der Lack ist das Erste, was man sieht. Wir schuetzen ihn praezise von Waesche und Dekontamination bis zur Lackkorrektur und Keramikversiegelung fuer das Klima in Katar.',
-      features: ['Premium-Waesche und Handwachs', 'Lackdekontamination mit Knete', 'Maschinenpolitur und Lackkorrektur', 'Scheinwerfer-Aufbereitung', 'Motorraumreinigung', 'Keramikversiegelung und PPF'],
-      cta: 'Jetzt buchen', link: '/booking',
-    },
-    {
-      title: 'Innenraum auf Premium-Niveau',
-      description: 'Der Innenraum verdient dieselbe Sorgfalt wie das Exterieur. Wir reinigen, schuetzen und frischen jede Flaeche auf fuer ein hochwertiges Fahrerlebnis.',
-      features: ['Komplette Innenreinigung', 'Sitz- und Polsterpflege', 'Fleckenentfernung', 'Geruchsbeseitigung', 'Cockpit- und Panel-Detailing', 'Innenraum-Keramikschutz'],
-      cta: 'Jetzt buchen', link: '/booking',
-    },
-  ],
-};
+// Removed hardcoded SERVICE_HIGHLIGHTS_BY_LANG - only real API packages are displayed now
 const BRAND_VALUE_BY_LANG = {
   en: {
     title: "We Come to You. We Don't Cut Corners.",
@@ -1020,7 +979,7 @@ function Home() {
   const { lang } = useLanguage();
   const normalizedLang = normalizeLangCode(lang);
   const ui = HOME_UI_BY_LANG[normalizedLang] || HOME_UI_BY_LANG.en;
-  const fallbackServiceHighlights = SERVICE_HIGHLIGHTS_BY_LANG[normalizedLang] || SERVICE_HIGHLIGHTS_BY_LANG.en;
+
   const howItWorks = HOW_IT_WORKS_BY_LANG[normalizedLang] || HOW_IT_WORKS_BY_LANG.en;
   const brandValue = BRAND_VALUE_BY_LANG[normalizedLang] || BRAND_VALUE_BY_LANG.en;
   const { homePageContent } = getSiteContent(lang);
@@ -1036,6 +995,10 @@ function Home() {
   /* ── State ── */
   const [stats, setStats]                           = useState({ carsDetailed: 0, happyClients: 0, activePackages: 0, yearsActive: 0 });
   const [statsStarted, setStatsStarted]             = useState(false);
+  const [useRealReviews, setUseRealReviews]         = useState(() => {
+    // Check if dev flag is enabled, default to true (use real reviews)
+    return localStorage.getItem('DEV_REVIEWS_TOGGLE') !== 'true' ? true : false;
+  });
   const [reviews, setReviews]                       = useState([]);
   const [packages, setPackages]                     = useState([]);
   const [services, setServices]                     = useState([]);
@@ -1102,12 +1065,30 @@ function Home() {
 
   /* ── Data fetching — parallelized ── */
   useEffect(() => {
+    // Handle review fetching with toggle and fallback logic
+    const fetchReviews = async () => {
+      if (useRealReviews) {
+        try {
+          const data = await reviewsAPI.getPublic();
+          const realReviews = Array.isArray(data) ? data : [];
+          // Fallback to hardcoded if no real reviews
+          setReviews(realReviews.length > 0 ? realReviews : FALLBACK_REVIEWS);
+        } catch {
+          // On error, use fallback
+          setReviews(FALLBACK_REVIEWS);
+        }
+      } else {
+        // Toggle is OFF: use hardcoded reviews
+        setReviews(FALLBACK_REVIEWS);
+      }
+    };
+
     Promise.allSettled([
       statsAPI.getPublic().then(data => { setStats(data || {}); return data; }).catch(() => {}),
-      reviewsAPI.getPublic().then(data => { setReviews(Array.isArray(data) ? data : []); return data; }).catch(() => []),
+      fetchReviews(),
       packagesAPI.getAll(lang).then(data => {
         const active = (data || []).filter(p => p.isActive);
-        packageCountRef.current = active.length || fallbackServiceHighlights.length;
+        packageCountRef.current = active.length || 0;
         setPackages(active);
         return active;
       }).catch(() => []),
@@ -1124,7 +1105,7 @@ function Home() {
         console.error('Home page data fetch error:', err);
         setLoading({ stats: false, reviews: false, packages: false });
       });
-  }, [fallbackServiceHighlights.length, lang]);
+  }, [lang, useRealReviews]);
 
   // Reload service areas when admin updates business config
   useEffect(() => {
@@ -1363,6 +1344,10 @@ function Home() {
     setCurrentReviewIndex(p => (p >= max ? 0 : p + 1));
   };
 
+  const handleToggleReviews = () => {
+    setUseRealReviews(!useRealReviews);
+  };
+
   const marqueeSource  = services.length > 0
     ? services.map((s) => pickLocalizedField(s, 'name', lang) || s.name).filter(Boolean)
     : MARQUEE_ITEMS;
@@ -1370,22 +1355,20 @@ function Home() {
   const marqueeDuration = 28;
   const reviewDotsCount = Math.ceil(reviews.length / visibleReviewCount);
 
-  // Service highlights: live from API; falls back to hardcoded while loading
-  const serviceHighlights = packages.length > 0
-    ? packages.map(pkg => ({
-        title: pickLocalizedField(pkg, 'name', lang) || pkg.name,
-        description: pickLocalizedField(pkg, 'description', lang) || pkg.description || '',
-        features: pkg.services?.map(s => (
-          pickLocalizedField(s, 'serviceName', lang)
-          || pickLocalizedField(s, 'name', lang)
-          || s.serviceName
-          || s.name
-        )).filter(Boolean) || [],
-        cta: ui.bookNow,
-        link: '/booking',
-        pkg,
-      }))
-    : fallbackServiceHighlights;
+  // Service highlights: only from real API data
+  const serviceHighlights = packages.map(pkg => ({
+    title: pickLocalizedField(pkg, 'name', lang) || pkg.name,
+    description: pickLocalizedField(pkg, 'description', lang) || pkg.description || '',
+    features: pkg.services?.map(s => (
+      pickLocalizedField(s, 'serviceName', lang)
+      || pickLocalizedField(s, 'name', lang)
+      || s.serviceName
+      || s.name
+    )).filter(Boolean) || [],
+    cta: ui.bookNow,
+    link: '/booking',
+    pkg,
+  }));
 
   /* ══════════════════════════════════════════════════════════
      RENDER
@@ -1830,15 +1813,26 @@ function Home() {
             <div className="flex flex-col items-center gap-3">
               <img src="https://cdn.trustindex.io/assets/platform/Google/logo-dark.svg" alt="Google Reviews" className="h-8"
                 onError={e => { e.target.style.display = 'none'; }} />
-              <a
-                href="https://g.page/r/CbY8wgSE0iXGEAE/review"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold border border-primary/40 text-primary hover:bg-primary/10 transition-all duration-200"
-              >
-                <Star size={14} className="fill-primary" />
-                Leave a Review
-              </a>
+              <div className="flex items-center gap-3">
+                <a
+                  href="https://g.page/r/CbY8wgSE0iXGEAE/review"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold border border-primary/40 text-primary hover:bg-primary/10 transition-all duration-200"
+                >
+                  <Star size={14} className="fill-primary" />
+                  Leave a Review
+                </a>
+                {import.meta.env.DEV && (
+                  <button
+                    onClick={handleToggleReviews}
+                    className="inline-flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold border border-yellow-500/40 bg-yellow-500/5 text-yellow-600 hover:bg-yellow-500/10 transition-all duration-200"
+                    title="Toggle between real API reviews and hardcoded fallback reviews (dev mode only)"
+                  >
+                    {useRealReviews ? '🔴 REAL' : '🟡 HARDCODED'}
+                  </button>
+                )}
+              </div>
             </div>
           </div>
           {loading.reviews ? (
