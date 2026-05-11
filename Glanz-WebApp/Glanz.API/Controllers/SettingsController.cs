@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Glanz.API.Data;
 using Glanz.API.DTOs;
 using Glanz.API.Models;
@@ -61,10 +62,12 @@ namespace Glanz.API.Controllers
             new() { PropertyNameCaseInsensitive = true };
 
         private readonly AppDbContext _context;
+        private readonly ILogger<SettingsController> _logger;
 
-        public SettingsController(AppDbContext context)
+        public SettingsController(AppDbContext context, ILogger<SettingsController> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         // ── GET api/Settings ────────────────────────────────────────────────────
@@ -340,11 +343,34 @@ namespace Glanz.API.Controllers
                 var user = await _context.Users
                     .FirstOrDefaultAsync(u => u.Email.ToLower() == normalizedEmail);
 
-                if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
+                if (user == null)
+                    return Unauthorized(new { message = "Invalid credentials." });
+
+                var storedHash = user.PasswordHash?.Trim() ?? string.Empty;
+                var isPasswordValid = false;
+
+                if (!string.IsNullOrWhiteSpace(storedHash) && storedHash.StartsWith("$2"))
+                {
+                    isPasswordValid = BCrypt.Net.BCrypt.Verify(dto.Password, storedHash);
+                }
+                else
+                {
+                    // Legacy migration path: if old environments stored plain text passwords,
+                    // accept once and immediately upgrade to BCrypt.
+                    isPasswordValid = string.Equals(storedHash, dto.Password, StringComparison.Ordinal);
+                    if (isPasswordValid)
+                    {
+                        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
+                        user.UpdatedAt = DateTime.UtcNow;
+                        await _context.SaveChangesAsync();
+                    }
+                }
+
+                if (!isPasswordValid)
                     return Unauthorized(new { message = "Invalid credentials." });
 
                 // Only Admins can unlock the gate
-                if (user.Role != "Admin")
+                if (!string.Equals(user.Role?.Trim(), "Admin", StringComparison.OrdinalIgnoreCase))
                     return StatusCode(403, new { message = "Only admins can access the site gate." });
 
                 if (!user.IsActive) 
@@ -358,7 +384,7 @@ namespace Glanz.API.Controllers
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Gate verify error: {ex.Message}");
+                _logger.LogError(ex, "Gate verify failed for email {Email}", dto.Email);
                 return StatusCode(500, new { message = "Verification failed." });
             }
         }
