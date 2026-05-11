@@ -9,7 +9,6 @@ export function useRealtimeStatus() {
   const [status, setStatus] = useState(getConnectionState);
 
   useEffect(() => {
-    setStatus(getConnectionState());
     return onConnectionStateChange(setStatus);
   }, []);
 

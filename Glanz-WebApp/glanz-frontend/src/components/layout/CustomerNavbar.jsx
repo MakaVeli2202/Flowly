@@ -17,7 +17,7 @@ const CUSTOMER_LINKS = [
 
 export function CustomerNavbar({ theme, onToggleTheme }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [headerShapeClass, setHeaderShapeClass] = useState('rounded-full');
+  const [now, setNow] = useState(() => Date.now());
   const shapeTimeoutRef = useRef(null);
   const business = getBusiness();
   const { lang, t, setLang } = useLanguage();
@@ -31,19 +31,12 @@ export function CustomerNavbar({ theme, onToggleTheme }) {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const toggleMenu = () => setIsOpen(!isOpen);
-
   useEffect(() => {
-    if (shapeTimeoutRef.current) clearTimeout(shapeTimeoutRef.current);
-    if (isOpen) {
-      setHeaderShapeClass('rounded-xl');
-    } else {
-      shapeTimeoutRef.current = setTimeout(() => setHeaderShapeClass('rounded-full'), 300);
-    }
-    return () => {
-      if (shapeTimeoutRef.current) clearTimeout(shapeTimeoutRef.current);
-    };
-  }, [isOpen]);
+    const timer = window.setInterval(() => setNow(Date.now()), 60000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const toggleMenu = () => setIsOpen(!isOpen);
 
   useEffect(() => {
     const handler = (e) => {
@@ -63,6 +56,19 @@ export function CustomerNavbar({ theme, onToggleTheme }) {
     setShowLangMenu(false);
   }, [location.pathname]);
 
+  const loadNotifications = async () => {
+    try {
+      const [count, recent] = await Promise.all([
+        notificationsAPI.getUnreadCount(),
+        notificationsAPI.getRecent(6),
+      ]);
+      setUnreadCount(count || 0);
+      setNotifications(recent || []);
+    } catch (error) {
+      void error;
+    }
+  };
+
   useEffect(() => {
     if (!isAuthenticated) {
       setNotifications([]);
@@ -73,17 +79,6 @@ export function CustomerNavbar({ theme, onToggleTheme }) {
     const onNotif = () => loadNotifications();
     return subscribeToNotifications(onNotif);
   }, [isAuthenticated]);
-
-  const loadNotifications = async () => {
-    try {
-      const [count, recent] = await Promise.all([
-        notificationsAPI.getUnreadCount(),
-        notificationsAPI.getRecent(6),
-      ]);
-      setUnreadCount(count || 0);
-      setNotifications(recent || []);
-    } catch {}
-  };
 
   const handleLogout = () => {
     logout();
@@ -120,7 +115,7 @@ export function CustomerNavbar({ theme, onToggleTheme }) {
 
   function relativeTime(dateStr) {
     if (!dateStr) return '';
-    const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
+    const diff = Math.floor((now - new Date(dateStr).getTime()) / 1000);
     if (diff < 60) return 'just now';
     if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
     if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
@@ -142,7 +137,7 @@ export function CustomerNavbar({ theme, onToggleTheme }) {
       <header className={`fixed top-6 left-1/2 transform -translate-x-1/2 z-40
                          flex flex-col items-center
                          pl-6 pr-6 py-3 backdrop-blur-sm
-                         ${headerShapeClass}
+                         ${isOpen ? 'rounded-xl' : 'rounded-full'}
                          border border-[#333] bg-[#1f1f1f57]
                          w-[calc(100%-2rem)] sm:w-auto
                          transition-[border-radius] duration-0 ease-in-out`}>

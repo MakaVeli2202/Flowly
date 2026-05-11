@@ -139,7 +139,7 @@ function Footer() {
     return () => {
       cancelled = true;
     };
-  }, [lang]);
+  }, [lang, normalizedLang]);
 
   return (
     <footer className="border-t py-12 backdrop-blur-xl themed-nav">
@@ -230,7 +230,7 @@ function Footer() {
                  {business.location}
                </li>
              </ul>
-             {business.socialLinks && Object.entries(business.socialLinks).some(([_, url]) => url) && (
+             {business.socialLinks && Object.entries(business.socialLinks).some(([, url]) => url) && (
                 <div className="flex gap-3 mt-4">
                   {Object.entries(business.socialLinks).map(([platform, url]) => {
                     if (!url) return null;

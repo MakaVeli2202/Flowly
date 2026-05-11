@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { createPaginator } from '../core/paginationManager';
 import { bookingsAPI } from '../api/bookings';
 import { onJobStatus } from '../api/realtimeService';
@@ -32,49 +32,47 @@ const MAX_ITEMS = 1000;
  *   });
  */
 export function usePaginatedBookings({ filterFn = null, pageSize = PAGE_SIZE } = {}) {
-  const paginatorRef = useRef(null);
-  if (!paginatorRef.current) {
-    paginatorRef.current = createPaginator(
-      () => bookingsAPI.getAll(),
-      pageSize,
-      { maxItems: MAX_ITEMS },
-    );
-  }
+  const paginator = useMemo(() => createPaginator(
+    () => bookingsAPI.getAll(),
+    pageSize,
+    { maxItems: MAX_ITEMS },
+  ), [pageSize]);
 
   const [state,   setState]   = useState({ items: [], hasMore: false, total: 0 });
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   // Subscribe to paginator state changes
   useEffect(() => {
-    const unsub = paginatorRef.current.subscribe(setState);
-    setLoading(true);
-    paginatorRef.current.load().finally(() => setLoading(false));
+    const unsub = paginator.subscribe(setState);
+    paginator.load().finally(() => setLoading(false));
     return unsub;
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [paginator]);
 
   // Keep filter in sync — resets to page 0 automatically via paginator.setFilter
   useEffect(() => {
-    paginatorRef.current.setFilter(filterFn || null);
-  }, [filterFn]);
+    paginator.setFilter(filterFn || null);
+  }, [filterFn, paginator]);
 
   // Refresh backing data on any job status event via WebSocket
   useEffect(() => {
     return onJobStatus(() => {
       bookingsAPI.getAll()
-        .then(freshData => { if (Array.isArray(freshData)) paginatorRef.current.setData(freshData); })
-        .catch(() => {});
+        .then((freshData) => {
+          if (Array.isArray(freshData)) paginator.setData(freshData);
+        })
+        .catch((error) => { void error; });
     });
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [paginator]);
 
   const loadMore = useCallback(() => {
-    paginatorRef.current.loadMore();
-  }, []);
+    paginator.loadMore();
+  }, [paginator]);
 
   const refresh = useCallback(async () => {
     setLoading(true);
-    await paginatorRef.current.refresh();
+    await paginator.refresh();
     setLoading(false);
-  }, []);
+  }, [paginator]);
 
   return { bookings: state.items, hasMore: state.hasMore, total: state.total, loading, loadMore, refresh };
 }

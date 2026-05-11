@@ -1,12 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 
 function CookieConsent({ privacyHref = "#", className = "" }) {
-  const [show, setShow] = useState(false);
-
-  useEffect(() => {
-    const consent = localStorage.getItem("cookie-consent");
-    if (!consent) setShow(true);
-  }, []);
+  const [show, setShow] = useState(() => !localStorage.getItem("cookie-consent"));
 
   const handleAccept = () => {
     localStorage.setItem("cookie-consent", "accepted");

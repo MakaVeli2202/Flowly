@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { createPaginator } from '../core/paginationManager';
 
 /**
@@ -15,30 +15,26 @@ import { createPaginator } from '../core/paginationManager';
  *   );
  */
 export function usePaginator(fetchAll, pageSize = 50) {
-  const paginatorRef = useRef(null);
-  if (!paginatorRef.current) {
-    paginatorRef.current = createPaginator(fetchAll, pageSize);
-  }
+  const paginator = useMemo(() => createPaginator(fetchAll, pageSize), [fetchAll, pageSize]);
 
   const [state,   setState]   = useState({ items: [], hasMore: false, total: 0 });
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsub = paginatorRef.current.subscribe(setState);
-    setLoading(true);
-    paginatorRef.current.load().finally(() => setLoading(false));
+    const unsub = paginator.subscribe(setState);
+    paginator.load().finally(() => setLoading(false));
     return unsub;
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [paginator]);
 
   const loadMore = useCallback(() => {
-    paginatorRef.current.loadMore();
-  }, []);
+    paginator.loadMore();
+  }, [paginator]);
 
   const refresh = useCallback(async () => {
     setLoading(true);
-    await paginatorRef.current.refresh();
+    await paginator.refresh();
     setLoading(false);
-  }, []);
+  }, [paginator]);
 
   return { ...state, loading, loadMore, refresh };
 }

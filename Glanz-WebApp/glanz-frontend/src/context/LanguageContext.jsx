@@ -80,23 +80,40 @@ export function LanguageProvider({ children }) {
   const [lang, setLangState] = useState(defaultLang);
   const [translations, setTranslations] = useState({});
   const [fallbackTranslations, setFallbackTranslations] = useState({});
-  const [isLoading, setIsLoading] = useState(true);
+  const [loadedLang, setLoadedLang] = useState(null);
 
   useEffect(() => {
-    setIsLoading(true);
-    loadLocale(lang).then((trans) => {
-      setTranslations(trans);
-      setIsLoading(false);
-    });
+    let cancelled = false;
+    loadLocale(lang)
+      .then((trans) => {
+        if (cancelled) return;
+        setTranslations(trans);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setTranslations({});
+      })
+      .finally(() => {
+        if (!cancelled) setLoadedLang(lang);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [lang]);
 
   useEffect(() => {
-    if (lang !== DEFAULT_LANGUAGE) {
-      loadLocale(DEFAULT_LANGUAGE).then(setFallbackTranslations);
-    } else {
-      setFallbackTranslations({});
-    }
-  }, [lang]);
+    let cancelled = false;
+    loadLocale(DEFAULT_LANGUAGE)
+      .then((trans) => {
+        if (!cancelled) setFallbackTranslations(trans);
+      })
+      .catch(() => {
+        if (!cancelled) setFallbackTranslations({});
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     const langDef = LANGUAGES.find(l => l.code === lang) || LANGUAGES[0];
@@ -138,6 +155,7 @@ export function LanguageProvider({ children }) {
 
   const currentLangDef = LANGUAGES.find(l => l.code === lang) || LANGUAGES[0];
   const dir = currentLangDef.dir;
+  const isLoading = loadedLang !== lang;
 
   return (
     <LanguageContext.Provider value={{ lang, t, setLang, toggleLang, dir, isLoading }}>

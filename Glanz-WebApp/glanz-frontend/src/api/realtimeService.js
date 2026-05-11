@@ -236,7 +236,8 @@ export async function stopCustomerStream(bookingId) {
  * Actual position updates flow via updateAdminLocation() called by the GPS module.
  * NEVER stop admin tracking from worker job actions.
  */
-export async function startAdminTracking(_workerId) {
+export async function startAdminTracking(workerId) {
+  void workerId;
   // Admin stream activates implicitly when updateAdminLocation() is called.
   // Exists to fulfil the required API contract.
 }

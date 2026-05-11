@@ -90,7 +90,7 @@ function CustomerFallback() {
 // A wrapper component inserts an extra React element and breaks the tree.
 // Calling adminRoute() as a function returns the <Route> JSX directly.
 
-function adminRoute(path, Component) {
+function adminRoute(path, PageComponent) {
   return (
     <Route
       key={path}
@@ -98,7 +98,7 @@ function adminRoute(path, Component) {
       element={
         <ProtectedRoute requireAdmin>
           <Suspense fallback={<AdminFallback />}>
-            <Component />
+            <PageComponent />
           </Suspense>
         </ProtectedRoute>
       }

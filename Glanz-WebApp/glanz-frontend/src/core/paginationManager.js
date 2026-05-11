@@ -52,16 +52,18 @@ export function createPaginator(fetchAll, pageSize = DEFAULT_PAGE_SIZE) {
   let _allItems   = null;   // null = not loaded yet; [] = empty dataset
   let _promise    = null;   // inflight fetch promise (prevents duplicate calls)
   let _page       = 0;      // current page index (0-based)
+  let _filterFn   = null;   // optional client-side filter
   const _subs     = new Set();
 
   /* ── Internal helpers ────────────────────────────────────────────────── */
   function _buildState() {
     if (_allItems === null) return { items: [], hasMore: false, total: 0 };
-    const visible = _allItems.slice(0, (_page + 1) * pageSize);
+    const filtered = _filterFn ? _allItems.filter(_filterFn) : _allItems;
+    const visible = filtered.slice(0, (_page + 1) * pageSize);
     return {
       items:   visible,
-      hasMore: visible.length < _allItems.length,
-      total:   _allItems.length,
+      hasMore: visible.length < filtered.length,
+      total:   filtered.length,
     };
   }
 
@@ -122,7 +124,8 @@ export function createPaginator(fetchAll, pageSize = DEFAULT_PAGE_SIZE) {
    */
   function loadMore() {
     if (_allItems === null) return;
-    if ((_page + 1) * pageSize >= _filtered().length) return;
+    const filtered = _filterFn ? _allItems.filter(_filterFn) : _allItems;
+    if ((_page + 1) * pageSize >= filtered.length) return;
     _page += 1;
     _notify();
   }
