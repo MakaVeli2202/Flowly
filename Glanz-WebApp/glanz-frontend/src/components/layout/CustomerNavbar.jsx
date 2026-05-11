@@ -125,22 +125,18 @@ export function CustomerNavbar({ theme, onToggleTheme }) {
   return (
     <>
       {/* Fixed Logo - Top Left Corner */}
-      <Link to="/" className="fixed top-6 left-6 z-50 hover:opacity-80 transition-opacity">
-        <img src={business.logo || '/GlanzLogo.png'} alt={business.name} className="h-20 w-auto object-contain" />
+      <Link to="/" className="fixed top-4 left-4 z-50 hover:opacity-80 transition-opacity">
+        <img src={business.logo || '/GlanzLogo.png'} alt={business.name} className="h-28 w-auto object-contain" />
       </Link>
 
-      {/* Navbar */}
-      <header className={`fixed top-6 left-1/2 transform -translate-x-1/2 z-40
-                         flex flex-col items-center
-                         pl-6 pr-6 py-3 backdrop-blur-sm
-                         ${isOpen ? 'rounded-xl' : 'rounded-full'}
-                         border border-[#333] bg-[#1f1f1f57]
-                         w-[calc(100%-2rem)] sm:w-auto
-                         transition-[border-radius] duration-0 ease-in-out`}>
 
-        <div className="flex items-center justify-between w-full gap-x-6 sm:gap-x-8">
-          {/* Spacer for logo */}
-          <div className="w-10"></div>
+      {/* Navbar */}
+      <header className={`fixed top-0 left-0 right-0 z-40
+                         flex items-center justify-center
+                         px-6 py-3 backdrop-blur-sm
+                         border-b border-[#333] bg-[#1f1f1f57]`}>
+
+        <div className="flex items-center justify-center w-full gap-x-6 sm:gap-x-8">
 
           <nav className="hidden sm:flex items-center space-x-4 sm:space-x-6 text-sm">
             {CUSTOMER_LINKS.map((link) => (

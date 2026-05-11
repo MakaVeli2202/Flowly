@@ -147,7 +147,7 @@ function Footer() {
         <div className="grid md:grid-cols-4 gap-8">
           
 <div>
-              <div className="mb-4">
+              <div className="mb-0">
                 <img src={business.logo || '/GlanzLogo.png'} alt={business.name} className="h-56 w-auto object-contain" />
               </div>
               <p className="text-[var(--muted-color)]">
