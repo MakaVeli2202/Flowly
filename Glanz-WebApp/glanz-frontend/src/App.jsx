@@ -17,6 +17,7 @@ import Footer               from './components/layout/Footer';
 import ProtectedRoute       from './components/shared/ProtectedRoute';
 import WhatsAppWidget      from './components/shared/WhatsAppWidget';
 import RainBackground       from './components/shared/RainBackground';
+import LoadingCircle        from './components/shared/LoadingCircle';
 
 // ─── Customer pages (eager) ───────────────────────────────────────────────────
 import Home                from './pages/customer/Home';
@@ -68,9 +69,7 @@ const SubscriptionBooking    = lazy(() => import('./pages/customer/SubscriptionB
 
 function AdminFallback() {
   return (
-    <div className="min-h-[60vh] flex items-center justify-center">
-      <div className="w-10 h-10 rounded-full border-2 border-[var(--border-color)] border-t-primary animate-spin" />
-    </div>
+    <LoadingCircle className="min-h-[60vh]" label="Loading page..." />
   );
 }
 
@@ -78,9 +77,7 @@ function AdminFallback() {
 
 function CustomerFallback() {
   return (
-    <div className="min-h-[60vh] flex items-center justify-center">
-      <div className="w-10 h-10 rounded-full border-2 border-[var(--border-color)] border-t-primary animate-spin" />
-    </div>
+    <LoadingCircle className="min-h-[60vh]" label="Loading page..." />
   );
 }
 

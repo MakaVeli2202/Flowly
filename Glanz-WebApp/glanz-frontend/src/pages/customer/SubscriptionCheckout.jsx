@@ -9,6 +9,7 @@ import {
 import AddressAutocompleteInput from '../../components/shared/AddressAutocompleteInput';
 import SEO from '../../components/shared/SEO';
 import { formatQAR } from '../../utils/currency';
+import LoadingCircle from '../../components/shared/LoadingCircle';
 
 /* ── helpers ─────────────────────────────────────────────── */
 const toDateKey = (d) => {
@@ -199,7 +200,7 @@ function PackageSlots({ pkgId, date, selectedSlot, onSelectSlot }) {
   }, [pkgId, date]);
 
   if (!date) return <p className="text-xs text-[var(--muted-color)] italic py-2">Select a date first.</p>;
-  if (loading) return <div className="flex items-center gap-2 py-2"><Loader size={12} className="animate-spin text-primary" /><span className="text-xs text-[var(--muted-color)]">Loading slots…</span></div>;
+  if (loading) return <LoadingCircle label="Loading slots..." className="py-2 justify-start" sizeClass="h-4 w-4" />;
   if (slots.length === 0) return <p className="text-xs text-amber-400 py-2">No slots available for this date.</p>;
 
   // API returns SubBookingSlotDto objects: { slot, available, bookingCount, maxBookings }
@@ -325,7 +326,9 @@ export default function SubscriptionCheckout() {
     }
   };
 
-  if (!plan) return null;
+  if (!plan) {
+    return <LoadingCircle fullScreen label="Loading checkout..." />;
+  }
 
   const billingLabel = plan.billingCycle === 'Quarterly' ? '/qtr' : '/mo';
 

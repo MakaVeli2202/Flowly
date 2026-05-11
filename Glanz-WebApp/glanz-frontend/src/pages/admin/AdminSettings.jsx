@@ -97,6 +97,13 @@ export default function AdminSettings() {
       siteHidden: 'Private countdown page',
       siteVisibilityHelp: 'When public, anyone can browse the website. When private, only people with the password can enter.',
       failedToSaveSiteVisibility: 'Failed to save site visibility.',
+      launchConfiguration: 'Launch Configuration',
+      launchDateDesc: 'Set the countdown timer target date and time. Visitors will see a countdown until this moment.',
+      launchDateLabel: 'Launch Date & Time',
+      launchDatePlaceholder: 'Select date and time',
+      launchDateRequired: 'Launch date is required.',
+      failedToSaveLaunchDate: 'Failed to save launch date.',
+      saveLaunchDate: 'Save Launch Date',
       saving: 'Saving...',
       saved: 'Saved',
       to: 'to',
@@ -224,6 +231,13 @@ export default function AdminSettings() {
       siteHidden: 'صفحة خاصة بعداد تنازلي',
       siteVisibilityHelp: 'عند النشر يمكن لأي شخص تصفح الموقع. وعند الإخفاء لن يدخل إلا من يملك كلمة المرور.',
       failedToSaveSiteVisibility: 'فشل حفظ حالة ظهور الموقع.',
+      launchConfiguration: 'إعدادات الإطلاق',
+      launchDateDesc: 'حدد تاريخ وقت العد التنازلي. سيرى الزائرون عداد تنازلي حتى هذه اللحظة.',
+      launchDateLabel: 'تاريخ ووقت الإطلاق',
+      launchDatePlaceholder: 'اختر التاريخ والوقت',
+      launchDateRequired: 'تاريخ الإطلاق مطلوب.',
+      failedToSaveLaunchDate: 'فشل حفظ تاريخ الإطلاق.',
+      saveLaunchDate: 'حفظ تاريخ الإطلاق',
       saving: 'جارٍ الحفظ...',
       saved: 'تم الحفظ',
       to: 'إلى',
@@ -351,6 +365,13 @@ export default function AdminSettings() {
       siteHidden: 'Private Countdown-Seite',
       siteVisibilityHelp: 'Im öffentlichen Modus kann jeder die Website sehen. Im privaten Modus brauchen Besucher das Passwort.',
       failedToSaveSiteVisibility: 'Sichtbarkeit der Website konnte nicht gespeichert werden.',
+      launchConfiguration: 'Startkonfiguration',
+      launchDateDesc: 'Legen Sie das Zieldatum und die Uhrzeit fur den Countdown fest. Besucher sehen einen Countdown bis zu diesem Moment.',
+      launchDateLabel: 'Startdatum & -uhrzeit',
+      launchDatePlaceholder: 'Datum und Uhrzeit auswahlen',
+      launchDateRequired: 'Startdatum ist erforderlich.',
+      failedToSaveLaunchDate: 'Startdatum konnte nicht gespeichert werden.',
+      saveLaunchDate: 'Startdatum speichern',
       saving: 'Speichern...',
       saved: 'Gespeichert',
       to: 'bis',
@@ -590,6 +611,12 @@ export default function AdminSettings() {
   const [siteSaved,        setSiteSaved]        = useState(false);
   const [siteError,        setSiteError]        = useState('');
 
+  // Launch date state
+  const [launchDate,       setLaunchDate]       = useState('2026-06-01T00:00');
+  const [launchSaving,     setLaunchSaving]     = useState(false);
+  const [launchSaved,      setLaunchSaved]      = useState(false);
+  const [launchError,      setLaunchError]      = useState('');
+
   // Subscription discount state
   const [discountPct,      setDiscountPct]      = useState(10);
   const [discountSaving,   setDiscountSaving]   = useState(false);
@@ -627,6 +654,17 @@ export default function AdminSettings() {
   const [bizHoursSaved, setBizHoursSaved] = useState(false);
   const [bizHoursError, setBizHoursError] = useState('');
 
+  const formatDateTimeLocal = (value) => {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
   useEffect(() => {
     (async () => {
       try {
@@ -644,6 +682,15 @@ export default function AdminSettings() {
         setDiscountPct(data?.subscriptionDiscountPercent ?? 10);
         setSmsEnabled(data?.sms?.followUpEnabled ?? false);
         setSitePublished(data?.site?.published ?? false);
+        // Convert ISO datetime to datetime-local format (YYYY-MM-DDTHH:mm)
+        if (data?.site?.launchDate) {
+          try {
+            const localDateTime = formatDateTimeLocal(data.site.launchDate);
+            setLaunchDate(localDateTime);
+          } catch {
+            setLaunchDate('2026-06-01T00:00');
+          }
+        }
         setReferralReward(data?.referralRewardAmount ?? 50);
         setReferralDiscountPct(data?.referralDiscountPercent ?? 0);
         setReferralRequiredBookings(data?.referralRequiredBookings ?? 1);
@@ -729,6 +776,23 @@ export default function AdminSettings() {
       setTimeout(() => setSiteSaved(false), 3000);
     } catch (err) { setSiteError(err?.response?.data?.message || ui.failedToSaveSiteVisibility); }
     finally { setSiteSaving(false); }
+  };
+
+  const handleSaveLaunchDate = async () => {
+    if (!launchDate) {
+      setLaunchError(ui.launchDateRequired);
+      return;
+    }
+    try {
+      setLaunchSaving(true); setLaunchError('');
+      // Convert datetime-local to ISO format with UTC timezone
+      const date = new Date(launchDate);
+      const isoString = date.toISOString();
+      await settingsAPI.updateSystemSettings({ SiteLaunchDate: isoString });
+      setLaunchSaved(true);
+      setTimeout(() => setLaunchSaved(false), 3000);
+    } catch (err) { setLaunchError(err?.response?.data?.message || ui.failedToSaveLaunchDate); }
+    finally { setLaunchSaving(false); }
   };
 
   const handleSaveDiscount = async () => {
@@ -1602,10 +1666,65 @@ export default function AdminSettings() {
                   {siteSaved && !siteSaving && <CheckCircle size={14} className="text-emerald-400 flex-shrink-0" />}
                 </div>
               </div>
+
             </div>
           </div>
 
-          
+          {/* ── Launch Configuration card ── */}
+          <div className="glass-card relative overflow-hidden card-stagger">
+            <div className="absolute top-0 left-0 right-0 h-[2px]"
+              style={{ background:'linear-gradient(90deg,transparent,#06b6d4 38%,#c8a96b 62%,transparent)' }} />
+            <div className="absolute top-0 left-0 w-[3px] h-full"
+              style={{ background:'linear-gradient(180deg,#06b6d4 0%,#06b6d444 60%,transparent 100%)' }} />
+
+            <div className="p-7">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center"
+                  style={{ background:'rgba(6,182,212,.12)', border:'1px solid rgba(6,182,212,.24)' }}>
+                  <Clock size={14} style={{ color:'#06b6d4' }} />
+                </div>
+                <h2 className="premium-heading text-xl font-bold text-[var(--heading-color)]">{ui.launchConfiguration}</h2>
+              </div>
+              <p className="text-sm text-[var(--muted-color)] mb-5 ml-11">{ui.launchDateDesc}</p>
+              <div className="mb-5"><div className="spectrum-line" /></div>
+
+              {launchError && (
+                <div className="flex items-start gap-3 rounded-xl border border-rose-500/25 bg-rose-500/8 px-4 py-3 mb-5">
+                  <AlertCircle size={14} className="text-rose-400 flex-shrink-0 mt-0.5" />
+                  <p className="text-rose-300 text-sm font-semibold">{launchError}</p>
+                </div>
+              )}
+
+              <div className="mb-4">
+                <label className="field-label">{ui.launchDateLabel}</label>
+                <input
+                  type="datetime-local"
+                  value={launchDate}
+                  onChange={(e) => setLaunchDate(e.target.value)}
+                  disabled={launchSaving}
+                  className="field-input"
+                  style={{ background:'var(--surface-bg)', borderColor:'var(--border-color)' }}
+                />
+              </div>
+
+              <div className="rounded-xl border p-3 mb-5"
+                style={{ background:'rgba(6,182,212,.07)', borderColor:'rgba(6,182,212,.28)' }}>
+                <p className="text-xs text-[var(--muted-color)]">
+                  <span style={{ color:'#06b6d4', fontWeight:700 }}>Countdown Target: </span>
+                  {launchDate ? new Date(launchDate).toLocaleString(lang) : 'Not set'}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleSaveLaunchDate}
+                disabled={launchSaving}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition disabled:opacity-60"
+                style={{ background:'rgba(6,182,212,.15)', border:'1px solid rgba(6,182,212,.35)', color:'#22d3ee' }}>
+                {launchSaving ? ui.saving : launchSaved ? <><CheckCircle size={14} /> {ui.saved}</> : <><Save size={14} /> {ui.saveLaunchDate}</> }
+              </button>
+            </div>
+          </div>
 
         </div>
       </div>

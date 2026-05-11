@@ -17,6 +17,7 @@ export const DEFAULT_SETTINGS = {
   defaultBufferMinutes:    90, // customer same-day lead time
   workerTravelBufferMinutes: 30, // gap between worker jobs
   sitePublished: false,
+  siteLaunchDate: new Date('2026-06-01T00:00:00Z').toISOString(),
 };
 
 const SettingsContext = createContext(DEFAULT_SETTINGS);
@@ -51,6 +52,10 @@ export function SettingsProvider({ children }) {
             sitePublished: typeof data.site?.published === 'boolean'
               ? data.site.published
               : prev.sitePublished,
+
+            siteLaunchDate: typeof data.site?.launchDate === 'string' && data.site.launchDate
+              ? data.site.launchDate
+              : prev.siteLaunchDate,
           }));
         })
         .catch(() => {

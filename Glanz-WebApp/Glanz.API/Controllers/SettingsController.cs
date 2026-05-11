@@ -27,6 +27,7 @@ namespace Glanz.API.Controllers
         private const string DiscountKey          = "subscription.discountPercent";
         private const string SmsFollowUpKey       = "sms.followUpEnabled";
         private const string SitePublishedKey     = "site.published";
+        private const string SiteLaunchDateKey    = "site.launchDate";
         private const string BusinessHoursKey     = "booking.businessHours";
         private const string BusinessConfigKey    = "business.config";
         private const string ReferralRewardKey    = "referral.rewardAmount";
@@ -71,7 +72,7 @@ namespace Glanz.API.Controllers
         [HttpGet]
         public async Task<IActionResult> GetSettings()
         {
-            var keys = new[] { MultipliersKey, WorkerTravelKey, SmsFollowUpKey, SitePublishedKey, DiscountKey, BusinessHoursKey, BusinessConfigKey };
+            var keys = new[] { MultipliersKey, WorkerTravelKey, SmsFollowUpKey, SitePublishedKey, SiteLaunchDateKey, DiscountKey, BusinessHoursKey, BusinessConfigKey };
             var rows = await _context.SystemSettings
                 .AsNoTracking()
                 .Where(s => keys.Contains(s.Key))
@@ -105,6 +106,18 @@ namespace Glanz.API.Controllers
             bool sitePublished = false;
             if (bool.TryParse(GetVal(SitePublishedKey), out var parsedSitePublished))
                 sitePublished = parsedSitePublished;
+
+            string? siteLaunchDate = null;
+            var launchDateRaw = GetVal(SiteLaunchDateKey);
+            if (!string.IsNullOrWhiteSpace(launchDateRaw))
+            {
+                // Validate it's a valid ISO datetime string
+                if (DateTime.TryParse(launchDateRaw, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind, out var parsedDate))
+                    siteLaunchDate = parsedDate.ToUniversalTime().ToString("o");
+            }
+            // Default to 2026-06-01 if not set
+            if (string.IsNullOrWhiteSpace(siteLaunchDate))
+                siteLaunchDate = new DateTime(2026, 6, 1, 0, 0, 0, DateTimeKind.Utc).ToString("o");
 
             // ── subscription discount ────────────────────────────────────────────
             decimal subscriptionDiscountPercent = 10;
@@ -187,7 +200,7 @@ namespace Glanz.API.Controllers
                 pricing = new { vehicleMultipliers },
                 booking = new { workerTravelBufferMinutes },
                 sms     = new { followUpEnabled = smsFollowUpEnabled },
-                site    = new { published = sitePublished },
+                site    = new { published = sitePublished, launchDate = siteLaunchDate },
                 subscriptionDiscountPercent,
                 businessHours,
                 businessConfig,
@@ -227,6 +240,14 @@ namespace Glanz.API.Controllers
 
             if (dto.SitePublished.HasValue)
                 updates.Add((SitePublishedKey, dto.SitePublished.Value.ToString()));
+
+            if (!string.IsNullOrWhiteSpace(dto.SiteLaunchDate))
+            {
+                // Validate it's a valid ISO datetime string
+                if (!DateTime.TryParse(dto.SiteLaunchDate, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind, out var parsedDate))
+                    return BadRequest(new { message = "SiteLaunchDate must be a valid ISO datetime string." });
+                updates.Add((SiteLaunchDateKey, parsedDate.ToUniversalTime().ToString("o")));
+            }
 
             // Handle referral reward amount
             if (dto.ReferralRewardAmount.HasValue)
@@ -349,6 +370,7 @@ namespace Glanz.API.Controllers
         public decimal?          SubscriptionDiscountPercent { get; set; }
         public bool?             SmsFollowUpEnabled          { get; set; }
         public bool?             SitePublished               { get; set; }
+        public string?           SiteLaunchDate              { get; set; }
         public int?              ReferralRewardAmount        { get; set; } // Referral reward in QAR for referrer
         public decimal?         ReferralDiscountPercent     { get; set; } // Discount % for referred user
         public int?             ReferralRequiredBookings   { get; set; } // Number of bookings needed for referrer reward

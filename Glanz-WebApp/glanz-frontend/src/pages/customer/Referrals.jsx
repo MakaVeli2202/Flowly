@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { referralAPI } from '../../api/referral';
 import { Copy, Share2, Gift, Users, CheckCircle, Clock, Award, ArrowLeft, Lock, Sparkles } from 'lucide-react';
+import LoadingCircle from '../../components/shared/LoadingCircle';
 
 export default function Referrals() {
   const { user, isAuthenticated } = useAuth();
@@ -85,11 +86,7 @@ export default function Referrals() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--surface-bg)' }}>
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderColor: 'var(--cta-color)' }}></div>
-      </div>
-    );
+    return <LoadingCircle fullScreen label={lang === 'ar' ? 'جاري تحميل الإحالات...' : 'Loading referrals...'} />;
   }
 
   return (

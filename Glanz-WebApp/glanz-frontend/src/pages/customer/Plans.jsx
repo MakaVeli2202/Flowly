@@ -8,6 +8,7 @@ import { subscriptionsAPI } from '../../api/subscriptions';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../components/shared/Toast';
 import SEO from '../../components/shared/SEO';
+import LoadingCircle from '../../components/shared/LoadingCircle';
 
 /* ── CSS injected once ────────────────────────────────────────────────────── */
 const PLANS_CSS = `
@@ -431,11 +432,7 @@ export default function Plans() {
 
   // Loading skeleton
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-10 h-10 rounded-full border-2 border-[var(--border-color)] border-t-primary animate-spin" />
-      </div>
-    );
+    return <LoadingCircle fullScreen label="Loading plans..." />;
   }
 
   // Fallback static plans if API fails

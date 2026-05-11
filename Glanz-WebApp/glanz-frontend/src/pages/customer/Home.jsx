@@ -19,6 +19,7 @@ import SEO from '../../components/shared/SEO';
 import { getBusiness } from '../../config/business';
 import { Skeleton, CardSkeleton, BookingCardSkeleton } from '../../components/shared/Skeleton';
 import { EmptyState } from '../../components/shared/EmptyState';
+import LoadingCircle from '../../components/shared/LoadingCircle';
 
 function buildLocalBusinessLd() {
   const biz = getBusiness();
@@ -1047,6 +1048,7 @@ function Home() {
     stats: true,
     reviews: true,
     packages: true,
+    services: true,
   });
   
   // Error states with retry
@@ -1054,6 +1056,7 @@ function Home() {
     stats: null,
     reviews: null,
     packages: null,
+    services: null,
   });
 
   const retryFetch = (type) => {
@@ -1064,6 +1067,7 @@ function Home() {
       stats: () => statsAPI.getPublic(),
       reviews: () => reviewsAPI.getPublic(),
       packages: () => packagesAPI.getAll(lang).then(data => data.filter(p => p.isActive)),
+      services: () => servicesAPI.getAll(lang).then(data => (data || []).filter(s => s.isActive !== false)),
     };
     
     fetchMap[type]()
@@ -1073,6 +1077,8 @@ function Home() {
         else if (type === 'packages') {
           packageCountRef.current = Array.isArray(data) && data.length > 0 ? data.length : 3;
           setPackages(data);
+        } else if (type === 'services') {
+          setServices(Array.isArray(data) ? data : []);
         }
       })
       .catch(err => setErrors(prev => ({ ...prev, [type]: err.message })))
@@ -1115,11 +1121,11 @@ function Home() {
       }).catch(() => []),
     ])
       .then(() => {
-        setLoading({ stats: false, reviews: false, packages: false });
+        setLoading({ stats: false, reviews: false, packages: false, services: false });
       })
       .catch((err) => {
         console.error('Home page data fetch error:', err);
-        setLoading({ stats: false, reviews: false, packages: false });
+        setLoading({ stats: false, reviews: false, packages: false, services: false });
       });
   }, [lang, useRealReviews]);
 
@@ -1498,13 +1504,17 @@ function Home() {
       <div className="py-[14px] border-y border-[var(--border-color)]"
         style={{ background: 'color-mix(in srgb, var(--surface-bg-alt) 70%, transparent)' }} aria-hidden="true">
         <div className="marquee-outer">
-          <div className="marquee-inner" style={{ animationDuration: `${marqueeDuration}s` }}>
-            {marqueeItems.map((item, i) => (
-              <span key={i} className="inline-flex items-center gap-2.5 px-5 text-[0.72rem] font-semibold tracking-[0.18em] uppercase whitespace-nowrap" style={{ color: 'var(--muted-color)' }}>
-                <span style={{ color: '#c8a96b', fontSize: '0.9rem', lineHeight: 1 }}>✦</span>{item}
-              </span>
-            ))}
-          </div>
+          {loading.services ? (
+            <LoadingCircle label="Loading services..." className="py-2" sizeClass="h-6 w-6" />
+          ) : (
+            <div className="marquee-inner" style={{ animationDuration: `${marqueeDuration}s` }}>
+              {marqueeItems.map((item, i) => (
+                <span key={i} className="inline-flex items-center gap-2.5 px-5 text-[0.72rem] font-semibold tracking-[0.18em] uppercase whitespace-nowrap" style={{ color: 'var(--muted-color)' }}>
+                  <span style={{ color: '#c8a96b', fontSize: '0.9rem', lineHeight: 1 }}>✦</span>{item}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -1636,7 +1646,11 @@ function Home() {
               </div>
             </div>
 
-            {serviceHighlights.map((service, index) => {
+            {loading.packages ? (
+              <div className="w-[50vw] min-w-[520px] flex-shrink-0">
+                <LoadingCircle label="Loading services..." className="h-[420px]" sizeClass="h-10 w-10" />
+              </div>
+            ) : serviceHighlights.map((service, index) => {
               const accent = CARD_ACCENTS[index % CARD_ACCENTS.length];
               return (
               <div
@@ -1720,7 +1734,9 @@ function Home() {
       {/* ══ SERVICE HIGHLIGHTS — MOBILE ══ */}
       <section className="md:hidden py-8">
         <div className="container mx-auto px-4">
-          {serviceHighlights.map((service, index) => (
+          {loading.packages ? (
+            <LoadingCircle label="Loading services..." className="min-h-[220px]" sizeClass="h-10 w-10" />
+          ) : serviceHighlights.map((service, index) => (
             <div key={service.title} className="mb-20 last:mb-0 flex flex-col gap-10" dir="ltr" style={{ direction: 'ltr' }}>
               <div className="flex-1">
                 <h2 className="premium-heading text-3xl font-bold text-[var(--heading-color)] mb-6">{service.title}</h2>

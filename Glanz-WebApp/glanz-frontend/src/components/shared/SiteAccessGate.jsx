@@ -17,7 +17,6 @@ import { useSettings } from '../../context/SettingsContext';
 const GATE_TOKEN_STORAGE_KEY = 'glanz.site-gate-token';
 const FORCE_PUBLISHED = import.meta.env.VITE_FORCE_PUBLISHED === 'true';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5289/api';
-const COUNTDOWN_TARGET = new Date('2026-06-01T00:00:00+03:00').getTime();
 
 function getRemaining(targetTime, now) {
   const total = Math.max(0, targetTime - now);
@@ -39,7 +38,7 @@ function CountdownStat({ value, label }) {
 }
 
 export default function SiteAccessGate({ children }) {
-  const { sitePublished, isLoaded } = useSettings();
+  const { sitePublished, siteLaunchDate, isLoaded } = useSettings();
   const [hasToken, setHasToken] = useState(() => !!localStorage.getItem(GATE_TOKEN_STORAGE_KEY));
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -53,7 +52,13 @@ export default function SiteAccessGate({ children }) {
     return () => window.clearInterval(timer);
   }, []);
 
-  const remaining = useMemo(() => getRemaining(COUNTDOWN_TARGET, now), [now]);
+  const countdownTarget = useMemo(() => {
+    const parsed = siteLaunchDate ? new Date(siteLaunchDate).getTime() : Number.NaN;
+    if (Number.isFinite(parsed)) return parsed;
+    return new Date('2026-06-01T00:00:00Z').getTime();
+  }, [siteLaunchDate]);
+
+  const remaining = useMemo(() => getRemaining(countdownTarget, now), [countdownTarget, now]);
   const siteOpen = sitePublished || hasToken || FORCE_PUBLISHED;
 
   const handleVerifyCredentials = async (event) => {
@@ -152,7 +157,7 @@ export default function SiteAccessGate({ children }) {
                   <Clock3 size={18} className="mt-0.5 text-primary flex-shrink-0" />
                   <div>
                     <p className="font-bold text-white">Launch target</p>
-                    <p className="text-sm text-white/55 mt-1">Countdown target: {new Date(COUNTDOWN_TARGET).toLocaleString()}</p>
+                    <p className="text-sm text-white/55 mt-1">Countdown target: {new Date(countdownTarget).toLocaleString()}</p>
                   </div>
                 </div>
               </div>
