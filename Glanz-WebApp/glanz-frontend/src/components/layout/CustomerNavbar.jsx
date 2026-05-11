@@ -124,11 +124,6 @@ export function CustomerNavbar({ theme, onToggleTheme }) {
 
   return (
     <>
-      {/* Fixed Logo - Top Left Corner */}
-      <Link to="/" className="fixed top-6 left-6 z-50 hover:opacity-80 transition-opacity">
-        <img src={business.logo || '/GlanzLogo.png'} alt={business.name} className="h-10 w-auto object-contain" />
-      </Link>
-
       {/* Navbar */}
       <header className={`fixed top-6 left-1/2 transform -translate-x-1/2 z-40
                          flex flex-col items-center
