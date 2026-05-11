@@ -124,25 +124,21 @@ export function CustomerNavbar({ theme, onToggleTheme }) {
 
   return (
     <>
-      {/* Fixed Logo - Top Left Corner */}
-      <Link to="/" className="fixed top-6 left-6 z-50 hover:opacity-80 transition-opacity">
-        <img src={business.logo || '/GlanzLogo.png'} alt={business.name} className="h-64 w-auto object-contain" />
-      </Link>
-
-
       {/* Navbar */}
       <header className={`fixed top-6 left-1/2 transform -translate-x-1/2 z-40
                          flex flex-col items-center
                          pl-6 pr-6 py-3 backdrop-blur-sm
                          ${isOpen ? 'rounded-xl' : 'rounded-full'}
                          border border-[#333] bg-[#1f1f1f57]
-                         w-[calc(100%-2rem)] sm:w-auto
+                         w-[calc(100%-2rem)] max-w-6xl
                          transition-[border-radius] duration-0 ease-in-out`}>
 
         <div className="flex items-center justify-between w-full gap-x-6 sm:gap-x-8">
 
-          {/* Spacer for fixed logo */}
-          <div className="w-24 sm:w-28"></div>
+          {/* Brand logo (modern navbar placement) */}
+          <Link to="/" className="flex items-center flex-shrink-0 hover:opacity-85 transition-opacity">
+            <img src={business.logo || '/GlanzLogo.png'} alt={business.name} className="h-10 sm:h-12 w-auto object-contain" />
+          </Link>
 
           <nav className="hidden sm:flex items-center space-x-4 sm:space-x-6 text-sm">
             {CUSTOMER_LINKS.map((link) => (
