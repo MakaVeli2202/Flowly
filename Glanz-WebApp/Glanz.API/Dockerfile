@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
 # Copy full context so this works whether Render builds from repo root
@@ -20,7 +20,7 @@ RUN if [ -f Glanz.API.csproj ]; then \
 			cd Glanz-WebApp/Glanz.API && dotnet publish Glanz.API.csproj -c Release -o /app/publish /p:UseAppHost=false; \
 		fi
 
-FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
 
 # Needed by PostgreSQL driver/native auth paths on some hosts.
