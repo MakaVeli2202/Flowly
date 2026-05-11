@@ -150,9 +150,11 @@ function Footer() {
               <div className="mb-0">
                 <img src={business.logo || '/GlanzLogo.png'} alt={business.name} className="h-56 w-auto object-contain" />
               </div>
-              <p className="text-[var(--muted-color)]">
-                {business.tagline}
-              </p>
+              {business.tagline && (
+                <p className="text-[var(--muted-color)]">
+                  {business.tagline}
+                </p>
+              )}
             </div>
 
             <div>

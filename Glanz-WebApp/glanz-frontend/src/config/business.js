@@ -28,13 +28,23 @@ export const BUSINESS = {
 };
 
 const STORAGE_KEY = 'businessConfig';
+const LEGACY_DEFAULT_TAGLINE = 'Professional car detailing services in Qatar. Quality you can trust.';
+
+function normalizeBusinessConfig(config) {
+  if (!config || typeof config !== 'object') return { ...BUSINESS };
+
+  return {
+    ...config,
+    tagline: config.tagline === LEGACY_DEFAULT_TAGLINE ? '' : (config.tagline || ''),
+  };
+}
 
 /** Returns BUSINESS defaults merged with any admin-saved overrides from localStorage. */
 export function getBusiness() {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
-      return { ...BUSINESS, ...JSON.parse(stored) };
+      return { ...BUSINESS, ...normalizeBusinessConfig(JSON.parse(stored)) };
     }
   } catch { /* ignore corrupt storage */ }
   return { ...BUSINESS };
@@ -54,7 +64,7 @@ export function getLogoUrl() {
 export function saveBusiness(updates) {
   try {
     const current = getBusiness();
-    const merged = { ...current, ...updates };
+    const merged = normalizeBusinessConfig({ ...current, ...updates });
     // Only persist the overridable fields
     const { name, logo, namePrefix, nameSuffix, tagline, phone, email, location, serviceAreas, socialLinks } = merged;
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ name, logo, namePrefix, nameSuffix, tagline, phone, email, location, serviceAreas, socialLinks }));
