@@ -1,51 +1,61 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Glanz.API.Data;
 using Glanz.API.Models;
-using Stripe;
+using System.Net.Http.Headers;
+using System.Text.Json;
 
 namespace Glanz.API.Controllers
 {
     /// <summary>
-    /// Thin server-side wrapper for Stripe PaymentIntent lifecycle.
-    /// Called by the mobile app (Phase 2A) to create and verify intents
-    /// without exposing the Stripe secret key to the client.
+    /// Server-side wrapper for Tap Payments charge lifecycle.
+    /// Tap Payments is the leading gateway in Qatar / GCC.
     ///
-    /// Phase 3 addition: CreateIntent now also inserts a SlotReservation so
-    /// that the chosen slot cannot be taken by a second customer while the
-    /// first is completing payment.
+    /// Flow:
+    ///   1. POST /api/Payments/create-charge  â€” creates a Tap charge + slot reservation,
+    ///      returns { chargeId, redirectUrl } so the frontend can redirect the customer to Tap.
+    ///   2. Customer pays on the Tap-hosted page.
+    ///   3. Tap redirects back to redirect_url with ?tap_id=&lt;chargeId&gt;.
+    ///   4. GET  /api/Payments/verify/{chargeId} â€” verifies the charge status with Tap and
+    ///      updates the booking payment status accordingly.
+    ///
+    /// Webhooks (POST /api/Webhooks/tap) provide an async safety net for the same events.
     /// </summary>
     [ApiController]
     [Route("api/[controller]")]
     public class PaymentsController : ControllerBase
     {
         private const int SlotHoldMinutes = 15;
+        private const string TapApiBase   = "https://api.tap.company/v2";
 
-        private readonly AppDbContext _context;
-        private readonly IConfiguration _configuration;
+        private readonly AppDbContext      _context;
+        private readonly IConfiguration   _configuration;
         private readonly IWebHostEnvironment _env;
+        private readonly IHttpClientFactory  _httpClientFactory;
 
-        public PaymentsController(AppDbContext context, IConfiguration configuration, IWebHostEnvironment env)
+        public PaymentsController(
+            AppDbContext context,
+            IConfiguration configuration,
+            IWebHostEnvironment env,
+            IHttpClientFactory httpClientFactory)
         {
-            _context = context;
-            _configuration = configuration;
-            _env = env;
-            StripeConfiguration.ApiKey = _configuration["Stripe:SecretKey"];
+            _context           = context;
+            _configuration     = configuration;
+            _env               = env;
+            _httpClientFactory = httpClientFactory;
         }
 
         /// <summary>
-        /// Creates a Stripe PaymentIntent and reserves the time slot for
-        /// <see cref="SlotHoldMinutes"/> minutes.
+        /// Creates a Tap charge and reserves the time slot.
         ///
-        /// POST /api/Payments/create-intent
-        /// Body: { amount, currency, scheduledDate, timeSlot, durationMinutes, customerEmail? }
-        /// Returns: { clientSecret, intentId, amount, currency }
+        /// POST /api/Payments/create-charge
+        /// Body: { amount, currency, scheduledDate, timeSlot, durationMinutes,
+        ///         customerEmail, bookingNumber, redirectUrl }
+        /// Returns: { chargeId, redirectUrl, amount, currency }
         /// </summary>
-        [HttpPost("create-intent")]
-        public async Task<IActionResult> CreateIntent([FromBody] CreatePaymentIntentDto dto)
+        [HttpPost("create-charge")]
+        public async Task<IActionResult> CreateCharge([FromBody] CreateChargeDto dto)
         {
-            // Auth check: always required, EXCEPT in Development with AllowDevBypass enabled.
-            // Guards against a misconfigured staging env accidentally being open to the internet.
-            // Configurable via DevBypass:AllowDevBypass in appsettings.Development.json.
             var isDevLoopback = _env.IsDevelopment()
                 && _configuration.GetValue<bool>("DevBypass:AllowDevBypass");
             if (!isDevLoopback && !(User.Identity?.IsAuthenticated ?? false))
@@ -54,33 +64,85 @@ namespace Glanz.API.Controllers
             if (dto.Amount <= 0)
                 return BadRequest(new { message = "Amount must be greater than zero." });
 
+            if (string.IsNullOrWhiteSpace(dto.RedirectUrl))
+                return BadRequest(new { message = "redirectUrl is required." });
+
+            var secretKey = _configuration["TapPayments:SecretKey"];
+            if (string.IsNullOrWhiteSpace(secretKey) || secretKey == "YOUR_TAP_SECRET_KEY")
+                return StatusCode(503, new { message = "Payment gateway not configured." });
+
             try
             {
-                // ── Create Stripe PaymentIntent ──────────────────────────────────────────
-                var service = new PaymentIntentService();
-                var options = new PaymentIntentCreateOptions
+                // Encode the booking number into the redirect URL so the frontend can
+                // retrieve it on return without extra state management.
+                var sep             = dto.RedirectUrl.Contains('?') ? '&' : '?';
+                var fullRedirectUrl = $"{dto.RedirectUrl}{sep}booking={Uri.EscapeDataString(dto.BookingNumber ?? "")}";
+
+                var chargeBody = new
                 {
-                    // Stripe uses smallest currency unit (fils/halalah for QAR = 1/100 QAR)
-                    Amount = (long)Math.Round(dto.Amount * 100),
-                    Currency = (dto.Currency ?? "QAR").ToLowerInvariant(),
-                    // manual capture: we capture only after the booking is confirmed
-                    CaptureMethod = "manual",
-                    Metadata = new Dictionary<string, string>
+                    amount            = Math.Round(dto.Amount, 2),
+                    currency          = (dto.Currency ?? "QAR").ToUpperInvariant(),
+                    customer_initiated = true,
+                    threeDSecure      = true,
+                    save_card         = false,
+                    description       = $"Glanz Car Detailing â€“ {dto.BookingNumber}",
+                    metadata = new
                     {
-                        { "scheduled_date", dto.ScheduledDate?.ToString("yyyy-MM-dd") ?? "" },
-                        { "time_slot",      dto.TimeSlot ?? "" },
-                        { "customer_email", dto.CustomerEmail ?? "" },
+                        booking_number  = dto.BookingNumber ?? "",
+                        scheduled_date  = dto.ScheduledDate?.ToString("yyyy-MM-dd") ?? "",
+                        time_slot       = dto.TimeSlot ?? "",
                     },
+                    customer = new { email = dto.CustomerEmail ?? "" },
+                    source   = new { id = "src_all" }, // accept all payment methods
+                    redirect = new { url = fullRedirectUrl },
                 };
 
-                var intent = await service.CreateAsync(options);
+                using var http = _httpClientFactory.CreateClient();
+                http.DefaultRequestHeaders.Authorization =
+                    new AuthenticationHeaderValue("Bearer", secretKey);
+                http.DefaultRequestHeaders.Accept.Add(
+                    new MediaTypeWithQualityHeaderValue("application/json"));
 
-                // ── Reserve the slot ────────────────────────────────────────────────────
+                var body     = JsonSerializer.Serialize(chargeBody);
+                var content  = new StringContent(body, System.Text.Encoding.UTF8, "application/json");
+                var response = await http.PostAsync($"{TapApiBase}/charges", content);
+                var raw      = await response.Content.ReadAsStringAsync();
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    Console.WriteLine($"[PaymentsController] Tap error: {raw}");
+                    return StatusCode(502, new { message = "Payment provider error. Please try again." });
+                }
+
+                using var doc  = JsonDocument.Parse(raw);
+                var root       = doc.RootElement;
+                var chargeId   = root.TryGetProperty("id",  out var idEl)  ? idEl.GetString()  : null;
+                var tapRedirectUrl = root.TryGetProperty("transaction", out var tx)
+                    && tx.TryGetProperty("url", out var urlEl)
+                    ? urlEl.GetString() : null;
+
+                if (string.IsNullOrWhiteSpace(chargeId) || string.IsNullOrWhiteSpace(tapRedirectUrl))
+                    return StatusCode(502, new { message = "Payment gateway did not return a redirect URL." });
+
+                // Update the booking with the Tap charge ID so we can look it up on verify/webhook.
+                if (!string.IsNullOrWhiteSpace(dto.BookingNumber))
+                {
+                    var booking = await _context.Bookings
+                        .FirstOrDefaultAsync(b => b.BookingNumber == dto.BookingNumber);
+                    if (booking != null)
+                    {
+                        booking.StripePaymentIntentId = chargeId; // field reused for Tap charge ID
+                        booking.UpdatedAt             = DateTime.UtcNow;
+                        await _context.SaveChangesAsync();
+                    }
+                }
+
+                // Reserve the slot for SlotHoldMinutes to block concurrent bookings.
                 if (dto.ScheduledDate.HasValue && !string.IsNullOrWhiteSpace(dto.TimeSlot))
                 {
                     _context.SlotReservations.Add(new SlotReservation
                     {
-                        PaymentIntentId = intent.Id,
+                        PaymentIntentId = chargeId,
                         ScheduledDate   = DateTime.SpecifyKind(dto.ScheduledDate.Value.Date, DateTimeKind.Utc),
                         TimeSlot        = dto.TimeSlot.Trim(),
                         DurationMinutes = dto.DurationMinutes,
@@ -93,68 +155,111 @@ namespace Glanz.API.Controllers
 
                 return Ok(new
                 {
-                    clientSecret = intent.ClientSecret,
-                    intentId     = intent.Id,
-                    amount       = dto.Amount,
-                    currency     = dto.Currency ?? "QAR",
+                    chargeId,
+                    redirectUrl = tapRedirectUrl,
+                    amount      = dto.Amount,
+                    currency    = dto.Currency ?? "QAR",
                 });
             }
-            catch (StripeException ex)
+            catch (Exception ex)
             {
-                Console.WriteLine($"[PaymentsController] Stripe error: {ex.StripeError?.Message}");
+                Console.WriteLine($"[PaymentsController] Tap error: {ex.Message}");
                 return StatusCode(502, new { message = "Payment provider error. Please try again." });
             }
         }
 
         /// <summary>
-        /// Returns the current status of a PaymentIntent without exposing the secret key.
+        /// Verifies a Tap charge status and updates the booking if payment succeeded.
         ///
-        /// GET /api/Payments/intent/{intentId}
-        /// Returns: { intentId, status, amount }
+        /// GET /api/Payments/verify/{chargeId}
+        /// Returns: { chargeId, status, amount, bookingNumber }
         /// </summary>
-        [HttpGet("intent/{intentId}")]
-        public async Task<IActionResult> GetIntentStatus(string intentId)
+        [HttpGet("verify/{chargeId}")]
+        public async Task<IActionResult> VerifyCharge(string chargeId)
         {
-            // Auth check: always required, EXCEPT in Development with AllowDevBypass enabled.
             var isDevLoopback = _env.IsDevelopment()
                 && _configuration.GetValue<bool>("DevBypass:AllowDevBypass");
             if (!isDevLoopback && !(User.Identity?.IsAuthenticated ?? false))
                 return Unauthorized(new { message = "Authentication required." });
 
-            if (string.IsNullOrWhiteSpace(intentId))
-                return BadRequest(new { message = "intentId is required." });
+            if (string.IsNullOrWhiteSpace(chargeId))
+                return BadRequest(new { message = "chargeId is required." });
+
+            var secretKey = _configuration["TapPayments:SecretKey"];
+            if (string.IsNullOrWhiteSpace(secretKey) || secretKey == "YOUR_TAP_SECRET_KEY")
+                return StatusCode(503, new { message = "Payment gateway not configured." });
 
             try
             {
-                var service = new PaymentIntentService();
-                var intent  = await service.GetAsync(intentId);
+                using var http = _httpClientFactory.CreateClient();
+                http.DefaultRequestHeaders.Authorization =
+                    new AuthenticationHeaderValue("Bearer", secretKey);
+
+                var response = await http.GetAsync($"{TapApiBase}/charges/{Uri.EscapeDataString(chargeId)}");
+                var raw      = await response.Content.ReadAsStringAsync();
+
+                if (!response.IsSuccessStatusCode)
+                    return StatusCode(502, new { message = "Payment verification failed." });
+
+                using var doc = JsonDocument.Parse(raw);
+                var root      = doc.RootElement;
+                var status    = root.TryGetProperty("status", out var statusEl) ? statusEl.GetString() ?? "UNKNOWN" : "UNKNOWN";
+                var amount    = root.TryGetProperty("amount", out var amtEl)    ? amtEl.GetDecimal()   : 0m;
+
+                // Resolve the booking tied to this charge.
+                var booking = await _context.Bookings
+                    .FirstOrDefaultAsync(b => b.StripePaymentIntentId == chargeId);
+
+                if (booking != null)
+                {
+                    var upperStatus = status.ToUpperInvariant();
+                    if (upperStatus is "CAPTURED" or "AUTHORIZED")
+                    {
+                        if (booking.Status == BookingStatus.Pending)
+                        {
+                            booking.Status        = BookingStatus.Confirmed;
+                            booking.PaymentStatus = PaymentStatus.Paid;
+                            booking.UpdatedAt     = DateTime.UtcNow;
+                            await _context.SaveChangesAsync();
+                            Console.WriteLine($"[Verify] Booking {booking.BookingNumber} confirmed via charge {chargeId}.");
+                        }
+                    }
+                    else if (upperStatus is "FAILED" or "DECLINED" or "CANCELLED")
+                    {
+                        if (booking.PaymentStatus != PaymentStatus.Paid)
+                        {
+                            booking.PaymentStatus = PaymentStatus.Failed;
+                            booking.UpdatedAt     = DateTime.UtcNow;
+                            await _context.SaveChangesAsync();
+                        }
+                    }
+                }
 
                 return Ok(new
                 {
-                    intentId = intent.Id,
-                    status   = intent.Status,
-                    amount   = intent.Amount / 100m,
+                    chargeId,
+                    status,
+                    amount,
+                    bookingNumber = booking?.BookingNumber,
                 });
             }
-            catch (StripeException ex) when (ex.StripeError?.Code == "resource_missing")
+            catch (Exception ex)
             {
-                return NotFound(new { message = "Payment intent not found." });
-            }
-            catch (StripeException ex)
-            {
-                Console.WriteLine($"[PaymentsController] Stripe error: {ex.StripeError?.Message}");
-                return StatusCode(502, new { message = "Payment provider error." });
+                Console.WriteLine($"[PaymentsController] Tap verify error: {ex.Message}");
+                return StatusCode(502, new { message = "Payment verification error." });
             }
         }
     }
 
-    public class CreatePaymentIntentDto
+    public class CreateChargeDto
     {
-        public decimal Amount { get; set; }
-        public string? Currency { get; set; }
-        public DateTime? ScheduledDate { get; set; }
-        public string? TimeSlot { get; set; }
-        public int DurationMinutes { get; set; }
-        public string? CustomerEmail { get; set; }
+        public decimal   Amount          { get; set; }
+        public string?   Currency        { get; set; }
+        public DateTime? ScheduledDate   { get; set; }
+        public string?   TimeSlot        { get; set; }
+        public int       DurationMinutes { get; set; }
+        public string?   CustomerEmail   { get; set; }
+        public string?   BookingNumber   { get; set; }
+        public string?   RedirectUrl     { get; set; }
     }
 }

@@ -9,8 +9,6 @@ import { usePackages } from '../../context/PackagesContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useSettings } from '../../context/SettingsContext';
 import { ArrowRight, Shield, CheckCircle, Clock, MapPin, Star, CreditCard } from 'lucide-react';
-import { Elements, useStripe, useElements } from '@stripe/react-stripe-js';
-import { stripePromise } from '../../api/stripe';
 import { getSiteContent } from '../../config/siteContent';
 import { useFeatures } from '../../context/FeaturesContext';
 
@@ -21,7 +19,7 @@ import BookingDetailsCheckoutStep from './booking/BookingDetailsCheckoutStep';
 import BookingSidebar             from './booking/BookingSidebar';
 
 /* ── BookingForm (orchestrator) ─────────────────────────────────────────── */
-function BookingForm({ stripe, elements, isStripeMode }) {
+function BookingForm({ isTapMode }) {
   const features = useFeatures();
   const { lang } = useLanguage();
   const { bookingPageConfig } = getSiteContent(lang);
@@ -313,7 +311,6 @@ function BookingForm({ stripe, elements, isStripeMode }) {
     setError(''); setSuccess('');
     if (selectedPackages.length === 0) { setError('Please select at least one package.'); return; }
     if (!formData.scheduledDate || !formData.timeSlot) { setError('Please select a date and time slot.'); return; }
-    if (isStripeMode && (!stripe || !elements)) { setError('Stripe is still loading. Please try again in a moment.'); return; }
     setPaymentProcessing(true);
     try {
       const bookingData = {
@@ -338,29 +335,49 @@ function BookingForm({ stripe, elements, isStripeMode }) {
           ? (mySubscription.id ?? null)
           : null,
       };
-      let stripePaymentIntentId = `placeholder-${Date.now()}`;
-      if (isStripeMode) {
-        const serverAmount = quote?.finalPrice ?? calculateTotal();
-        if (serverAmount > 0) {
-          const intentRes = await bookingsAPI.createPaymentIntentV2({
-            amount:          serverAmount,
-            scheduledDate:   bookingData.scheduledDate,
-            timeSlot:        bookingData.timeSlot,
-            durationMinutes: totalDuration,
-            customerEmail:   bookingData.customerEmail,
-          });
-          const cardElement = elements.getElement('card');
-          if (!cardElement) { setError('Card input unavailable. Please refresh and try again.'); return; }
-          const { error: stripeError, paymentIntent } = await stripe.confirmCardPayment(intentRes.clientSecret, {
-            payment_method: { card: cardElement, billing_details: { name: formData.customerName, email: formData.customerEmail } },
-          });
-          if (stripeError) { setError(stripeError.message || 'Payment failed. Please try another card.'); return; }
-          stripePaymentIntentId = paymentIntent?.id || stripePaymentIntentId;
-        }
+
+      // ── No payment mode: create booking directly ───────────────────────
+      if (!isTapMode) {
+        const response = await bookingsAPI.create({ ...bookingData, stripePaymentIntentId: `placeholder-${Date.now()}` });
+        setSuccess('Booking confirmed! Redirecting…');
+        setTimeout(() => navigate(`/booking-confirmation/${response.bookingNumber}`), 1800);
+        return;
       }
-      const response = await bookingsAPI.create({ ...bookingData, stripePaymentIntentId });
+
+      // ── Tap Payments mode: create booking first, then redirect to Tap ──
+      const serverAmount = quote?.finalPrice ?? calculateTotal();
+
+      // Create the booking (Pending + no payment intent yet)
+      const response = await bookingsAPI.create({ ...bookingData, stripePaymentIntentId: `pending-tap-${Date.now()}` });
+      const bookingNumber = response.bookingNumber;
+
+      if (serverAmount > 0) {
+        // Build the return URL — Tap will append ?tap_id=<chargeId>
+        const origin      = window.location.origin;
+        const redirectUrl = `${origin}/booking-confirmation/${bookingNumber}`;
+
+        const chargeRes = await bookingsAPI.createTapCharge({
+          amount:          serverAmount,
+          currency:        'QAR',
+          scheduledDate:   bookingData.scheduledDate,
+          timeSlot:        bookingData.timeSlot,
+          durationMinutes: totalDuration,
+          customerEmail:   bookingData.customerEmail,
+          bookingNumber,
+          redirectUrl,
+        });
+
+        // Redirect customer to Tap-hosted payment page
+        if (chargeRes?.redirectUrl) {
+          window.location.href = chargeRes.redirectUrl;
+          return;
+        }
+        throw new Error('Payment gateway did not return a redirect URL.');
+      }
+
+      // Amount is 0 (fully covered by coupon/points) — no payment needed
       setSuccess('Booking confirmed! Redirecting…');
-      setTimeout(() => navigate(`/booking-confirmation/${response.bookingNumber}`), 1800);
+      setTimeout(() => navigate(`/booking-confirmation/${bookingNumber}`), 1800);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to create booking. Please try again.');
     } finally { setPaymentProcessing(false); }
@@ -465,7 +482,7 @@ function BookingForm({ stripe, elements, isStripeMode }) {
                   savedAddresses={savedAddresses}
                   addressHelperText={addressHelperText}
                   myCoupons={myCoupons}
-                  isStripeMode={isStripeMode}
+                  isTapMode={isTapMode}
                   paymentMethod={paymentMethod}
                   setPaymentMethod={setPaymentMethod}
                   quote={quote}
@@ -526,42 +543,12 @@ function BookingForm({ stripe, elements, isStripeMode }) {
   );
 }
 
-/* ── Stripe wrapper ─────────────────────────────────────────────────────── */
-function StripeBookingForm() {
-  const stripe   = useStripe();
-  const elements = useElements();
-  return <BookingForm stripe={stripe} elements={elements} isStripeMode={true} />;
-}
-
 function Booking() {
   const { payments } = useFeatures();
   const devBypass = !!localStorage.getItem('DEV_BYPASS_PAYMENT');
   const paymentsEnabled = payments || devBypass;
 
-  if (paymentsEnabled && !stripePromise) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-8">
-        <div className="glass-card max-w-md w-full p-8 text-center">
-          <div className="w-12 h-12 rounded-xl bg-red-500/12 border border-red-500/25 flex items-center justify-center mx-auto mb-4">
-            <CreditCard size={22} className="text-red-400" />
-          </div>
-          <h2 className="premium-heading text-xl font-bold text-[var(--heading-color)] mb-3">Stripe Not Configured</h2>
-          <p className="text-sm text-[var(--muted-color)] leading-relaxed mb-4">
-            <code className="text-xs bg-white/8 px-2 py-1 rounded">VITE_STRIPE_PUBLISHABLE_KEY</code> is missing from your environment file.
-          </p>
-          <p className="text-xs text-[var(--muted-color)]">
-            Add your Stripe publishable key (<code className="text-primary">pk_test_…</code> or <code className="text-primary">pk_live_…</code>) to <code className="text-xs bg-white/8 px-1.5 py-0.5 rounded">.env.development</code> and restart the dev server.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  return paymentsEnabled ? (
-    <Elements stripe={stripePromise}><StripeBookingForm /></Elements>
-  ) : (
-    <BookingForm stripe={null} elements={null} isStripeMode={false} />
-  );
+  return <BookingForm isTapMode={paymentsEnabled} />;
 }
 
 export default Booking;

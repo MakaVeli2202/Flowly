@@ -12,8 +12,13 @@ export const bookingsAPI = {
     return response.data;
   }),
 
-  createPaymentIntentV2: async (data) => withRetry(async () => {
-    const response = await apiClient.post('/Payments/create-intent', data);
+  createTapCharge: async (data) => withRetry(async () => {
+    const response = await apiClient.post('/Payments/create-charge', data);
+    return response.data;
+  }),
+
+  verifyTapCharge: async (chargeId) => withRetry(async () => {
+    const response = await apiClient.get(`/Payments/verify/${encodeURIComponent(chargeId)}`);
     return response.data;
   }),
 

@@ -24,11 +24,11 @@ const DEV_FLAGS = [
   {
     key: 'DEV_BYPASS_PAYMENT',
     label: 'Bypass Payment Processing',
-    description: 'Marks bookings as paid in the UI without calling Stripe. The backend still needs to be configured to accept test charges — use Stripe test cards on the backend side.',
+    description: 'Skips payment redirect in the UI for local testing. Bookings can still be created without a live Tap checkout.',
     category: 'Payments',
     icon: CreditCard,
     accent: '#0ea5a0',
-    warning: 'Backend must also be in test mode. This flag only skips the frontend guard.',
+    warning: 'Frontend-only bypass. Disable before production.',
   },
   {
     key: 'DEV_SMS_SILENT',
@@ -52,7 +52,7 @@ const DEV_FLAGS = [
 
 /* ─── Backend feature flags (read-only display) ──────────────────────────── */
 const FEATURE_FLAG_META = {
-  payments:         { label: 'Payment Processing',         description: 'Stripe live/test payment collection.' },
+  payments:         { label: 'Payment Processing',         description: 'Tap live/test payment collection.' },
   subscriptions:    { label: 'Subscription Plans',         description: 'Customer-facing subscription tiers.' },
   slotReservation:  { label: 'Slot Reservation (15-min)',  description: 'Temporary slot hold during checkout.' },
   smartAssignment:  { label: 'Smart Worker Assignment',    description: 'Auto-assign workers based on proximity & schedule.' },
@@ -62,8 +62,8 @@ const FEATURE_FLAG_META = {
 
 /* ─── Deployment readiness checklist ─────────────────────────────────────── */
 const DEPLOY_CHECKS = [
-  { id: 'stripe_live',     label: 'Stripe live keys configured',               category: 'Payments' },
-  { id: 'stripe_webhooks', label: 'Stripe webhooks pointed at production URL',  category: 'Payments' },
+  { id: 'tap_live',        label: 'Tap live keys configured',                  category: 'Payments' },
+  { id: 'tap_webhooks',    label: 'Tap webhooks pointed at production URL',    category: 'Payments' },
   { id: 'sms_live',        label: 'SMS provider using live credentials',        category: 'Notifications' },
   { id: 'google_review',   label: 'Google review URL verified and working',     category: 'Reviews' },
   { id: 'dev_flags_off',   label: 'All dev flags (DEV_*) cleared',              category: 'Dev Flags' },

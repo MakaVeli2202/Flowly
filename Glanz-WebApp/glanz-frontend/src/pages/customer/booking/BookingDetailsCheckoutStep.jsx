@@ -3,7 +3,6 @@ import {
   User, Mail, Phone, MapPin, Tag, Ticket, CreditCard,
   Shield, Star, AlertCircle, Gift, Coins,
 } from 'lucide-react';
-import { CardElement } from '@stripe/react-stripe-js';
 import AddressAutocompleteInput from '../../../components/shared/AddressAutocompleteInput';
 import { SectionHeading } from './BookingShared';
 import { useLanguage } from '../../../context/LanguageContext';
@@ -35,7 +34,7 @@ const UI_BY_LANG = {
     preauthInfo: 'Your card will be pre-authorised. Payment is captured only after service completion.',
     payComingSoon: (method) => `${method} coming soon. Please use Credit / Debit Card to complete your booking.`,
     paymentPlaceholderTitle: 'Payment placeholder active',
-    paymentPlaceholderDesc: 'Stripe is temporarily disabled. Bookings will be created without a payment charge — for testing purposes only.',
+    paymentPlaceholderDesc: 'Tap checkout is temporarily disabled. Bookings will be created without a payment charge — for testing purposes only.',
     loyaltyHelp: 'Loyalty rewards appear here after completed bookings. Discounts are validated server-side at checkout.',
     referralHelp: "Use a friend's referral code to unlock exclusive discounts. Your friend earns rewards too!",
     customerFields: [
@@ -75,7 +74,7 @@ const UI_BY_LANG = {
     preauthInfo: 'سيتم إجراء تفويض مبدئي للبطاقة. يتم الخصم بعد اكتمال الخدمة فقط.',
     payComingSoon: (method) => `${method} قريبا. يرجى استخدام البطاقة لإكمال الحجز.`,
     paymentPlaceholderTitle: 'وضع الدفع التجريبي مفعل',
-    paymentPlaceholderDesc: 'Stripe معطل مؤقتا. سيتم إنشاء الحجوزات بدون تحصيل دفعة - لأغراض الاختبار فقط.',
+    paymentPlaceholderDesc: 'Tap checkout معطل مؤقتا. سيتم إنشاء الحجوزات بدون تحصيل دفعة - لأغراض الاختبار فقط.',
     loyaltyHelp: 'تظهر مكافآت الولاء هنا بعد إكمال الحجوزات. يتم التحقق من الخصومات من الخادم عند الدفع.',
     referralHelp: 'استخدم رمز إحالة صديق للحصول على خصومات حصرية. وسيحصل صديقك أيضا على مكافآت.',
     customerFields: [
@@ -115,7 +114,7 @@ const UI_BY_LANG = {
     preauthInfo: 'Ihre Karte wird vorautorisiert. Die Belastung erfolgt erst nach Abschluss des Services.',
     payComingSoon: (method) => `${method} folgt bald. Bitte verwenden Sie Kredit-/Debitkarte fur die Buchung.`,
     paymentPlaceholderTitle: 'Zahlungs-Platzhalter aktiv',
-    paymentPlaceholderDesc: 'Stripe ist vorubergehend deaktiviert. Buchungen werden ohne Zahlungsabbuchung erstellt - nur fur Tests.',
+    paymentPlaceholderDesc: 'Tap Checkout ist vorubergehend deaktiviert. Buchungen werden ohne Zahlungsabbuchung erstellt - nur fur Tests.',
     loyaltyHelp: 'Treuepramien erscheinen hier nach abgeschlossenen Buchungen. Rabatte werden serverseitig gepruft.',
     referralHelp: 'Nutzen Sie den Code eines Freundes fur exklusive Rabatte. Ihr Freund erhalt ebenfalls Pramien.',
     customerFields: [
@@ -136,7 +135,7 @@ function BookingDetailsCheckoutStep({
   canAutofillCustomerData, isAdmin,
   savedAddresses, addressHelperText,
   myCoupons,
-  isStripeMode, paymentMethod, setPaymentMethod,
+  isTapMode, paymentMethod, setPaymentMethod,
   quote, totalAmount,
   userReferralPoints = 0,
 }) {
@@ -311,7 +310,7 @@ function BookingDetailsCheckoutStep({
       <div className="glass-card p-6 relative overflow-hidden">
         <div className="prism-ray" style={{ left: '28%', width: '13%', animation: 'prism-ray-sweep 15s ease-in-out 9s infinite' }} />
         <SectionHeading icon={CreditCard} step={7}>{ui.payment}</SectionHeading>
-        {isStripeMode && totalAmount === 0 ? (
+        {isTapMode && totalAmount === 0 ? (
           <div className="rounded-xl border border-dashed p-5 flex items-start gap-3"
             style={{ borderColor: 'rgba(200,169,107,0.35)', background: 'rgba(200,169,107,0.04)' }}>
             <Gift size={18} className="text-yellow-300 flex-shrink-0 mt-0.5" />
@@ -322,49 +321,21 @@ function BookingDetailsCheckoutStep({
               </p>
             </div>
           </div>
-        ) : isStripeMode ? (
-          <>
-            <div className="flex gap-2 mb-4">
-              {paymentMethods.map(({ id, label, Icon }) => (
-                <button key={id} type="button"
-                  onClick={() => setPaymentMethod(id)}
-                  className={`flex-1 flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl border-2 text-xs font-semibold transition-all ${
-                    paymentMethod === id
-                      ? 'border-primary bg-primary/10 text-primary'
-                      : 'border-[var(--border-color)] text-[var(--muted-color)] hover:border-primary/40'
-                  }`}>
-                  <Icon size={16} />
-                  <span className="text-[10px] leading-tight text-center">{label}</span>
-                </button>
-              ))}
-            </div>
-            {paymentMethod === 'card' ? (
-              <>
-                <div className="rounded-xl border border-[var(--border-color)] bg-[var(--surface-bg)] p-4">
-                  <CardElement options={{
-                    style: {
-                      base: { fontSize: '15px', color: '#E8E9EC', '::placeholder': { color: '#7A8495' } },
-                      invalid: { color: '#EF4444' },
-                    },
-                  }} />
-                </div>
-                <div className="flex items-center gap-2 mt-3">
-                  <Shield size={11} className="text-[var(--muted-color)] flex-shrink-0" />
-                  <p className="text-xs text-[var(--muted-color)]">
-                    {ui.preauthInfo}
-                  </p>
-                </div>
-              </>
-            ) : (
-              <div className="rounded-xl border border-dashed border-[var(--border-color)] p-5 flex items-center gap-3"
-                style={{ background: 'rgba(255,255,255,0.015)' }}>
-                <AlertCircle size={16} className="text-[var(--muted-color)] flex-shrink-0" />
-                <p className="text-sm text-[var(--muted-color)]">
-                  {ui.payComingSoon(paymentMethod === 'google_pay' ? ui.paymentMethods.googlePay : ui.paymentMethods.applePay)}
-                </p>
+        ) : isTapMode ? (
+          <div className="rounded-xl border border-[var(--border-color)] p-5 flex items-start gap-3"
+            style={{ background: 'rgba(200,169,107,0.04)', borderColor: 'rgba(200,169,107,0.35)' }}>
+            <CreditCard size={18} className="text-primary flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-semibold text-[var(--heading-color)]">Secure Payment via Tap</p>
+              <p className="text-xs text-[var(--muted-color)] mt-1">
+                After confirming your booking you will be redirected to the Tap Payments page to complete payment securely. All major cards accepted.
+              </p>
+              <div className="flex items-center gap-2 mt-3">
+                <Shield size={11} className="text-[var(--muted-color)] flex-shrink-0" />
+                <p className="text-xs text-[var(--muted-color)]">{ui.preauthInfo}</p>
               </div>
-            )}
-          </>
+            </div>
+          </div>
         ) : (
           <div className="rounded-xl border border-dashed border-[var(--border-color)] p-5"
             style={{ background: 'rgba(255,255,255,0.015)' }}>

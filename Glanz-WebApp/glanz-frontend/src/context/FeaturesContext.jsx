@@ -21,7 +21,7 @@ import apiClient from '../api/axios';
 
 // ── Default flags — all OFF (safe baseline) ──────────────────────────────────
 const DEFAULT_FLAGS = {
-  payments:         false,  // Stripe real payment flow
+  payments:         false,  // Tap Payments redirect flow
   subscriptions:    false,  // Customer-facing subscription plans
   slotReservation:  false,  // 15-min slot hold (Phase 3 slot system)
   smartAssignment:  false,  // Automatic worker assignment

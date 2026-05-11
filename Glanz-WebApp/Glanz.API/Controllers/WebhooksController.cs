@@ -1,119 +1,112 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Glanz.API.Data;
 using Glanz.API.Models;
-using Stripe;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
 
 namespace Glanz.API.Controllers
 {
     /// <summary>
-    /// Stripe webhook receiver — safety net for payment lifecycle events.
+    /// Tap Payments webhook receiver â€” async safety net for payment lifecycle events.
     ///
-    /// Register this endpoint in the Stripe Dashboard:
-    ///   URL: POST https://yourdomain.com/api/Webhooks/stripe
-    ///   Events to listen for:
-    ///     • payment_intent.payment_failed
-    ///     • payment_intent.succeeded
-    ///     • payment_intent.canceled
+    /// Register this endpoint in the Tap Payments dashboard:
+    ///   URL: POST https://yourdomain.com/api/Webhooks/tap
+    ///   Events: CAPTURED, FAILED, CANCELLED
     ///
-    /// After registering, copy the "Signing secret" from the dashboard to
-    /// appsettings.json → Stripe:WebhookSecret.
+    /// Set Tap:WebhookSecret in appsettings / Render env vars to the signing key
+    /// shown in the Tap dashboard so every payload is verified before processing.
     ///
-    /// NO [Authorize] — Stripe does not send auth headers.
-    /// Security comes from verifying the Stripe-Signature header.
+    /// NO [Authorize] â€” Tap does not send auth headers.
+    /// Security comes from HMAC-SHA256 signature verification.
     /// </summary>
     [ApiController]
     [Route("api/[controller]")]
     public class WebhooksController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly AppDbContext    _context;
         private readonly IConfiguration _configuration;
 
         public WebhooksController(AppDbContext context, IConfiguration configuration)
         {
-            _context = context;
+            _context       = context;
             _configuration = configuration;
         }
 
-        [HttpPost("stripe")]
-        public async Task<IActionResult> StripeWebhook()
+        [HttpPost("tap")]
+        public async Task<IActionResult> TapWebhook()
         {
-            // ── Read raw body (must happen before any other middleware consumes it) ──
             var json = await new StreamReader(Request.Body).ReadToEndAsync();
 
-            var webhookSecret = _configuration["Stripe:WebhookSecret"];
-            if (string.IsNullOrWhiteSpace(webhookSecret))
-            {
-                // A missing secret must be a misconfiguration — fail loudly rather than
-                // silently accepting unsigned (potentially forged) webhook payloads.
-                throw new InvalidOperationException(
-                    "Stripe:WebhookSecret is required and must be configured. " +
-                    "Register the webhook in the Stripe Dashboard and set the signing secret.");
-            }
+            var webhookSecret = _configuration["TapPayments:WebhookSecret"];
 
-            // ── Verify signature ────────────────────────────────────────────────────
-            Event stripeEvent;
-            try
+            // If a webhook secret is configured, verify the HMAC-SHA256 signature.
+            // Tap sends the signature in the "hashstring" header.
+            if (!string.IsNullOrWhiteSpace(webhookSecret))
             {
-                stripeEvent = EventUtility.ConstructEvent(
-                    json,
-                    Request.Headers["Stripe-Signature"],
-                    webhookSecret,
-                    throwOnApiVersionMismatch: false);
-            }
-            catch (StripeException ex)
-            {
-                Console.WriteLine($"[Webhook] Signature verification failed: {ex.Message}");
-                return BadRequest(new { message = "Invalid Stripe signature." });
-            }
-
-            // ── Handle events ───────────────────────────────────────────────────────
-            try
-            {
-                switch (stripeEvent.Type)
+                var tapSignature = Request.Headers["hashstring"].FirstOrDefault();
+                if (string.IsNullOrWhiteSpace(tapSignature))
                 {
-                    case "payment_intent.succeeded":
-                        await HandlePaymentSucceededAsync(stripeEvent);
+                    Console.WriteLine("[Webhook/Tap] Missing hashstring header.");
+                    return BadRequest(new { message = "Missing webhook signature." });
+                }
+
+                using var hmac         = new HMACSHA256(Encoding.UTF8.GetBytes(webhookSecret));
+                var computedHash       = hmac.ComputeHash(Encoding.UTF8.GetBytes(json));
+                var computedSignature  = Convert.ToHexString(computedHash).ToLowerInvariant();
+
+                if (!computedSignature.Equals(tapSignature, StringComparison.OrdinalIgnoreCase))
+                {
+                    Console.WriteLine("[Webhook/Tap] Signature mismatch â€” possible forged request.");
+                    return BadRequest(new { message = "Invalid webhook signature." });
+                }
+            }
+
+            try
+            {
+                using var doc  = JsonDocument.Parse(json);
+                var root       = doc.RootElement;
+                var status     = root.TryGetProperty("status", out var statusEl) ? statusEl.GetString() ?? "" : "";
+                var chargeId   = root.TryGetProperty("id",     out var idEl)     ? idEl.GetString()     ?? "" : "";
+
+                if (string.IsNullOrWhiteSpace(chargeId))
+                {
+                    return Ok(); // ignore unrecognised payloads
+                }
+
+                var upperStatus = status.ToUpperInvariant();
+                switch (upperStatus)
+                {
+                    case "CAPTURED":
+                    case "AUTHORIZED":
+                        await HandlePaymentSucceededAsync(chargeId);
                         break;
 
-                    case "payment_intent.payment_failed":
-                        await HandlePaymentFailedAsync(stripeEvent);
+                    case "FAILED":
+                    case "DECLINED":
+                        await HandlePaymentFailedAsync(chargeId);
                         break;
 
-                    case "payment_intent.canceled":
-                        await HandlePaymentCanceledAsync(stripeEvent);
-                        break;
-
-                    default:
-                        // Unhandled event type — acknowledge so Stripe doesn't retry
+                    case "CANCELLED":
+                        await HandlePaymentCancelledAsync(chargeId);
                         break;
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[Webhook] Handler error for {stripeEvent.Type}: {ex.Message}");
-                // Return 200 anyway so Stripe doesn't keep retrying. Log the error for investigation.
+                Console.WriteLine($"[Webhook/Tap] Handler error: {ex.Message}");
+                // Return 200 so Tap doesn't keep retrying â€” log for investigation.
             }
 
             return Ok();
         }
 
-        // ── Handlers ─────────────────────────────────────────────────────────────────
+        // â”€â”€ Handlers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-        /// <summary>
-        /// payment_intent.succeeded: if the booking is still Pending, move it to Confirmed.
-        /// This handles the edge case where payment succeeded but the mobile app crashed
-        /// before calling CreateBooking.
-        ///
-        /// Note: In the normal happy path the booking is created via POST /Bookings *after*
-        /// presentPaymentSheet succeeds, so the booking may already be Confirmed by the time
-        /// this webhook fires. That's fine — the guard below handles it safely.
-        /// </summary>
-        private async Task HandlePaymentSucceededAsync(Event stripeEvent)
+        private async Task HandlePaymentSucceededAsync(string chargeId)
         {
-            if (stripeEvent.Data.Object is not PaymentIntent intent) return;
-
-            var booking = await FindBookingByIntentIdAsync(intent.Id);
+            var booking = await FindBookingByChargeIdAsync(chargeId);
             if (booking == null) return;
 
             if (booking.Status == BookingStatus.Pending)
@@ -122,20 +115,13 @@ namespace Glanz.API.Controllers
                 booking.PaymentStatus = PaymentStatus.Paid;
                 booking.UpdatedAt     = DateTime.UtcNow;
                 await _context.SaveChangesAsync();
-                Console.WriteLine($"[Webhook] Booking {booking.BookingNumber} confirmed via payment_intent.succeeded.");
+                Console.WriteLine($"[Webhook/Tap] Booking {booking.BookingNumber} confirmed via charge {chargeId}.");
             }
         }
 
-        /// <summary>
-        /// payment_intent.payment_failed: mark the booking payment as Failed so admin
-        /// can see it in the dashboard and follow up. The booking remains in Pending so
-        /// it can be re-attempted (do not cancel automatically — the customer may retry).
-        /// </summary>
-        private async Task HandlePaymentFailedAsync(Event stripeEvent)
+        private async Task HandlePaymentFailedAsync(string chargeId)
         {
-            if (stripeEvent.Data.Object is not PaymentIntent intent) return;
-
-            var booking = await FindBookingByIntentIdAsync(intent.Id);
+            var booking = await FindBookingByChargeIdAsync(chargeId);
             if (booking == null) return;
 
             if (booking.PaymentStatus != PaymentStatus.Paid)
@@ -143,19 +129,13 @@ namespace Glanz.API.Controllers
                 booking.PaymentStatus = PaymentStatus.Failed;
                 booking.UpdatedAt     = DateTime.UtcNow;
                 await _context.SaveChangesAsync();
-                Console.WriteLine($"[Webhook] Booking {booking.BookingNumber} payment failed.");
+                Console.WriteLine($"[Webhook/Tap] Booking {booking.BookingNumber} payment failed (charge {chargeId}).");
             }
         }
 
-        /// <summary>
-        /// payment_intent.canceled: Stripe canceled the intent (e.g., expired after 24 h).
-        /// Move the booking to Cancelled so the slot is freed.
-        /// </summary>
-        private async Task HandlePaymentCanceledAsync(Event stripeEvent)
+        private async Task HandlePaymentCancelledAsync(string chargeId)
         {
-            if (stripeEvent.Data.Object is not PaymentIntent intent) return;
-
-            var booking = await FindBookingByIntentIdAsync(intent.Id);
+            var booking = await FindBookingByChargeIdAsync(chargeId);
             if (booking == null) return;
 
             if (booking.Status == BookingStatus.Pending)
@@ -164,18 +144,17 @@ namespace Glanz.API.Controllers
                 booking.PaymentStatus = PaymentStatus.Failed;
                 booking.UpdatedAt     = DateTime.UtcNow;
                 await _context.SaveChangesAsync();
-                Console.WriteLine($"[Webhook] Booking {booking.BookingNumber} cancelled — payment intent expired.");
+                Console.WriteLine($"[Webhook/Tap] Booking {booking.BookingNumber} cancelled (charge {chargeId}).");
             }
         }
 
-        // ── Helpers ───────────────────────────────────────────────────────────────────
-
-        private async Task<Booking?> FindBookingByIntentIdAsync(string intentId)
+        // StripePaymentIntentId column is reused to store the Tap charge ID.
+        private async Task<Booking?> FindBookingByChargeIdAsync(string chargeId)
         {
-            if (string.IsNullOrWhiteSpace(intentId)) return null;
-
+            if (string.IsNullOrWhiteSpace(chargeId)) return null;
             return await _context.Bookings
-                .FirstOrDefaultAsync(b => b.StripePaymentIntentId == intentId);
+                .FirstOrDefaultAsync(b => b.StripePaymentIntentId == chargeId);
         }
     }
 }
+

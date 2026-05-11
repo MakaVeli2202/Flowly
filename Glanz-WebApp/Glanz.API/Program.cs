@@ -16,21 +16,13 @@ using FluentValidation;
 
 var builder = WebApplication.CreateBuilder(args);
 
-const string insecureDefaultStripeSecret = "YOUR_STRIPE_SECRET_KEY";
-
 var jwtSecretFromConfig = builder.Configuration["JwtSettings:SecretKey"];
-var stripeSecretFromConfig = builder.Configuration["Stripe:SecretKey"];
 
 if (!builder.Environment.IsDevelopment())
 {
     if (string.IsNullOrWhiteSpace(jwtSecretFromConfig) || jwtSecretFromConfig.Length < 32)
     {
         throw new InvalidOperationException("JwtSettings:SecretKey must be at least 32 characters and must not be the default placeholder.");
-    }
-
-    if (string.IsNullOrWhiteSpace(stripeSecretFromConfig) || stripeSecretFromConfig == insecureDefaultStripeSecret)
-    {
-        throw new InvalidOperationException("Stripe:SecretKey must be set to a non-default value outside Development.");
     }
 }
 
@@ -58,7 +50,7 @@ builder.Services.AddHealthChecks();
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-    options.KnownNetworks.Clear();
+    options.KnownIPNetworks.Clear();
     options.KnownProxies.Clear();
 });
 
@@ -338,7 +330,7 @@ if (!app.Environment.IsDevelopment())
 
 // ── Security response headers ─────────────────────────────────────────────
 // Applied before any controller response so every endpoint benefits.
-// CSP allows Stripe.js, fonts, and same-origin assets. Tighten per environment as needed.
+// CSP allows Tap checkout assets, fonts, and same-origin assets. Tighten per environment as needed.
 app.Use(async (context, next) =>
 {
     context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
@@ -351,9 +343,9 @@ app.Use(async (context, next) =>
         context.Response.Headers.Append("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
         context.Response.Headers.Append("Content-Security-Policy",
             "default-src 'self'; " +
-            "script-src 'self' https://js.stripe.com; " +
-            "frame-src https://js.stripe.com; " +
-            "connect-src 'self' https://api.stripe.com; " +
+            "script-src 'self' https://secure.gosell.io; " +
+            "frame-src https://secure.gosell.io https://tap.company; " +
+            "connect-src 'self' https://api.tap.company; " +
             "font-src 'self' https://fonts.gstatic.com; " +
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
             "img-src 'self' data: https:;");

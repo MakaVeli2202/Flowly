@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
-using Stripe;
 using System.Net;
 using System.Text.Json;
 
@@ -56,7 +55,6 @@ public class GlobalExceptionFilter : IExceptionFilter
             KeyNotFoundException => "Resource not found.",
             InvalidOperationException => ex.Message,
             DbUpdateException => "A database operation failed. Please try again.",
-            StripeException stripeEx => stripeEx.Message,
             _ => "An unexpected error occurred. Please try again later."
         };
     }
@@ -71,7 +69,6 @@ public class GlobalExceptionFilter : IExceptionFilter
             InvalidOperationException => (int)HttpStatusCode.BadRequest,
             NotImplementedException => (int)HttpStatusCode.NotImplemented,
             DbUpdateException => (int)HttpStatusCode.Conflict,
-            StripeException => (int)HttpStatusCode.BadRequest,
             _ => (int)HttpStatusCode.InternalServerError
         };
     }

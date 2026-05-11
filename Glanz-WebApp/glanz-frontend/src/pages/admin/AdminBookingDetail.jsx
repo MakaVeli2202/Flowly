@@ -1036,7 +1036,7 @@ export default function AdminBookingDetail() {
                         </div>
                         <p className="text-sm text-[var(--heading-color)]">{cancelRefundResult.message}</p>
                         {cancelRefundResult.stripeRefundId && (
-                          <p className="text-xs text-[var(--muted-color)]">Stripe Refund ID: {cancelRefundResult.stripeRefundId}</p>
+                          <p className="text-xs text-[var(--muted-color)]">Tap Refund ID: {cancelRefundResult.stripeRefundId}</p>
                         )}
                         <p className="text-xs text-[var(--muted-color)]">
                           Status: {cancelRefundResult.bookingStatus} · Payment: {cancelRefundResult.paymentStatus}
@@ -1105,7 +1105,7 @@ export default function AdminBookingDetail() {
                         {!feeInfoLoading && !booking.stripePaymentIntentId?.startsWith('pi_') && (
                           <div className="flex items-start gap-2 rounded-xl border border-amber-500/22 bg-amber-500/8 px-4 py-3">
                             <AlertCircle size={13} className="text-amber-400 flex-shrink-0 mt-0.5" />
-                            <p className="text-xs text-amber-400">No Stripe payment on file — booking will be cancelled but no Stripe refund will be processed automatically.</p>
+                            <p className="text-xs text-amber-400">No card payment on file — booking will be cancelled but no automatic refund will be processed.</p>
                           </div>
                         )}
 

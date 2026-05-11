@@ -1,9 +1,6 @@
-import { loadStripe } from '@stripe/stripe-js/pure';
+// Tap Payments helper
+// The publishable key is used only in the frontend to identify your Tap account.
+// Set VITE_TAP_PUBLISHABLE_KEY in your .env file.
+// During development (feature.payments = false) this is never read.
 
-loadStripe.setLoadParameters({ advancedFraudSignals: false });
-
-const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
-
-export const stripePromise = stripePublishableKey
-	? loadStripe(stripePublishableKey)
-	: null;
+export const tapPublishableKey = import.meta.env.VITE_TAP_PUBLISHABLE_KEY ?? null;
