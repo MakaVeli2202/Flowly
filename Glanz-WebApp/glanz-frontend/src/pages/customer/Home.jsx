@@ -491,7 +491,7 @@ function ReviewCard({ review }) {
   };
   return (
     <div ref={cardRef} className="review-liquid prism-glass rounded-2xl p-6 flex flex-col h-full relative overflow-hidden" onMouseMove={onMouse}>
-      <AdvDroplets />
+      <AdvBubbles />
       <span aria-hidden="true" className="absolute -top-1 right-4 text-8xl leading-none font-serif pointer-events-none select-none"
         style={{ background: 'linear-gradient(135deg,rgba(255,0,100,.18),rgba(255,165,0,.18),rgba(0,255,100,.18),rgba(0,150,255,.18))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
         &ldquo;
@@ -1306,7 +1306,7 @@ function Home() {
 
         <div className="container mx-auto px-4 relative z-10 py-16 md:py-20 flex flex-col items-center">
           <div ref={heroCardRef} className="hero-glass max-w-5xl w-full mx-auto" style={{ willChange: 'transform' }}>
-            <AdvDroplets dense />
+            <AdvBubbles dense />
 
             {/* Top edge accent line */}
             <div className="absolute top-0 left-[10%] right-[10%] h-[1.5px] hero-animate hero-animate-1"
@@ -1525,7 +1525,7 @@ function Home() {
                   e.currentTarget.style.setProperty('--py', `${((e.clientY - r.top)  / r.height * 100).toFixed(1)}%`);
                 }}
               >
-                <AdvDroplets dense />
+                <AdvBubbles dense />
                 <div className="absolute top-0 left-0 right-0 h-[2px]"
                   style={{ background: `linear-gradient(90deg, transparent, ${accent}, ${accent === '#c8a96b' ? '#fff' : '#c8a96b'}, ${accent}, transparent)`, animation: 'liquid-shimmer 5s ease-in-out infinite', backgroundSize: '200% 100%' }} />
                 <span className="absolute bottom-4 right-6 font-black pointer-events-none select-none"
@@ -1609,7 +1609,7 @@ function Home() {
                 >{service.cta}<ArrowRight size={18} /></button>
               </div>
                <div className="service-liquid-card-mobile glass-card p-7 relative overflow-hidden">
-                <AdvDroplets />
+                <AdvBubbles />
                 <p className="text-[0.62rem] font-bold tracking-[0.22em] uppercase text-primary mb-5 relative z-10">{ui.whatsIncluded}</p>
                 <ul className="space-y-3.5 relative z-10">
                   {service.features.map(feat => (
@@ -1657,7 +1657,7 @@ function Home() {
         <div className="container mx-auto px-4">
           <div ref={brandRef} className="cta-prism-glow rounded-2xl">
             <div className="glass-card p-8 md:p-12 text-center relative overflow-hidden">
-              <AdvDroplets dense />
+              <AdvBubbles dense />
               <h2 className="premium-heading text-3xl md:text-4xl font-bold text-[var(--heading-color)] mb-6 relative z-10">{brandValue.title}</h2>
               <p className="text-base md:text-lg text-[var(--muted-color)] leading-relaxed max-w-3xl mx-auto relative z-10">{brandValue.description}</p>
             </div>
@@ -1807,7 +1807,7 @@ function Home() {
         <div className="container mx-auto px-4">
           <div className="cta-prism-glow rounded-2xl reveal-up">
             <div className="glass-card p-8 md:p-12 text-center relative overflow-hidden">
-              <AdvDroplets dense />
+              <AdvBubbles dense />
               <div className="flex items-center justify-center gap-3 mb-4">
                 <Sparkles className="text-primary" size={22} />
                 <h2 className="premium-heading text-4xl md:text-5xl font-bold text-[var(--heading-color)]">{homePageContent.curatedTitle}</h2>
@@ -1825,7 +1825,7 @@ function Home() {
         <div className="container mx-auto px-4">
           <div className="cta-prism-glow rounded-2xl reveal-up">
             <div className="glass-card p-8 md:p-12 text-center relative overflow-hidden">
-              <AdvDroplets dense />
+              <AdvBubbles dense />
               {DOTS.map((d, i) => (
                 <div key={i} className="pointer-events-none absolute rounded-full"
                   style={{ top: d.top, left: d.left, right: d.right, width: d.size, height: d.size, background: d.color, animation: `${d.anim} ${6 + i}s ease-in-out ${d.delay} infinite` }} />
@@ -1857,7 +1857,7 @@ function Home() {
             onClick={e => e.stopPropagation()}
             style={{ maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}
           >
-            <AdvDroplets />
+            <AdvBubbles />
             {/* Top accent line */}
             <div className="h-[2px] flex-shrink-0"
               style={{ background: `linear-gradient(90deg, transparent, ${CARD_ACCENTS[0]}, ${CARD_ACCENTS[1]}, transparent)` }} />
