@@ -5,6 +5,17 @@ import { startNotificationConnection, stopNotificationConnection } from '../api/
 import realtimeService from '../api/realtimeService';
 import { cacheManager } from '../core/cacheManager';
 
+const TOKEN_KEY = 'glanz_access_token';
+
+function isTokenExpired(token) {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return Date.now() / 1000 >= (payload.exp - 60);
+  } catch {
+    return true;
+  }
+}
+
 const AuthContext = createContext();
 
 export function useAuth() {
@@ -65,14 +76,41 @@ export function AuthProvider({ children }) {
           return;
         }
 
+        // Fast path: restore from stored access token if still valid
+        const storedToken = localStorage.getItem(TOKEN_KEY);
+        if (storedToken && !isTokenExpired(storedToken)) {
+          setAuthToken(storedToken);
+          setToken(storedToken);
+
+          let currentUser = decodeUserFromToken(storedToken);
+          try {
+            currentUser = await authAPI.getCurrentUser();
+          } catch {
+            // keep decoded user, token is valid
+          }
+          setUser(currentUser);
+          setLoading(false);
+
+          // Silently refresh in background for a fresh token + cookie
+          try {
+            const refreshed = await authAPI.refresh();
+            setAuthToken(refreshed.token);
+            setToken(refreshed.token);
+            localStorage.setItem(TOKEN_KEY, refreshed.token);
+          } catch {
+            // stay logged in with current valid token; refresh will be reattempted later
+          }
+
+          await realtimeService.connect(storedToken);
+          startNotificationConnection();
+          return;
+        }
+
+        // Slow path: stored token expired — try cookie-based refresh
         const refreshed = await authAPI.refresh();
         setAuthToken(refreshed.token);
+        localStorage.setItem(TOKEN_KEY, refreshed.token);
 
-        // Try fetching full user profile — but don't let failure cascade.
-        // If getCurrentUser 401's, the axios interceptor will try another
-        // /Auth/refresh, consuming the already-used cookie and clearing the
-        // valid access token.  We catch that, re-apply the token we already
-        // have, and fall back to JWT decoding for role info.
         let currentUser = refreshed.user || null;
         if (!currentUser) {
           try {
@@ -90,6 +128,7 @@ export function AuthProvider({ children }) {
         startNotificationConnection();
       } catch {
         localStorage.removeItem('glanz_session_active');
+        localStorage.removeItem(TOKEN_KEY);
         setAuthToken(null);
         setToken(null);
         setUser(null);
@@ -111,6 +150,7 @@ export function AuthProvider({ children }) {
       throw new Error('This action is not allowed with a company account. Please use the mobile app to log in as a detailer.');
     }
     localStorage.setItem('glanz_session_active', 'true');
+    localStorage.setItem(TOKEN_KEY, response.token);
     persistSession(response.token, response.user);
     await realtimeService.connect(response.token);
     startNotificationConnection();
@@ -120,6 +160,7 @@ export function AuthProvider({ children }) {
   const register = async (userData) => {
     const response = await authAPI.register(userData);
     localStorage.setItem('glanz_session_active', 'true');
+    localStorage.setItem(TOKEN_KEY, response.token);
     persistSession(response.token, response.user);
     await realtimeService.connect(response.token);
     startNotificationConnection();
@@ -153,6 +194,7 @@ export function AuthProvider({ children }) {
     realtimeService.disconnect();
     authAPI.logout();
     localStorage.removeItem('glanz_session_active');
+    localStorage.removeItem(TOKEN_KEY);
     setAuthToken(null);
     setToken(null);
     setUser(null);

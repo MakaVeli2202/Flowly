@@ -623,4 +623,15 @@ namespace Glanz.API.DTOs
         [StringLength(500)]
         public string? Caption { get; set; }
     }
+
+    public class ResetDatabaseDto
+    {
+        [Required]
+        public string Password { get; set; } = string.Empty;
+
+        /// <summary>"full" | "keep_catalog" | "transactional_only"</summary>
+        [Required]
+        [StringLength(30)]
+        public string Mode { get; set; } = "keep_catalog";
+    }
 }

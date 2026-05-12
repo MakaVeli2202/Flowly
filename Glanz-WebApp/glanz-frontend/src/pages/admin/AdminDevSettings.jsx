@@ -1,18 +1,17 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ToggleLeft, ToggleRight, AlertTriangle, CheckCircle2, Info,
   Rocket, RefreshCw, Terminal, CreditCard, MessageSquare, Star,
-  ChevronRight, Wrench, ShieldAlert, LogOut,
+  ChevronRight, Wrench, ShieldAlert, LogOut, Database, Trash2,
+  Globe, Server, Eye, EyeOff, BarChart3, Loader2,
 } from 'lucide-react';
 import { useFeatures } from '../../context/FeaturesContext';
 import { useSettings } from '../../context/SettingsContext';
 import { settingsAPI } from '../../api/settings';
+import AppModal from '../../components/shared/AppModal';
 
-/* ─── Dev flags stored in localStorage ──────────────────────────────────────
-   These are FRONTEND-ONLY overrides. They bypass checks in the UI layer.
-   They have no effect on the backend.
-   ─────────────────────────────────────────────────────────────────────────── */
+/* ─── Dev flags stored in localStorage ──────────────────────────────────────*/
 const DEV_FLAGS = [
   {
     key: 'DEV_BYPASS_REVIEW',
@@ -44,7 +43,7 @@ const DEV_FLAGS = [
   {
     key: 'DEV_REVIEWS_TOGGLE',
     label: 'Review Mode Toggle',
-    description: 'Switch between real API reviews and hardcoded fallback reviews. Enables the tiger (🔴 REAL / 🟡 HARDCODED) toggle button on the homepage for testing review display without waiting for API data.',
+    description: 'Switch between real API reviews and hardcoded fallback reviews. Enables the tiger toggle button on the homepage for testing review display without waiting for API data.',
     category: 'Reviews',
     icon: Star,
     accent: '#f59e0b',
@@ -52,7 +51,7 @@ const DEV_FLAGS = [
   },
 ];
 
-/* ─── Backend feature flags (read-only display) ──────────────────────────── */
+/* ─── Backend feature flags ──────────────────────────────────────────────── */
 const FEATURE_FLAG_META = {
   payments:         { label: 'Payment Processing',         description: 'Tap live/test payment collection.' },
   subscriptions:    { label: 'Subscription Plans',         description: 'Customer-facing subscription tiers.' },
@@ -64,16 +63,18 @@ const FEATURE_FLAG_META = {
 
 /* ─── Deployment readiness checklist ─────────────────────────────────────── */
 const DEPLOY_CHECKS = [
-  { id: 'tap_live',        label: 'Tap live keys configured',                  category: 'Payments' },
-  { id: 'tap_webhooks',    label: 'Tap webhooks pointed at production URL',    category: 'Payments' },
-  { id: 'sms_live',        label: 'SMS provider using live credentials',        category: 'Notifications' },
-  { id: 'google_review',   label: 'Google review URL verified and working',     category: 'Reviews' },
-  { id: 'dev_flags_off',   label: 'All dev flags (DEV_*) cleared',              category: 'Dev Flags' },
-  { id: 'features_on',     label: 'Backend feature flags enabled as intended',  category: 'Feature Flags' },
+  { id: 'tap_live',        label: 'Tap live keys configured',                    category: 'Payments' },
+  { id: 'tap_webhooks',    label: 'Tap webhooks pointed at production URL',       category: 'Payments' },
+  { id: 'sms_live',        label: 'SMS provider using live credentials',          category: 'Notifications' },
+  { id: 'google_review',   label: 'Google review URL verified and working',       category: 'Reviews' },
+  { id: 'dev_flags_off',   label: 'All dev flags (DEV_*) cleared',                category: 'Dev Flags' },
+  { id: 'features_on',     label: 'Backend feature flags enabled as intended',    category: 'Feature Flags' },
   { id: 'env_vars',        label: 'Frontend env vars pointing to production API', category: 'Infra' },
-  { id: 'https',           label: 'HTTPS enforced (HTTP redirects to HTTPS)',   category: 'Infra' },
-  { id: 'cors',            label: 'CORS restricted to production domain only',  category: 'Infra' },
-  { id: 'error_pages',     label: '404 and 500 error pages tested',             category: 'UX' },
+  { id: 'cors',            label: 'CORS restricted to production domain only',    category: 'Infra' },
+  { id: 'cors_render',     label: 'Render: Cors__AllowedOrigins__0=https://www.glanz.qa', category: 'Infra' },
+  { id: 'vercel_api_url',  label: 'Vercel: VITE_API_BASE_URL set to Render URL', category: 'Infra' },
+  { id: 'https',           label: 'HTTPS enforced (HTTP redirects to HTTPS)',     category: 'Infra' },
+  { id: 'error_pages',     label: '404 and 500 error pages tested',               category: 'UX' },
   { id: 'mobile_test',     label: 'Tested on real mobile device (iOS + Android)', category: 'UX' },
   { id: 'booking_e2e',     label: 'End-to-end booking flow tested (live payment)', category: 'E2E' },
 ];
@@ -84,14 +85,39 @@ function loadChecklist() {
   try { return JSON.parse(localStorage.getItem(CHECKLIST_KEY) || '{}'); } catch { return {}; }
 }
 
-/* ─── Toggle component ───────────────────────────────────────────────────── */
+/* ─── Reset modes ────────────────────────────────────────────────────────── */
+const RESET_MODES = [
+  {
+    value: 'transactional_only',
+    label: 'Transactional Only',
+    description: 'Safest reset — wipes operational data only.',
+    deletes: ['Bookings & items', 'Customers & vehicles', 'Workers (staff)', 'Notifications & audit logs', 'Leads, referrals, feedback'],
+    keeps: ['Packages, Services, Products', 'Subscription Plans', 'Offers', 'Job Positions', 'System Settings'],
+    color: '#f59e0b',
+  },
+  {
+    value: 'keep_catalog',
+    label: 'Keep Catalog',
+    description: 'Wipes all user data, keeps your service catalog.',
+    deletes: ['Bookings & items', 'Customers & vehicles', 'Workers (staff)', 'Notifications & audit logs', 'Leads, referrals, feedback', 'Job Applications'],
+    keeps: ['Packages, Services, Products', 'Subscription Plans', 'Offers', 'Job Positions', 'System Settings'],
+    color: '#c8a96b',
+  },
+  {
+    value: 'full',
+    label: 'Full Reset',
+    description: 'Nuclear option — deletes everything except your admin account.',
+    deletes: ['Bookings & items', 'Customers & vehicles', 'Workers (staff)', 'Packages, Services, Products', 'Subscription Plans & Packages', 'Offers', 'Job Positions & Applications', 'Notifications, Audit Logs', 'Leads, Referrals, Feedback'],
+    keeps: ['Your admin account', 'System Settings (business config)'],
+    color: '#ef4444',
+  },
+];
+
+/* ─── Subcomponents ──────────────────────────────────────────────────────── */
 function DevToggle({ flag, value, onChange }) {
   const Icon = flag.icon;
   return (
-    <div
-      className="glass-card p-5 relative overflow-hidden"
-      style={{ borderTop: `2px solid ${flag.accent}30` }}
-    >
+    <div className="glass-card p-5 relative overflow-hidden" style={{ borderTop: `2px solid ${flag.accent}30` }}>
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start gap-3 flex-1 min-w-0">
           <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
@@ -135,6 +161,21 @@ function DevToggle({ flag, value, onChange }) {
   );
 }
 
+function StatCard({ label, value, loading }) {
+  return (
+    <div className="glass-card p-4 text-center">
+      {loading ? (
+        <div className="h-7 w-12 mx-auto rounded-md bg-white/10 animate-pulse mb-1" />
+      ) : (
+        <p className="text-2xl font-bold tabular-nums text-[var(--heading-color)]">
+          {value?.toLocaleString() ?? '—'}
+        </p>
+      )}
+      <p className="text-xs text-[var(--muted-color)] mt-0.5">{label}</p>
+    </div>
+  );
+}
+
 /* ─── Main page ──────────────────────────────────────────────────────────── */
 export default function AdminDevSettings() {
   const features = useFeatures();
@@ -146,11 +187,37 @@ export default function AdminDevSettings() {
   });
 
   const [checklist, setChecklist] = useState(loadChecklist);
-
   const { sitePublished } = useSettings();
   const [isSavingPublish, setIsSavingPublish] = useState(false);
   const [publishError, setPublishError] = useState('');
   const [hasGateToken, setHasGateToken] = useState(() => !!localStorage.getItem('glanz.site-gate-token'));
+
+  // DB stats
+  const [dbStats, setDbStats] = useState(null);
+  const [statsLoading, setStatsLoading] = useState(true);
+
+  // Reset modal
+  const [resetModal, setResetModal] = useState(false);
+  const [resetMode, setResetMode] = useState('keep_catalog');
+  const [resetPassword, setResetPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetError, setResetError] = useState('');
+  const [resetSuccess, setResetSuccess] = useState(null);
+
+  const fetchStats = useCallback(async () => {
+    setStatsLoading(true);
+    try {
+      const data = await settingsAPI.getDatabaseStats();
+      setDbStats(data);
+    } catch {
+      setDbStats(null);
+    } finally {
+      setStatsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchStats(); }, [fetchStats]);
 
   const handlePublishToggle = async () => {
     try {
@@ -170,11 +237,8 @@ export default function AdminDevSettings() {
   };
 
   const handleDevToggle = useCallback((key, enabled) => {
-    if (enabled) {
-      localStorage.setItem(key, '1');
-    } else {
-      localStorage.removeItem(key);
-    }
+    if (enabled) localStorage.setItem(key, '1');
+    else localStorage.removeItem(key);
     setDevFlags(prev => ({ ...prev, [key]: enabled }));
   }, []);
 
@@ -191,8 +255,36 @@ export default function AdminDevSettings() {
     setDevFlags(Object.fromEntries(DEV_FLAGS.map(f => [f.key, false])));
   }, []);
 
+  const openResetModal = () => {
+    setResetPassword('');
+    setResetError('');
+    setResetMode('keep_catalog');
+    setShowPassword(false);
+    setResetModal(true);
+  };
+
+  const handleReset = async () => {
+    if (!resetPassword) return;
+    setResetLoading(true);
+    setResetError('');
+    try {
+      const result = await settingsAPI.resetDatabase(resetPassword, resetMode);
+      setResetModal(false);
+      setResetSuccess(result);
+      await fetchStats();
+    } catch (err) {
+      setResetError(err?.response?.data?.message || 'Reset failed. Please try again.');
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
   const anyDevFlagActive = DEV_FLAGS.some(f => devFlags[f.key]);
   const checklistDone = DEPLOY_CHECKS.filter(c => checklist[c.id]).length;
+  const apiUrl = import.meta.env.VITE_API_BASE_URL || '/api (no env var set)';
+  const buildMode = import.meta.env.MODE;
+
+  const selectedMode = RESET_MODES.find(m => m.value === resetMode);
 
   return (
     <div className="min-h-screen py-10 md:py-14 text-[var(--text-color)]"
@@ -218,8 +310,8 @@ export default function AdminDevSettings() {
                 Developer Settings
               </h1>
               <p className="text-[var(--muted-color)] text-sm mt-1">
-                Frontend-only dev overrides, feature flag inspector, and deployment checklist.
-                <strong className="text-amber-400"> These settings live in your browser only — clear them before going live.</strong>
+                Dev overrides, feature flags, deployment checklist, DB stats, and danger zone.
+                <strong className="text-amber-400"> Clear dev flags before going live.</strong>
               </p>
             </div>
           </div>
@@ -257,20 +349,11 @@ export default function AdminDevSettings() {
                     className="inline-flex items-center gap-2 rounded-xl border border-primary/25 bg-primary/10 px-3 py-2 text-xs font-bold text-primary transition hover:bg-primary/15 disabled:opacity-60"
                   >
                     {isSavingPublish ? (
-                      <>
-                        <span className="h-3.5 w-3.5 animate-spin rounded-full border border-primary/35 border-t-primary" />
-                        Saving
-                      </>
+                      <><span className="h-3.5 w-3.5 animate-spin rounded-full border border-primary/35 border-t-primary" />Saving</>
                     ) : sitePublished ? (
-                      <>
-                        <ToggleRight size={14} />
-                        Unpublish
-                      </>
+                      <><ToggleRight size={14} />Unpublish</>
                     ) : (
-                      <>
-                        <ToggleLeft size={14} />
-                        Publish
-                      </>
+                      <><ToggleLeft size={14} />Publish</>
                     )}
                   </button>
                   <button
@@ -292,6 +375,77 @@ export default function AdminDevSettings() {
           </section>
         )}
 
+        {/* ── Environment & API Info ── */}
+        <section className="mb-10">
+          <div className="flex items-center gap-2 mb-4">
+            <Globe size={15} className="text-primary" />
+            <h2 className="text-sm font-bold uppercase tracking-widest text-[var(--heading-color)]">
+              Environment
+            </h2>
+            <span className="text-xs text-[var(--muted-color)] ml-1">(build-time config)</span>
+          </div>
+          <div className="glass-card divide-y divide-[var(--border-color)]">
+            {[
+              { label: 'Build Mode', value: buildMode, highlight: buildMode === 'production' ? 'green' : 'amber' },
+              { label: 'API Base URL', value: apiUrl, highlight: apiUrl.includes('onrender.com') ? 'green' : 'rose' },
+              { label: 'Frontend Origin', value: typeof window !== 'undefined' ? window.location.origin : '—', highlight: null },
+            ].map(({ label, value, highlight }) => (
+              <div key={label} className="flex items-center justify-between gap-4 px-5 py-3.5">
+                <p className="text-sm text-[var(--muted-color)]">{label}</p>
+                <code className={`text-xs font-mono px-2.5 py-1 rounded-lg border ${
+                  highlight === 'green' ? 'border-green-500/30 bg-green-500/10 text-green-400' :
+                  highlight === 'amber' ? 'border-amber-500/30 bg-amber-500/10 text-amber-400' :
+                  highlight === 'rose'  ? 'border-rose-500/30 bg-rose-500/10 text-rose-400' :
+                  'border-[var(--border-color)] bg-white/5 text-[var(--text-color)]'
+                }`}>
+                  {value}
+                </code>
+              </div>
+            ))}
+          </div>
+          {!import.meta.env.VITE_API_BASE_URL && (
+            <p className="mt-2 text-xs text-rose-400 ml-1">
+              ⚠ VITE_API_BASE_URL is not set — API calls use relative /api path. Set it to{' '}
+              <code className="bg-white/5 px-1 rounded">https://glanz-api.onrender.com/api</code> in Vercel dashboard.
+            </p>
+          )}
+        </section>
+
+        {/* ── Database Stats ── */}
+        <section className="mb-10">
+          <div className="flex items-center justify-between gap-3 mb-4">
+            <div className="flex items-center gap-2">
+              <Database size={15} className="text-primary" />
+              <h2 className="text-sm font-bold uppercase tracking-widest text-[var(--heading-color)]">
+                Database Stats
+              </h2>
+            </div>
+            <button
+              onClick={fetchStats}
+              disabled={statsLoading}
+              className="text-xs font-bold text-[var(--muted-color)] border border-[var(--border-color)] px-3 py-1.5 rounded-lg hover:border-primary/40 hover:text-primary transition flex items-center gap-1.5 disabled:opacity-50"
+            >
+              <RefreshCw size={11} className={statsLoading ? 'animate-spin' : ''} /> Refresh
+            </button>
+          </div>
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+            {[
+              { label: 'Customers', key: 'customers' },
+              { label: 'Workers', key: 'workers' },
+              { label: 'Bookings', key: 'bookings' },
+              { label: 'Packages', key: 'packages' },
+              { label: 'Services', key: 'services' },
+              { label: 'Products', key: 'products' },
+              { label: 'Offers', key: 'offers' },
+              { label: 'Sub Plans', key: 'subscriptionPlans' },
+              { label: 'Notifications', key: 'notifications' },
+              { label: 'Audit Logs', key: 'auditLogs' },
+            ].map(({ label, key }) => (
+              <StatCard key={key} label={label} value={dbStats?.[key]} loading={statsLoading} />
+            ))}
+          </div>
+        </section>
+
         {/* ── Dev flag toggles ── */}
         <section className="mb-10">
           <div className="flex items-center gap-2 mb-4">
@@ -303,12 +457,7 @@ export default function AdminDevSettings() {
           </div>
           <div className="space-y-3">
             {DEV_FLAGS.map(flag => (
-              <DevToggle
-                key={flag.key}
-                flag={flag}
-                value={devFlags[flag.key]}
-                onChange={handleDevToggle}
-              />
+              <DevToggle key={flag.key} flag={flag} value={devFlags[flag.key]} onChange={handleDevToggle} />
             ))}
           </div>
         </section>
@@ -320,7 +469,7 @@ export default function AdminDevSettings() {
             <h2 className="text-sm font-bold uppercase tracking-widest text-[var(--heading-color)]">
               Backend Feature Flags
             </h2>
-            <span className="text-xs text-[var(--muted-color)] ml-1">(read-only — change via DB or admin settings)</span>
+            <span className="text-xs text-[var(--muted-color)] ml-1">(read-only — change via admin settings)</span>
           </div>
           <div className="glass-card divide-y divide-[var(--border-color)]">
             {Object.entries(FEATURE_FLAG_META).map(([key, meta]) => {
@@ -331,21 +480,19 @@ export default function AdminDevSettings() {
                     <p className="text-sm font-semibold text-[var(--heading-color)]">{meta.label}</p>
                     <p className="text-xs text-[var(--muted-color)] mt-0.5">{meta.description}</p>
                   </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${
-                      enabled
-                        ? 'border-green-500/30 bg-green-500/12 text-green-400'
-                        : 'border-[var(--border-color)] bg-white/3 text-[var(--muted-color)]'
-                    }`}>
-                      {enabled ? 'ON' : 'OFF'}
-                    </span>
-                  </div>
+                  <span className={`text-xs font-bold px-2.5 py-1 rounded-full border flex-shrink-0 ${
+                    enabled
+                      ? 'border-green-500/30 bg-green-500/12 text-green-400'
+                      : 'border-[var(--border-color)] bg-white/3 text-[var(--muted-color)]'
+                  }`}>
+                    {enabled ? 'ON' : 'OFF'}
+                  </span>
                 </div>
               );
             })}
           </div>
           <p className="text-xs text-[var(--muted-color)] mt-2 ml-1">
-            Edit at <Link to="/admin/settings" className="text-primary hover:underline">Admin → Settings</Link> or via DB: <code className="text-xs bg-white/5 px-1.5 py-0.5 rounded">UPDATE AppSettings SET value='true' WHERE key='feature.payments'</code>
+            Edit at <Link to="/admin/settings" className="text-primary hover:underline">Admin → Settings</Link>
           </p>
         </section>
 
@@ -367,8 +514,6 @@ export default function AdminDevSettings() {
               {checklistDone} / {DEPLOY_CHECKS.length}
             </span>
           </div>
-
-          {/* Progress bar */}
           <div className="w-full bg-white/8 rounded-full h-1.5 mb-4 overflow-hidden">
             <div className="h-1.5 rounded-full transition-all duration-500"
               style={{
@@ -376,7 +521,6 @@ export default function AdminDevSettings() {
                 background: 'linear-gradient(90deg, rgba(200,169,107,0.9), rgba(14,165,160,0.85))',
               }} />
           </div>
-
           <div className="glass-card divide-y divide-[var(--border-color)]">
             {DEPLOY_CHECKS.map(item => (
               <label key={item.id}
@@ -403,13 +547,62 @@ export default function AdminDevSettings() {
               </label>
             ))}
           </div>
-
           {checklistDone === DEPLOY_CHECKS.length && (
             <div className="mt-4 flex items-center gap-2 text-green-400 text-sm font-semibold">
               <CheckCircle2 size={16} />
               All checks passed — ready to deploy.
             </div>
           )}
+        </section>
+
+        {/* ── Danger Zone ── */}
+        <section className="mb-10">
+          <div className="flex items-center gap-2 mb-4">
+            <AlertTriangle size={15} className="text-rose-400" />
+            <h2 className="text-sm font-bold uppercase tracking-widest text-rose-400">
+              Danger Zone
+            </h2>
+          </div>
+
+          {resetSuccess && (
+            <div className="mb-4 rounded-xl border border-green-500/30 bg-green-500/8 px-4 py-3">
+              <div className="flex items-center gap-2 text-green-400 text-sm font-semibold mb-1">
+                <CheckCircle2 size={15} />
+                Database reset successful ({resetSuccess.mode} mode)
+              </div>
+              <p className="text-xs text-[var(--muted-color)]">
+                Deleted: {Object.entries(resetSuccess.deletedCounts || {})
+                  .filter(([, v]) => v > 0)
+                  .map(([k, v]) => `${v} ${k}`)
+                  .join(', ')}
+              </p>
+              <button
+                onClick={() => setResetSuccess(null)}
+                className="mt-2 text-xs text-[var(--muted-color)] hover:text-[var(--text-color)] transition"
+              >
+                Dismiss
+              </button>
+            </div>
+          )}
+
+          <div className="rounded-2xl border-2 border-rose-500/25 bg-rose-500/5 p-5">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-bold text-rose-400 mb-1">Reset Database</p>
+                <p className="text-xs text-[var(--muted-color)] leading-relaxed max-w-lg">
+                  Wipes selected data from the database. Your admin account is always preserved.
+                  Choose the reset mode in the confirmation dialog. This action cannot be undone.
+                </p>
+              </div>
+              <button
+                onClick={openResetModal}
+                className="flex-shrink-0 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-rose-500/15 border border-rose-500/35 text-rose-400 text-sm font-bold hover:bg-rose-500/25 transition"
+              >
+                <Trash2 size={15} />
+                Reset DB
+              </button>
+            </div>
+          </div>
         </section>
 
         {/* ── Quick nav ── */}
@@ -421,9 +614,9 @@ export default function AdminDevSettings() {
           </div>
           <div className="grid sm:grid-cols-3 gap-3">
             {[
-              { to: '/admin/settings',      label: 'System Settings',    sub: 'Pricing, buffers, notifications' },
-              { to: '/admin/notifications', label: 'Notifications',       sub: 'SMS & email logs' },
-              { to: '/admin/offers',        label: 'Loyalty & Offers',    sub: 'Programs, coupons, triggers' },
+              { to: '/admin/settings',      label: 'System Settings',  sub: 'Pricing, buffers, notifications' },
+              { to: '/admin/notifications', label: 'Notifications',    sub: 'SMS & email logs' },
+              { to: '/admin/offers',        label: 'Loyalty & Offers', sub: 'Programs, coupons, triggers' },
             ].map(({ to, label, sub }) => (
               <Link key={to} to={to}
                 className="glass-card p-4 flex items-center justify-between gap-2 hover:border-primary/40 transition group">
@@ -438,6 +631,112 @@ export default function AdminDevSettings() {
         </section>
 
       </div>
+
+      {/* ── Reset Database Modal ── */}
+      <AppModal
+        isOpen={resetModal}
+        onClose={() => { if (!resetLoading) setResetModal(false); }}
+        title="Reset Database"
+        variant="danger"
+        confirmLabel="Reset Database"
+        cancelLabel="Cancel"
+        onConfirm={handleReset}
+        loading={resetLoading}
+        size="lg"
+      >
+        <div className="space-y-4">
+          {/* Mode selector */}
+          <div>
+            <p className="text-xs font-bold uppercase tracking-widest text-[var(--muted-color)] mb-2">Select reset mode</p>
+            <div className="space-y-2">
+              {RESET_MODES.map(mode => (
+                <label
+                  key={mode.value}
+                  className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition ${
+                    resetMode === mode.value
+                      ? 'border-rose-500/50 bg-rose-500/10'
+                      : 'border-[var(--border-color)] hover:border-rose-500/30'
+                  }`}
+                  onClick={() => setResetMode(mode.value)}
+                >
+                  <div className={`w-4 h-4 rounded-full border-2 mt-0.5 flex-shrink-0 transition ${
+                    resetMode === mode.value ? 'border-rose-400 bg-rose-400' : 'border-[var(--border-color)]'
+                  }`} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm font-bold text-[var(--heading-color)]">{mode.label}</span>
+                      <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full"
+                        style={{ background: `${mode.color}18`, color: mode.color }}>
+                        {mode.value === 'full' ? 'NUCLEAR' : mode.value === 'transactional_only' ? 'SAFE' : 'RECOMMENDED'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-[var(--muted-color)] mt-0.5">{mode.description}</p>
+                  </div>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* What gets deleted/kept */}
+          {selectedMode && (
+            <div className="grid grid-cols-2 gap-3 text-xs">
+              <div className="rounded-xl border border-rose-500/20 bg-rose-500/5 p-3">
+                <p className="font-bold text-rose-400 mb-1.5 flex items-center gap-1">
+                  <Trash2 size={11} /> Deletes
+                </p>
+                <ul className="space-y-1">
+                  {selectedMode.deletes.map(d => (
+                    <li key={d} className="text-[var(--muted-color)] flex items-start gap-1">
+                      <span className="text-rose-400 mt-0.5">•</span> {d}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="rounded-xl border border-green-500/20 bg-green-500/5 p-3">
+                <p className="font-bold text-green-400 mb-1.5 flex items-center gap-1">
+                  <CheckCircle2 size={11} /> Keeps
+                </p>
+                <ul className="space-y-1">
+                  {selectedMode.keeps.map(k => (
+                    <li key={k} className="text-[var(--muted-color)] flex items-start gap-1">
+                      <span className="text-green-400 mt-0.5">•</span> {k}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {/* Password */}
+          <div>
+            <label className="text-xs font-bold text-[var(--muted-color)] uppercase tracking-widest mb-1.5 block">
+              Admin password to confirm
+            </label>
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={resetPassword}
+                onChange={e => { setResetPassword(e.target.value); setResetError(''); }}
+                placeholder="Enter your admin password"
+                className="w-full bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl px-4 py-2.5 pr-10 text-sm text-[var(--text-color)] placeholder:text-[var(--muted-color)] focus:outline-none focus:border-primary/60 transition"
+                onKeyDown={e => { if (e.key === 'Enter' && resetPassword) handleReset(); }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(v => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--muted-color)] hover:text-[var(--text-color)] transition"
+              >
+                {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+              </button>
+            </div>
+            {resetError && (
+              <p className="mt-1.5 text-xs text-rose-400 flex items-center gap-1">
+                <AlertTriangle size={11} /> {resetError}
+              </p>
+            )}
+          </div>
+        </div>
+      </AppModal>
     </div>
   );
 }

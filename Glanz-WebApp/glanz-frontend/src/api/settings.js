@@ -37,4 +37,14 @@ export const settingsAPI = {
   updateBusinessConfig: async (config) => withRetry(async () => {
     return settingsAPI.updateSystemSettings({ BusinessConfig: config });
   }),
+
+  getDatabaseStats: async () => withRetry(async () => {
+    const response = await apiClient.get('/AdminSettings/database-stats');
+    return response.data;
+  }),
+
+  resetDatabase: async (password, mode) => {
+    const response = await apiClient.post('/AdminSettings/reset-database', { password, mode });
+    return response.data;
+  },
 };
