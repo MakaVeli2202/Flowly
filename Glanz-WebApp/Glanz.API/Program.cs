@@ -18,9 +18,12 @@ var builder = WebApplication.CreateBuilder(args);
 
 var jwtSecretFromConfig = builder.Configuration["JwtSettings:SecretKey"];
 
-if (string.IsNullOrWhiteSpace(jwtSecretFromConfig) || jwtSecretFromConfig.Length < 32)
+if (!builder.Environment.IsDevelopment())
 {
-    throw new InvalidOperationException("JwtSettings:SecretKey must be at least 32 characters and must not be the default placeholder.");
+    if (string.IsNullOrWhiteSpace(jwtSecretFromConfig) || jwtSecretFromConfig.Length < 32)
+    {
+        throw new InvalidOperationException("JwtSettings:SecretKey must be at least 32 characters and must not be the default placeholder.");
+    }
 }
 
 builder.WebHost.ConfigureKestrel(options =>
@@ -47,7 +50,7 @@ builder.Services.AddHealthChecks();
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-    options.KnownIPNetworks.Clear();
+    options.KnownNetworks.Clear();
     options.KnownProxies.Clear();
 });
 
@@ -444,17 +447,15 @@ WHERE bi.""PackageId"" = p.""Id""
 
 static string ResolvePostgresConnectionString(IConfiguration configuration)
 {
+    var configured = configuration.GetConnectionString("DefaultConnection");
+    var fromEnvConnectionStrings = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
     var fromDatabaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
 
-    // 1) Standard config pipeline: env var -> appsettings.Development.json -> appsettings.json
-    var candidate = configuration.GetConnectionString("DefaultConnection");
+    var candidate = FirstNonEmpty(fromEnvConnectionStrings, configured);
 
-    // 2) Fallback to Render's DATABASE_URL (postgres:// URI) if no explicit config
-    if (string.IsNullOrWhiteSpace(candidate) || LooksLikePlaceholder(candidate))
+    if (!string.IsNullOrWhiteSpace(fromDatabaseUrl))
     {
-        candidate = fromDatabaseUrl is not null
-            ? (TryConvertDatabaseUrlToNpgsql(fromDatabaseUrl) ?? fromDatabaseUrl)
-            : string.Empty;
+        candidate = TryConvertDatabaseUrlToNpgsql(fromDatabaseUrl) ?? fromDatabaseUrl;
     }
 
     if (string.IsNullOrWhiteSpace(candidate) || LooksLikePlaceholder(candidate))
@@ -475,6 +476,19 @@ static string ResolvePostgresConnectionString(IConfiguration configuration)
 static bool LooksLikePlaceholder(string value)
 {
     return value.Trim().Equals("SET_IN_ENV_CONNECTIONSTRING", StringComparison.OrdinalIgnoreCase);
+}
+
+static string FirstNonEmpty(params string?[] values)
+{
+    foreach (var value in values)
+    {
+        if (!string.IsNullOrWhiteSpace(value))
+        {
+            return value;
+        }
+    }
+
+    return string.Empty;
 }
 
 static string? TryConvertDatabaseUrlToNpgsql(string databaseUrl)

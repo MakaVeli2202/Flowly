@@ -17,7 +17,7 @@ namespace Glanz.API.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.7")
+                .HasAnnotation("ProductVersion", "10.0.5")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -901,9 +901,6 @@ namespace Glanz.API.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<decimal?>("DiscountPercent")
-                        .HasColumnType("numeric");
 
                     b.Property<DateTime?>("FirstBookingAt")
                         .HasColumnType("timestamp with time zone");
