@@ -229,12 +229,9 @@ namespace Glanz.API.Controllers
             });
         }
 
-        private async Task<int> DeleteAllAsync<T>(Microsoft.EntityFrameworkCore.DbSet<T> dbSet) where T : class
-        {
-            var items = await dbSet.ToListAsync();
-            dbSet.RemoveRange(items);
-            await _context.SaveChangesAsync();
-            return items.Count;
-        }
+        // ExecuteDeleteAsync generates a raw DELETE FROM without SELECT-ing columns,
+        // so it works even when the prod schema has drifted from the EF model.
+        private static async Task<int> DeleteAllAsync<T>(Microsoft.EntityFrameworkCore.DbSet<T> dbSet) where T : class
+            => await dbSet.ExecuteDeleteAsync();
     }
 }
