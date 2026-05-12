@@ -243,7 +243,7 @@ namespace Glanz.API.Controllers
                         IsAtRisk = daysSinceLast > AtRiskDaysThreshold && totalBookings > 0
                     };
                 })
-                .Where(c => c != null)
+                .OfType<CrmCustomerDto>()
                 .OrderByDescending(c => c.TotalSpent)
                 .ToList();
 
@@ -603,7 +603,7 @@ namespace Glanz.API.Controllers
                 .GroupBy(b => b.UserId)
                 .Select(g => new
                 {
-                    UserId = g.Key,
+                    UserId = g.Key!.Value,
                     TotalSpent = g.Sum(b => b.TotalAmount),
                     TotalBookings = g.Count(),
                     LastBookedDate = g.Max(b => b.ScheduledDate)
