@@ -3,9 +3,9 @@ import {
   AlertCircle,
   ArrowRight,
   Clock3,
-  LockKeyhole,
-  ShieldCheck,
+  Lock,
   Sparkles,
+  X,
 } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
 
@@ -35,6 +35,7 @@ function CountdownStat({ value, label }) {
 export default function SiteAccessGate({ children }) {
   const { sitePublished, siteLaunchDate, isLoaded } = useSettings();
   const [hasToken, setHasToken] = useState(() => !!localStorage.getItem(GATE_TOKEN_STORAGE_KEY));
+  const [showLogin, setShowLogin] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -82,6 +83,7 @@ export default function SiteAccessGate({ children }) {
       setHasToken(true);
       setEmail('');
       setPassword('');
+      setShowLogin(false);
     } catch (err) {
       console.error('Gate verify error:', err);
       setError('Connection error. Please try again.');
@@ -95,7 +97,7 @@ export default function SiteAccessGate({ children }) {
       <div className="min-h-screen flex items-center justify-center bg-[radial-gradient(circle_at_top,rgba(200,169,107,0.08),transparent_36%),linear-gradient(160deg,var(--surface-bg)_0%,var(--surface-bg-alt)_52%,var(--surface-bg)_100%)] text-white">
         <div className="flex flex-col items-center gap-4 rounded-3xl border border-white/10 bg-black/20 px-8 py-10 shadow-2xl backdrop-blur-xl">
           <div className="h-12 w-12 rounded-full border-2 border-white/20 border-t-primary animate-spin" />
-          <p className="text-sm text-white/60 font-medium">Preparing site status...</p>
+          <p className="text-sm text-white/60 font-medium">Loading...</p>
         </div>
       </div>
     );
@@ -103,111 +105,122 @@ export default function SiteAccessGate({ children }) {
 
   if (!siteOpen) {
     return (
-      <div className="min-h-screen overflow-hidden text-white relative" style={{ background: 'radial-gradient(circle at 20% 20%, rgba(200,169,107,0.18), transparent 28%), radial-gradient(circle at 80% 10%, rgba(14,165,160,0.16), transparent 26%), linear-gradient(160deg, #050816 0%, #0b1120 45%, #050816 100%)' }}>
-        <div className="absolute inset-0 opacity-35 pointer-events-none bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.08),transparent_25%),linear-gradient(transparent_0,transparent_95%,rgba(255,255,255,0.03)_100%)]" />
-        <div className="relative z-10 container mx-auto min-h-screen px-4 py-10 md:py-16 flex items-center">
-          <div className="grid lg:grid-cols-[1.2fr_0.8fr] gap-8 w-full items-center">
-            <div className="space-y-6">
-              <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.26em] text-primary">
-                <Sparkles size={14} />
-                Coming soon
-              </div>
-              <div className="space-y-4 max-w-2xl">
-                <p className="text-xs uppercase tracking-[0.32em] text-white/45 font-semibold">Glanz Preview</p>
-                <h1 className="premium-heading text-5xl sm:text-6xl md:text-7xl font-black leading-[0.92]">
-                  The site is being prepared for launch.
-                </h1>
-                <p className="text-base md:text-lg text-white/65 leading-relaxed max-w-xl">
-                  Visitors will see this launch screen until the site is published. Enter the private password to view the full website and manage publishing.
-                </p>
-              </div>
+      <div
+        className="min-h-screen overflow-hidden text-white relative flex items-center justify-center"
+        style={{ background: 'radial-gradient(circle at 20% 20%, rgba(200,169,107,0.18), transparent 28%), radial-gradient(circle at 80% 10%, rgba(14,165,160,0.16), transparent 26%), linear-gradient(160deg, #050816 0%, #0b1120 45%, #050816 100%)' }}
+      >
+        <div className="absolute inset-0 opacity-35 pointer-events-none bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.08),transparent_25%)]" />
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-2xl">
-                <CountdownStat value={remaining.days} label="Days" />
-                <CountdownStat value={remaining.hours} label="Hours" />
-                <CountdownStat value={remaining.minutes} label="Minutes" />
-                <CountdownStat value={remaining.secs} label="Seconds" />
-              </div>
+        {/* Main coming-soon content */}
+        <div className="relative z-10 container mx-auto px-4 py-16 flex flex-col items-center text-center max-w-3xl">
+          <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.26em] text-primary mb-8">
+            <Sparkles size={14} />
+            Coming soon
+          </div>
 
-              <div className="rounded-3xl border border-white/10 bg-white/5 p-5 max-w-2xl backdrop-blur-xl">
-                <div className="flex items-start gap-3">
-                  <Clock3 size={18} className="mt-0.5 text-primary flex-shrink-0" />
-                  <div>
-                    <p className="font-bold text-white">Launch target</p>
-                    <p className="text-sm text-white/55 mt-1">Countdown target: {new Date(countdownTarget).toLocaleString()}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+          <h1 className="premium-heading text-5xl sm:text-6xl md:text-7xl font-black leading-[0.92] mb-6">
+            Something great<br />is on its way.
+          </h1>
+          <p className="text-base md:text-lg text-white/60 leading-relaxed max-w-xl mb-10">
+            We're putting the finishing touches on Glanz — your premium vehicle cleaning service. Be the first to know when we launch.
+          </p>
 
-            <div className="relative">
-              <div className="absolute -inset-6 rounded-[2rem] bg-primary/10 blur-3xl opacity-60" />
-              <div className="relative rounded-[2rem] border border-white/10 bg-[#0a1020]/85 p-6 md:p-8 shadow-2xl backdrop-blur-2xl">
-                <div className="flex items-center gap-3 mb-5">
-                  <div className="h-11 w-11 rounded-2xl flex items-center justify-center bg-primary/15 border border-primary/25 text-primary">
-                    <LockKeyhole size={20} />
-                  </div>
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.28em] text-white/40 font-bold">Admin access</p>
-                    <h2 className="text-2xl font-black text-white mt-1">Enter admin credentials</h2>
-                  </div>
-                </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full max-w-lg mb-10">
+            <CountdownStat value={remaining.days} label="Days" />
+            <CountdownStat value={remaining.hours} label="Hours" />
+            <CountdownStat value={remaining.minutes} label="Minutes" />
+            <CountdownStat value={remaining.secs} label="Seconds" />
+          </div>
 
-                {error && (
-                  <div className="mb-4 rounded-2xl border border-rose-500/25 bg-rose-500/10 px-4 py-3 text-rose-200 text-sm flex items-start gap-3">
-                    <AlertCircle size={16} className="mt-0.5 flex-shrink-0" />
-                    <span>{error}</span>
-                  </div>
-                )}
-
-                <form onSubmit={handleVerifyCredentials} className="space-y-3">
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-[0.22em] text-white/45 mb-2">Admin email</label>
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3.5 text-white outline-none placeholder:text-white/25 focus:border-primary/50 focus:ring-2 focus:ring-primary/10"
-                      placeholder="admin@example.com"
-                      autoComplete="email"
-                      disabled={isVerifying}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-[0.22em] text-white/45 mb-2">Password</label>
-                    <input
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3.5 text-white outline-none placeholder:text-white/25 focus:border-primary/50 focus:ring-2 focus:ring-primary/10"
-                      placeholder="Enter your password"
-                      autoComplete="current-password"
-                      disabled={isVerifying}
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={isVerifying}
-                    className="premium-btn w-full inline-flex items-center justify-center gap-2 py-3.5 text-base disabled:opacity-50"
-                  >
-                    {isVerifying ? 'Verifying...' : 'Unlock site'}
-                    <ArrowRight size={17} />
-                  </button>
-                </form>
-
-                <div className="mt-5 rounded-2xl border border-white/8 bg-white/5 p-4">
-                  <div className="flex items-center gap-2 text-sm font-semibold text-white/80">
-                    <ShieldCheck size={16} className="text-primary" />
-                    How it works
-                  </div>
-                  <p className="text-sm text-white/55 mt-2 leading-relaxed">
-                    Only admin accounts can access the private preview page. Enter your admin email and password to view and manage the site before publishing.
-                  </p>
-                </div>
-              </div>
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-5 max-w-sm w-full backdrop-blur-xl">
+            <div className="flex items-center gap-3">
+              <Clock3 size={18} className="text-primary flex-shrink-0" />
+              <p className="text-sm text-white/55">
+                Launching <span className="text-white font-semibold">{new Date(countdownTarget).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+              </p>
             </div>
           </div>
         </div>
+
+        {/* Staff login — subtle corner button */}
+        <button
+          onClick={() => { setShowLogin(true); setError(''); }}
+          className="fixed bottom-5 right-5 z-20 h-10 w-10 rounded-full border border-white/15 bg-white/8 text-white/30 hover:text-white/70 hover:border-white/30 transition-all backdrop-blur-xl flex items-center justify-center"
+          title="Staff login"
+        >
+          <Lock size={15} />
+        </button>
+
+        {/* Staff login overlay */}
+        {showLogin && (
+          <div className="fixed inset-0 z-30 flex items-center justify-center p-4" onClick={() => setShowLogin(false)}>
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+            <div
+              className="relative w-full max-w-sm rounded-[2rem] border border-white/10 bg-[#0a1020]/95 p-7 shadow-2xl backdrop-blur-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setShowLogin(false)}
+                className="absolute top-4 right-4 h-8 w-8 rounded-full flex items-center justify-center text-white/40 hover:text-white/80 hover:bg-white/10 transition-all"
+              >
+                <X size={16} />
+              </button>
+
+              <div className="flex items-center gap-3 mb-6">
+                <div className="h-10 w-10 rounded-xl flex items-center justify-center bg-primary/15 border border-primary/25 text-primary">
+                  <Lock size={18} />
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-[0.28em] text-white/40 font-bold">Staff access</p>
+                  <h2 className="text-xl font-black text-white mt-0.5">Sign in</h2>
+                </div>
+              </div>
+
+              {error && (
+                <div className="mb-4 rounded-2xl border border-rose-500/25 bg-rose-500/10 px-4 py-3 text-rose-200 text-sm flex items-start gap-3">
+                  <AlertCircle size={16} className="mt-0.5 flex-shrink-0" />
+                  <span>{error}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleVerifyCredentials} className="space-y-3">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-[0.22em] text-white/45 mb-2">Email</label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3.5 text-white outline-none placeholder:text-white/25 focus:border-primary/50 focus:ring-2 focus:ring-primary/10"
+                    placeholder="admin@example.com"
+                    autoComplete="email"
+                    disabled={isVerifying}
+                    autoFocus
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-[0.22em] text-white/45 mb-2">Password</label>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3.5 text-white outline-none placeholder:text-white/25 focus:border-primary/50 focus:ring-2 focus:ring-primary/10"
+                    placeholder="Enter your password"
+                    autoComplete="current-password"
+                    disabled={isVerifying}
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={isVerifying}
+                  className="premium-btn w-full inline-flex items-center justify-center gap-2 py-3.5 text-base disabled:opacity-50 mt-1"
+                >
+                  {isVerifying ? 'Verifying...' : 'Unlock site'}
+                  <ArrowRight size={17} />
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     );
   }

@@ -173,23 +173,24 @@ namespace Glanz.API.Controllers
             var counts = new Dictionary<string, int>();
 
             // ── Always delete (transactional data) ─────────────────────────────
-            counts["workerLocations"]   = await DeleteAllAsync(_context.WorkerLocations);
-            counts["slotReservations"]  = await DeleteAllAsync(_context.SlotReservations);
-            counts["bookingPhotos"]     = await DeleteAllAsync(_context.BookingPhotos);
-            counts["checklistItems"]    = await DeleteAllAsync(_context.BookingChecklistItems);
-            counts["bookingItems"]      = await DeleteAllAsync(_context.BookingItems);
-            counts["bookings"]          = await DeleteAllAsync(_context.Bookings);
-            counts["subBookings"]       = await DeleteAllAsync(_context.SubscriptionBookings);
-            counts["userSubscriptions"] = await DeleteAllAsync(_context.UserSubscriptions);
+            // FK-safe order: child rows before parent rows
+            counts["workerLocations"]      = await DeleteAllAsync(_context.WorkerLocations);
+            counts["slotReservations"]     = await DeleteAllAsync(_context.SlotReservations);
+            counts["bookingPhotos"]        = await DeleteAllAsync(_context.BookingPhotos);
+            counts["checklistItems"]       = await DeleteAllAsync(_context.BookingChecklistItems);
+            counts["bookingItems"]         = await DeleteAllAsync(_context.BookingItems);
+            counts["notifications"]        = await DeleteAllAsync(_context.Notifications);
+            counts["customerFeedbacks"]    = await DeleteAllAsync(_context.CustomerFeedbacks);
+            counts["leads"]                = await DeleteAllAsync(_context.Leads);
+            counts["auditLogs"]            = await DeleteAllAsync(_context.AuditLogs);
+            counts["bookings"]             = await DeleteAllAsync(_context.Bookings);
+            counts["subBookings"]          = await DeleteAllAsync(_context.SubscriptionBookings);
+            counts["userSubscriptions"]    = await DeleteAllAsync(_context.UserSubscriptions);
             counts["serviceSubscriptions"] = await DeleteAllAsync(_context.ServiceSubscriptions);
-            counts["userOffers"]        = await DeleteAllAsync(_context.UserOffers);
-            counts["vehicles"]          = await DeleteAllAsync(_context.Vehicles);
-            counts["notifications"]     = await DeleteAllAsync(_context.Notifications);
-            counts["auditLogs"]         = await DeleteAllAsync(_context.AuditLogs);
-            counts["customerFeedbacks"] = await DeleteAllAsync(_context.CustomerFeedbacks);
-            counts["leads"]             = await DeleteAllAsync(_context.Leads);
-            counts["referrals"]         = await DeleteAllAsync(_context.Referrals);
-            counts["availabilities"]    = await DeleteAllAsync(_context.Availabilities);
+            counts["userOffers"]           = await DeleteAllAsync(_context.UserOffers);
+            counts["vehicles"]             = await DeleteAllAsync(_context.Vehicles);
+            counts["referrals"]            = await DeleteAllAsync(_context.Referrals);
+            counts["availabilities"]       = await DeleteAllAsync(_context.Availabilities);
 
             // ── Workers + Customers (keep admin) ───────────────────────────────
             counts["workers"]   = await DeleteAllAsync(_context.Staff);
