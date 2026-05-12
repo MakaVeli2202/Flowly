@@ -26,7 +26,9 @@
  */
 
 import * as signalR from '@microsoft/signalr';
-const _apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5289/api';
+const _apiBase = (typeof window !== 'undefined' && window.__CONFIG__?.API_URL)
+  || import.meta.env.VITE_API_BASE_URL
+  || '/api';
 const HUB_URL  = `${_apiBase.replace('/api', '')}/hubs/glanz`;
 
 // ── Internal state ────────────────────────────────────────────────────────────

@@ -93,15 +93,12 @@ const PRISM_CSS = `
   66%      { transform: translate(-12px,12px) rotate(240deg); opacity: 0.38; }
 }
 @keyframes cta-rainbow-glow {
-  0%,100% { box-shadow: 0 0 0 1.5px rgba(255,80,80,.55),  0 0 32px rgba(255,165,0,.25), 0 0 60px rgba(0,255,100,.18), 0 0 100px rgba(0,100,255,.12); }
-  25%      { box-shadow: 0 0 0 1.5px rgba(255,210,0,.55),  0 0 32px rgba(0,255,150,.25), 0 0 60px rgba(0,150,255,.18), 0 0 100px rgba(200,0,255,.12); }
-  50%      { box-shadow: 0 0 0 1.5px rgba(0,200,255,.55),  0 0 32px rgba(160,0,255,.25), 0 0 60px rgba(255,0,100,.18), 0 0 100px rgba(255,220,0,.12); }
-  75%      { box-shadow: 0 0 0 1.5px rgba(0,255,120,.55),  0 0 32px rgba(255,0,100,.25), 0 0 60px rgba(255,210,0,.18), 0 0 100px rgba(0,255,150,.12); }
+  0%,100% { box-shadow: 0 0 0 1.5px rgba(200,169,107,.45), 0 0 32px rgba(200,169,107,.18); }
+  50%     { box-shadow: 0 0 0 1.5px rgba(14,165,160,.45),  0 0 32px rgba(14,165,160,.18); }
 }
 @keyframes prism-card-glow {
-  0%,100% { box-shadow: 0 0 0 1px rgba(255,100,80,.4),  0 0 24px rgba(255,165,0,.18), 0 0 50px rgba(0,255,100,.14); }
-  33%      { box-shadow: 0 0 0 1px rgba(0,160,255,.4),   0 0 24px rgba(160,0,255,.18), 0 0 50px rgba(255,0,100,.14); }
-  66%      { box-shadow: 0 0 0 1px rgba(0,255,150,.4),   0 0 24px rgba(255,255,0,.18),  0 0 50px rgba(0,100,255,.14); }
+  0%,100% { box-shadow: 0 0 0 1px rgba(200,169,107,.35), 0 0 24px rgba(200,169,107,.14); }
+  50%     { box-shadow: 0 0 0 1px rgba(14,165,160,.35),  0 0 24px rgba(14,165,160,.14); }
 }
 
 /* ── NEW: Liquid glass animations ── */
@@ -160,6 +157,15 @@ const PRISM_CSS = `
   --drop-size: 12px;
   position: absolute;
   opacity: 0;
+}
+
+.adv-card__droplet::before {
+  content: '';
+  position: absolute;
+  border-radius: 999px;
+  background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.92), rgba(255,255,255,0.14) 72%, transparent 100%);
+  filter: blur(0.5px);
+  opacity: 0.9;
 }
 
 .adv-card__droplet--bubble {
@@ -341,8 +347,7 @@ const PRISM_CSS = `
   content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
   background: radial-gradient(
     circle at var(--px,50%) var(--py,50%),
-    rgba(255,200,80,.22) 0%, rgba(80,255,160,.16) 25%,
-    rgba(40,130,255,.15) 50%, rgba(200,40,255,.11) 70%, transparent 86%
+    rgba(200,169,107,.22) 0%, rgba(14,165,160,.16) 50%, transparent 80%
   );
   opacity: 0; transition: opacity 0.3s; mix-blend-mode: screen;
 }
@@ -391,12 +396,10 @@ const PRISM_CSS = `
 .spectrum-line {
   height: 1.5px;
   background: linear-gradient(90deg,
-    transparent 0%, rgba(255,0,100,.85) 12%, rgba(255,165,0,.9) 24%,
-    rgba(255,255,0,.9) 36%, rgba(0,255,100,.9) 48%,
-    rgba(0,150,255,.9) 60%, rgba(150,0,255,.85) 72%, transparent 85%);
+    transparent 0%, rgba(200,169,107,.55) 20%,
+    rgba(14,165,160,.55) 50%, rgba(200,169,107,.55) 80%, transparent 100%);
   background-size: 200% 100%;
   animation: holo-sweep 5s linear infinite;
-  animation-delay: 0s;
   opacity: 0.55;
   width: 100%;
 }
@@ -1271,20 +1274,20 @@ function Home() {
       {/* ══ HERO ══ */}
       <section ref={heroSectionRef} className="relative min-h-screen flex items-center justify-center overflow-hidden">
         {/* YouTube background video */}
-        <div className="absolute inset-0 overflow-hidden" style={{ pointerEvents: 'none' }}>
+        <div className="absolute inset-0 bg-black overflow-hidden" style={{ pointerEvents: 'none' }}>
           <iframe
             className="absolute"
             style={{
               top: '50%',
               left: '50%',
-              width: '177.77777778vh',
+              width: '100vw',
               height: '56.25vw',
-              minWidth: '100%',
-              minHeight: '100%',
+              minHeight: '100vh',
+              minWidth: '177.77777778vh',
               transform: 'translate(-50%, -50%)',
               border: 0,
             }}
-            src="https://www.youtube.com/embed/ZeES31xz7CE?autoplay=1&mute=1&loop=1&playlist=ZeES31xz7CE&controls=0&showinfo=0&rel=0&modestbranding=1"
+            src="https://www.youtube.com/embed/ZeES31xz7CE?autoplay=1&mute=1&loop=1&playlist=ZeES31xz7CE&controls=0&rel=0&playsinline=1"
             allow="autoplay; encrypted-media"
             title="Hero background"
           />
@@ -1315,7 +1318,7 @@ function Home() {
             <div className="relative z-10 px-8 md:px-16 py-10 md:py-12 text-center flex flex-col items-center">
               {/* Logo */}
               <div className="mb-6 hero-animate hero-animate-1">
-                <img src={getBusiness().logo || '/GlanzLogo.png'} alt="Glanz" className="h-14 sm:h-16 md:h-20 w-auto object-contain mx-auto" />
+                <img src={getBusiness().logo || '/GlanzLogo.png'} alt="Glanz" className="h-24 sm:h-28 md:h-36 w-auto object-contain mx-auto drop-shadow-xl" />
               </div>
 
               {/* Badge */}

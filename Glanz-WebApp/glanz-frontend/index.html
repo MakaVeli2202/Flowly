@@ -29,6 +29,17 @@
     <!-- Preconnect for Stripe (used on booking page) -->
     <link rel="preconnect" href="https://js.stripe.com" />
     <title>Glanz — Professional Car Detailing in Qatar</title>
+    <script>
+      // Runtime API URL — resolve at request time, not build time.
+      // 1. If __API_URL__ is already set (e.g. nginx sub_filter), use it.
+      // 2. If VITE_API_BASE_URL env var was baked at build, import.meta will find it.
+      // 3. Fall back to relative /api (Vite proxy in dev, nginx proxy in prod).
+      window.__CONFIG__ = window.__CONFIG__ || {};
+      // Only set in production — dev uses Vite proxy (/api).
+      if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+        window.__CONFIG__.API_URL = 'https://glanz-api.onrender.com/api';
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -1,22 +1,19 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5289/api';
+// Runtime API URL resolution (priority order):
+//   1. window.__CONFIG__.API_URL  — set by nginx sub_filter or manually in index.html
+//   2. VITE_API_BASE_URL env var  — baked at build time
+//   3. '/api'                     — Vite proxy (dev) or nginx reverse proxy (prod)
+// HttpOnly refresh cookies with SameSite=Lax are NOT sent cross-origin,
+// so production MUST serve API on the same origin or via a reverse proxy.
+// For a truly separate API domain, set __CONFIG__.API_URL in index.html
+// or pass VITE_API_BASE_URL at build time.
+const API_URL = (typeof window !== 'undefined' && window.__CONFIG__?.API_URL)
+  || import.meta.env.VITE_API_BASE_URL
+  || '/api';
 
-if (typeof window !== 'undefined') {
-  const isLocalFrontend =
-    window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-  const isLocalApi = API_URL.includes('localhost') || API_URL.includes('127.0.0.1');
-
-  if (!isLocalFrontend && isLocalApi) {
-    console.error(
-      `[API CONFIG] Frontend is deployed at ${window.location.origin} but API URL is local (${API_URL}). ` +
-      'Set VITE_API_BASE_URL in your hosting environment and redeploy.'
-    );
-  }
-
-  if (import.meta.env.DEV) {
-    console.info(`[API CONFIG] Using API base URL: ${API_URL}`);
-  }
+if (typeof window !== 'undefined' && import.meta.env.DEV) {
+  console.info(`[API CONFIG] Using API base URL: ${API_URL}`);
 }
 
 const apiClient = axios.create({
