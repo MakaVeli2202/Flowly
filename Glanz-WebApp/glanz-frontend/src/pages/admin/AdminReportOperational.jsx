@@ -1,5 +1,5 @@
 // OperationalReport.jsx
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { reportsAPI } from '../../api/reports';
 import { Calendar, Package, TrendingUp, Download, BarChart2, CheckCircle, Clock, XCircle } from 'lucide-react';
 import { format, subDays } from 'date-fns';
@@ -125,9 +125,7 @@ function OperationalReport() {
   const [startDate, setStartDate] = useState(format(subDays(new Date(), 30), 'yyyy-MM-dd'));
   const [endDate,   setEndDate]   = useState(format(new Date(), 'yyyy-MM-dd'));
 
-  useEffect(() => { fetchReport(); }, [startDate, endDate]);
-
-  const fetchReport = async () => {
+  const fetchReport = useCallback(async () => {
     try {
       setLoading(true);
       const data = await reportsAPI.getOperational(startDate, endDate);
@@ -137,7 +135,9 @@ function OperationalReport() {
       setReport(null);
     }
     finally { setLoading(false); }
-  };
+  }, [startDate, endDate]);
+
+  useEffect(() => { fetchReport(); }, [fetchReport]);
 
   if (loading) return (
     <>

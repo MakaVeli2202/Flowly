@@ -2,16 +2,11 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   AlertCircle,
   ArrowRight,
-  CheckCircle2,
   Clock3,
   LockKeyhole,
   ShieldCheck,
   Sparkles,
-  ToggleLeft,
-  ToggleRight,
-  LogOut,
 } from 'lucide-react';
-import { settingsAPI } from '../../api/settings';
 import { useSettings } from '../../context/SettingsContext';
 
 const GATE_TOKEN_STORAGE_KEY = 'glanz.site-gate-token';
@@ -44,7 +39,6 @@ export default function SiteAccessGate({ children }) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
-  const [isSavingPublish, setIsSavingPublish] = useState(false);
   const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
@@ -93,23 +87,6 @@ export default function SiteAccessGate({ children }) {
       setError('Connection error. Please try again.');
     } finally {
       setIsVerifying(false);
-    }
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem(GATE_TOKEN_STORAGE_KEY);
-    setHasToken(false);
-  };
-
-  const handlePublishToggle = async () => {
-    try {
-      setIsSavingPublish(true);
-      setError('');
-      await settingsAPI.updateSystemSettings({ SitePublished: !sitePublished });
-    } catch (err) {
-      setError(err?.response?.data?.message || 'Failed to update site visibility.');
-    } finally {
-      setIsSavingPublish(false);
     }
   };
 
@@ -235,57 +212,5 @@ export default function SiteAccessGate({ children }) {
     );
   }
 
-  return (
-    <>
-      {children}
-      {hasToken && (
-        <div className="fixed bottom-4 right-4 z-[90] max-w-sm rounded-2xl border border-white/10 bg-[#0a1020]/90 p-3 shadow-2xl backdrop-blur-xl">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-[0.62rem] uppercase tracking-[0.26em] text-white/40 font-bold">Admin access</p>
-              <p className="text-sm font-semibold text-white">{sitePublished ? 'Site is published' : 'Private preview unlocked'}</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handlePublishToggle}
-                disabled={isSavingPublish}
-                className="inline-flex items-center gap-2 rounded-xl border border-primary/25 bg-primary/10 px-3 py-2 text-xs font-bold text-primary transition hover:bg-primary/15 disabled:opacity-60"
-              >
-                {isSavingPublish ? (
-                  <>
-                    <span className="h-3.5 w-3.5 animate-spin rounded-full border border-primary/35 border-t-primary" />
-                    Saving
-                  </>
-                ) : sitePublished ? (
-                  <>
-                    <ToggleRight size={14} />
-                    Unpublish
-                  </>
-                ) : (
-                  <>
-                    <ToggleLeft size={14} />
-                    Publish
-                  </>
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="inline-flex items-center gap-1 rounded-xl border border-white/15 bg-white/5 px-2.5 py-2 text-xs font-bold text-white/70 transition hover:bg-white/10"
-                title="Logout"
-              >
-                <LogOut size={14} />
-              </button>
-            </div>
-          </div>
-          <div className="mt-2 flex items-start gap-2 text-xs text-white/50">
-            <CheckCircle2 size={14} className="mt-0.5 text-emerald-400 flex-shrink-0" />
-            <span>{sitePublished ? 'Anyone can browse the full website.' : 'Only this browser can bypass the private page until you publish.'}</span>
-          </div>
-          {error && <p className="mt-2 text-xs text-rose-300">{error}</p>}
-        </div>
-      )}
-    </>
-  );
+  return <>{children}</>;
 }

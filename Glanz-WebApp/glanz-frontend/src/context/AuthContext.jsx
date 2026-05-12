@@ -90,6 +90,7 @@ export function AuthProvider({ children }) {
 
   const register = async (userData) => {
     const response = await authAPI.register(userData);
+    localStorage.setItem('glanz_session_active', 'true');
     persistSession(response.token, response.user);
     await realtimeService.connect(response.token);
     startNotificationConnection();

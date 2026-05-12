@@ -2,8 +2,11 @@ import apiClient from './axios';
 import { withRetry } from '../utils/retry';
 
 export const reportsAPI = {
-  getDashboardSummary: async () => withRetry(async () => {
-    const response = await apiClient.get('/Reports/dashboard-summary');
+  getDashboardSummary: async (startDate, endDate) => withRetry(async () => {
+    const params = new URLSearchParams();
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+    const response = await apiClient.get(`/Reports/dashboard-summary?${params}`);
     return response.data;
   }),
 

@@ -27,12 +27,15 @@ namespace Glanz.API.Controllers
         }
 
         [HttpGet("dashboard-summary")]
-        public async Task<ActionResult<DashboardSummaryDto>> GetDashboardSummary()
+        public async Task<ActionResult<DashboardSummaryDto>> GetDashboardSummary(
+            [FromQuery] DateTime? startDate,
+            [FromQuery] DateTime? endDate)
         {
             try
             {
-                var windowEnd = DateTime.UtcNow;
-                var windowStart = windowEnd.AddDays(-30);
+                var now = DateTime.UtcNow;
+                var windowEnd = NormalizeUtc(endDate ?? now);
+                var windowStart = NormalizeUtc(startDate ?? new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc));
 
                 var totalBookings = await _context.Bookings.CountAsync();
                 var pendingBookings = await _context.Bookings.CountAsync(b => b.Status == BookingStatus.Pending);

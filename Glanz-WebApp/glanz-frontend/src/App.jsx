@@ -172,9 +172,9 @@ function AppRoutes() {
   }, [location.pathname]);
 
   return (
-    <main key={location.pathname} className="relative z-10 flex-grow">
+    <main className="relative z-10 flex-grow">
       <ScrollToTop />
-      <Routes location={location}>
+      <Routes>
 
         {/* ── Public ─────────────────────────────────────────────────── */}
         <Route path="/"         element={<Home />}     />

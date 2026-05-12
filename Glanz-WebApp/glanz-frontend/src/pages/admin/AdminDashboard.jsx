@@ -43,15 +43,15 @@ const UI_BY_LANG = {
     bookingsCard: 'Bookings',
     customers: 'Customers',
     activeCatalog: 'Active Catalog',
-    last30Revenue: (v) => `${formatQAR(v)} in the last 30 days`,
+    last30Revenue: (v) => `${formatQAR(v)} in the selected period`,
     bookingMixDetail: (p, c) => `${p} pending · ${c} completed`,
-    customerDetail: (r) => `${r} bookings in the last 30 days`,
+    customerDetail: (r) => `${r} bookings in the selected period`,
     catalogDetail: (s, p) => `${s} services · ${p} products`,
     commandCenter: 'Command Center',
     adminDashboard: 'Admin Dashboard',
     liveData: 'Live data from your detailing business',
     revenueTrend: 'Revenue Trend',
-    revenueTrendSub: 'Last 30 days of bookings, revenue, and profit performance',
+    revenueTrendSub: 'Bookings, revenue, and profit performance',
     financial: 'Financial',
     profitMargin: 'Profit Margin',
     bookingMix: 'Booking Mix',
@@ -116,15 +116,15 @@ const UI_BY_LANG = {
     bookingsCard: 'الحجوزات',
     customers: 'العملاء',
     activeCatalog: 'الكتالوج النشط',
-    last30Revenue: (v) => `${formatQAR(v)} خلال آخر 30 يوما`,
+    last30Revenue: (v) => `${formatQAR(v)} في الفترة المحددة`,
     bookingMixDetail: (p, c) => `${p} قيد الانتظار · ${c} مكتملة`,
-    customerDetail: (r) => `${r} حجوزات خلال آخر 30 يوما`,
+    customerDetail: (r) => `${r} حجوزات في الفترة المحددة`,
     catalogDetail: (s, p) => `${s} خدمات · ${p} منتجات`,
     commandCenter: 'مركز التحكم',
     adminDashboard: 'لوحة الإدارة',
     liveData: 'بيانات مباشرة من نشاطك',
     revenueTrend: 'اتجاه الإيرادات',
-    revenueTrendSub: 'آخر 30 يوما من الحجوزات والإيرادات والربح',
+    revenueTrendSub: 'أداء الحجوزات والإيرادات والربح',
     financial: 'مالي',
     profitMargin: 'هامش الربح',
     bookingMix: 'توزيع الحجوزات',
@@ -189,15 +189,15 @@ const UI_BY_LANG = {
     bookingsCard: 'Buchungen',
     customers: 'Kunden',
     activeCatalog: 'Aktiver Katalog',
-    last30Revenue: (v) => `${formatQAR(v)} in den letzten 30 Tagen`,
+    last30Revenue: (v) => `${formatQAR(v)} im gewählten Zeitraum`,
     bookingMixDetail: (p, c) => `${p} ausstehend · ${c} abgeschlossen`,
-    customerDetail: (r) => `${r} Buchungen in den letzten 30 Tagen`,
+    customerDetail: (r) => `${r} Buchungen im gewählten Zeitraum`,
     catalogDetail: (s, p) => `${s} Services · ${p} Produkte`,
     commandCenter: 'Leitzentrale',
     adminDashboard: 'Admin-Dashboard',
     liveData: 'Live-Daten aus Ihrem Detailing-Geschaft',
     revenueTrend: 'Umsatztrend',
-    revenueTrendSub: 'Letzte 30 Tage mit Buchungen, Umsatz und Gewinn',
+    revenueTrendSub: 'Buchungs-, Umsatz- und Gewinnentwicklung',
     financial: 'Finanzen',
     profitMargin: 'Gewinnmarge',
     bookingMix: 'Buchungsmix',
@@ -447,15 +447,54 @@ function AdminDashboard() {
   const [operationalReport, setOperationalReport] = useState(null);
   const [loadingCharts,     setLoadingCharts]     = useState(true);
 
+  const [startDate, setStartDate] = useState(() => {
+    const d = new Date();
+    return new Date(d.getFullYear(), d.getMonth(), 1);
+  });
+  const [endDate, setEndDate] = useState(() => new Date());
+
+  const dateRef = useRef({ startDate, endDate });
+  useEffect(() => { dateRef.current = { startDate, endDate }; }, [startDate, endDate]);
+
+  const toDateInput = (date) => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  };
+
+  const handleStartDateChange = (e) => {
+    const parts = e.target.value.split('-');
+    if (parts.length === 3) setStartDate(new Date(+parts[0], +parts[1] - 1, +parts[2]));
+  };
+
+  const handleEndDateChange = (e) => {
+    const parts = e.target.value.split('-');
+    if (parts.length === 3) setEndDate(new Date(+parts[0], +parts[1] - 1, +parts[2]));
+  };
+
+  const formatPeriodLabel = (start, end, lang) => {
+    const locale = getLocale(lang);
+    const opts = { month: 'short', day: 'numeric', year: 'numeric' };
+    return `${start.toLocaleDateString(locale, opts)} – ${end.toLocaleDateString(locale, opts)}`;
+  };
+
+  const dateRangeLabel = useMemo(
+    () => formatPeriodLabel(startDate, endDate, lang),
+    [startDate, endDate, lang]
+  );
+
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         setLoadingSummary(true);
         setLoadingCharts(true);
+        const s = toDateInput(startDate);
+        const e = toDateInput(endDate);
         const [summaryData, financialData, operationalData] = await Promise.all([
-          reportsAPI.getDashboardSummary(),
-          reportsAPI.getFinancial(),
-          reportsAPI.getOperational(),
+          reportsAPI.getDashboardSummary(s, e),
+          reportsAPI.getFinancial(s, e),
+          reportsAPI.getOperational(s, e),
         ]);
         setSummary(summaryData);
         setFinancialReport(financialData);
@@ -464,15 +503,17 @@ function AdminDashboard() {
       finally { setLoadingSummary(false); setLoadingCharts(false); }
     };
     fetchDashboardData();
+  }, [startDate, endDate]);
 
-    // Refresh summary counts when booking-related notifications arrive
+  useEffect(() => {
     const BOOKING_EVENTS = new Set([
       'NewBooking', 'BookingConfirmed', 'BookingCancelled', 'BookingStatusChanged',
       'JobStarted', 'JobCompleted', 'BookingReassigned', 'BookingClaimed', 'BookingUnassigned',
     ]);
     const onNotif = (notif) => {
       if (BOOKING_EVENTS.has(notif?.type)) {
-        reportsAPI.getDashboardSummary()
+        const { startDate: sd, endDate: ed } = dateRef.current;
+        reportsAPI.getDashboardSummary(toDateInput(sd), toDateInput(ed))
           .then(d => { if (d) setSummary(d); })
           .catch(() => {});
       }
@@ -520,10 +561,10 @@ function AdminDashboard() {
 
   /* ── Static data ─────────────────────────────────────────── */
   const summaryCards = summary ? [
-    { title: ui.lifetimeRevenue, value: formatQAR(summary.lifetimeRevenue), detail: ui.last30Revenue(summary.recentRevenue),                                              icon: TrendingUp,    accent: '#c8a96b' },
-    { title: ui.bookingsCard,    value: `${summary.totalBookings}`,         detail: ui.bookingMixDetail(summary.pendingBookings, summary.completedBookings),               icon: ClipboardList, accent: '#0ea5a0' },
-    { title: ui.customers,       value: `${summary.activeCustomers}`,       detail: ui.customerDetail(summary.recentBookings),                                            icon: Users,         accent: '#f59e0b' },
-    { title: ui.activeCatalog,   value: `${summary.activePackages}`,        detail: ui.catalogDetail(summary.activeServices, summary.activeProducts),                    icon: Package,       accent: '#8b5cf6' },
+    { title: ui.lifetimeRevenue, value: formatQAR(summary.lifetimeRevenue), detail: `${formatQAR(summary.recentRevenue)} (${dateRangeLabel})`,                            icon: TrendingUp,    accent: '#c8a96b' },
+    { title: ui.bookingsCard,    value: `${summary.totalBookings}`,         detail: ui.bookingMixDetail(summary.pendingBookings, summary.completedBookings),                  icon: ClipboardList, accent: '#0ea5a0' },
+    { title: ui.customers,       value: `${summary.activeCustomers}`,       detail: `${summary.recentBookings} bookings (${dateRangeLabel})`,                                 icon: Users,         accent: '#f59e0b' },
+    { title: ui.activeCatalog,   value: `${summary.activePackages}`,        detail: ui.catalogDetail(summary.activeServices, summary.activeProducts),                       icon: Package,       accent: '#8b5cf6' },
   ] : [];
 
   const tc = ui.toolCards;
@@ -582,6 +623,29 @@ function AdminDashboard() {
             <p className="text-[var(--muted-color)]">{ui.liveData}</p>
           </div>
 
+          {/* ── Period selector ──────────────────────────── */}
+          <div className="mb-8 flex items-center gap-4 flex-wrap">
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-bold uppercase tracking-widest text-[var(--muted-color)]">From</label>
+              <input
+                type="date"
+                value={toDateInput(startDate)}
+                onChange={handleStartDateChange}
+                className="rounded-xl border border-[var(--border-color)] bg-[var(--card-bg)] px-3 py-2 text-sm text-[var(--text-color)] outline-none focus:border-primary/50"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-bold uppercase tracking-widest text-[var(--muted-color)]">To</label>
+              <input
+                type="date"
+                value={toDateInput(endDate)}
+                onChange={handleEndDateChange}
+                className="rounded-xl border border-[var(--border-color)] bg-[var(--card-bg)] px-3 py-2 text-sm text-[var(--text-color)] outline-none focus:border-primary/50"
+              />
+            </div>
+            <span className="text-xs text-[var(--muted-color)] ml-1">{dateRangeLabel}</span>
+          </div>
+
           {/* ── Summary cards ────────────────────────────── */}
           <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4 mb-8">
             {loadingSummary
@@ -625,7 +689,7 @@ function AdminDashboard() {
             {/* Revenue Trend */}
             <ChartCard
               title={ui.revenueTrend}
-              subtitle={ui.revenueTrendSub}
+              subtitle={`${ui.revenueTrendSub} — ${dateRangeLabel}`}
               badge={ui.financial}
               accentColor="#c8a96b"
               rayDelay="2s"
