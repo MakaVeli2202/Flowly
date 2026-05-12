@@ -20,9 +20,10 @@ jobs:
           cache-dependency-path: Glanz-WebApp/glanz-frontend/package-lock.json
       - name: Install dependencies
         run: npm ci
+      - name: Audit dependencies
+        run: npm audit --audit-level=high
       - name: Lint
         run: npm run lint
-        continue-on-error: true
       - name: Test
         run: npm run test
       - name: Build
@@ -40,6 +41,8 @@ jobs:
           dotnet-version: "10.0.x"
       - name: Restore
         run: dotnet restore
+      - name: Check for vulnerable packages
+        run: dotnet list package --vulnerable --include-transitive
       - name: Build
         run: dotnet build --configuration Release --no-restore
       - name: Test

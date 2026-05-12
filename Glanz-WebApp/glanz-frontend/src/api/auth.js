@@ -103,5 +103,17 @@ export const authAPI = {
     } catch {
       // best-effort — clear local state regardless
     }
-  }
+  },
+
+  sendVerificationEmail: (email) =>
+    apiClient.post('/Auth/send-verification', { email }),
+
+  verifyEmailCode: (email, token) =>
+    apiClient.post('/Auth/verify-email', { email, token }),
+
+  forgotPassword: (email) =>
+    apiClient.post('/Auth/forgot-password', { email }),
+
+  resetPassword: (token, newPassword, confirmNewPassword) =>
+    apiClient.post('/Auth/reset-password', { token, newPassword, confirmNewPassword }),
 };

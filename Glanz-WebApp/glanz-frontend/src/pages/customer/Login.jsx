@@ -200,7 +200,12 @@ function Login() {
       else if (from && from !== '/login') navigate(from, { replace: true });
       else                            navigate('/', { replace: true });
     } catch (err) {
-      setError(err.response?.data?.message || err.message || ui.loginFailed);
+      const errData = err.response?.data;
+      if (errData?.requiresEmailVerification) {
+        navigate(`/verify-email?email=${encodeURIComponent(errData.email || formData.email)}`, { replace: true });
+        return;
+      }
+      setError(errData?.message || err.message || ui.loginFailed);
     } finally { setLoading(false); }
   };
 
@@ -319,9 +324,14 @@ function Login() {
 
                 {/* Password */}
                 <div className="field-2">
-                  <label className="block text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-color)] mb-2">
-                    {ui.password}
-                  </label>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-color)]">
+                      {ui.password}
+                    </label>
+                    <Link to="/forgot-password" className="text-[11px] text-primary hover:text-primary/80 transition-colors">
+                      Forgot password?
+                    </Link>
+                  </div>
                   <div className="relative">
                     <Lock size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--muted-color)]" />
                     <input

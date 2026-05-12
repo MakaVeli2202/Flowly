@@ -159,6 +159,7 @@ export function AuthProvider({ children }) {
 
   const register = async (userData) => {
     const response = await authAPI.register(userData);
+    if (response.requiresEmailVerification) return response;
     localStorage.setItem('glanz_session_active', 'true');
     localStorage.setItem(TOKEN_KEY, response.token);
     persistSession(response.token, response.user);

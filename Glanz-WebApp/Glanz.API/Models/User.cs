@@ -81,6 +81,20 @@ namespace Glanz.API.Models
         public string? RefreshToken { get; set; }
         public DateTime? RefreshTokenExpiry { get; set; }
 
+        // ── Email verification ────────────────────────────────────────────────
+        // IsEmailVerified is false for new registrations; set true after OTP confirmation.
+        // Existing users are grandfathered via the AddEmailVerification migration.
+        public bool IsEmailVerified { get; set; } = false;
+
+        [StringLength(200)]
+        public string? EmailVerificationToken { get; set; }
+        public DateTime? EmailVerificationTokenExpiry { get; set; }
+
+        // ── Password reset ────────────────────────────────────────────────────
+        [StringLength(200)]
+        public string? PasswordResetToken { get; set; }
+        public DateTime? PasswordResetTokenExpiry { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 

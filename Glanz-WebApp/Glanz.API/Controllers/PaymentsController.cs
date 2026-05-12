@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Glanz.API.Data;
 using Glanz.API.Models;
@@ -12,11 +12,11 @@ namespace Glanz.API.Controllers
     /// Tap Payments is the leading gateway in Qatar / GCC.
     ///
     /// Flow:
-    ///   1. POST /api/Payments/create-charge  â€” creates a Tap charge + slot reservation,
+    ///   1. POST /api/Payments/create-charge  – creates a Tap charge + slot reservation,
     ///      returns { chargeId, redirectUrl } so the frontend can redirect the customer to Tap.
     ///   2. Customer pays on the Tap-hosted page.
-    ///   3. Tap redirects back to redirect_url with ?tap_id=&lt;chargeId&gt;.
-    ///   4. GET  /api/Payments/verify/{chargeId} â€” verifies the charge status with Tap and
+    ///   3. Tap redirects back to redirect_url with ?tap_id=<chargeId>.
+    ///   4. GET  /api/Payments/verify/{chargeId} – verifies the charge status with Tap and
     ///      updates the booking payment status accordingly.
     ///
     /// Webhooks (POST /api/Webhooks/tap) provide an async safety net for the same events.
@@ -28,8 +28,8 @@ namespace Glanz.API.Controllers
         private const int SlotHoldMinutes = 15;
         private const string TapApiBase   = "https://api.tap.company/v2";
 
-        private readonly AppDbContext      _context;
-        private readonly IConfiguration   _configuration;
+        private readonly AppDbContext        _context;
+        private readonly IConfiguration      _configuration;
         private readonly IWebHostEnvironment _env;
         private readonly IHttpClientFactory  _httpClientFactory;
 
@@ -49,8 +49,11 @@ namespace Glanz.API.Controllers
         /// Creates a Tap charge and reserves the time slot.
         ///
         /// POST /api/Payments/create-charge
-        /// Body: { amount, currency, scheduledDate, timeSlot, durationMinutes,
-        ///         customerEmail, bookingNumber, redirectUrl }
+        /// Body: { currency, durationMinutes, customerEmail, bookingNumber, redirectUrl }
+        ///
+        /// The charge amount is always derived server-side from the booking record —
+        /// never from the client payload — to prevent price manipulation.
+        ///
         /// Returns: { chargeId, redirectUrl, amount, currency }
         /// </summary>
         [HttpPost("create-charge")]
@@ -61,11 +64,24 @@ namespace Glanz.API.Controllers
             if (!isDevLoopback && !(User.Identity?.IsAuthenticated ?? false))
                 return Unauthorized(new { message = "Authentication required." });
 
-            if (dto.Amount <= 0)
-                return BadRequest(new { message = "Amount must be greater than zero." });
+            if (string.IsNullOrWhiteSpace(dto.BookingNumber))
+                return BadRequest(new { message = "bookingNumber is required." });
 
             if (string.IsNullOrWhiteSpace(dto.RedirectUrl))
                 return BadRequest(new { message = "redirectUrl is required." });
+
+            // Always derive the charge amount from the server-side booking record.
+            // Never trust any client-supplied amount — it can be tampered with.
+            var booking = await _context.Bookings
+                .FirstOrDefaultAsync(b => b.BookingNumber == dto.BookingNumber);
+            if (booking == null)
+                return BadRequest(new { message = "Booking not found." });
+            if (booking.PaymentStatus == PaymentStatus.Paid)
+                return BadRequest(new { message = "This booking has already been paid." });
+
+            var chargeAmount = Math.Round(booking.TotalAmount, 2);
+            if (chargeAmount <= 0)
+                return BadRequest(new { message = "Booking total amount is invalid." });
 
             var secretKey = _configuration["TapPayments:SecretKey"];
             if (string.IsNullOrWhiteSpace(secretKey) || secretKey == "YOUR_TAP_SECRET_KEY")
@@ -76,23 +92,23 @@ namespace Glanz.API.Controllers
                 // Encode the booking number into the redirect URL so the frontend can
                 // retrieve it on return without extra state management.
                 var sep             = dto.RedirectUrl.Contains('?') ? '&' : '?';
-                var fullRedirectUrl = $"{dto.RedirectUrl}{sep}booking={Uri.EscapeDataString(dto.BookingNumber ?? "")}";
+                var fullRedirectUrl = $"{dto.RedirectUrl}{sep}booking={Uri.EscapeDataString(dto.BookingNumber)}";
 
                 var chargeBody = new
                 {
-                    amount            = Math.Round(dto.Amount, 2),
-                    currency          = (dto.Currency ?? "QAR").ToUpperInvariant(),
+                    amount             = chargeAmount,
+                    currency           = (dto.Currency ?? "QAR").ToUpperInvariant(),
                     customer_initiated = true,
-                    threeDSecure      = true,
-                    save_card         = false,
-                    description       = $"Glanz Car Detailing â€“ {dto.BookingNumber}",
+                    threeDSecure       = true,
+                    save_card          = false,
+                    description        = $"Glanz Car Detailing – {dto.BookingNumber}",
                     metadata = new
                     {
-                        booking_number  = dto.BookingNumber ?? "",
-                        scheduled_date  = dto.ScheduledDate?.ToString("yyyy-MM-dd") ?? "",
-                        time_slot       = dto.TimeSlot ?? "",
+                        booking_number = dto.BookingNumber,
+                        scheduled_date = booking.ScheduledDate.ToString("yyyy-MM-dd"),
+                        time_slot      = booking.TimeSlot ?? "",
                     },
-                    customer = new { email = dto.CustomerEmail ?? "" },
+                    customer = new { email = dto.CustomerEmail ?? booking.CustomerEmail ?? "" },
                     source   = new { id = "src_all" }, // accept all payment methods
                     redirect = new { url = fullRedirectUrl },
                 };
@@ -114,9 +130,9 @@ namespace Glanz.API.Controllers
                     return StatusCode(502, new { message = "Payment provider error. Please try again." });
                 }
 
-                using var doc  = JsonDocument.Parse(raw);
-                var root       = doc.RootElement;
-                var chargeId   = root.TryGetProperty("id",  out var idEl)  ? idEl.GetString()  : null;
+                using var doc      = JsonDocument.Parse(raw);
+                var root           = doc.RootElement;
+                var chargeId       = root.TryGetProperty("id",  out var idEl)  ? idEl.GetString()  : null;
                 var tapRedirectUrl = root.TryGetProperty("transaction", out var tx)
                     && tx.TryGetProperty("url", out var urlEl)
                     ? urlEl.GetString() : null;
@@ -124,40 +140,29 @@ namespace Glanz.API.Controllers
                 if (string.IsNullOrWhiteSpace(chargeId) || string.IsNullOrWhiteSpace(tapRedirectUrl))
                     return StatusCode(502, new { message = "Payment gateway did not return a redirect URL." });
 
-                // Update the booking with the Tap charge ID so we can look it up on verify/webhook.
-                if (!string.IsNullOrWhiteSpace(dto.BookingNumber))
-                {
-                    var booking = await _context.Bookings
-                        .FirstOrDefaultAsync(b => b.BookingNumber == dto.BookingNumber);
-                    if (booking != null)
-                    {
-                        booking.StripePaymentIntentId = chargeId; // field reused for Tap charge ID
-                        booking.UpdatedAt             = DateTime.UtcNow;
-                        await _context.SaveChangesAsync();
-                    }
-                }
+                // Store the Tap charge ID on the booking record.
+                booking.StripePaymentIntentId = chargeId; // column reused for Tap charge ID
+                booking.UpdatedAt             = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
 
-                // Reserve the slot for SlotHoldMinutes to block concurrent bookings.
-                if (dto.ScheduledDate.HasValue && !string.IsNullOrWhiteSpace(dto.TimeSlot))
+                // Reserve the slot for SlotHoldMinutes to block concurrent bookings during checkout.
+                _context.SlotReservations.Add(new SlotReservation
                 {
-                    _context.SlotReservations.Add(new SlotReservation
-                    {
-                        PaymentIntentId = chargeId,
-                        ScheduledDate   = DateTime.SpecifyKind(dto.ScheduledDate.Value.Date, DateTimeKind.Utc),
-                        TimeSlot        = dto.TimeSlot.Trim(),
-                        DurationMinutes = dto.DurationMinutes,
-                        CustomerEmail   = dto.CustomerEmail?.Trim().ToLowerInvariant(),
-                        ExpiresAt       = DateTime.UtcNow.AddMinutes(SlotHoldMinutes),
-                        CreatedAt       = DateTime.UtcNow,
-                    });
-                    await _context.SaveChangesAsync();
-                }
+                    PaymentIntentId = chargeId,
+                    ScheduledDate   = DateTime.SpecifyKind(booking.ScheduledDate.Date, DateTimeKind.Utc),
+                    TimeSlot        = (booking.TimeSlot ?? "").Trim(),
+                    DurationMinutes = dto.DurationMinutes,
+                    CustomerEmail   = (dto.CustomerEmail ?? booking.CustomerEmail ?? "").Trim().ToLowerInvariant(),
+                    ExpiresAt       = DateTime.UtcNow.AddMinutes(SlotHoldMinutes),
+                    CreatedAt       = DateTime.UtcNow,
+                });
+                await _context.SaveChangesAsync();
 
                 return Ok(new
                 {
                     chargeId,
                     redirectUrl = tapRedirectUrl,
-                    amount      = dto.Amount,
+                    amount      = chargeAmount,
                     currency    = dto.Currency ?? "QAR",
                 });
             }
@@ -206,7 +211,6 @@ namespace Glanz.API.Controllers
                 var status    = root.TryGetProperty("status", out var statusEl) ? statusEl.GetString() ?? "UNKNOWN" : "UNKNOWN";
                 var amount    = root.TryGetProperty("amount", out var amtEl)    ? amtEl.GetDecimal()   : 0m;
 
-                // Resolve the booking tied to this charge.
                 var booking = await _context.Bookings
                     .FirstOrDefaultAsync(b => b.StripePaymentIntentId == chargeId);
 
@@ -251,12 +255,13 @@ namespace Glanz.API.Controllers
         }
     }
 
+    /// <summary>
+    /// Note: Amount and ScheduledDate are intentionally absent.
+    /// The charge amount is always derived server-side from the booking record.
+    /// </summary>
     public class CreateChargeDto
     {
-        public decimal   Amount          { get; set; }
         public string?   Currency        { get; set; }
-        public DateTime? ScheduledDate   { get; set; }
-        public string?   TimeSlot        { get; set; }
         public int       DurationMinutes { get; set; }
         public string?   CustomerEmail   { get; set; }
         public string?   BookingNumber   { get; set; }

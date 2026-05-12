@@ -69,7 +69,12 @@ function flushQueue(error, token = null) {
 
 // ── Response interceptor ──────────────────────────────────────────────────────
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Capture correlation ID for error reporting (see X-Correlation-Id middleware)
+    const cid = response.headers?.['x-correlation-id'];
+    if (cid) window.__lastCorrelationId = cid;
+    return response;
+  },
   async (error) => {
     if (!error?.response) {
       console.error(
@@ -79,6 +84,7 @@ apiClient.interceptors.response.use(
           url: error?.config?.url,
           baseURL: error?.config?.baseURL,
           method: error?.config?.method,
+          correlationId: window.__lastCorrelationId,
         }
       );
     }

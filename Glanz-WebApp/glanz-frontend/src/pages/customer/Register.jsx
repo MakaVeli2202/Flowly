@@ -174,7 +174,7 @@ function Register() {
     }
     setLoading(true);
     try {
-      await register({
+      const result = await register({
         firstName: formData.firstName, lastName: formData.lastName,
         email: formData.email,         password: formData.password,
         phone: formData.phone.trim() || undefined,
@@ -182,6 +182,10 @@ function Register() {
         referralCode: formData.referralCode.trim() || undefined,
         dateOfBirth: dateOfBirth ? dateOfBirth.toISOString() : undefined,
       });
+      if (result.requiresEmailVerification) {
+        navigate(`/verify-email?email=${encodeURIComponent(formData.email)}`, { replace: true });
+        return;
+      }
       if (selectedPackage)                              navigate('/booking', { state: { selectedPackage }, replace: true });
       else if (from && from !== '/register' && from !== '/login') navigate(from, { replace: true });
       else                                              navigate('/', { replace: true });

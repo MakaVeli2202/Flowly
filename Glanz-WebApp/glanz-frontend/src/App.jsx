@@ -23,6 +23,9 @@ import LoadingCircle        from './components/shared/LoadingCircle';
 import Home                from './pages/customer/Home';
 import Login               from './pages/customer/Login';
 import Register            from './pages/customer/Register';
+import EmailVerification   from './pages/customer/EmailVerification';
+import ForgotPassword      from './pages/customer/ForgotPassword';
+import ResetPassword       from './pages/customer/ResetPassword';
 import Packages            from './pages/customer/Packages';
 import Booking             from './pages/customer/Booking';
 import BookingConfirmation from './pages/customer/BookingConfirmation';
@@ -177,13 +180,16 @@ function AppRoutes() {
       <Routes>
 
         {/* ── Public ─────────────────────────────────────────────────── */}
-        <Route path="/"         element={<Home />}     />
-        <Route path="/login"    element={<Login />}    />
-        <Route path="/register" element={<Register />} />
-        <Route path="/packages" element={<Packages />} />
-        <Route path="/plans"    element={<Plans />}    />
-        <Route path="/careers"  element={<Careers />}  />
-        <Route path="/privacy"  element={<PrivacyPolicy />} />
+        <Route path="/"               element={<Home />}             />
+        <Route path="/login"          element={<Login />}            />
+        <Route path="/register"       element={<Register />}         />
+        <Route path="/verify-email"   element={<EmailVerification />}/>
+        <Route path="/forgot-password" element={<ForgotPassword />}  />
+        <Route path="/reset-password" element={<ResetPassword />}    />
+        <Route path="/packages"       element={<Packages />}         />
+        <Route path="/plans"          element={<Plans />}            />
+        <Route path="/careers"        element={<Careers />}          />
+        <Route path="/privacy"        element={<PrivacyPolicy />}    />
 
         {/* ── Protected customer ─────────────────────────────────────── */}
         <Route path="/booking" element={

@@ -30,6 +30,7 @@ builder.WebHost.ConfigureKestrel(options =>
 {
     var port = int.Parse(Environment.GetEnvironmentVariable("PORT") ?? "5289");
     options.ListenAnyIP(port);
+    options.Limits.MaxRequestBodySize = 10 * 1024 * 1024; // 10 MB global cap — prevents DoS via oversized payloads
 });
 
 builder.Services.AddControllers(options =>
@@ -79,6 +80,20 @@ if (!builder.Environment.IsDevelopment())
                 Endpoint = "post:/api/auth/*",
                 Period = "5m",
                 Limit = 20,
+            },
+            new RateLimitRule
+            {
+                // Tighter per-IP cap on login to slow credential-stuffing attacks
+                Endpoint = "post:/api/auth/login",
+                Period = "10m",
+                Limit = 10,
+            },
+            new RateLimitRule
+            {
+                // Limit account creation to block throwaway-account spam
+                Endpoint = "post:/api/auth/register",
+                Period = "10m",
+                Limit = 5,
             },
             new RateLimitRule
             {
@@ -266,6 +281,7 @@ builder.Services.AddScoped<IRealtimeService, RealtimeService>();
 builder.Services.AddScoped<ILocalizationTextResolver, LocalizationTextResolver>();
 builder.Services.AddScoped<IAutoTranslationService, AutoTranslationService>();
 builder.Services.AddScoped<IReferralService, ReferralService>();
+builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 // Phase 3: background maintenance — cleans expired slot reservations + flags late bookings
 builder.Services.AddHostedService<BookingMaintenanceService>();
 // Customer reminder service — sends notifications to inactive customers
@@ -279,6 +295,17 @@ builder.Services.AddSignalR(options =>
 });
 
 var app = builder.Build();
+
+// ── Security startup checks ───────────────────────────────────────────────
+var startupLogger = app.Services.GetRequiredService<ILogger<Program>>();
+var tapWebhookSecret = app.Configuration["TapPayments:WebhookSecret"];
+if (app.Environment.IsProduction() && string.IsNullOrWhiteSpace(tapWebhookSecret))
+{
+    startupLogger.LogCritical(
+        "SECURITY WARNING: TapPayments:WebhookSecret is not configured. " +
+        "Incoming Tap webhooks cannot be verified — a forged webhook could mark unpaid bookings as paid. " +
+        "Set TapPayments:WebhookSecret to the signing key from the Tap dashboard immediately.");
+}
 
 using (var scope = app.Services.CreateScope())
 {
@@ -351,12 +378,17 @@ app.Use(async (context, next) =>
             "connect-src 'self' https://api.tap.company; " +
             "font-src 'self' https://fonts.gstatic.com; " +
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+            // TODO: Remove 'unsafe-inline' from style-src — it allows CSS injection attacks.
+            // Tailwind and some component inline styles currently require it.
+            // Fix path: generate a per-request nonce, inject into style tags, include nonce
+            // in the CSP header (requires SSR or middleware that patches the served index.html).
             "img-src 'self' data: https:;");
     }
     await next();
 });
 
 app.UseStaticFiles();
+app.UseMiddleware<Glanz.API.Middleware.CorrelationIdMiddleware>();
 app.UseIpRateLimiting();
 app.UseCors("AllowFrontend");
 app.UseAuthentication();

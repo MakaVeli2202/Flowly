@@ -6,6 +6,7 @@ using Glanz.API.Models;
 using Glanz.API.DTOs;
 using Glanz.API.Services;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Hosting;
@@ -25,6 +26,7 @@ namespace Glanz.API.Controllers
         private readonly IAuditService _audit;
         private readonly ICredentialVerifier _credentialVerifier;
         private readonly IObjectStorageService _objectStorage;
+        private readonly IEmailService _emailService;
         private static readonly string[] DefaultAvatarUrls =
         {
             "/assets/avatars/default-gulf-male-1.svg",
@@ -35,7 +37,7 @@ namespace Glanz.API.Controllers
             "/assets/avatars/default-expat-female-1.svg"
         };
 
-        public AuthController(AppDbContext context, ITokenService tokenService, IConfiguration configuration, IWebHostEnvironment env, IAuditService audit, ICredentialVerifier credentialVerifier, IObjectStorageService objectStorage)
+        public AuthController(AppDbContext context, ITokenService tokenService, IConfiguration configuration, IWebHostEnvironment env, IAuditService audit, ICredentialVerifier credentialVerifier, IObjectStorageService objectStorage, IEmailService emailService)
         {
             _context = context;
             _audit = audit;
@@ -44,6 +46,7 @@ namespace Glanz.API.Controllers
             _env = env;
             _credentialVerifier = credentialVerifier;
             _objectStorage = objectStorage;
+            _emailService = emailService;
         }
 
         private void SetRefreshTokenCookie(string refreshToken)
@@ -332,14 +335,28 @@ namespace Glanz.API.Controllers
                     await _context.SaveChangesAsync();
                 }
 
-                var (accessToken, refreshToken) = await IssueTokensAsync(user);
-                SetRefreshTokenCookie(refreshToken);
+                // Generate and send email verification OTP.
+                // The user cannot log in until they verify their email.
+                var otp = GenerateNumericOtp();
+                user.EmailVerificationToken       = BCrypt.Net.BCrypt.HashPassword(otp);
+                user.EmailVerificationTokenExpiry = DateTime.UtcNow.AddHours(24);
+                user.IsEmailVerified              = false;
+                await _context.SaveChangesAsync();
 
-                return Ok(new AuthResponseDto
+                try
                 {
-                    Token        = accessToken,
-                    RefreshToken = refreshToken,
-                    User         = ToUserDto(user)
+                    await _emailService.SendEmailVerificationAsync(user.Email, user.FirstName, otp);
+                }
+                catch (Exception emailEx)
+                {
+                    Console.WriteLine($"[Auth/Register] Email send failed (non-fatal): {emailEx.Message}");
+                }
+
+                return Ok(new
+                {
+                    message                  = "Registration successful. Please check your email for a verification code.",
+                    requiresEmailVerification = true,
+                    email                    = user.Email
                 });
             }
             catch (Exception ex)
@@ -554,6 +571,9 @@ namespace Glanz.API.Controllers
 
                     if (!user.IsActive)
                         return Unauthorized(new { message = "Account is disabled" });
+
+                    if (!user.IsEmailVerified)
+                        return StatusCode(403, new { message = "Please verify your email address before logging in.", requiresEmailVerification = true, email = user.Email });
 
                     var (accessToken, refreshToken) = await IssueTokensAsync(user);
                     SetRefreshTokenCookie(refreshToken);
@@ -1264,6 +1284,121 @@ namespace Glanz.API.Controllers
                 Console.WriteLine($"Update payslip settings error: {ex.Message}");
                 return StatusCode(500, new { message = "Failed to update payslip settings" });
             }
+        }
+
+        // ── Email Verification & Password Reset ──────────────────────────────────
+
+        [HttpPost("send-verification")]
+        public async Task<IActionResult> SendVerification([FromBody] SendVerificationDto dto)
+        {
+            var normalizedEmail = dto.Email.Trim().ToLowerInvariant();
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == normalizedEmail);
+
+            // Return same response regardless to prevent email enumeration
+            if (user != null && !user.IsEmailVerified)
+            {
+                var otp = GenerateNumericOtp();
+                user.EmailVerificationToken       = BCrypt.Net.BCrypt.HashPassword(otp);
+                user.EmailVerificationTokenExpiry = DateTime.UtcNow.AddHours(24);
+                user.UpdatedAt                    = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+
+                try { await _emailService.SendEmailVerificationAsync(user.Email, user.FirstName, otp); }
+                catch (Exception ex) { Console.WriteLine($"[Auth/SendVerification] Email send failed: {ex.Message}"); }
+            }
+
+            return Ok(new { message = "If that address is registered and unverified, a new code has been sent." });
+        }
+
+        [HttpPost("verify-email")]
+        public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailDto dto)
+        {
+            var normalizedEmail = dto.Email.Trim().ToLowerInvariant();
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == normalizedEmail);
+
+            if (user == null)
+                return BadRequest(new { message = "Invalid verification code." });
+
+            if (user.IsEmailVerified)
+                return Ok(new { message = "Email already verified. Please log in." });
+
+            if (user.EmailVerificationToken == null || user.EmailVerificationTokenExpiry < DateTime.UtcNow)
+                return BadRequest(new { message = "Verification code has expired. Please request a new one." });
+
+            if (!BCrypt.Net.BCrypt.Verify(dto.Token, user.EmailVerificationToken))
+                return BadRequest(new { message = "Invalid verification code." });
+
+            user.IsEmailVerified              = true;
+            user.EmailVerificationToken       = null;
+            user.EmailVerificationTokenExpiry = null;
+            user.UpdatedAt                    = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Email verified successfully. You can now log in." });
+        }
+
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
+        {
+            var normalizedEmail = dto.Email.Trim().ToLowerInvariant();
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == normalizedEmail);
+
+            // Return same response regardless to prevent email enumeration
+            if (user != null)
+            {
+                var token = GenerateSecureToken();
+                user.PasswordResetToken       = BCrypt.Net.BCrypt.HashPassword(token);
+                user.PasswordResetTokenExpiry = DateTime.UtcNow.AddHours(6);
+                user.UpdatedAt                = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+
+                var frontendUrl = _configuration["FrontendUrl"] ?? "http://localhost:5173";
+                var resetUrl    = $"{frontendUrl}/reset-password?token={Uri.EscapeDataString(token)}";
+
+                try { await _emailService.SendPasswordResetAsync(user.Email, user.FirstName, resetUrl); }
+                catch (Exception ex) { Console.WriteLine($"[Auth/ForgotPassword] Email send failed: {ex.Message}"); }
+            }
+
+            return Ok(new { message = "If that email address is registered, you will receive password reset instructions shortly." });
+        }
+
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
+        {
+            if (dto.NewPassword != dto.ConfirmNewPassword)
+                return BadRequest(new { message = "Passwords do not match." });
+
+            // Load only candidates with a non-expired token to limit BCrypt calls
+            var candidates = await _context.Users
+                .Where(u => u.PasswordResetToken != null && u.PasswordResetTokenExpiry > DateTime.UtcNow)
+                .ToListAsync();
+
+            var user = candidates.FirstOrDefault(u => BCrypt.Net.BCrypt.Verify(dto.Token, u.PasswordResetToken!));
+            if (user == null)
+                return BadRequest(new { message = "Invalid or expired reset token." });
+
+            user.PasswordHash             = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
+            user.PasswordResetToken       = null;
+            user.PasswordResetTokenExpiry = null;
+            user.RefreshToken             = null; // Invalidate all existing sessions
+            user.RefreshTokenExpiry       = null;
+            user.UpdatedAt                = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Password reset successfully. Please log in with your new password." });
+        }
+
+        private static string GenerateNumericOtp()
+        {
+            var bytes = RandomNumberGenerator.GetBytes(4);
+            var value = BitConverter.ToUInt32(bytes) % 1_000_000;
+            return value.ToString("D6");
+        }
+
+        private static string GenerateSecureToken()
+        {
+            return Convert.ToBase64String(RandomNumberGenerator.GetBytes(32))
+                .Replace('+', '-').Replace('/', '_').TrimEnd('=');
         }
     }
 }

@@ -280,4 +280,27 @@ namespace Glanz.API.DTOs
     {
         public string? RefreshToken { get; set; }
     }
+
+    public class SendVerificationDto
+    {
+        public string Email { get; set; } = string.Empty;
+    }
+
+    public class VerifyEmailDto
+    {
+        public string Email { get; set; } = string.Empty;
+        public string Token { get; set; } = string.Empty;
+    }
+
+    public class ForgotPasswordDto
+    {
+        public string Email { get; set; } = string.Empty;
+    }
+
+    public class ResetPasswordDto
+    {
+        public string Token          { get; set; } = string.Empty;
+        public string NewPassword    { get; set; } = string.Empty;
+        public string ConfirmNewPassword { get; set; } = string.Empty;
+    }
 }
