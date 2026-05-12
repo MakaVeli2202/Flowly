@@ -147,13 +147,7 @@ namespace Glanz.API.Controllers
             return Ok(new { message = "Location tracking stopped" });
         }
 
-        private int? GetUserId()
-        {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
-                return null;
-            return userId;
-        }
+        private int? GetUserId() => User.GetCurrentUserId();
     }
 
     [ApiController]

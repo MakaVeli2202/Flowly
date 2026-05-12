@@ -22,15 +22,7 @@ namespace Glanz.API.Controllers
             _context = context;
         }
 
-        private int? GetUserId()
-        {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int userId))
-            {
-                return userId;
-            }
-            return null;
-        }
+        private int? GetUserId() => User.GetCurrentUserId();
 
         [Authorize(Roles = "Admin")]
         [HttpGet("dashboard")]

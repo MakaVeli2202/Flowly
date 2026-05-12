@@ -24,11 +24,7 @@ namespace Glanz.API.Controllers
             _configuration = configuration;
         }
 
-        private int? GetUserId()
-        {
-            var c = User.FindFirst(ClaimTypes.NameIdentifier);
-            return c != null && int.TryParse(c.Value, out int id) ? id : null;
-        }
+        private int? GetUserId() => User.GetCurrentUserId();
 
         private bool IsAdmin() => User.IsInRole("Admin");
 

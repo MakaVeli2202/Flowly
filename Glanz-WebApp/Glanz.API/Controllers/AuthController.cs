@@ -114,7 +114,7 @@ namespace Glanz.API.Controllers
             };
         }
 
-        private static readonly JsonSerializerOptions _jsonOpts = new() { PropertyNameCaseInsensitive = true };
+        private static readonly JsonSerializerOptions _jsonOpts = JsonOptions.CaseInsensitive;
 
         private static List<WorkerDayScheduleEntry>? ParseDaySchedules(string? json)
         {
@@ -661,30 +661,27 @@ namespace Glanz.API.Controllers
         [Authorize]
         public async Task<IActionResult> Logout()
         {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim != null && int.TryParse(userIdClaim.Value, out var userId))
+            var userId = User.GetCurrentUserId();
+            if (IsWorkerRole())
             {
-                if (IsWorkerRole())
+                var staff = await _context.Staff.FindAsync(userId);
+                if (staff != null)
                 {
-                    var staff = await _context.Staff.FindAsync(userId);
-                    if (staff != null)
-                    {
-                        staff.RefreshToken = null;
-                        staff.RefreshTokenExpiry = null;
-                        staff.UpdatedAt = DateTime.UtcNow;
-                        await _context.SaveChangesAsync();
-                    }
+                    staff.RefreshToken = null;
+                    staff.RefreshTokenExpiry = null;
+                    staff.UpdatedAt = DateTime.UtcNow;
+                    await _context.SaveChangesAsync();
                 }
-                else
+            }
+            else
+            {
+                var user = await _context.Users.FindAsync(userId);
+                if (user != null)
                 {
-                    var user = await _context.Users.FindAsync(userId);
-                    if (user != null)
-                    {
-                        user.RefreshToken       = null;
-                        user.RefreshTokenExpiry = null;
-                        user.UpdatedAt          = DateTime.UtcNow;
-                        await _context.SaveChangesAsync();
-                    }
+                    user.RefreshToken       = null;
+                    user.RefreshTokenExpiry = null;
+                    user.UpdatedAt          = DateTime.UtcNow;
+                    await _context.SaveChangesAsync();
                 }
             }
 
@@ -698,9 +695,7 @@ namespace Glanz.API.Controllers
         {
             try
             {
-                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
-                    return Unauthorized(new { message = "Invalid token" });
+                var userId = User.GetCurrentUserId();
 
                 if (IsWorkerRole())
                 {
@@ -726,9 +721,7 @@ namespace Glanz.API.Controllers
         {
             try
             {
-                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
-                    return Unauthorized(new { message = "Invalid token" });
+                var userId = User.GetCurrentUserId();
 
                 if (IsWorkerRole())
                 {
@@ -799,9 +792,7 @@ namespace Glanz.API.Controllers
         {
             try
             {
-                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
-                    return Unauthorized(new { message = "Invalid token" });
+                var userId = User.GetCurrentUserId();
 
                 var image = dto.Image ?? Request.Form?.Files?.FirstOrDefault();
                 if (image == null || image.Length == 0)
@@ -863,9 +854,7 @@ namespace Glanz.API.Controllers
                 if (dto.NewPassword != dto.ConfirmNewPassword)
                     return BadRequest(new { message = "New password and confirmation do not match" });
 
-                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
-                    return Unauthorized(new { message = "Invalid token" });
+                var userId = User.GetCurrentUserId();
 
                 if (IsWorkerRole())
                 {
@@ -927,9 +916,7 @@ namespace Glanz.API.Controllers
         [Authorize]
         public async Task<IActionResult> RegisterPushTokenAsync([FromBody] RegisterPushTokenDto dto)
         {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
-                return Unauthorized();
+            var userId = User.GetCurrentUserId();
 
             if (string.IsNullOrWhiteSpace(dto.Token) || !dto.Token.StartsWith("ExponentPushToken"))
                 return BadRequest(new { message = "Invalid Expo push token." });
@@ -978,9 +965,7 @@ namespace Glanz.API.Controllers
         [Authorize]
         public async Task<IActionResult> ClearPushTokenAsync()
         {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
-                return Unauthorized();
+            var userId = User.GetCurrentUserId();
 
             if (IsWorkerRole())
             {

@@ -83,10 +83,6 @@ export const formatDuration = (rawMinutes, style = 'long') => {
   return `${hm} (${total} min)`;                // 'long'
 };
 
-// Keep the original export name as an alias so existing call sites don't break.
-export const formatMinutesAsHoursAndMinutes = (rawMinutes) =>
-  formatDuration(rawMinutes, 'long');
-
 // ─── Display formatting ───────────────────────────────────────────────────────
 
 /**

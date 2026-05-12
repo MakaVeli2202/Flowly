@@ -235,7 +235,7 @@ function BookingForm({ isTapMode }) {
 
   useEffect(() => {
     if (!isAuthenticated || isAdmin) { setMySubscription(null); return; }
-    subscriptionsAPI.getMySubscription()
+    subscriptionsAPI.getMy()
       .then((sub) => setMySubscription((sub?.isActive || sub?.status === 'Active') ? sub : null))
       .catch(() => setMySubscription(null));
   }, [isAuthenticated, isAdmin]);

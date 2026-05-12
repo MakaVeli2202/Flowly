@@ -35,15 +35,7 @@ namespace Glanz.API.Controllers
             return 50m;
         }
 
-        private int? GetUserId()
-        {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int userId))
-            {
-                return userId;
-            }
-            return null;
-        }
+        private int? GetUserId() => User.GetCurrentUserId();
 
         [HttpGet("my-referrals")]
         public async Task<ActionResult<MyReferralsDto>> GetMyReferrals()

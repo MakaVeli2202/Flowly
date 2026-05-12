@@ -167,11 +167,7 @@ namespace Glanz.API.Controllers
         [Authorize]
         public async Task<ActionResult<CustomerSubscriptionDto>> Subscribe(int planId)
         {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
-            {
-                return Unauthorized();
-            }
+            var userId = User.GetCurrentUserId();
 
             var plan = await _context.SubscriptionPlans
                 .Include(p => p.Features)
@@ -222,11 +218,7 @@ namespace Glanz.API.Controllers
         [Authorize]
         public async Task<ActionResult<CustomerSubscriptionDto>> GetMy()
         {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
-            {
-                return Unauthorized();
-            }
+            var userId = User.GetCurrentUserId();
 
             var subscription = await _context.UserSubscriptions
                 .AsNoTracking()
@@ -252,11 +244,7 @@ namespace Glanz.API.Controllers
         [Authorize]
         public async Task<ActionResult> CancelMySubscription()
         {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
-            {
-                return Unauthorized();
-            }
+            var userId = User.GetCurrentUserId();
 
             var subscription = await _context.UserSubscriptions
                 .Where(s => s.UserId == userId && s.Status == UserSubscriptionStatus.Active)

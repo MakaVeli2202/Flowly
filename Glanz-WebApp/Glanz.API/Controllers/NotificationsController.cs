@@ -23,15 +23,7 @@ namespace Glanz.API.Controllers
             _expoPush = expoPush;
         }
 
-        private int? GetUserId()
-        {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int userId))
-            {
-                return userId;
-            }
-            return null;
-        }
+        private int? GetUserId() => User.GetCurrentUserId();
 
         [HttpGet("unread-count")]
         public async Task<ActionResult<int>> GetUnreadCount()

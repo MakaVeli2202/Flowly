@@ -38,11 +38,6 @@ export const subscriptionsAPI = {
     return response.data;
   }),
 
-  getMySubscription: async () => withRetry(async () => {
-    const response = await apiClient.get('/Plans/my');
-    return response.data;
-  }),
-
   cancelPlan: async () => withRetry(async () => {
     const response = await apiClient.post('/Plans/cancel');
     return response.data;

@@ -67,15 +67,7 @@ namespace Glanz.API.Controllers
             return header.Split(',')[0].Split('-')[0].Trim().ToLowerInvariant();
         }
 
-        private int? GetUserId()
-        {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int userId))
-            {
-                return userId;
-            }
-            return null;
-        }
+        private int? GetUserId() => User.GetCurrentUserId();
 
         // Business-hours window that defines the bookable day.
         // Configurable via BusinessSettings:DayStart / DayEnd in appsettings.json.
@@ -335,7 +327,7 @@ namespace Glanz.API.Controllers
                 day.Equals(targetShort, StringComparison.OrdinalIgnoreCase));
         }
 
-        private static readonly JsonSerializerOptions _dayScheduleJsonOpts = new() { PropertyNameCaseInsensitive = true };
+        private static readonly JsonSerializerOptions _dayScheduleJsonOpts = JsonOptions.CaseInsensitive;
 
         /// <summary>
         /// Returns (shiftStart, shiftEnd) for a worker on a specific day,

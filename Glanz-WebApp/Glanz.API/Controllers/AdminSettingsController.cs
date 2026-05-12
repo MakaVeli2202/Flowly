@@ -154,9 +154,7 @@ namespace Glanz.API.Controllers
         {
             if (!IsAdmin()) return Forbid();
 
-            var adminIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (adminIdClaim == null || !int.TryParse(adminIdClaim.Value, out var adminId))
-                return Unauthorized(new { message = "Invalid token." });
+            var adminId = User.GetCurrentUserId();
 
             var admin = await _context.Users.FindAsync(adminId);
             if (admin == null)

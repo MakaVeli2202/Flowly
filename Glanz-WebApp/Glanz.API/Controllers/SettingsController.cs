@@ -61,8 +61,7 @@ namespace Glanz.API.Controllers
     private const int DefaultReferralRewardAmount = 50; // Default 50 QAR reward
     private const decimal DefaultReferralDiscountPercent = 0; // Default 0% discount for referred user
 
-        private static readonly JsonSerializerOptions _jsonOpts =
-            new() { PropertyNameCaseInsensitive = true };
+        private static readonly JsonSerializerOptions _jsonOpts = JsonOptions.CaseInsensitive;
 
         private readonly AppDbContext _context;
         private readonly ILogger<SettingsController> _logger;

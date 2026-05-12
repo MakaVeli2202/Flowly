@@ -23,8 +23,7 @@ namespace Glanz.API.Controllers
             _objectStorage = objectStorage;
         }
 
-        private int GetUserId() =>
-            int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        private int GetUserId() => User.GetCurrentUserId();
 
         private static VehicleDto ToDto(Vehicle v) => new()
         {
