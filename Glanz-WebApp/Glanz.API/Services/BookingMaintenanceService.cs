@@ -10,14 +10,40 @@ namespace Glanz.API.Services
     ///   1. Expired slot reservations — removed so the slot opens up for new bookings.
     ///   2. Late bookings — Confirmed bookings where the scheduled time + grace period
     ///      has passed are flagged so admin can see them in the dashboard.
+    ///   3. Old notifications — pruned once per day using tiered retention:
+    ///        • Ephemeral (status updates)  → 7 days
+    ///        • Operational (booking events) → 60 days
+    ///        • Engagement (loyalty/offers)  → 90 days
     ///
     /// Registered as a hosted service in Program.cs.
     /// Uses IServiceScopeFactory to create a scoped DbContext (BackgroundService is singleton).
     /// </summary>
     public class BookingMaintenanceService : BackgroundService
     {
-        private static readonly TimeSpan TickInterval   = TimeSpan.FromMinutes(5);
-        private static readonly TimeSpan LateGracePeriod = TimeSpan.FromMinutes(90); // confirmed + scheduled time + 90 min = late
+        private static readonly TimeSpan TickInterval    = TimeSpan.FromMinutes(5);
+        private static readonly TimeSpan LateGracePeriod = TimeSpan.FromMinutes(90);
+        private static readonly TimeSpan NotificationCleanupInterval = TimeSpan.FromDays(1);
+
+        // Real-time status updates — irrelevant after a week
+        private static readonly NotificationType[] EphemeralTypes =
+        [
+            NotificationType.WorkerArrived,
+            NotificationType.WorkerOnMyWay,
+            NotificationType.JobStarted,
+            NotificationType.JobPaused,
+            NotificationType.JobResumed,
+            NotificationType.WorkerRunningLate,
+        ];
+
+        // Loyalty / offers — customers may check these weeks later
+        private static readonly NotificationType[] EngagementTypes =
+        [
+            NotificationType.SpecialOffer,
+            NotificationType.LoyaltyReward,
+            NotificationType.LoyaltyReviewRequested,
+        ];
+
+        private DateTime _lastNotificationCleanup = DateTime.MinValue;
 
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly ILogger<BookingMaintenanceService> _logger;
@@ -64,6 +90,15 @@ namespace Glanz.API.Services
                 _logger.LogInformation(
                     "[Maintenance] Tick complete — expired reservations removed: {Expired}, late bookings flagged: {Late}",
                     expired, lateCount);
+            }
+
+            // Notification cleanup runs once per day
+            if (DateTime.UtcNow - _lastNotificationCleanup >= NotificationCleanupInterval)
+            {
+                var cleaned = await CleanOldNotificationsAsync(db, ct);
+                if (cleaned > 0)
+                    _logger.LogInformation("[Maintenance] Pruned {Count} old notifications.", cleaned);
+                _lastNotificationCleanup = DateTime.UtcNow;
             }
         }
 
@@ -121,6 +156,35 @@ namespace Glanz.API.Services
 
             await db.SaveChangesAsync(ct);
             return late.Count;
+        }
+
+        // ── Task 3: Prune old notifications ───────────────────────────────────────────
+        //
+        // Tiered retention keeps the table small without discarding anything the
+        // admin or customer might still need:
+        //   • Ephemeral (real-time status)  → 7 days
+        //   • Operational (booking events)  → 60 days
+        //   • Engagement (loyalty/offers)   → 90 days
+
+        private async Task<int> CleanOldNotificationsAsync(AppDbContext db, CancellationToken ct)
+        {
+            var now       = DateTime.UtcNow;
+            var cutoff7   = now.AddDays(-7);
+            var cutoff60  = now.AddDays(-60);
+            var cutoff90  = now.AddDays(-90);
+
+            var toDelete = await db.Notifications
+                .Where(n =>
+                    (EphemeralTypes.Contains(n.Type)  && n.CreatedAt < cutoff7)  ||
+                    (EngagementTypes.Contains(n.Type) && n.CreatedAt < cutoff90) ||
+                    (!EphemeralTypes.Contains(n.Type) && !EngagementTypes.Contains(n.Type) && n.CreatedAt < cutoff60))
+                .ToListAsync(ct);
+
+            if (toDelete.Count == 0) return 0;
+
+            db.Notifications.RemoveRange(toDelete);
+            await db.SaveChangesAsync(ct);
+            return toDelete.Count;
         }
     }
 }
