@@ -15,6 +15,27 @@ export function useAuth() {
   return context;
 }
 
+function decodeUserFromToken(token) {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return {
+      id: payload.sub || payload.nameidentifier || payload.nameid,
+      role: payload.role
+        || payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role']
+        || payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/role'],
+      email: payload.email
+        || payload.emailaddress
+        || payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'],
+      userName: payload.name
+        || payload.unique_name
+        || payload.given_name
+        || payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'],
+    };
+  } catch {
+    return null;
+  }
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
@@ -38,28 +59,36 @@ export function AuthProvider({ children }) {
 
     const initAuth = async () => {
       try {
-        // Only attempt refresh if we have an active session indicator.
-        // This prevents a 401 on /Auth/refresh when not logged in.
         const hasSession = localStorage.getItem('glanz_session_active') === 'true';
         if (!hasSession) {
           setLoading(false);
           return;
         }
-        // HttpOnly refresh-token cookie is sent automatically by the browser.
-        // This silently re-issues an access token so the user stays logged in
-        // across page reloads without storing anything in localStorage.
+
         const refreshed = await authAPI.refresh();
-        // Apply the new access token to axios BEFORE calling /Auth/me,
-        // otherwise the request goes out unauthenticated and returns 401.
         setAuthToken(refreshed.token);
-        const currentUser = await authAPI.getCurrentUser();
+
+        // Try fetching full user profile — but don't let failure cascade.
+        // If getCurrentUser 401's, the axios interceptor will try another
+        // /Auth/refresh, consuming the already-used cookie and clearing the
+        // valid access token.  We catch that, re-apply the token we already
+        // have, and fall back to JWT decoding for role info.
+        let currentUser = refreshed.user || null;
+        if (!currentUser) {
+          try {
+            currentUser = await authAPI.getCurrentUser();
+          } catch {
+            setAuthToken(refreshed.token);
+            currentUser = decodeUserFromToken(refreshed.token);
+          }
+        }
+
         setToken(refreshed.token);
         setUser(currentUser);
-        // Connect WebSocket hub and start notification bus
+
         await realtimeService.connect(refreshed.token);
         startNotificationConnection();
       } catch {
-        // No valid refresh token — user must log in manually.
         localStorage.removeItem('glanz_session_active');
         setAuthToken(null);
         setToken(null);

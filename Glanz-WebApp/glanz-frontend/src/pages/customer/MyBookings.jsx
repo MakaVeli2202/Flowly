@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   bookingsAPI
@@ -20,6 +20,7 @@ import { Skeleton, CardSkeleton } from '../../components/shared/Skeleton';
 import { EmptyState } from '../../components/shared/EmptyState';
 import { useSettings } from '../../context/SettingsContext';
 import { useLanguage } from '../../context/LanguageContext';
+import { Balloons } from '../../components/shared/Balloons';
 
 const VEHICLE_TYPES = ['Motorcycle', 'Sedan', 'SUV', 'Pickup'];
 
@@ -192,6 +193,8 @@ function MyBookings() {
   const [feedbackData, setFeedbackData] = useState({ type: 'Review', rating: 5, comment: '', isAnonymous: false });
   const [submittingFeedback, setSubmittingFeedback] = useState(false);
 
+  const balloonsRef = useRef(null);
+
   // Edit modal state
   const [editBooking,        setEditBooking]        = useState(null);
   const [editForm,           setEditForm]           = useState({});
@@ -237,6 +240,14 @@ function MyBookings() {
     window.addEventListener('highlight-customer-booking', onHighlight);
     return () => window.removeEventListener('highlight-customer-booking', onHighlight);
   }, []);
+
+  useEffect(() => {
+    if (loyalty?.isGoogleReviewActivated && !localStorage.getItem('glanz_review_balloon_shown')) {
+      localStorage.setItem('glanz_review_balloon_shown', '1');
+      const timer = setTimeout(() => balloonsRef.current?.launchAnimation(), 600);
+      return () => clearTimeout(timer);
+    }
+  }, [loyalty?.isGoogleReviewActivated]);
 
   const fetchBookings = async () => {
     try {
@@ -1295,6 +1306,7 @@ function MyBookings() {
           </div>
         )}
       </div>
+      <Balloons ref={balloonsRef} />
     </div>
   );
 }

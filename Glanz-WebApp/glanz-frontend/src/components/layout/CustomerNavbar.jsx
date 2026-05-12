@@ -135,11 +135,6 @@ export function CustomerNavbar({ theme, onToggleTheme }) {
 
         <div className="flex items-center justify-between w-full gap-x-6 sm:gap-x-8">
 
-          {/* Brand logo (modern navbar placement) */}
-          <Link to="/" className="flex items-center flex-shrink-0 hover:opacity-85 transition-opacity">
-            <img src={business.logo || '/GlanzLogo.png'} alt={business.name} className="h-10 sm:h-12 w-auto object-contain" />
-          </Link>
-
           <nav className="hidden sm:flex items-center space-x-4 sm:space-x-6 text-sm">
             {CUSTOMER_LINKS.map((link) => (
               <Link

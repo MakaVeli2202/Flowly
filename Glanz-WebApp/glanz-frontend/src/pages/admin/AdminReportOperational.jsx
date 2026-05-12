@@ -122,16 +122,20 @@ function OperationalReport() {
   const { t } = useLanguage();
   const [report,    setReport]    = useState(null);
   const [loading,   setLoading]   = useState(true);
+  const [fetchError, setFetchError] = useState(null);
   const [startDate, setStartDate] = useState(format(subDays(new Date(), 30), 'yyyy-MM-dd'));
   const [endDate,   setEndDate]   = useState(format(new Date(), 'yyyy-MM-dd'));
 
   const fetchReport = useCallback(async () => {
     try {
       setLoading(true);
+      setFetchError(null);
       const data = await reportsAPI.getOperational(startDate, endDate);
       setReport(data);
     } catch (err) {
       console.error('Operational report fetch failed:', err);
+      const msg = err?.response?.data?.message || err?.response?.data?.title || err?.message || 'Failed to load report';
+      setFetchError(msg);
       setReport(null);
     }
     finally { setLoading(false); }
@@ -145,6 +149,20 @@ function OperationalReport() {
       <div className="flex flex-col items-center justify-center min-h-screen gap-4">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
         <p className="text-[var(--muted-color)] text-sm">Loading report…</p>
+      </div>
+    </>
+  );
+
+  if (fetchError) return (
+    <>
+      <style>{PRISM_CSS}</style>
+      <div className="flex flex-col items-center justify-center min-h-screen gap-3 px-4">
+        <XCircle size={40} className="text-red-400" />
+        <p className="text-red-400 text-sm font-bold text-center">{fetchError}</p>
+        <button onClick={fetchReport}
+          className="mt-2 px-4 py-2 rounded-xl bg-primary text-white text-sm font-bold hover:bg-primary/90 transition">
+          Retry
+        </button>
       </div>
     </>
   );

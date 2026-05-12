@@ -6,6 +6,7 @@ import {
   formatDuration, formatSlotStartHour, formatTimeToAmPm,
   calculateEndTimeFromSlot, getCalendarCells,
 } from './BookingShared';
+import TimeSlotDropdown from '../../../components/shared/TimeSlotDropdown';
 
 function BookingScheduleStep({
   calendarMonth, setCalendarMonth,
@@ -95,23 +96,13 @@ function BookingScheduleStep({
         {/* Time slot */}
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-color)] mb-3">Time Slot</p>
-          <select name="timeSlot" value={formData.timeSlot}
-            onChange={(e) => setFormData((prev) => ({ ...prev, timeSlot: e.target.value }))}
-            required disabled={slotsLoading}
-            className="w-full rounded-xl border border-[var(--border-color)] bg-[var(--surface-bg)] text-[var(--text-color)] px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition">
-            {slotsLoading ? (
-              <option value="">Checking availability…</option>
-            ) : availableSlots !== null && availableSlots.length === 0 ? (
-              <option value="">No times available — try another day</option>
-            ) : (
-              <>
-                <option value="">Select a time</option>
-                {(availableSlots || []).map((slot) => (
-                  <option key={slot} value={slot}>{formatSlotStartHour(slot)}</option>
-                ))}
-              </>
-            )}
-          </select>
+          <TimeSlotDropdown
+            value={formData.timeSlot}
+            onChange={(slot) => setFormData((prev) => ({ ...prev, timeSlot: slot }))}
+            slots={availableSlots || []}
+            loading={slotsLoading}
+            disabled={!formData.scheduledDate}
+          />
           {availableSlots !== null && !slotsLoading && (
             <p className={`text-xs mt-2 ${availableSlots.length === 0 ? 'text-red-400' : 'text-[var(--muted-color)]'}`}>
               {availableSlots.length === 0

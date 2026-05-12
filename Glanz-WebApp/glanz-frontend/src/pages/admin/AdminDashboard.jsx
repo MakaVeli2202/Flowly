@@ -499,8 +499,8 @@ function AdminDashboard() {
         setSummary(summaryData);
         setFinancialReport(financialData);
         setOperationalReport(operationalData);
-      } catch {}
-      finally { setLoadingSummary(false); setLoadingCharts(false); }
+        } catch (err) { console.error('Dashboard fetch failed:', err); }
+        finally { setLoadingSummary(false); setLoadingCharts(false); }
     };
     fetchDashboardData();
   }, [startDate, endDate]);
@@ -515,7 +515,7 @@ function AdminDashboard() {
         const { startDate: sd, endDate: ed } = dateRef.current;
         reportsAPI.getDashboardSummary(toDateInput(sd), toDateInput(ed))
           .then(d => { if (d) setSummary(d); })
-          .catch(() => {});
+          .catch((err) => console.error('Dashboard live refresh failed:', err));
       }
     };
     return subscribeToNotifications(onNotif);

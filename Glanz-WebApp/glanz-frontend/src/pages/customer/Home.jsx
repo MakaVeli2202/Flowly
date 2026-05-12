@@ -2,7 +2,7 @@ import React, { useEffect, useLayoutEffect, useRef, useState, Suspense, lazy } f
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Link, useNavigate } from 'react-router-dom';
-import heroVideo from '../../assets/videos/hero-detailing.mp4';
+
 import {
   ArrowRight, Star, Shield, Clock, Award, Sparkles, Zap,
   MapPin, ChevronLeft, ChevronRight, ChevronDown, CheckCircle2,
@@ -124,57 +124,7 @@ const PRISM_CSS = `
   100% { transform: scale(3); opacity: 0; }
 }
 
-/* ── Adv droplets ── */
-@keyframes adv-drop-slide {
-  0% {
-    transform: translate3d(0, -24%, 0) scale(var(--drop-scale-x, 0.82), var(--drop-scale-y, 1.24));
-    opacity: 0.18;
-  }
-  10% {
-    transform: translate3d(var(--drift-a, -4px), 16%, 0) scale(calc(var(--drop-scale-x, 0.82) * 1.05), calc(var(--drop-scale-y, 1.24) * 0.98));
-    opacity: 0.9;
-  }
-  22% {
-    transform: translate3d(var(--drift-b, 6px), 88%, 0) scale(calc(var(--drop-scale-x, 0.82) * 0.98), calc(var(--drop-scale-y, 1.24) * 1.04));
-    opacity: 0.96;
-  }
-  40% {
-    transform: translate3d(var(--drift-c, -7px), 230%, 0) scale(calc(var(--drop-scale-x, 0.82) * 1.03), calc(var(--drop-scale-y, 1.24) * 0.98));
-    opacity: 0.94;
-  }
-  62% {
-    transform: translate3d(calc(var(--drift-d, 4px) * -1), 430%, 0) scale(calc(var(--drop-scale-x, 0.82) * 1.06), calc(var(--drop-scale-y, 1.24) * 0.94));
-    opacity: 0.86;
-  }
-  82% {
-    transform: translate3d(var(--drift-e, 2px), 620%, 0) scale(calc(var(--drop-scale-x, 0.82) * 0.96), calc(var(--drop-scale-y, 1.24) * 1.08));
-    opacity: 0.68;
-  }
-  100% {
-    transform: translate3d(calc(var(--drift-f, -3px) * 0.8), 860%, 0) scale(calc(var(--drop-scale-x, 0.82) * 0.92), calc(var(--drop-scale-y, 1.24) * 1.12));
-    opacity: 0.34;
-  }
-}
-@keyframes adv-drop-wobble {
-  0%, 100% { transform: translate3d(0, 0, 0) scale(1, 1); }
-  25%      { transform: translate3d(-1px, 0, 0) scale(0.98, 1.02); }
-  50%      { transform: translate3d(1.5px, 0, 0) scale(1.02, 0.99); }
-  75%      { transform: translate3d(-1px, 0, 0) scale(0.99, 1.01); }
-}
-@keyframes adv-drop-static {
-  0%, 100% {
-    opacity: 0.26;
-    transform: translate3d(0, 0, 0) scale(0.96);
-  }
-  45% {
-    opacity: 0.46;
-    transform: translate3d(1px, 2px, 0) scale(1.04);
-  }
-  70% {
-    opacity: 0.38;
-    transform: translate3d(-1px, 4px, 0) scale(1.08);
-  }
-}
+/* ── Adv bubbles ── */
 @keyframes adv-bubble-float {
   0% {
     transform: translate3d(0, 16px, 0) scale(0.88);
@@ -208,86 +158,8 @@ const PRISM_CSS = `
 
 .adv-card__droplet {
   --drop-size: 12px;
-  --trail-length: 90px;
-  --drift-a: -4px;
-  --drift-b: 6px;
-  --drift-c: -7px;
-  --drift-d: 4px;
-  --drift-e: -2px;
-  --drift-f: 3px;
-  --drop-scale-x: 0.78;
-  --drop-scale-y: 1.42;
   position: absolute;
-  width: var(--drop-size);
-  height: calc(var(--drop-size) * 1.32);
-  border-radius: 44% 56% 58% 42% / 22% 22% 78% 78%;
-  background:
-    radial-gradient(circle at 28% 22%, rgba(255,255,255,0.96) 0%, rgba(255,255,255,0.34) 22%, rgba(194,225,255,0.14) 50%, rgba(90,126,160,0.04) 100%),
-    linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0.04) 34%, rgba(150,190,225,0.10) 68%, rgba(12,20,28,0.05) 100%);
-  box-shadow:
-    inset 0 1px 1px rgba(255,255,255,0.52),
-    inset 0 -2px 4px rgba(12,20,28,0.12),
-    0 0 0 1px rgba(255,255,255,0.10),
-    0 10px 18px rgba(10,14,18,0.12),
-    0 0 14px rgba(210,236,255,0.12),
-    0 0 18px rgba(14,165,160,0.06);
-  mix-blend-mode: screen;
-  filter: saturate(1.14) blur(0.2px);
-  will-change: transform, opacity;
-  transform: translate3d(0, 0, 0);
   opacity: 0;
-}
-
-.adv-card__droplet::before {
-  content: '';
-  position: absolute;
-  top: 10%;
-  left: 20%;
-  width: 34%;
-  height: 20%;
-  border-radius: 999px;
-  background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.92), rgba(255,255,255,0.14) 72%, transparent 100%);
-  filter: blur(0.5px);
-  opacity: 0.9;
-}
-
-.adv-card__droplet::after {
-  content: '';
-  position: absolute;
-  left: 50%;
-  bottom: calc(100% - 2px);
-  width: calc(var(--drop-size) * 0.28);
-  height: var(--trail-length);
-  transform: translateX(-50%);
-  border-radius: 999px;
-  background: linear-gradient(180deg, transparent 0%, rgba(90,120,145,0.04) 18%, rgba(150,190,220,0.10) 52%, rgba(180,220,255,0.18) 78%, rgba(255,255,255,0.22) 100%);
-  filter: blur(1.2px);
-  opacity: 0.72;
-}
-
-.adv-card__droplet--sliding {
-  animation-name: adv-drop-slide;
-  animation-timing-function: cubic-bezier(0.22, 0.08, 0.18, 1);
-  animation-iteration-count: infinite;
-}
-
-.adv-card__droplet--sliding::after {
-  opacity: 0.78;
-}
-
-.adv-card__droplet--wobble {
-  animation-name: adv-drop-slide, adv-drop-wobble;
-  animation-timing-function: cubic-bezier(0.22, 0.08, 0.18, 1), ease-in-out;
-  animation-iteration-count: infinite, infinite;
-}
-
-.adv-card__droplet--static {
-  opacity: 0.3;
-  animation: adv-drop-static 5.6s ease-in-out infinite;
-}
-
-.adv-card__droplet--static::after {
-  display: none;
 }
 
 .adv-card__droplet--bubble {
@@ -571,53 +443,34 @@ function PrismaticCursorOrb() {
   return <div ref={ref} className="prism-cursor-blob" style={{ width: 380, height: 380, top: '-190px', left: '-190px' }} />;
 }
 
-function AdvDroplets({ dense = false }) {
-  const baseDrops = [
-    { cls: 'adv-card__droplet adv-card__droplet--sliding adv-card__droplet--wobble', left: '12%', top: '-10%', size: '12px', trail: '110px', delay: '0.2s', duration: '4.9s, 1.6s', driftA: '-5px', driftB: '7px', driftC: '-8px', driftD: '5px', driftE: '-3px', driftF: '4px', scaleX: '0.78', scaleY: '1.48' },
-    { cls: 'adv-card__droplet adv-card__droplet--sliding', left: '31%', top: '-14%', size: '10px', trail: '84px', delay: '1.4s', duration: '5.6s', driftA: '4px', driftB: '-6px', driftC: '7px', driftD: '-4px', driftE: '3px', driftF: '-2px', scaleX: '0.82', scaleY: '1.38' },
-    { cls: 'adv-card__droplet adv-card__droplet--sliding adv-card__droplet--wobble', left: '58%', top: '-8%', size: '14px', trail: '124px', delay: '0.8s', duration: '6.1s, 1.8s', driftA: '-4px', driftB: '8px', driftC: '-7px', driftD: '6px', driftE: '-4px', driftF: '5px', scaleX: '0.74', scaleY: '1.56' },
-    { cls: 'adv-card__droplet adv-card__droplet--sliding', left: '82%', top: '-12%', size: '9px', trail: '76px', delay: '2.1s', duration: '5.1s', driftA: '3px', driftB: '-5px', driftC: '6px', driftD: '-3px', driftE: '2px', driftF: '-3px', scaleX: '0.84', scaleY: '1.34' },
-    { cls: 'adv-card__droplet adv-card__droplet--static', left: '22%', top: '24%', size: '7px', trail: '0px', delay: '0s', duration: '0s', driftA: '0px', driftB: '0px', driftC: '0px', driftD: '0px', driftE: '0px', driftF: '0px', scaleX: '1', scaleY: '1' },
-    { cls: 'adv-card__droplet adv-card__droplet--static', left: '73%', top: '54%', size: '6px', trail: '0px', delay: '0s', duration: '0s', driftA: '0px', driftB: '0px', driftC: '0px', driftD: '0px', driftE: '0px', driftF: '0px', scaleX: '1', scaleY: '1' },
-    { cls: 'adv-card__droplet adv-card__droplet--bubble', left: '24%', top: '66%', size: '16px', trail: '0px', delay: '0.8s', duration: '8.8s', driftA: '0px', driftB: '0px', driftC: '0px', driftD: '0px', driftE: '0px', driftF: '0px', bubbleA: '-4px', bubbleB: '9px', bubbleC: '-7px', bubbleD: '4px', scaleX: '1', scaleY: '1' },
-    { cls: 'adv-card__droplet adv-card__droplet--bubble', left: '78%', top: '72%', size: '12px', trail: '0px', delay: '3.2s', duration: '9.6s', driftA: '0px', driftB: '0px', driftC: '0px', driftD: '0px', driftE: '0px', driftF: '0px', bubbleA: '3px', bubbleB: '-6px', bubbleC: '7px', bubbleD: '-4px', scaleX: '1', scaleY: '1' },
+function AdvBubbles({ dense = false }) {
+  const baseBubbles = [
+    { left: '24%', top: '66%', size: '16px', delay: '0.8s', duration: '8.8s', bubbleA: '-4px', bubbleB: '9px', bubbleC: '-7px', bubbleD: '4px' },
+    { left: '78%', top: '72%', size: '12px', delay: '3.2s', duration: '9.6s', bubbleA: '3px', bubbleB: '-6px', bubbleC: '7px', bubbleD: '-4px' },
   ];
-  const extraDrops = [
-    { cls: 'adv-card__droplet adv-card__droplet--sliding adv-card__droplet--wobble', left: '18%', top: '-18%', size: '15px', trail: '136px', delay: '2.7s', duration: '6.8s, 1.9s', driftA: '-6px', driftB: '9px', driftC: '-10px', driftD: '6px', driftE: '-4px', driftF: '5px', scaleX: '0.72', scaleY: '1.62' },
-    { cls: 'adv-card__droplet adv-card__droplet--sliding', left: '44%', top: '-11%', size: '11px', trail: '92px', delay: '1.9s', duration: '5.4s', driftA: '5px', driftB: '-7px', driftC: '7px', driftD: '-5px', driftE: '3px', driftF: '-3px', scaleX: '0.8', scaleY: '1.44' },
-    { cls: 'adv-card__droplet adv-card__droplet--sliding', left: '67%', top: '-16%', size: '13px', trail: '120px', delay: '3.6s', duration: '6.2s', driftA: '-4px', driftB: '6px', driftC: '-8px', driftD: '5px', driftE: '-3px', driftF: '4px', scaleX: '0.76', scaleY: '1.54' },
-    { cls: 'adv-card__droplet adv-card__droplet--static', left: '12%', top: '44%', size: '8px', trail: '0px', delay: '0s', duration: '0s', driftA: '0px', driftB: '0px', driftC: '0px', driftD: '0px', driftE: '0px', driftF: '0px', scaleX: '1', scaleY: '1' },
-    { cls: 'adv-card__droplet adv-card__droplet--bubble', left: '52%', top: '64%', size: '18px', trail: '0px', delay: '1.8s', duration: '10.4s', driftA: '0px', driftB: '0px', driftC: '0px', driftD: '0px', driftE: '0px', driftF: '0px', bubbleA: '-5px', bubbleB: '8px', bubbleC: '-6px', bubbleD: '5px', scaleX: '1', scaleY: '1' },
-    { cls: 'adv-card__droplet adv-card__droplet--bubble', left: '86%', top: '58%', size: '14px', trail: '0px', delay: '4.4s', duration: '9.2s', driftA: '0px', driftB: '0px', driftC: '0px', driftD: '0px', driftE: '0px', driftF: '0px', bubbleA: '4px', bubbleB: '-5px', bubbleC: '6px', bubbleD: '-3px', scaleX: '1', scaleY: '1' },
+  const extraBubbles = [
+    { left: '52%', top: '64%', size: '18px', delay: '1.8s', duration: '10.4s', bubbleA: '-5px', bubbleB: '8px', bubbleC: '-6px', bubbleD: '5px' },
+    { left: '86%', top: '58%', size: '14px', delay: '4.4s', duration: '9.2s', bubbleA: '4px', bubbleB: '-5px', bubbleC: '6px', bubbleD: '-3px' },
   ];
 
-  const drops = dense ? [...baseDrops, ...extraDrops] : baseDrops;
+  const bubbles = dense ? [...baseBubbles, ...extraBubbles] : baseBubbles;
 
   return (
     <div className="adv-card__droplets">
-      {drops.map((d, i) => (
+      {bubbles.map((b, i) => (
         <div
-          key={`${d.left}-${d.top}-${i}`}
-          className={d.cls}
+          key={`${b.left}-${b.top}-${i}`}
+          className="adv-card__droplet adv-card__droplet--bubble"
           style={{
-            left: d.left,
-            top: d.top,
-            '--drop-size': d.size,
-            '--trail-length': d.trail,
-            '--drift-a': d.driftA,
-            '--drift-b': d.driftB,
-            '--drift-c': d.driftC,
-            '--drift-d': d.driftD,
-            '--drift-e': d.driftE,
-            '--drift-f': d.driftF,
-            '--drop-scale-x': d.scaleX,
-            '--drop-scale-y': d.scaleY,
-            '--bubble-drift-a': d.bubbleA,
-            '--bubble-drift-b': d.bubbleB,
-            '--bubble-drift-c': d.bubbleC,
-            '--bubble-drift-d': d.bubbleD,
-            animationDelay: d.cls.includes('adv-card__droplet--wobble') ? `${d.delay}, ${d.delay}` : d.delay,
-            animationDuration: d.duration,
+            left: b.left,
+            top: b.top,
+            '--drop-size': b.size,
+            '--bubble-drift-a': b.bubbleA,
+            '--bubble-drift-b': b.bubbleB,
+            '--bubble-drift-c': b.bubbleC,
+            '--bubble-drift-d': b.bubbleD,
+            animationDelay: b.delay,
+            animationDuration: b.duration,
           }}
         />
       ))}
@@ -1417,14 +1270,25 @@ function Home() {
 
       {/* ══ HERO ══ */}
       <section ref={heroSectionRef} className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        <video
-          className="absolute inset-0 w-full h-full object-cover"
-          autoPlay loop muted playsInline
-          preload="none"
-          poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1920 1080'%3E%3Crect fill='%230d1117' width='1920' height='1080'/%3E%3C/svg%3E"
-        >
-          <source src={heroVideo} type="video/mp4" />
-        </video>
+        {/* YouTube background video */}
+        <div className="absolute inset-0 overflow-hidden" style={{ pointerEvents: 'none' }}>
+          <iframe
+            className="absolute"
+            style={{
+              top: '50%',
+              left: '50%',
+              width: '177.77777778vh',
+              height: '56.25vw',
+              minWidth: '100%',
+              minHeight: '100%',
+              transform: 'translate(-50%, -50%)',
+              border: 0,
+            }}
+            src="https://www.youtube.com/embed/ZeES31xz7CE?autoplay=1&mute=1&loop=1&playlist=ZeES31xz7CE&controls=0&showinfo=0&rel=0&modestbranding=1"
+            allow="autoplay; encrypted-media"
+            title="Hero background"
+          />
+        </div>
 
         {/* Cinematic layered overlay — dark vignette + subtle centre window */}
         <div className="absolute inset-0" style={{
@@ -1449,6 +1313,11 @@ function Home() {
               style={{ background: 'linear-gradient(90deg,transparent,#c8a96b 30%,#0ea5a0 70%,transparent)' }} />
 
             <div className="relative z-10 px-8 md:px-16 py-10 md:py-12 text-center flex flex-col items-center">
+              {/* Logo */}
+              <div className="mb-6 hero-animate hero-animate-1">
+                <img src={getBusiness().logo || '/GlanzLogo.png'} alt="Glanz" className="h-14 sm:h-16 md:h-20 w-auto object-contain mx-auto" />
+              </div>
+
               {/* Badge */}
               <div className="flex items-center gap-3 mb-6 hero-animate hero-animate-1">
                 <span className="flex-shrink-0 h-px w-12" style={{ background: 'linear-gradient(90deg,transparent,#c8a96b)' }} />
@@ -1575,13 +1444,6 @@ function Home() {
                     e.currentTarget.style.setProperty('--py', `${((e.clientY - r.top) / r.height * 100).toFixed(1)}%`);
                   }}
                 >
-                  <div className="adv-card__droplets">
-                    <div className="adv-card__droplet adv-card__droplet--sliding adv-card__droplet--wobble" style={{ left: '14%', top: '-8%', '--drop-size': '6px', '--trail-length': '40px', animationDelay: `${0.9 + i * 0.7}s, ${0.9 + i * 0.7}s`, animationDuration: `${8.2 + i * 0.8}s, 2.2s` }} />
-                    <div className="adv-card__droplet adv-card__droplet--sliding" style={{ left: '62%', top: '-6%', '--drop-size': '8px', '--trail-length': '54px', animationDelay: `${2.8 + i * 0.6}s`, animationDuration: `${9.8 + i * 0.9}s` }} />
-                    <div className="adv-card__droplet adv-card__droplet--sliding adv-card__droplet--wobble" style={{ left: '84%', top: '-10%', '--drop-size': '5px', '--trail-length': '36px', animationDelay: `${4.1 + i * 0.5}s, ${4.1 + i * 0.5}s`, animationDuration: `${10.2 + i * 0.6}s, 2.6s` }} />
-                    <div className="adv-card__droplet adv-card__droplet--static" style={{ left: '33%', top: '26%', '--drop-size': '4px', '--trail-length': '0px', animationDelay: '0s', animationDuration: '0s' }} />
-                    <div className="adv-card__droplet adv-card__droplet--static" style={{ left: '76%', top: '58%', '--drop-size': '3px', '--trail-length': '0px', animationDelay: '0s', animationDuration: '0s' }} />
-                  </div>
                   <div className="relative z-10">
                     <span className="block text-[0.6rem] font-black tracking-[0.32em] mb-5"
                       style={{ color: item.accent, opacity: 0.6 }}>
@@ -1816,7 +1678,7 @@ function Home() {
               return (
                 <div key={feature.key}>
                   <div className="glass-card feature-card p-7 text-center h-full relative overflow-hidden">
-                    <AdvDroplets />
+      <AdvBubbles />
                     {/* Top accent line per card */}
                     <div className="absolute top-0 left-[20%] right-[20%] h-[1.5px]"
                       style={{ background: index % 2 === 0

@@ -175,11 +175,6 @@ export function AdminHeader({ theme, onToggleTheme }) {
       scrolled ? "border-b border-gray-800" : "border-b-0"
     }`}>
       <div className="flex items-center justify-between w-full mx-auto max-w-7xl">
-        {/* Logo */}
-        <Link to="/admin" className="flex items-center hover:opacity-80 transition-opacity">
-          <img src={business.logo || '/GlanzLogo.png'} alt={business.name} className="h-10 w-auto object-contain" />
-        </Link>
-
         {/* Desktop Nav */}
         <div className="hidden lg:flex items-center gap-1">
           {/* Dashboard Button - Always visible */}

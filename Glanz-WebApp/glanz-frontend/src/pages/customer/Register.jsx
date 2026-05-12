@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import SEO from '../../components/shared/SEO';
 import AddressAutocompleteInput from '../../components/shared/AddressAutocompleteInput';
+import { DateWheelPicker } from '../../components/shared/DateWheelPicker';
 
 /* ── PRISM CSS (same as Login) ─────────────────────────────── */
 const PRISM_CSS = `
@@ -146,6 +147,7 @@ function Register() {
   const [loading,             setLoading]             = useState(false);
   const [showPassword,        setShowPassword]        = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [dateOfBirth, setDateOfBirth] = useState(null);
 
   const from            = location.state?.from || '/';
   const selectedPackage = location.state?.selectedPackage;
@@ -178,6 +180,7 @@ function Register() {
         phone: formData.phone.trim() || undefined,
         preferredAddress: formData.address.trim() || undefined,
         referralCode: formData.referralCode.trim() || undefined,
+        dateOfBirth: dateOfBirth ? dateOfBirth.toISOString() : undefined,
       });
       if (selectedPackage)                              navigate('/booking', { state: { selectedPackage }, replace: true });
       else if (from && from !== '/register' && from !== '/login') navigate(from, { replace: true });
@@ -398,6 +401,23 @@ function Register() {
                       }
                     </p>
                   )}
+                </div>
+
+                {/* Date of Birth */}
+                <div className="field-5">
+                  <label className="block text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-color)] mb-3">
+                    Date of Birth <span className="normal-case font-normal">(optional)</span>
+                  </label>
+                  <div className="flex justify-center rounded-xl border border-[var(--border-color)] bg-[var(--surface-bg)] py-3">
+                    <DateWheelPicker
+                      value={dateOfBirth}
+                      onChange={setDateOfBirth}
+                      maxYear={new Date().getFullYear() - 13}
+                      minYear={new Date().getFullYear() - 100}
+                      size="sm"
+                      numericMonths
+                    />
+                  </div>
                 </div>
 
                 {/* Phone */}
