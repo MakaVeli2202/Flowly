@@ -1288,7 +1288,7 @@ function Home() {
               border: 0,
             }}
             src="https://www.youtube.com/embed/ZeES31xz7CE?autoplay=1&mute=1&loop=1&playlist=ZeES31xz7CE&controls=0&rel=0&playsinline=1"
-            allow="autoplay; encrypted-media"
+            allow="autoplay; encrypted-media; picture-in-picture"
             title="Hero background"
           />
         </div>
