@@ -46,7 +46,7 @@ public static class AdminAccountBootstrapper
                     Phone = phone,
                     Role = "Admin",
                     IsActive = true,
-                    IsEmailVerified = true, // Admin accounts are auto-verified
+                    IsEmailVerified = true,
                     CreatedAt = now,
                     UpdatedAt = now,
                 });
@@ -113,6 +113,12 @@ public static class AdminAccountBootstrapper
             if (!string.Equals(existing.Email, email, StringComparison.Ordinal))
             {
                 existing.Email = email;
+                shouldUpdate = true;
+            }
+
+            if (!existing.IsEmailVerified)
+            {
+                existing.IsEmailVerified = true;
                 shouldUpdate = true;
             }
 
