@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Glanz.API.Data;
 using Glanz.API.DTOs;
 using Glanz.API.Models;
+using Glanz.API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;

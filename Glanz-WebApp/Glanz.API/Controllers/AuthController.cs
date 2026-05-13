@@ -114,7 +114,7 @@ namespace Glanz.API.Controllers
             };
         }
 
-        private static readonly JsonSerializerOptions _jsonOpts = JsonOptions.CaseInsensitive;
+        private static readonly JsonSerializerOptions _jsonOpts = AppJsonOptions.CaseInsensitive;
 
         private static List<WorkerDayScheduleEntry>? ParseDaySchedules(string? json)
         {

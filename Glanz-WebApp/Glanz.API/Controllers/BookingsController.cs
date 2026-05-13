@@ -327,7 +327,7 @@ namespace Glanz.API.Controllers
                 day.Equals(targetShort, StringComparison.OrdinalIgnoreCase));
         }
 
-        private static readonly JsonSerializerOptions _dayScheduleJsonOpts = JsonOptions.CaseInsensitive;
+        private static readonly JsonSerializerOptions _dayScheduleJsonOpts = AppJsonOptions.CaseInsensitive;
 
         /// <summary>
         /// Returns (shiftStart, shiftEnd) for a worker on a specific day,

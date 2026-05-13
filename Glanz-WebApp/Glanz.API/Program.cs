@@ -329,7 +329,7 @@ using (var scope = app.Services.CreateScope())
         try
         {
             var hours = System.Text.Json.JsonSerializer.Deserialize<BusinessHoursPerDayDto>(hoursRow.Value,
-                JsonOptions.CaseInsensitive);
+                AppJsonOptions.CaseInsensitive);
             if (hours != null)
             {
                 Glanz.API.Controllers.BookingsController.SetBusinessHoursFromSettings(hours);

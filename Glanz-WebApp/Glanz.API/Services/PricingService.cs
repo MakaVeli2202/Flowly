@@ -62,7 +62,7 @@ namespace Glanz.API.Services
                 [VehicleType.Pickup]     = 1.5m,
             };
 
-        private static readonly JsonSerializerOptions _jsonOpts = JsonOptions.CaseInsensitive;
+        private static readonly JsonSerializerOptions _jsonOpts = AppJsonOptions.CaseInsensitive;
 
         private readonly AppDbContext _context;
 

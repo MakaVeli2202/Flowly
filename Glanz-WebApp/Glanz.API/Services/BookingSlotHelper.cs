@@ -14,7 +14,7 @@ namespace Glanz.API.Services
         internal const int DefaultWorkerTravelBufferMinutes = 30;
         internal const int SlotSelectionStepMinutes          = 30;
 
-        private static readonly JsonSerializerOptions _jsonOpts = JsonOptions.CaseInsensitive;
+        private static readonly JsonSerializerOptions _jsonOpts = AppJsonOptions.CaseInsensitive;
 
         // Business-day bounds — mirror BookingsController defaults (09:00–18:00).
         private static readonly Dictionary<string, List<string>> _dailySlotsByDay = new()

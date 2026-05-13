@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Glanz.API.Data;
 using Glanz.API.DTOs;
 using Glanz.API.Models;
+using Glanz.API.Services;
 using System.Security.Claims;
 
 namespace Glanz.API.Controllers
