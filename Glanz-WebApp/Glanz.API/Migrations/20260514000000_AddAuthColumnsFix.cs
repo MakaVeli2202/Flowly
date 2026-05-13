@@ -11,38 +11,30 @@ namespace Glanz.API.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<bool>(
-                name: "IsEmailVerified",
-                table: "Users",
-                type: "boolean",
-                nullable: false,
-                defaultValue: false);
+            migrationBuilder.Sql(@"
+                DO $$
+                BEGIN
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Users' AND column_name = 'IsEmailVerified') THEN
+                        ALTER TABLE ""Users"" ADD COLUMN ""IsEmailVerified"" boolean NOT NULL DEFAULT false;
+                    END IF;
 
-            migrationBuilder.AddColumn<string>(
-                name: "EmailVerificationToken",
-                table: "Users",
-                type: "character varying(200)",
-                maxLength: 200,
-                nullable: true);
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Users' AND column_name = 'EmailVerificationToken') THEN
+                        ALTER TABLE ""Users"" ADD COLUMN ""EmailVerificationToken"" varchar(200);
+                    END IF;
 
-            migrationBuilder.AddColumn<DateTime>(
-                name: "EmailVerificationTokenExpiry",
-                table: "Users",
-                type: "timestamp with time zone",
-                nullable: true);
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Users' AND column_name = 'EmailVerificationTokenExpiry') THEN
+                        ALTER TABLE ""Users"" ADD COLUMN ""EmailVerificationTokenExpiry"" timestamptz;
+                    END IF;
 
-            migrationBuilder.AddColumn<string>(
-                name: "PasswordResetToken",
-                table: "Users",
-                type: "character varying(200)",
-                maxLength: 200,
-                nullable: true);
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Users' AND column_name = 'PasswordResetToken') THEN
+                        ALTER TABLE ""Users"" ADD COLUMN ""PasswordResetToken"" varchar(200);
+                    END IF;
 
-            migrationBuilder.AddColumn<DateTime>(
-                name: "PasswordResetTokenExpiry",
-                table: "Users",
-                type: "timestamp with time zone",
-                nullable: true);
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Users' AND column_name = 'PasswordResetTokenExpiry') THEN
+                        ALTER TABLE ""Users"" ADD COLUMN ""PasswordResetTokenExpiry"" timestamptz;
+                    END IF;
+                END $$;
+            ");
 
             migrationBuilder.Sql("UPDATE \"Users\" SET \"IsEmailVerified\" = true WHERE \"IsEmailVerified\" = false");
         }
@@ -50,11 +42,6 @@ namespace Glanz.API.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(name: "IsEmailVerified", table: "Users");
-            migrationBuilder.DropColumn(name: "EmailVerificationToken", table: "Users");
-            migrationBuilder.DropColumn(name: "EmailVerificationTokenExpiry", table: "Users");
-            migrationBuilder.DropColumn(name: "PasswordResetToken", table: "Users");
-            migrationBuilder.DropColumn(name: "PasswordResetTokenExpiry", table: "Users");
         }
     }
 }
