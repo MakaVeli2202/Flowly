@@ -123,7 +123,14 @@ namespace Glanz.API.Controllers
             catch { return null; }
         }
 
-        private static UserDto ToUserDto(User user)
+        private async Task<string?> GetReferredByNameAsync(int? referredByUserId)
+        {
+            if (referredByUserId == null) return null;
+            var referrer = await _context.Users.FindAsync(referredByUserId.Value);
+            return referrer != null ? $"{referrer.FirstName} {referrer.LastName}" : null;
+        }
+
+        private async Task<UserDto> ToUserDtoAsync(User user)
         {
             var preferredAddressType = NormalizeAddressType(user.PreferredAddressType);
 
@@ -147,9 +154,17 @@ namespace Glanz.API.Controllers
                 Phone = user.Phone,
                 ProfileImageUrl = user.ProfileImageUrl,
                 HomeAddress = user.HomeAddress,
+                HomeHouseNumber = user.HomeHouseNumber,
                 WorkAddress = user.WorkAddress,
+                WorkHouseNumber = user.WorkHouseNumber,
                 OtherAddress = user.OtherAddress,
+                OtherHouseNumber = user.OtherHouseNumber,
                 PreferredAddressType = preferredAddressType,
+                ReferralCode = user.ReferralCode,
+                HasUsedReferralCode = user.HasUsedReferralCode,
+                ReferredByName = user.ReferredByUserId != null 
+                    ? await GetReferredByNameAsync(user.ReferredByUserId) 
+                    : null,
                 Role = user.Role,
                 IsActive = user.IsActive,
                 CreatedAt = user.CreatedAt,
@@ -256,7 +271,7 @@ namespace Glanz.API.Controllers
             {
                 Token = accessToken,
                 RefreshToken = refreshToken,
-                User = ToUserDto(existingUser)
+                User = await ToUserDtoAsync(existingUser)
             });
         }
 
@@ -582,7 +597,7 @@ namespace Glanz.API.Controllers
                     {
                         Token        = accessToken,
                         RefreshToken = refreshToken,
-                        User         = ToUserDto(user)
+                        User         = await ToUserDtoAsync(user)
                     });
                 }
 
@@ -706,7 +721,7 @@ namespace Glanz.API.Controllers
 
                 var user = await _context.Users.FindAsync(userId);
                 if (user == null) return NotFound(new { message = "User not found" });
-                return Ok(ToUserDto(user));
+                return Ok(await ToUserDtoAsync(user));
             }
             catch (Exception ex)
             {
@@ -776,7 +791,7 @@ namespace Glanz.API.Controllers
                 user.UpdatedAt = DateTime.UtcNow;
 
                 await _context.SaveChangesAsync();
-                return Ok(ToUserDto(user));
+                return Ok(await ToUserDtoAsync(user));
             }
             catch (Exception ex)
             {
@@ -831,7 +846,7 @@ namespace Glanz.API.Controllers
                 user.ProfileImageUrl = storedImage.PublicUrl;
                 user.UpdatedAt = DateTime.UtcNow;
                 await _context.SaveChangesAsync();
-                return Ok(ToUserDto(user));
+                return Ok(await ToUserDtoAsync(user));
             }
             catch (Exception ex)
             {

@@ -133,11 +133,13 @@ const UI_BY_LANG = {
 function BookingDetailsCheckoutStep({
   formData, setFormData,
   canAutofillCustomerData, isAdmin,
-  savedAddresses, addressHelperText,
+  savedAddresses, savedHouseNumbers, addressHelperText,
   myCoupons,
   isTapMode, paymentMethod, setPaymentMethod,
   quote, totalAmount,
   userReferralPoints = 0,
+  hasUsedReferral = false,
+  referredByName = null,
 }) {
   const { lang } = useLanguage();
   const langKey = String(lang || 'en').toLowerCase().split('-')[0];
@@ -210,6 +212,19 @@ function BookingDetailsCheckoutStep({
           required
           helperText={addressHelperText}
         />
+        {formData.customerAddress && (
+          <div className="mt-4">
+            <label className="block text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-color)] mb-2">House / Building Number</label>
+            <input
+              type="text"
+              name="houseNumber"
+              value={formData.houseNumber || savedHouseNumbers?.[formData.addressType] || ''}
+              onChange={(e) => setFormData((prev) => ({ ...prev, houseNumber: e.target.value }))}
+              placeholder="e.g. Villa 12, Building 5, Flat 3"
+              className="w-full px-4 py-3 rounded-xl border border-[var(--border-color)] bg-[var(--surface-bg)] text-[var(--text-color)] text-sm placeholder:text-[var(--muted-color)] focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition"
+            />
+          </div>
+        )}
         <div className="mt-5">
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-color)] mb-2">{ui.specialInstructions}</p>
           <textarea name="specialInstructions" value={formData.specialInstructions} onChange={handleChange}
@@ -252,23 +267,21 @@ function BookingDetailsCheckoutStep({
         </div>
       </div>
 
-      {/* ── Referral Code ──────────────────────────────────── */}
-      <div className="glass-card p-6 relative">
-        <SectionHeading icon={Gift} step={6}>{ui.referralCode}</SectionHeading>
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-color)] mb-2">{ui.haveReferral}</p>
-          <div className="relative">
-            <User size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--muted-color)]" />
-            <input type="text" name="referralCode" value={formData.referralCode}
-              onChange={(e) => setFormData((prev) => ({ ...prev, referralCode: e.target.value.toUpperCase() }))}
-              placeholder="AHMED8K2"
-              className="w-full pl-10 pr-4 py-3 rounded-xl border border-[var(--border-color)] bg-[var(--surface-bg)] text-[var(--text-color)] text-sm placeholder:text-[var(--muted-color)] focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition tracking-widest font-mono" />
+      {/* ── Referral Info ──────────────────────────────────── */}
+      {hasUsedReferral && referredByName && (
+        <div className="glass-card p-6 relative overflow-hidden">
+          <div className="prism-ray" style={{ left: '80%', width: '10%', animation: 'prism-ray-sweep 18s ease-in-out 4s infinite' }} />
+          <SectionHeading icon={Gift} step={6}>Referral Benefit</SectionHeading>
+          <div className="rounded-xl border p-4" style={{ background: 'rgba(34,197,94,.08)', borderColor: 'rgba(34,197,94,.25)' }}>
+            <p className="text-sm font-semibold" style={{ color: '#22c55e' }}>
+              You received a discount from {referredByName}'s referral!
+            </p>
+            <p className="text-xs text-[var(--muted-color)] mt-1">
+              Your booking includes the referral discount. Thank you for using Glanz!
+            </p>
           </div>
-          <p className="text-[11px] text-[var(--muted-color)] mt-2 leading-relaxed">
-            {ui.referralHelp}
-          </p>
         </div>
-      </div>
+      )}
 
       {/* ── My Referral Points ──────────────────────────────────── */}
       {userReferralPoints > 0 && (

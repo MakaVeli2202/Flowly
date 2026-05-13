@@ -70,7 +70,17 @@ function BookingForm({ isTapMode }) {
     Work:  canAutofillCustomerData ? user?.workAddress?.trim()  || '' : '',
     Other: canAutofillCustomerData ? user?.otherAddress?.trim() || '' : '',
   };
+  const savedHouseNumbers = {
+    Home:  canAutofillCustomerData ? user?.homeHouseNumber?.trim()  || '' : '',
+    Work:  canAutofillCustomerData ? user?.workHouseNumber?.trim()  || '' : '',
+    Other: canAutofillCustomerData ? user?.otherHouseNumber?.trim() || '' : '',
+  };
   const savedAddress = savedAddresses[normalizedPreferredAddressType] || '';
+  const savedHouseNumber = savedHouseNumbers[normalizedPreferredAddressType] || '';
+
+  // Referral info
+  const hasUsedReferral = user?.hasUsedReferralCode || false;
+  const referredByName = user?.referredByName || null;
 
   const vehicleMultiplier = settings.vehicleMultipliers;
 
@@ -81,6 +91,7 @@ function BookingForm({ isTapMode }) {
     customerEmail:       canAutofillCustomerData ? user?.email  || '' : '',
     customerPhone:       canAutofillCustomerData ? user?.phone  || '' : '',
     customerAddress:     '',
+    houseNumber:         '',
     addressType:         'Home',
     offerCode:           new URLSearchParams(location.search).get('coupon')?.toUpperCase() || '',
     vehicleType:         'Sedan',
@@ -90,7 +101,6 @@ function BookingForm({ isTapMode }) {
     specialInstructions: '',
     leadSource:          'Direct',
     leadSourceDetails:   '',
-    referralCode:        '',
     useReferralPoints:   true, // Default: use points
   });
 
@@ -169,10 +179,11 @@ function BookingForm({ isTapMode }) {
         customerEmail:   prev.customerEmail   || user.email  || '',
         customerPhone:   prev.customerPhone   || user.phone  || '',
         customerAddress: savedAddress || prev.customerAddress || '',
+        houseNumber:     savedHouseNumber || prev.houseNumber || '',
         addressType:     savedAddress ? normalizedPreferredAddressType : prev.addressType,
       }));
     }
-  }, [user, savedAddress, normalizedPreferredAddressType, canAutofillCustomerData]);
+  }, [user, savedAddress, savedHouseNumber, normalizedPreferredAddressType, canAutofillCustomerData]);
 
   // Auto-capture UTM parameters for lead tracking (invisible to user)
   useEffect(() => {
@@ -320,9 +331,9 @@ function BookingForm({ isTapMode }) {
         customerEmail:          formData.customerEmail,
         customerPhone:          formData.customerPhone,
         customerAddress:        formData.customerAddress || null,
+        houseNumber:            formData.houseNumber?.trim() || null,
         addressType:            isAdmin ? 'Home' : (formData.addressType || 'Home'),
         offerCode:              formData.offerCode?.trim() || null,
-        referralCode:           formData.referralCode?.trim() || null,
         vehicleMake:            formData.vehicleMake  || null,
         vehicleModel:           formData.vehicleModel || null,
         vehicleYear:            formData.vehicleYear  || null,
@@ -480,6 +491,7 @@ function BookingForm({ isTapMode }) {
                   canAutofillCustomerData={canAutofillCustomerData}
                   isAdmin={isAdmin}
                   savedAddresses={savedAddresses}
+                  savedHouseNumbers={savedHouseNumbers}
                   addressHelperText={addressHelperText}
                   myCoupons={myCoupons}
                   isTapMode={isTapMode}
@@ -488,6 +500,8 @@ function BookingForm({ isTapMode }) {
                   quote={quote}
                   totalAmount={totalAmount}
                   userReferralPoints={user?.referralPoints || 0}
+                  hasUsedReferral={hasUsedReferral}
+                  referredByName={referredByName}
                 />
 
                 {/* ── Submit ── */}

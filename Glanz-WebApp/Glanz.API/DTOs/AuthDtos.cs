@@ -88,9 +88,15 @@ namespace Glanz.API.DTOs
         public string? Phone { get; set; }
         public string? ProfileImageUrl { get; set; }
         public string? HomeAddress { get; set; }
+        public string? HomeHouseNumber { get; set; }
         public string? WorkAddress { get; set; }
+        public string? WorkHouseNumber { get; set; }
         public string? OtherAddress { get; set; }
+        public string? OtherHouseNumber { get; set; }
         public string PreferredAddressType { get; set; } = "Home";
+        public string? ReferralCode { get; set; }
+        public bool HasUsedReferralCode { get; set; }
+        public string? ReferredByName { get; set; }
         public string Role { get; set; } = string.Empty;
         public bool IsActive { get; set; }
         public DateTime CreatedAt { get; set; }
