@@ -461,6 +461,8 @@ WHERE bi.""PackageId"" = p.""Id""
         // ServiceSubscriptions table must exist before we can add columns to it.
         await EnsureSubscriptionsTableAsync(connection);
         await EnsureColumnAsync(connection, "ServiceSubscriptions", "DiscountPercent", "numeric(5,2) NOT NULL DEFAULT 0");
+        // Referrals table may be missing DiscountPercent column from initial migration
+        await EnsureColumnAsync(connection, "Referrals", "DiscountPercent", "numeric(5,2) NULL");
         await EnsureStandaloneSubscriptionTablesAsync(connection);
         await EnsureTranslationTablesAsync(connection);
 
