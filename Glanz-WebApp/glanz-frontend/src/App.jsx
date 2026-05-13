@@ -91,7 +91,7 @@ function CustomerFallback() {
 // Calling adminRoute() as a function returns the <Route> JSX directly.
 
 function adminRoute(path, _PageComponent) {
-  // eslint-disable-next-line @eslint-eslint/no-unused-vars
+  // eslint-disable-next-line no-unused-vars
   const PageComponent = _PageComponent;
   return (
     <Route

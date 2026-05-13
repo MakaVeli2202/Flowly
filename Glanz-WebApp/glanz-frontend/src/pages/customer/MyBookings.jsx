@@ -208,7 +208,7 @@ function MyBookings() {
 
   useEffect(() => {
     Promise.all([fetchBookings(), fetchLoyalty()]);
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const silentFetch = useCallback(() => {
     bookingsAPI.getMyBookings()

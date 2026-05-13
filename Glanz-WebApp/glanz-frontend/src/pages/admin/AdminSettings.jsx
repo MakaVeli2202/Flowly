@@ -1750,7 +1750,7 @@ export default function AdminSettings() {
                   style={{ background:'rgba(168,85,247,.15)', border:'1px solid rgba(168,85,247,.35)', color:'#a855f7' }}
                 >
                   <Trash2 size={14} />
-                  Simulate 7 Days Delete
+                  Simulate 7-Day Cleanup
                 </button>
                 <button
                   type="button"
@@ -1758,7 +1758,7 @@ export default function AdminSettings() {
                   style={{ background:'rgba(59,130,246,.15)', border:'1px solid rgba(59,130,246,.35)', color:'#3b82f6' }}
                 >
                   <Trash2 size={14} />
-                  Simulate 30 Days Delete
+                  Simulate 30-Day Cleanup
                 </button>
                 <button
                   type="button"
@@ -1766,7 +1766,7 @@ export default function AdminSettings() {
                   style={{ background:'rgba(234,179,8,.15)', border:'1px solid rgba(234,179,8,.35)', color:'#eab308' }}
                 >
                   <Database size={14} />
-                  Database Cleanup
+                  Run Full Cleanup
                 </button>
               </div>
             </div>

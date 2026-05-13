@@ -38,7 +38,7 @@ export default function AdminSubscriptionBookings() {
     }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleStatusFilter = (v) => {
     setStatusFilter(v);

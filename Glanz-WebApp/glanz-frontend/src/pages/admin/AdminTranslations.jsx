@@ -41,7 +41,7 @@ export default function AdminTranslations() {
 
   React.useEffect(() => {
     loadRows();
-  }, [entityType, lang]);
+  }, [entityType, lang]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const filteredRows = useMemo(() => {
     const q = search.trim().toLowerCase();

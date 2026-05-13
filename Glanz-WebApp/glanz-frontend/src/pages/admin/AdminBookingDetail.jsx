@@ -212,7 +212,7 @@ export default function AdminBookingDetail() {
       setLoadingAvailableWorkers(true);
       const data = await bookingsAPI.getAvailableWorkers(booking.id, params);
       setAvailableWorkers(data || []);
-    } catch {} finally { setLoadingAvailableWorkers(false); }
+    } catch { /* ignore worker load errors */ } finally { setLoadingAvailableWorkers(false); }
   };
   const workerLabelById = (workerId) => {
     const w = workers.find(w => w.id === workerId);
@@ -295,7 +295,7 @@ export default function AdminBookingDetail() {
     });
     setEditMode(true); setEditError(''); setEditSlots([]); setEditPackageSlotWarning(null);
     if (allPackages.length === 0) {
-      try { const pkgs = await packagesAPI.getAllAdmin(); setAllPackages(pkgs || []); } catch {}
+      try { const pkgs = await packagesAPI.getAllAdmin(); setAllPackages(pkgs || []); } catch { /* ignore package load errors */ }
     }
     const currentDate = booking.scheduledDate ? new Date(booking.scheduledDate).toISOString().split('T')[0] : '';
     await Promise.all([

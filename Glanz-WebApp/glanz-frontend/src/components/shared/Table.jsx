@@ -4,8 +4,6 @@ import { ChevronUp, ChevronDown } from 'lucide-react';
 export function Table({ 
   children, 
   className = '',
-  _hoverable = true,
-  _striped = false,
   ...props 
 }) {
   return (

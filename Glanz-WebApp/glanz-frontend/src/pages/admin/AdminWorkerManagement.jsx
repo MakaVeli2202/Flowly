@@ -239,7 +239,7 @@ export default function WorkerManagement() {
   const [editWorker, setEditWorker] = useState(null);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => { fetchWorkers(); }, []);
+  useEffect(() => { fetchWorkers(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchWorkers = async () => {
     try {
