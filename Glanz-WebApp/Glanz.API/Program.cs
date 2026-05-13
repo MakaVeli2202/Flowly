@@ -737,6 +737,8 @@ CREATE TABLE IF NOT EXISTS ""SubscriptionPlanPackages"" (
     await EnsureIndexAsync(connection, "IX_UserSubscriptions_PlanId_Status", "CREATE INDEX IF NOT EXISTS \"IX_UserSubscriptions_PlanId_Status\" ON \"UserSubscriptions\" (\"PlanId\", \"Status\");");
     await EnsureIndexAsync(connection, "IX_SubscriptionPlanPackages_PlanId_DisplayOrder", "CREATE INDEX IF NOT EXISTS \"IX_SubscriptionPlanPackages_PlanId_DisplayOrder\" ON \"SubscriptionPlanPackages\" (\"PlanId\", \"DisplayOrder\");");
     await EnsureIndexAsync(connection, "IX_SubscriptionPlanPackages_PackageId", "CREATE INDEX IF NOT EXISTS \"IX_SubscriptionPlanPackages_PackageId\" ON \"SubscriptionPlanPackages\" (\"PackageId\");");
+    
+    await EnsureColumnAsync(connection, "SubscriptionPlans", "DiscountPercent", "numeric(5,2) NOT NULL DEFAULT 0");
 }
 
 static async Task EnsureColumnAsync(DbConnection connection, string tableName, string columnName, string columnDefinition)
