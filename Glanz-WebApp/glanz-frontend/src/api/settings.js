@@ -47,35 +47,4 @@ export const settingsAPI = {
     const response = await apiClient.post('/AdminSettings/reset-database', { password, mode });
     return response.data;
   },
-
-  // Cleanup test endpoints
-  cleanupNotifications: async () => withRetry(async () => {
-    const response = await apiClient.post('/AdminSettings/cleanup/notifications');
-    return response.data;
-  }),
-
-  cleanupExpiredReservations: async () => withRetry(async () => {
-    const response = await apiClient.post('/AdminSettings/cleanup/expired-reservations');
-    return response.data;
-  }),
-
-  cleanupLateBookings: async () => withRetry(async () => {
-    const response = await apiClient.post('/AdminSettings/cleanup/late-bookings');
-    return response.data;
-  }),
-
-  createTestOldNotifications: async (options) => withRetry(async () => {
-    const response = await apiClient.post('/AdminSettings/test/create-old-notifications', options);
-    return response.data;
-  }),
-
-  createTestExpiredReservation: async () => withRetry(async () => {
-    const response = await apiClient.post('/AdminSettings/test/create-expired-reservation');
-    return response.data;
-  }),
-
-  createTestLateBooking: async () => withRetry(async () => {
-    const response = await apiClient.post('/AdminSettings/test/create-late-booking');
-    return response.data;
-  }),
 };
