@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { settingsAPI } from '../../api/settings';
 import { authAPI } from '../../api/auth';
 import { formatQAR } from '../../utils/currency';
-import { Settings, Shield, CheckCircle, AlertCircle, Save, Building2, Clock, MessageSquare, DollarSign, Gift } from 'lucide-react';
+import { Settings, Shield, CheckCircle, AlertCircle, Save, Building2, Clock, MessageSquare, DollarSign, Gift, FlaskConical, Trash2, Database } from 'lucide-react';
 import { getBusiness, saveBusiness } from '../../config/business';
 import { useLanguage } from '../../context/LanguageContext';
 
@@ -1723,6 +1723,52 @@ export default function AdminSettings() {
                 style={{ background:'rgba(6,182,212,.15)', border:'1px solid rgba(6,182,212,.35)', color:'#22d3ee' }}>
                 {launchSaving ? ui.saving : launchSaved ? <><CheckCircle size={14} /> {ui.saved}</> : <><Save size={14} /> {ui.saveLaunchDate}</> }
               </button>
+            </div>
+          </div>
+
+          {/* ── Dev Testing Section ── */}
+          <div className="glass-card relative overflow-hidden card-stagger mt-6">
+            <div className="absolute top-0 left-0 right-0 h-[2px]"
+              style={{ background:'linear-gradient(90deg,transparent,#ef4444 38%,#c8a96b 62%,transparent)' }} />
+            <div className="absolute top-0 left-0 w-[3px] h-full"
+              style={{ background:'linear-gradient(180deg,#ef4444 0%,#ef444444 60%,transparent 100%)' }} />
+            <div className="p-7">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center"
+                  style={{ background:'rgba(239,68,68,.12)', border:'1px solid rgba(239,68,68,.24)' }}>
+                  <FlaskConical size={18} style={{ color:'#ef4444' }} />
+                </div>
+                <h2 className="text-lg font-bold" style={{ color:'var(--heading-color)' }}>Dev Testing</h2>
+              </div>
+              <p className="text-xs text-[var(--muted-color)] mb-5">
+                Test notification cleanup logic. No actual changes in production.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition hover:opacity-80"
+                  style={{ background:'rgba(168,85,247,.15)', border:'1px solid rgba(168,85,247,.35)', color:'#a855f7' }}
+                >
+                  <Trash2 size={14} />
+                  Simulate 7 Days Delete
+                </button>
+                <button
+                  type="button"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition hover:opacity-80"
+                  style={{ background:'rgba(59,130,246,.15)', border:'1px solid rgba(59,130,246,.35)', color:'#3b82f6' }}
+                >
+                  <Trash2 size={14} />
+                  Simulate 30 Days Delete
+                </button>
+                <button
+                  type="button"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition hover:opacity-80"
+                  style={{ background:'rgba(234,179,8,.15)', border:'1px solid rgba(234,179,8,.35)', color:'#eab308' }}
+                >
+                  <Database size={14} />
+                  Database Cleanup
+                </button>
+              </div>
             </div>
           </div>
 
