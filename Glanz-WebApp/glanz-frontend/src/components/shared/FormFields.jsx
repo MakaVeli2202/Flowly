@@ -55,8 +55,6 @@ export function Input({
   className = '',
   ...props
 }) {
-  const [focused, setFocused] = useState(false);
-  
   const baseInputClass = `
     w-full px-4 py-2.5 rounded-xl bg-[var(--surface-bg)] border text-[var(--text-color)] 
     placeholder:text-[var(--muted-color)]/60 font-medium text-sm
@@ -75,8 +73,6 @@ export function Input({
       <input
         type={type}
         className={`${baseInputClass} ${stateClasses} ${className}`}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
         {...props}
       />
       {error && (
@@ -161,7 +157,6 @@ export function Textarea({
 
 export function Checkbox({
   label,
-  error,
   className = '',
   ...props
 }) {

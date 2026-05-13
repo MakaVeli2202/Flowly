@@ -237,7 +237,7 @@ namespace Glanz.API.Controllers
                     };
                 })
                 .Where(c => c != null)
-                .OrderByDescending(c => c.TotalSpent)
+                .OrderByDescending(c => c!.TotalSpent)
                 .ToList();
 
             return Ok(result);
@@ -603,7 +603,7 @@ namespace Glanz.API.Controllers
                 })
                 .ToListAsync();
 
-            var statsMap = bookingStats.ToDictionary(b => b.UserId);
+            var statsMap = bookingStats.Where(b => b.UserId.HasValue).ToDictionary(b => b.UserId!.Value);
 
             int updated = 0;
             foreach (var customer in customers)

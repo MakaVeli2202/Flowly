@@ -7,7 +7,7 @@ import { useAuth } from '../../context/AuthContext';
 import { notificationsAPI } from '../../api/notifications';
 import { subscribeToNotifications } from '../../api/notificationBus';
 import { useLanguage, LANGUAGES } from '../../context/LanguageContext';
-import { getBusiness } from '../../config/business';
+
 
 const CUSTOMER_LINKS = [
   { to: '/',           label: 'Home',     icon: Home     },
@@ -18,8 +18,6 @@ const CUSTOMER_LINKS = [
 export function CustomerNavbar({ theme, onToggleTheme }) {
   const [isOpen, setIsOpen] = useState(false);
   const [now, setNow] = useState(() => Date.now());
-  const shapeTimeoutRef = useRef(null);
-  const business = getBusiness();
   const { lang, t, setLang } = useLanguage();
   const { user, isAuthenticated, isEmployee, logout } = useAuth();
   const [notifications, setNotifications] = useState([]);

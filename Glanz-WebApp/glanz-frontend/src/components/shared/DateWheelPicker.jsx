@@ -1,6 +1,5 @@
 import {
   animate,
-  motion,
   useMotionValue,
   useTransform,
 } from "framer-motion";

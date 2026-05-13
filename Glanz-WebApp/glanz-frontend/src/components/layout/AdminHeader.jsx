@@ -7,8 +7,6 @@ import { useAuth } from '../../context/AuthContext';
 import { notificationsAPI } from '../../api/notifications';
 import { subscribeToNotifications } from '../../api/notificationBus';
 import { useLanguage, LANGUAGES } from '../../context/LanguageContext';
-import { useRealtimeStatus } from '../../hooks/useRealtimeStatus';
-import { getBusiness } from '../../config/business';
 
 // ADMIN_LINKS and ADMIN_GROUPS will be defined inside the AdminHeader function after we have access to the `t` function
 
@@ -32,9 +30,7 @@ export function AdminHeader({ theme, onToggleTheme }) {
   const notificationsRef = useRef(null);
   const langMenuRef = useRef(null);
   const { user, token, logout } = useAuth();
-  const business = getBusiness();
   const { lang, t, setLang } = useLanguage();
-  const wsStatus = useRealtimeStatus();
   const navigate = useNavigate();
   const location = useLocation();
 
