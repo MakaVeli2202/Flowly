@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { settingsAPI } from '../../api/settings';
 import { authAPI } from '../../api/auth';
 import { formatQAR } from '../../utils/currency';
-import { Settings, Shield, CheckCircle, AlertCircle, Save, Building2, Clock, MessageSquare, DollarSign, Gift } from 'lucide-react';
+import { Settings, Shield, CheckCircle, AlertCircle, Save, Building2, Clock, MessageSquare, DollarSign, Gift, Trash2, Play, PlusCircle } from 'lucide-react';
 import { getBusiness, saveBusiness } from '../../config/business';
 import { useLanguage } from '../../context/LanguageContext';
 
@@ -654,6 +654,12 @@ export default function AdminSettings() {
   const [bizHoursSaved, setBizHoursSaved] = useState(false);
   const [bizHoursError, setBizHoursError] = useState('');
 
+  // Cleanup test state
+  const [cleaningUp, setCleaningUp] = useState(false);
+  const [creatingTestData, setCreatingTestData] = useState(false);
+  const [cleanupResult, setCleanupResult] = useState('');
+  const [testDataCreated, setTestDataCreated] = useState(false);
+
   const formatDateTimeLocal = (value) => {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return '';
@@ -866,6 +872,96 @@ export default function AdminSettings() {
 
   const updateBusinessHours = (day, start, end) => {
     setBusinessHours(prev => ({ ...prev, [day]: `${start}-${end}` }));
+  };
+
+  // Cleanup test handlers
+  const handleCreateTestNotifications = async () => {
+    setCreatingTestData(true);
+    setTestDataCreated(false);
+    setCleanupResult('');
+    try {
+      await settingsAPI.createTestOldNotifications({
+        CreateEphemeral7Days: true,
+        CreateOperational60Days: true,
+        CreateEngagement90Days: true,
+        CreateRecentEphemeral: true,
+      });
+      setTestDataCreated(true);
+      setTimeout(() => setTestDataCreated(false), 3000);
+    } catch (err) {
+      setCleanupResult('Failed to create test notifications: ' + (err?.response?.data?.message || err.message));
+    } finally {
+      setCreatingTestData(false);
+    }
+  };
+
+  const handleCreateTestExpiredReservation = async () => {
+    setCreatingTestData(true);
+    setTestDataCreated(false);
+    setCleanupResult('');
+    try {
+      await settingsAPI.createTestExpiredReservation();
+      setTestDataCreated(true);
+      setTimeout(() => setTestDataCreated(false), 3000);
+    } catch (err) {
+      setCleanupResult('Failed to create test reservation: ' + (err?.response?.data?.message || err.message));
+    } finally {
+      setCreatingTestData(false);
+    }
+  };
+
+  const handleCreateTestLateBooking = async () => {
+    setCreatingTestData(true);
+    setTestDataCreated(false);
+    setCleanupResult('');
+    try {
+      await settingsAPI.createTestLateBooking();
+      setTestDataCreated(true);
+      setTimeout(() => setTestDataCreated(false), 3000);
+    } catch (err) {
+      setCleanupResult('Failed to create test booking: ' + (err?.response?.data?.message || err.message));
+    } finally {
+      setCreatingTestData(false);
+    }
+  };
+
+  const handleCleanupNotifications = async () => {
+    setCleaningUp(true);
+    setCleanupResult('');
+    try {
+      const result = await settingsAPI.cleanupNotifications();
+      setCleanupResult(result.message || `Deleted ${result.deleted} notifications`);
+    } catch (err) {
+      setCleanupResult('Failed: ' + (err?.response?.data?.message || err.message));
+    } finally {
+      setCleaningUp(false);
+    }
+  };
+
+  const handleCleanupExpiredReservations = async () => {
+    setCleaningUp(true);
+    setCleanupResult('');
+    try {
+      const result = await settingsAPI.cleanupExpiredReservations();
+      setCleanupResult(result.message || `Deleted ${result.deleted} expired reservations`);
+    } catch (err) {
+      setCleanupResult('Failed: ' + (err?.response?.data?.message || err.message));
+    } finally {
+      setCleaningUp(false);
+    }
+  };
+
+  const handleCleanupLateBookings = async () => {
+    setCleaningUp(true);
+    setCleanupResult('');
+    try {
+      const result = await settingsAPI.cleanupLateBookings();
+      setCleanupResult(result.message || `Flagged ${result.flagged} late bookings`);
+    } catch (err) {
+      setCleanupResult('Failed: ' + (err?.response?.data?.message || err.message));
+    } finally {
+      setCleaningUp(false);
+    }
   };
 
   const exampleFee = policy.feeType === 'Percent'
@@ -1723,6 +1819,112 @@ export default function AdminSettings() {
                 style={{ background:'rgba(6,182,212,.15)', border:'1px solid rgba(6,182,212,.35)', color:'#22d3ee' }}>
                 {launchSaving ? ui.saving : launchSaved ? <><CheckCircle size={14} /> {ui.saved}</> : <><Save size={14} /> {ui.saveLaunchDate}</> }
               </button>
+            </div>
+          </div>
+
+          {/* ── Database Cleanup Test card ── */}
+          <div className="glass-card relative overflow-hidden card-stagger">
+            <div className="absolute top-0 left-0 right-0 h-[2px]"
+              style={{ background:'linear-gradient(90deg,transparent,#ef4444 38%,#f97316 62%,transparent)' }} />
+            <div className="absolute top-0 left-0 w-[3px] h-full"
+              style={{ background:'linear-gradient(180deg,#ef4444 0%,#ef444444 60%,transparent 100%)' }} />
+
+            <div className="p-7">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center"
+                  style={{ background:'rgba(239,68,68,.12)', border:'1px solid rgba(239,68,68,.24)' }}>
+                  <Trash2 size={14} style={{ color:'#ef4444' }} />
+                </div>
+                <h2 className="premium-heading text-xl font-bold text-[var(--heading-color)]">Database Cleanup Tests</h2>
+              </div>
+              <p className="text-sm text-[var(--muted-color)] mb-5 ml-11">Test the automated cleanup jobs that run periodically. Create old test data and then run cleanup to verify it works.</p>
+              <div className="mb-5"><div className="spectrum-line" /></div>
+
+              {/* ── Create Test Data Section ── */}
+              <div className="mb-6 p-4 rounded-xl border"
+                style={{ background:'rgba(139,92,246,.06)', borderColor:'rgba(139,92,246,.20)' }}>
+                <div className="flex items-center gap-2 mb-3">
+                  <PlusCircle size={14} style={{ color:'#8b5cf6' }} />
+                  <span className="text-sm font-bold text-[var(--heading-color)]">Create Test Data (Simulate Old Records)</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={handleCreateTestNotifications}
+                    disabled={creatingTestData}
+                    className="px-3 py-1.5 rounded-lg text-xs font-bold border transition disabled:opacity-50"
+                    style={{ background:'rgba(139,92,246,.12)', borderColor:'rgba(139,92,246,.35)', color:'#a78bfa' }}>
+                    <PlusCircle size={12} className="inline mr-1" />
+                    Old Notifications (7/60/90 days)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCreateTestExpiredReservation}
+                    disabled={creatingTestData}
+                    className="px-3 py-1.5 rounded-lg text-xs font-bold border transition disabled:opacity-50"
+                    style={{ background:'rgba(139,92,246,.12)', borderColor:'rgba(139,92,246,.35)', color:'#a78bfa' }}>
+                    <PlusCircle size={12} className="inline mr-1" />
+                    Expired Slot Reservation
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCreateTestLateBooking}
+                    disabled={creatingTestData}
+                    className="px-3 py-1.5 rounded-lg text-xs font-bold border transition disabled:opacity-50"
+                    style={{ background:'rgba(139,92,246,.12)', borderColor:'rgba(139,92,246,.35)', color:'#a78bfa' }}>
+                    <PlusCircle size={12} className="inline mr-1" />
+                    Late Booking (Yesterday)
+                  </button>
+                </div>
+                {testDataCreated && (
+                  <p className="text-xs text-emerald-400 mt-2">Test data created successfully!</p>
+                )}
+              </div>
+
+              {/* ── Run Cleanup Section ── */}
+              <div className="p-4 rounded-xl border"
+                style={{ background:'rgba(239,68,68,.06)', borderColor:'rgba(239,68,68,.20)' }}>
+                <div className="flex items-center gap-2 mb-3">
+                  <Play size={14} style={{ color:'#ef4444' }} />
+                  <span className="text-sm font-bold text-[var(--heading-color)]">Run Cleanup Jobs</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={handleCleanupNotifications}
+                    disabled={cleaningUp}
+                    className="px-3 py-1.5 rounded-lg text-xs font-bold border transition disabled:opacity-50"
+                    style={{ background:'rgba(239,68,68,.12)', borderColor:'rgba(239,68,68,.35)', color:'#f87171' }}>
+                    <Trash2 size={12} className="inline mr-1" />
+                    Clean Old Notifications
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCleanupExpiredReservations}
+                    disabled={cleaningUp}
+                    className="px-3 py-1.5 rounded-lg text-xs font-bold border transition disabled:opacity-50"
+                    style={{ background:'rgba(239,68,68,.12)', borderColor:'rgba(239,68,68,.35)', color:'#f87171' }}>
+                    <Trash2 size={12} className="inline mr-1" />
+                    Clean Expired Reservations
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCleanupLateBookings}
+                    disabled={cleaningUp}
+                    className="px-3 py-1.5 rounded-lg text-xs font-bold border transition disabled:opacity-50"
+                    style={{ background:'rgba(239,68,68,.12)', borderColor:'rgba(239,68,68,.35)', color:'#f87171' }}>
+                    <Trash2 size={12} className="inline mr-1" />
+                    Flag Late Bookings
+                  </button>
+                </div>
+              </div>
+
+              {cleanupResult && (
+                <div className="mt-4 p-3 rounded-xl border"
+                  style={{ background:'rgba(16,185,129,.08)', borderColor:'rgba(16,185,129,.25)' }}>
+                  <p className="text-sm text-emerald-400 font-medium">{cleanupResult}</p>
+                </div>
+              )}
             </div>
           </div>
 
