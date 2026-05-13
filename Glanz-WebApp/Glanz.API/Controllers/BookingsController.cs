@@ -2507,8 +2507,8 @@ namespace Glanz.API.Controllers
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error creating booking: {ex.Message}");
-                return StatusCode(500, new { message = "Failed to create booking" });
+                Console.WriteLine($"Error creating booking: {ex.Message}\n{ex.StackTrace}");
+                return StatusCode(500, new { message = $"Failed to create booking: {ex.Message}" });
             }
         }
 
