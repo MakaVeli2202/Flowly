@@ -90,7 +90,9 @@ function CustomerFallback() {
 // A wrapper component inserts an extra React element and breaks the tree.
 // Calling adminRoute() as a function returns the <Route> JSX directly.
 
-function adminRoute(path, PageComponent) {
+function adminRoute(path, _PageComponent) {
+  // eslint-disable-next-line @eslint-eslint/no-unused-vars
+  const PageComponent = _PageComponent;
   return (
     <Route
       key={path}

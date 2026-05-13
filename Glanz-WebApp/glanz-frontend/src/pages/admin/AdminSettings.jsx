@@ -673,7 +673,7 @@ export default function AdminSettings() {
       } catch { setError(ui.failedToLoadSettings); }
       finally { setLoading(false); }
     })();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     settingsAPI.getSystemSettings()

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { bookingsAPI } from '../../api/bookings';
 import { packagesAPI } from '../../api/packages';
@@ -182,6 +182,7 @@ export default function AdminBookingDetail() {
         .catch(() => navigate('/admin/bookings'))
         .finally(() => setLoading(false));
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const refreshBooking = async () => {

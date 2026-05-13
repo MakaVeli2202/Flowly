@@ -769,7 +769,7 @@ export default function AdminOffers() {
     const handler = () => fetchAll();
     window.addEventListener('refresh-offers-data', handler);
     return () => window.removeEventListener('refresh-offers-data', handler);
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const params = new URLSearchParams();

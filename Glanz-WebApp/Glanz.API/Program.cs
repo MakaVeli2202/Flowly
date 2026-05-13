@@ -437,27 +437,6 @@ static async Task EnsurePostgresSchemaCompatibilityAsync(AppDbContext dbContext)
         await EnsureColumnAsync(connection, "Users", "FirstWashCompletedAt", "timestamp with time zone NULL");
         await EnsureColumnAsync(connection, "UserOffers", "GoogleReviewActivatedAt", "timestamp with time zone NULL");
 
-        // Email verification columns (AddEmailVerification migration)
-        await EnsureColumnAsync(connection, "Users", "IsEmailVerified", "boolean NOT NULL DEFAULT false");
-        await EnsureColumnAsync(connection, "Users", "EmailVerificationToken", "character varying(200) NULL");
-        await EnsureColumnAsync(connection, "Users", "EmailVerificationTokenExpiry", "timestamp with time zone NULL");
-        await EnsureColumnAsync(connection, "Users", "PasswordResetToken", "character varying(200) NULL");
-        await EnsureColumnAsync(connection, "Users", "PasswordResetTokenExpiry", "timestamp with time zone NULL");
-
-        // Grandfather existing users — they registered before email verification was required
-        // Also auto-verify all admin accounts
-        await using (var backfillCmd = connection.CreateCommand())
-        {
-            backfillCmd.CommandText = @"
-UPDATE ""Users"" SET ""IsEmailVerified"" = true WHERE ""IsEmailVerified"" = false AND (""CreatedAt"" < '2025-06-01'::date OR ""Role"" = 'Admin');";
-            await backfillCmd.ExecuteNonQueryAsync();
-        }
-
-        // Referral columns
-        await EnsureColumnAsync(connection, "Users", "ReferralCode", "character varying(20) NULL");
-        await EnsureColumnAsync(connection, "Users", "ReferralPoints", "numeric(10,2) NOT NULL DEFAULT 0");
-        await EnsureColumnAsync(connection, "Users", "HasUsedReferralCode", "boolean NOT NULL DEFAULT false");
-
         // Columns added in hand-crafted migrations that lack .Designer.cs and are not
         // discovered by EF Core's migration runner on a fresh database.
         await EnsureColumnAsync(connection, "Bookings", "IdempotencyKey", "character varying(100) NULL");

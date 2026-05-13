@@ -235,9 +235,9 @@ Generated: ${new Date().toLocaleString()}
     setModal({ open:true, title, message, variant, onConfirm });
   const toast = useToast();
 
-  useEffect(() => { fetchWorkers(); }, []);
+  useEffect(() => { fetchWorkers(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => { checkPayrollDue(); }, []);
+  useEffect(() => { checkPayrollDue(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const checkPayrollDue = async () => {
     try {

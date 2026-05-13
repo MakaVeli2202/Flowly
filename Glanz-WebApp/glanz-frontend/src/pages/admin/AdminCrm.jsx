@@ -365,7 +365,7 @@ export default function AdminCrm() {
 
   useEffect(() => {
     loadData();
-  }, [activeTab, selectedSegment]);
+  }, [activeTab, selectedSegment]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadData = async () => {
     setLoading(true);

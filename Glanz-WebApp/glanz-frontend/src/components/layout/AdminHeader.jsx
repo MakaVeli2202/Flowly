@@ -113,7 +113,9 @@ export function AdminHeader({ theme, onToggleTheme }) {
       ]);
       setUnreadCount(count || 0);
       setNotifications(recent || []);
-    } catch {}
+    } catch {
+      // ignore notification load errors
+    }
   }, [token]);
 
   useEffect(() => {

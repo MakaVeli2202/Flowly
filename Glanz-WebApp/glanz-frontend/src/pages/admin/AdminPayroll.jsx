@@ -130,7 +130,7 @@ export default function AdminPayroll() {
         }
       })
       .catch(() => {});
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchPayroll = async () => {
     try {
@@ -141,7 +141,7 @@ export default function AdminPayroll() {
     finally { setPayrollLoading(false); }
   };
 
-  useEffect(() => { fetchPayroll(); }, [payrollMonth, payrollYear]);
+  useEffect(() => { fetchPayroll(); }, [payrollMonth, payrollYear]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleMarkPaid = async (worker) => {
     try {

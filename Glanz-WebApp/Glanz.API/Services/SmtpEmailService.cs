@@ -95,7 +95,6 @@ namespace Glanz.API.Services
                 || host.StartsWith("TODO", StringComparison.OrdinalIgnoreCase))
             {
                 _logger.LogWarning("📧 {Message}", devLogMessage);
-                Console.WriteLine($"📧 EMAIL: {devLogMessage}");
                 return;
             }
 

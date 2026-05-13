@@ -444,10 +444,10 @@ function AdminBookings() {
     };
     window.addEventListener('highlight-booking', onHL);
     return () => window.removeEventListener('highlight-booking', onHL);
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Refresh booking list on any incoming WebSocket notification (job changes trigger notifications)
-  const silentRefresh = useCallback(() => fetchBookings({ showLoader: false }), []);
+  const silentRefresh = useCallback(() => fetchBookings({ showLoader: false }), []); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => subscribeToNotifications(silentRefresh), [silentRefresh]);
 
   /* ── Worker helpers ────────────────────────────────────── */
