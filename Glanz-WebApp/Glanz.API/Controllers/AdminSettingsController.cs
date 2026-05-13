@@ -363,7 +363,7 @@ namespace Glanz.API.Controllers
                     {
                         UserId = user.Id,
                         Message = "Test: Booking confirmed notification (60 days old)",
-                        Type = NotificationType.BookingConfirmed,
+                        Type = NotificationType.BookingStatusChanged,
                         CreatedAt = now.AddDays(-60).AddHours(-1),
                         IsRead = false
                     });
