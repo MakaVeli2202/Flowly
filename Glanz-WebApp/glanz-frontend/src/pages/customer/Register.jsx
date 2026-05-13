@@ -73,6 +73,8 @@ function Register() {
         dateOfBirth: dateOfBirth ? dateOfBirth.toISOString() : undefined,
       });
       if (result.requiresEmailVerification) {
+        sessionStorage.setItem('pendingEmail', formData.email);
+        sessionStorage.setItem('pendingPassword', formData.password);
         navigate(`/verify-email?email=${encodeURIComponent(formData.email)}`, { replace: true });
         return;
       }

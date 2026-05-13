@@ -46,6 +46,22 @@ function EmailVerification() {
     try {
       await authAPI.verifyEmailCode(email, code);
       setSuccess(true);
+      
+      // Auto-login after verification
+      const storedEmail = sessionStorage.getItem('pendingEmail');
+      const storedPassword = sessionStorage.getItem('pendingPassword');
+      if (storedEmail === email && storedPassword) {
+        try {
+          const loginResult = await authAPI.login({ email, password: storedPassword });
+          localStorage.setItem('token', loginResult.token);
+          localStorage.setItem('refreshToken', loginResult.refreshToken || '');
+          localStorage.setItem('user', JSON.stringify(loginResult.user));
+          sessionStorage.removeItem('pendingEmail');
+          sessionStorage.removeItem('pendingPassword');
+          setTimeout(() => navigate('/', { replace: true }), 1800);
+          return;
+        } catch { /* fall through to login page */ }
+      }
       setTimeout(() => navigate('/login', { state: { message: 'Email verified! You can now sign in.' } }), 1800);
     } catch (err) {
       setError(err.response?.data?.message || 'Verification failed. Please try again.');
