@@ -572,7 +572,9 @@ namespace Glanz.API.Controllers
                     if (!user.IsActive)
                         return Unauthorized(new { message = "Account is disabled" });
 
-                    if (!user.IsEmailVerified)
+                    // Admin accounts are auto-verified and don't need email verification
+                    var isAdmin = user.Role?.ToLower() == "admin";
+                    if (!isAdmin && !user.IsEmailVerified)
                         return StatusCode(403, new { message = "Please verify your email address before logging in.", requiresEmailVerification = true, email = user.Email });
 
                     var (accessToken, refreshToken) = await IssueTokensAsync(user);

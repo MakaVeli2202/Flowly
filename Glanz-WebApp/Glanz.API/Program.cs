@@ -445,10 +445,11 @@ static async Task EnsurePostgresSchemaCompatibilityAsync(AppDbContext dbContext)
         await EnsureColumnAsync(connection, "Users", "PasswordResetTokenExpiry", "timestamp with time zone NULL");
 
         // Grandfather existing users — they registered before email verification was required
+        // Also auto-verify all admin accounts
         await using (var backfillCmd = connection.CreateCommand())
         {
             backfillCmd.CommandText = @"
-UPDATE ""Users"" SET ""IsEmailVerified"" = true WHERE ""IsEmailVerified"" = false AND ""CreatedAt"" < '2025-06-01'::date;";
+UPDATE ""Users"" SET ""IsEmailVerified"" = true WHERE ""IsEmailVerified"" = false AND (""CreatedAt"" < '2025-06-01'::date OR ""Role"" = 'Admin');";
             await backfillCmd.ExecuteNonQueryAsync();
         }
 

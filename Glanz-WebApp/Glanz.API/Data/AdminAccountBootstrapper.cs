@@ -46,6 +46,7 @@ public static class AdminAccountBootstrapper
                     Phone = phone,
                     Role = "Admin",
                     IsActive = true,
+                    IsEmailVerified = true, // Admin accounts are auto-verified
                     CreatedAt = now,
                     UpdatedAt = now,
                 });
