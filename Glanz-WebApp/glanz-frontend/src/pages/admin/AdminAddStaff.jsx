@@ -374,12 +374,34 @@ export default function AdminAddStaff() {
 
             {/* Work Schedule */}
             <div className="glass-card p-7 card-stagger">
-              <div className="flex items-center gap-2 mb-4">
+              <div className="flex items-center gap-2 mb-1">
                 <CalendarDays size={14} style={{ color:'#c8a96b' }} />
                 <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)]">Work Schedule</p>
               </div>
-              <p className="text-xs text-[var(--muted-color)] mb-4">Default shift times. You can set per-day overrides after saving.</p>
-              <div className="flex flex-wrap gap-2 mb-5">
+              <p className="text-xs text-[var(--muted-color)] mb-5">Default shift. Per-day overrides can be set after creating the staff member.</p>
+
+              {/* Default shift */}
+              <div className="mb-5 p-4 rounded-xl border border-[var(--border-color)]" style={{ background:'rgba(200,169,107,.04)' }}>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)] mb-3">Default shift (applies unless overridden)</p>
+                <div className="flex flex-wrap items-end gap-5">
+                  <div>
+                    <label className="field-label">Start</label>
+                    <select className={inp} value={form.shiftStart} onChange={e => set('shiftStart', e.target.value)}>
+                      {SHIFT_HOURS.map(h => <option key={h} value={h}>{h}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="field-label">End</label>
+                    <select className={inp} value={form.shiftEnd} onChange={e => set('shiftEnd', e.target.value)}>
+                      {SHIFT_HOURS.map(h => <option key={h} value={h}>{h}</option>)}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Working days */}
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)] mb-3">Working days</p>
+              <div className="flex flex-wrap gap-2">
                 {ALL_DAYS.map(day => (
                   <button key={day} type="button" onClick={() => toggleDay(day)}
                     className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition ${form.workingDays.includes(day) ? 'bg-primary text-white border-primary' : 'border-[var(--border-color)] text-[var(--text-color)] hover:bg-white/5'}`}>
@@ -387,21 +409,7 @@ export default function AdminAddStaff() {
                   </button>
                 ))}
               </div>
-              {errors.workingDays && <p className="text-rose-400 text-xs mb-3">{errors.workingDays}</p>}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="field-label">Shift Start</label>
-                  <select className={inp} value={form.shiftStart} onChange={e => set('shiftStart', e.target.value)}>
-                    {SHIFT_HOURS.map(h => <option key={h} value={h}>{h}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="field-label">Shift End</label>
-                  <select className={inp} value={form.shiftEnd} onChange={e => set('shiftEnd', e.target.value)}>
-                    {SHIFT_HOURS.map(h => <option key={h} value={h}>{h}</option>)}
-                  </select>
-                </div>
-              </div>
+              {errors.workingDays && <p className="text-rose-400 text-xs mt-3">{errors.workingDays}</p>}
             </div>
 
             {/* Submit */}

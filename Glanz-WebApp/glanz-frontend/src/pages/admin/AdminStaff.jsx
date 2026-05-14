@@ -1,5 +1,5 @@
 // ManageStaff.jsx
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authAPI } from '../../api/auth';
 import AppModal from '../../components/shared/AppModal';
@@ -253,16 +253,16 @@ Generated: ${new Date().toLocaleString()}
     } catch { }
   };
 
-  const fetchPayroll = async () => {
+  const fetchPayroll = useCallback(async () => {
     try {
       setPayrollLoading(true);
       const data = await authAPI.getPayrollSummary(payrollMonth, payrollYear);
       setPayroll(data || []);
     } catch { setPayroll([]); }
     finally { setPayrollLoading(false); }
-  };
+  }, [payrollMonth, payrollYear]);
 
-  useEffect(() => { if (workers.length > 0) fetchPayroll(); }, [payrollMonth, payrollYear, workers.length]);
+  useEffect(() => { if (workers.length > 0) fetchPayroll(); }, [workers.length, fetchPayroll]);
 
   const fetchWorkers = async () => {
     try {

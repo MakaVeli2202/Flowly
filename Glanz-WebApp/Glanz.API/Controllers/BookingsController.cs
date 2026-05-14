@@ -1178,30 +1178,25 @@ namespace Glanz.API.Controllers
                     .OrderBy(name => name)
                     .ToList();
 
-                for (var quantityIndex = 1; quantityIndex <= Math.Max(1, selectedPackage.Quantity); quantityIndex++)
+                if (serviceNames.Count == 0)
                 {
-                    if (serviceNames.Count == 0)
+                    checklistItems.Add(new BookingChecklistItem
                     {
-                        checklistItems.Add(new BookingChecklistItem
-                        {
-                            Label = selectedPackage.Quantity > 1
-                                ? $"{package.Name} #{quantityIndex}: Complete package"
-                                : $"{package.Name}: Complete package",
-                            DisplayOrder = displayOrder++
-                        });
-                        continue;
-                    }
+                        Label = selectedPackage.Quantity > 1
+                            ? $"{package.Name} x{selectedPackage.Quantity}: Complete package"
+                            : $"{package.Name}: Complete package",
+                        DisplayOrder = displayOrder++
+                    });
+                    continue;
+                }
 
-                    foreach (var serviceName in serviceNames)
+                foreach (var serviceName in serviceNames)
+                {
+                    checklistItems.Add(new BookingChecklistItem
                     {
-                        checklistItems.Add(new BookingChecklistItem
-                        {
-                            Label = selectedPackage.Quantity > 1
-                                ? $"{package.Name} #{quantityIndex}: {serviceName}"
-                                : $"{package.Name}: {serviceName}",
-                            DisplayOrder = displayOrder++
-                        });
-                    }
+                        Label = $"{package.Name}: {serviceName}",
+                        DisplayOrder = displayOrder++
+                    });
                 }
             }
 
