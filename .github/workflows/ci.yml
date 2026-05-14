@@ -12,10 +12,10 @@ jobs:
       run:
         working-directory: Glanz-WebApp/glanz-frontend
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
-          node-version: "20"
+          node-version: "24"
           cache: "npm"
           cache-dependency-path: Glanz-WebApp/glanz-frontend/package-lock.json
       - name: Install dependencies
@@ -35,8 +35,8 @@ jobs:
       run:
         working-directory: Glanz-WebApp/Glanz.API
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: "10.0.x"
       - name: Restore

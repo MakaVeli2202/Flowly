@@ -192,7 +192,8 @@ function FormField({ label, hint, children }) {
 }
 
 /* ── FormSection ─────────────────────────────────────────────── */
-function FormSection({ title, badge, icon: Icon, accentColor, rayDelay = '3s', delay = '0s', children }) {
+function FormSection({ title, badge, icon, accentColor, rayDelay = '3s', delay = '0s', children }) {
+  const Icon = icon;
   return (
     <section
       className="glass-card relative overflow-hidden card-stagger"

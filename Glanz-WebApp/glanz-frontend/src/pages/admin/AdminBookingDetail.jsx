@@ -100,7 +100,8 @@ function getBookingBreakdown(booking) {
 }
 
 /* ── Sub-components ──────────────────────────────────────────── */
-function InfoRow({ icon: Icon, label, value }) {
+function InfoRow({ icon, label, value }) {
+  const Icon = icon;
   if (!value) return null;
   return (
     <div className="flex items-start gap-3">
@@ -114,7 +115,8 @@ function InfoRow({ icon: Icon, label, value }) {
     </div>
   );
 }
-function SectionCard({ title, icon: Icon, accent = '#c8a96b', children }) {
+function SectionCard({ title, icon, accent = '#c8a96b', children }) {
+  const Icon = icon;
   return (
     <div className="rounded-xl border border-[var(--border-color)] overflow-hidden" style={{ borderLeft: `3px solid ${accent}` }}>
       <div className="flex items-center gap-3 px-5 py-3.5 bg-white/[0.02] border-b border-[var(--border-color)]">

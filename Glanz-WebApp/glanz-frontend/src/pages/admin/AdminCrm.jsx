@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { crmAPI } from '../../api/crm';
 import { useLanguage } from '../../context/LanguageContext';
 import {
@@ -341,7 +340,6 @@ const UI_BY_LANG = {
 };
 
 export default function AdminCrm() {
-  const navigate = useNavigate();
   const { lang } = useLanguage();
   const localeKey = String(lang || '').startsWith('ar') ? 'ar' : String(lang || '').startsWith('de') ? 'de' : 'en';
   const ui = UI_BY_LANG[localeKey] || UI_BY_LANG.en;
@@ -353,7 +351,6 @@ export default function AdminCrm() {
   const [selectedSegment, setSelectedSegment] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCustomers, setSelectedCustomers] = useState([]);
-  const [tagInput, setTagInput] = useState('');
   const [editingCustomer, setEditingCustomer] = useState(null);
   const [customerForm, setCustomerForm] = useState({ tags: '', notes: '' });
   const [showHelp, setShowHelp] = useState(false);

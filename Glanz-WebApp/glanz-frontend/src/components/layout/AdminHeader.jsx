@@ -375,7 +375,10 @@ export function AdminHeader({ theme, onToggleTheme }) {
       {showAdminMenu && (
         <div className="lg:hidden absolute top-16 left-0 right-0 bg-[#0d1117] border-b border-gray-800 p-4">
           <div className="space-y-1">
-{ADMIN_LINKS.map(({ to, label, icon: Icon }) => (
+{ADMIN_LINKS.map((link) => {
+  const { to, label, icon } = link;
+  const Icon = icon;
+  return (
   <Link
     key={to}
     to={to}
@@ -389,7 +392,8 @@ export function AdminHeader({ theme, onToggleTheme }) {
     <Icon size={16} />
     {t(label)}
   </Link>
-))}
+  );
+})}
           </div>
         </div>
       )}
