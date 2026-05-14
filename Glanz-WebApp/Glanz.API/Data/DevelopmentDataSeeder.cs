@@ -37,19 +37,23 @@ public static class DevelopmentDataSeeder
         // â”€â”€ Admin â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         var adminEmail    = configuration["AdminUser:Email"]     ?? "admin@glanz.qa";
         var adminPassword = configuration["AdminUser:Password"]  ?? "Admin123!";
-        var admin = new User
+        var admin = await db.Users.FirstOrDefaultAsync(u => u.Email == adminEmail);
+        if (admin == null)
         {
-            FirstName    = configuration["AdminUser:FirstName"] ?? "Admin",
-            LastName     = configuration["AdminUser:LastName"]  ?? "User",
-            Email        = adminEmail,
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword(adminPassword),
-            Phone        = configuration["AdminUser:Phone"] ?? "+97444444444",
-            Role         = "Admin",
-            IsActive     = true,
-            CreatedAt    = now,
-            UpdatedAt    = now,
-        };
-        await db.Users.AddAsync(admin);
+            admin = new User
+            {
+                FirstName    = configuration["AdminUser:FirstName"] ?? "Admin",
+                LastName     = configuration["AdminUser:LastName"]  ?? "User",
+                Email        = adminEmail,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(adminPassword),
+                Phone        = configuration["AdminUser:Phone"] ?? "+97444444444",
+                Role         = "Admin",
+                IsActive     = true,
+                CreatedAt    = now,
+                UpdatedAt    = now,
+            };
+            await db.Users.AddAsync(admin);
+        }
 
         // â”€â”€ Workers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         var workers = new List<Staff>
