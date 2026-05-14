@@ -399,15 +399,36 @@ export default function AdminAddStaff() {
                 </div>
               </div>
 
-              {/* Working days */}
-              <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)] mb-3">Working days</p>
-              <div className="flex flex-wrap gap-2">
-                {ALL_DAYS.map(day => (
-                  <button key={day} type="button" onClick={() => toggleDay(day)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition ${form.workingDays.includes(day) ? 'bg-primary text-white border-primary' : 'border-[var(--border-color)] text-[var(--text-color)] hover:bg-white/5'}`}>
-                    {day.slice(0,3)}
-                  </button>
-                ))}
+              {/* Per-day grid */}
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)] mb-3">Days & per-day overrides</p>
+              <div className="grid gap-2">
+                {ALL_DAYS.map(day => {
+                  const active = form.workingDays.includes(day);
+                  return (
+                    <div key={day}
+                      className={`flex flex-col sm:flex-row sm:items-center gap-2 rounded-xl border px-3 py-2.5 transition-all ${active ? 'border-[var(--border-color)]' : 'border-dashed border-[var(--border-color)] opacity-50'}`}
+                      style={active ? { background:'rgba(200,169,107,.04)' } : {}}>
+                      <button type="button" onClick={() => toggleDay(day)}
+                        className={`w-24 shrink-0 px-2 py-1 rounded-lg text-xs font-bold border transition-all ${active ? 'bg-primary text-white border-primary' : 'border-[var(--border-color)] bg-[var(--card-bg)] text-[var(--muted-color)]'}`}>
+                        {day.slice(0,3)}
+                      </button>
+                      {active && (
+                        <div className="flex items-center gap-2 flex-1 flex-wrap">
+                          <select className={inp} value={form.shiftStart} onChange={e => set('shiftStart', e.target.value)}
+                            style={{ padding:'6px 10px', fontSize:'12px' }}>
+                            {SHIFT_HOURS.map(h => <option key={h} value={h}>{h}</option>)}
+                          </select>
+                          <span className="text-xs text-[var(--muted-color)]">to</span>
+                          <select className={inp} value={form.shiftEnd} onChange={e => set('shiftEnd', e.target.value)}
+                            style={{ padding:'6px 10px', fontSize:'12px' }}>
+                            {SHIFT_HOURS.map(h => <option key={h} value={h}>{h}</option>)}
+                          </select>
+                          <span className="text-xs text-[var(--muted-color)] italic">default</span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
               {errors.workingDays && <p className="text-rose-400 text-xs mt-3">{errors.workingDays}</p>}
             </div>

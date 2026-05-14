@@ -570,32 +570,6 @@ Generated: ${new Date().toLocaleString()}
                         </div>
                       </div>
 
-                      {/* ── Salary ── */}
-                      <div className="mt-4 flex flex-wrap items-end gap-3 p-4 rounded-xl border border-[var(--border-color)]"
-                        style={{ background:'rgba(200,169,107,.03)' }}>
-                        <div className="flex items-center gap-2 mb-1 w-full">
-                          <DollarSign size={12} style={{ color:'#c8a96b' }} />
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)]">{ui.salaryTitle}</p>
-                        </div>
-                        {salaryError && <p className="text-xs text-rose-400 w-full -mt-1">{salaryError}</p>}
-                        <input
-                          type="number" min={0} step={50}
-                          value={salaryInputs[worker.id] ?? (worker.monthlySalary ?? '')}
-                          onChange={e => setSalaryInputs(p => ({ ...p, [worker.id]: e.target.value }))}
-                          placeholder="e.g. 2500"
-                          className="field-input"
-                          style={{ maxWidth:'180px' }}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => handleSaveSalary(worker.id)}
-                          disabled={salarySavingId === worker.id}
-                          className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition disabled:opacity-50"
-                          style={{ background:'rgba(200,169,107,.14)', border:'1px solid rgba(200,169,107,.40)', color:'#c8a96b' }}>
-                          {salarySavingId === worker.id ? 'Saving...' : salarySavedId === worker.id ? <><CheckCircle size={12}/> {ui.saved}</> : <><Save size={12}/> {ui.saveSalary}</>}
-                        </button>
-                      </div>
-
                       {/* ── Schedule Editor ── */}
                       {editingScheduleId === worker.id && (
                         <div className="mt-5 relative overflow-hidden rounded-xl border border-[var(--border-color)] p-5"
