@@ -318,12 +318,16 @@ await AdminAccountBootstrapper.SyncFromConfigurationAsync(app.Services, builder.
 
 await DevelopmentDataSeeder.SeedAsync(app.Services, builder.Configuration, app.Environment);
 
-// Load business hours from DB and apply to slot helpers
+// Load business hours + closed dates from DB and apply to slot helpers
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    var hoursRow = await dbContext.SystemSettings
-        .FirstOrDefaultAsync(s => s.Key == "booking.businessHours");
+
+    var settingRows = await dbContext.SystemSettings
+        .Where(s => s.Key == "booking.businessHours" || s.Key == "booking.closedDates")
+        .ToListAsync();
+
+    var hoursRow = settingRows.FirstOrDefault(s => s.Key == "booking.businessHours");
     if (hoursRow != null && !string.IsNullOrWhiteSpace(hoursRow.Value))
     {
         try
@@ -335,6 +339,19 @@ using (var scope = app.Services.CreateScope())
                 Glanz.API.Controllers.BookingsController.SetBusinessHoursFromSettings(hours);
                 BookingSlotHelper.SetBusinessHoursFromSettings(hours);
             }
+        }
+        catch { }
+    }
+
+    var closedRow = settingRows.FirstOrDefault(s => s.Key == "booking.closedDates");
+    if (closedRow != null && !string.IsNullOrWhiteSpace(closedRow.Value))
+    {
+        try
+        {
+            var dates = System.Text.Json.JsonSerializer.Deserialize<List<string>>(closedRow.Value,
+                AppJsonOptions.CaseInsensitive);
+            if (dates != null)
+                BookingSlotHelper.SetClosedDatesFromSettings(dates);
         }
         catch { }
     }
@@ -459,6 +476,10 @@ WHERE bi.""PackageId"" = p.""Id""
         await EnsureColumnAsync(connection, "Users", "PasswordResetToken", "character varying(200) NULL");
         await EnsureColumnAsync(connection, "Users", "PasswordResetTokenExpiry", "timestamp with time zone NULL");
         await EnsurePageViewsTableAsync(connection);
+
+        // Preferred detailer (AddPreferredDetailerFields)
+        await EnsureColumnAsync(connection, "Users", "AllowPreferredWorker", "boolean NOT NULL DEFAULT false");
+        await EnsureColumnAsync(connection, "Bookings", "PreferredWorkerId", "integer NULL");
 
         await EnsureSlotReservationsTableAsync(connection);
         // ServiceSubscriptions table must exist before we can add columns to it.

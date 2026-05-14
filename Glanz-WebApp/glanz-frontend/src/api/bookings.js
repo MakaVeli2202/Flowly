@@ -59,10 +59,11 @@ export const bookingsAPI = {
     return response.data;
   }),
 
-  getAvailableSlots: async (date, durationMinutes, vehicleType) => withRetry(async () => {
+  getAvailableSlots: async (date, durationMinutes, vehicleType, preferredWorkerId) => withRetry(async () => {
     const params = { date };
     if (durationMinutes > 0) params.durationMinutes = durationMinutes;
     if (vehicleType) params.vehicleType = vehicleType;
+    if (preferredWorkerId) params.preferredWorkerId = preferredWorkerId;
     const response = await apiClient.get('/Bookings/available-slots', { params });
     return response.data;
   }),

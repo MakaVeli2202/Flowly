@@ -6,7 +6,7 @@ using Glanz.API.Data;
 namespace Glanz.API.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
+    [Route("api/[controller]")]
     [Authorize(Roles = "Admin")]
     public class DevController : ControllerBase
     {

@@ -398,15 +398,19 @@ export default function AdminDevSettings() {
           )}
         </div>
 
-        {/* ── Site Access ── */}
-        {hasGateToken && (
-          <section className="mb-10">
-            <div className="rounded-2xl border border-white/10 bg-[#0a1020]/90 p-5 shadow-2xl backdrop-blur-xl">
-              <div className="flex items-center justify-between gap-3">
+        {/* ── Launch Configuration + Publish ── */}
+        <section className="mb-10">
+          <div className="rounded-2xl border border-white/10 bg-[#0a1020]/90 p-5 shadow-2xl backdrop-blur-xl">
+            {/* Header row */}
+            <div className="flex items-center justify-between gap-3 mb-5">
+              <div className="flex items-center gap-2">
+                <Clock size={15} className="text-primary" />
                 <div>
-                  <p className="text-[0.62rem] uppercase tracking-[0.26em] text-white/40 font-bold">Admin access</p>
-                  <p className="text-lg font-semibold text-white">{sitePublished ? 'Site is published' : 'Private preview unlocked'}</p>
+                  <h2 className="text-sm font-bold uppercase tracking-widest text-[var(--heading-color)]">Launch Configuration</h2>
+                  <p className="text-xs text-[var(--muted-color)]">Countdown timer target + site visibility</p>
                 </div>
+              </div>
+              {hasGateToken && (
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
@@ -431,15 +435,57 @@ export default function AdminDevSettings() {
                     <LogOut size={14} />
                   </button>
                 </div>
-              </div>
-              <div className="mt-2 flex items-start gap-2 text-xs text-white/50">
+              )}
+            </div>
+
+            {/* Site status */}
+            {hasGateToken && (
+              <div className="mb-5 flex items-start gap-2 text-xs text-white/50">
                 <CheckCircle2 size={14} className="mt-0.5 text-emerald-400 flex-shrink-0" />
                 <span>{sitePublished ? 'Anyone can browse the full website.' : 'Only this browser can bypass the private page until you publish.'}</span>
               </div>
-              {publishError && <p className="mt-2 text-xs text-rose-300">{publishError}</p>}
+            )}
+            {publishError && <p className="mb-4 text-xs text-rose-300">{publishError}</p>}
+
+            {/* Launch date picker */}
+            <p className="text-xs text-[var(--muted-color)] mb-4">
+              Set the countdown timer target date and time. Visitors will see a countdown until this moment when the site is in private mode.
+            </p>
+            {launchError && (
+              <div className="flex items-start gap-3 rounded-xl border border-rose-500/25 bg-rose-500/8 px-4 py-3 mb-4">
+                <AlertCircle size={14} className="text-rose-400 flex-shrink-0 mt-0.5" />
+                <p className="text-rose-300 text-sm">{launchError}</p>
+              </div>
+            )}
+            <div className="mb-4">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)] block mb-2">Launch Date &amp; Time</label>
+              <input
+                type="datetime-local"
+                value={launchDate}
+                onChange={e => setLaunchDate(e.target.value)}
+                disabled={launchSaving}
+                className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--surface-bg)] text-[var(--text-color)] text-sm focus:outline-none focus:border-primary/60 disabled:opacity-50"
+              />
             </div>
-          </section>
-        )}
+            {launchDate && (
+              <div className="rounded-xl border p-3 mb-4" style={{ background:'rgba(6,182,212,.07)', borderColor:'rgba(6,182,212,.28)' }}>
+                <p className="text-xs text-[var(--muted-color)]">
+                  <span style={{ color:'#06b6d4', fontWeight:700 }}>Target: </span>
+                  {new Date(launchDate).toLocaleString()}
+                </p>
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={handleSaveLaunchDate}
+              disabled={launchSaving}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition disabled:opacity-50"
+              style={{ background:'rgba(6,182,212,.15)', border:'1px solid rgba(6,182,212,.35)', color:'#22d3ee' }}
+            >
+              {launchSaving ? 'Saving...' : launchSaved ? <><CheckCircle2 size={14}/> Saved</> : <><Save size={14}/> Save Launch Date</>}
+            </button>
+          </div>
+        </section>
 
         {/* ── Environment & API Info ── */}
         <section className="mb-10">
@@ -560,55 +606,6 @@ export default function AdminDevSettings() {
           <p className="text-xs text-[var(--muted-color)] mt-2 ml-1">
             Edit at <Link to="/admin/settings" className="text-primary hover:underline">Admin → Settings</Link>
           </p>
-        </section>
-
-        {/* ── Launch Configuration ── */}
-        <section className="mb-10">
-          <div className="flex items-center gap-2 mb-4">
-            <Clock size={15} className="text-primary" />
-            <h2 className="text-sm font-bold uppercase tracking-widest text-[var(--heading-color)]">
-              Launch Configuration
-            </h2>
-            <span className="text-xs text-[var(--muted-color)] ml-1">(countdown timer target date)</span>
-          </div>
-          <div className="glass-card p-5">
-            <p className="text-xs text-[var(--muted-color)] mb-4">
-              Set the countdown timer target date and time. Visitors will see a countdown until this moment when the site is in private mode.
-            </p>
-            {launchError && (
-              <div className="flex items-start gap-3 rounded-xl border border-rose-500/25 bg-rose-500/8 px-4 py-3 mb-4">
-                <AlertCircle size={14} className="text-rose-400 flex-shrink-0 mt-0.5" />
-                <p className="text-rose-300 text-sm">{launchError}</p>
-              </div>
-            )}
-            <div className="mb-4">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)] block mb-2">Launch Date &amp; Time</label>
-              <input
-                type="datetime-local"
-                value={launchDate}
-                onChange={e => setLaunchDate(e.target.value)}
-                disabled={launchSaving}
-                className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--surface-bg)] text-[var(--text-color)] text-sm focus:outline-none focus:border-primary/60 disabled:opacity-50"
-              />
-            </div>
-            {launchDate && (
-              <div className="rounded-xl border p-3 mb-4" style={{ background:'rgba(6,182,212,.07)', borderColor:'rgba(6,182,212,.28)' }}>
-                <p className="text-xs text-[var(--muted-color)]">
-                  <span style={{ color:'#06b6d4', fontWeight:700 }}>Target: </span>
-                  {new Date(launchDate).toLocaleString()}
-                </p>
-              </div>
-            )}
-            <button
-              type="button"
-              onClick={handleSaveLaunchDate}
-              disabled={launchSaving}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition disabled:opacity-50"
-              style={{ background:'rgba(6,182,212,.15)', border:'1px solid rgba(6,182,212,.35)', color:'#22d3ee' }}
-            >
-              {launchSaving ? 'Saving…' : launchSaved ? <><CheckCircle2 size={14}/> Saved</> : <><Save size={14}/> Save Launch Date</>}
-            </button>
-          </div>
         </section>
 
         {/* ── Dev Testing Panel ── */}

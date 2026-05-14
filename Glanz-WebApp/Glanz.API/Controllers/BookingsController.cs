@@ -953,6 +953,9 @@ namespace Glanz.API.Controllers
         private async Task<int> CountValidSlotsForDayAsync(DateTime targetDateUtc, int durationMinutes,
             int workerTravelBuffer = DefaultWorkerTravelBufferMinutes)
         {
+            if (BookingSlotHelper.IsDateClosed(DateOnly.FromDateTime(targetDateUtc)))
+                return 0;
+
             var dayName = targetDateUtc.DayOfWeek.ToString();
             var workers = await _context.Staff
                 .AsNoTracking()
@@ -1774,7 +1777,7 @@ namespace Glanz.API.Controllers
         }
 
         [HttpGet("available-slots")]
-        public async Task<ActionResult<IEnumerable<string>>> GetAvailableSlots([FromQuery] string date, [FromQuery] int? durationMinutes, [FromQuery] VehicleType? vehicleType)
+        public async Task<ActionResult<IEnumerable<string>>> GetAvailableSlots([FromQuery] string date, [FromQuery] int? durationMinutes, [FromQuery] VehicleType? vehicleType, [FromQuery] int? preferredWorkerId)
         {
             // All times are evaluated in BusinessTimeZone (Arab Standard Time = Qatar UTC+3 by default; overridable via appsettings BusinessSettings:TimeZone)
 
@@ -1783,6 +1786,10 @@ namespace Glanz.API.Controllers
                 return BadRequest(new { message = "Invalid date format. Use YYYY-MM-DD." });
 
             var slotDuration = (durationMinutes.HasValue && durationMinutes.Value > 0) ? durationMinutes.Value : 60;
+
+            // Check if the business has marked this date as a closed/off day.
+            if (BookingSlotHelper.IsDateClosed(parsedDate))
+                return Ok(new List<string>());
 
             // 2. Read workerTravelBuffer from SystemSettings (also acts as same-day lead time for first job).
             var workerTravelBuffer = await GetWorkerTravelBufferMinutesAsync();
@@ -1814,6 +1821,10 @@ namespace Glanz.API.Controllers
                 var availableWorkers = workers
                     .Where(w => WorkerWorksOnDay(w.WorkingDays, dayOfWeek))
                     .ToList();
+
+                // If a specific preferred worker was requested, restrict to that worker only.
+                if (preferredWorkerId.HasValue)
+                    availableWorkers = availableWorkers.Where(w => w.Id == preferredWorkerId.Value).ToList();
 
                 // 6. If none â†’ return empty.
                 if (availableWorkers.Count == 0)
@@ -2346,6 +2357,7 @@ namespace Glanz.API.Controllers
                     VehicleYear = dto.VehicleYear,
                     VehicleType = dto.VehicleType,
                     AssignedWorkerId = autoAssignedWorker?.Id,
+                    PreferredWorkerId = dto.PreferredWorkerId,
                     SpecialInstructions = dto.SpecialInstructions,
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow,

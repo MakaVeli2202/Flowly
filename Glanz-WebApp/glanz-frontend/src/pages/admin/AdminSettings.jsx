@@ -72,6 +72,15 @@ export default function AdminSettings() {
       multiplierRangeError: 'Each multiplier must be between 0 and 5.',
       failedToSaveMultipliers: 'Failed to save vehicle multipliers.',
       failedToSaveBusinessHours: 'Failed to save business hours.',
+      closedDays: 'Special Closed Days',
+      closedDaysDesc: 'Mark specific calendar dates as fully closed. Customers will see no available slots on these days. Contact customers with existing bookings to reschedule manually.',
+      addClosedDate: 'Mark Closed',
+      closedDatesNone: 'No closed days scheduled.',
+      failedToSaveClosedDates: 'Failed to save closed dates.',
+      featureFlags: 'Feature Flags',
+      featureFlagsDesc: 'Enable or disable platform features. Changes take effect immediately for all users.',
+      featureFlagFavoriteDetailer: 'Favourite Detailer',
+      featureFlagFavoriteDetailerDesc: 'Allows VIP customers to select a preferred detailer during booking. Enable per-customer via CRM.',
       adminSettings: 'Admin Settings',
       settingsSubtitle: 'Control system-wide policies and fees.',
       cancellationPolicy: 'Cancellation Policy',
@@ -206,6 +215,15 @@ export default function AdminSettings() {
       multiplierRangeError: 'يجب أن يكون كل معامل بين 0 و5.',
       failedToSaveMultipliers: 'فشل حفظ معاملات المركبات.',
       failedToSaveBusinessHours: 'فشل حفظ ساعات العمل.',
+      closedDays: 'أيام الإغلاق الخاصة',
+      closedDaysDesc: 'حدد تواريخ معينة كأيام إغلاق تام. لن يرى العملاء أي مواعيد متاحة في هذه الأيام. تواصل مع العملاء الذين لديهم حجوزات لإعادة الجدولة يدويا.',
+      addClosedDate: 'تحديد كيوم مغلق',
+      closedDatesNone: 'لا توجد أيام إغلاق مجدولة.',
+      failedToSaveClosedDates: 'فشل حفظ أيام الإغلاق.',
+      featureFlags: 'ميزات النظام',
+      featureFlagsDesc: 'تفعيل أو تعطيل ميزات المنصة. التغييرات تسري فورا على جميع المستخدمين.',
+      featureFlagFavoriteDetailer: 'المنظف المفضل',
+      featureFlagFavoriteDetailerDesc: 'يسمح للعملاء المميزين باختيار منظف مفضل عند الحجز. يتم التفعيل لكل عميل عبر إدارة علاقات العملاء.',
       adminSettings: 'إعدادات الإدارة',
       settingsSubtitle: 'تحكم في السياسات والرسوم على مستوى النظام.',
       cancellationPolicy: 'سياسة الإلغاء',
@@ -340,6 +358,15 @@ export default function AdminSettings() {
       multiplierRangeError: 'Jeder Multiplikator muss zwischen 0 und 5 liegen.',
       failedToSaveMultipliers: 'Fahrzeug-Multiplikatoren konnten nicht gespeichert werden.',
       failedToSaveBusinessHours: 'Geschaftszeiten konnten nicht gespeichert werden.',
+      closedDays: 'Besondere Schliessungstage',
+      closedDaysDesc: 'Markieren Sie bestimmte Kalendertage als vollstandig geschlossen. Kunden sehen an diesen Tagen keine verfugbaren Slots. Kontaktieren Sie Kunden mit bestehenden Buchungen zur manuellen Umplanung.',
+      addClosedDate: 'Als geschlossen markieren',
+      closedDatesNone: 'Keine Schliessungstage geplant.',
+      failedToSaveClosedDates: 'Schliessungstage konnten nicht gespeichert werden.',
+      featureFlags: 'Feature-Flags',
+      featureFlagsDesc: 'Aktivieren oder deaktivieren Sie Plattformfunktionen. Anderungen wirken sofort fur alle Nutzer.',
+      featureFlagFavoriteDetailer: 'Lieblingsreiniger',
+      featureFlagFavoriteDetailerDesc: 'Ermoglicht VIP-Kunden, einen bevorzugten Reiniger bei der Buchung auszuwahlen. Pro Kunde uber CRM aktivierbar.',
       adminSettings: 'Admin-Einstellungen',
       settingsSubtitle: 'Steuern Sie systemweite Richtlinien und Gebuhren.',
       cancellationPolicy: 'Stornierungsrichtlinie',
@@ -474,6 +501,15 @@ export default function AdminSettings() {
     multiplierRangeError: 'Each multiplier must be between 0 and 5.',
     failedToSaveMultipliers: 'Failed to save vehicle multipliers.',
     failedToSaveBusinessHours: 'Failed to save business hours.',
+    closedDays: 'Special Closed Days',
+    closedDaysDesc: 'Mark specific calendar dates as fully closed. Customers will see no available slots on these days. Contact customers with existing bookings to reschedule manually.',
+    addClosedDate: 'Mark Closed',
+    closedDatesNone: 'No closed days scheduled.',
+    failedToSaveClosedDates: 'Failed to save closed dates.',
+    featureFlags: 'Feature Flags',
+    featureFlagsDesc: 'Enable or disable platform features. Changes take effect immediately for all users.',
+    featureFlagFavoriteDetailer: 'Favourite Detailer',
+    featureFlagFavoriteDetailerDesc: 'Allows VIP customers to select a preferred detailer during booking. Enable per-customer via CRM.',
     adminSettings: 'Admin Settings',
     settingsSubtitle: 'Control system-wide policies and fees.',
     cancellationPolicy: 'Cancellation Policy',
@@ -646,12 +682,22 @@ export default function AdminSettings() {
   // Business hours state
   const defaultBusinessHours = {
     Sunday: '09:00-18:00', Monday: '09:00-18:00', Tuesday: '09:00-18:00',
-    Wednesday: '09:00-18:00', Thursday: '09:00-18:00', Friday: '00:00-00:00', Saturday: '10:00-16:00',
+    Wednesday: '09:00-18:00', Thursday: '09:00-18:00', Friday: '00:00-00:00', Saturday: '00:00-00:00',
   };
   const [businessHours, setBusinessHours] = useState(defaultBusinessHours);
   const [bizHoursSaving, setBizHoursSaving] = useState(false);
   const [bizHoursSaved, setBizHoursSaved] = useState(false);
   const [bizHoursError, setBizHoursError] = useState('');
+
+  // Closed days
+  const [closedDates, setClosedDates] = useState([]);
+  const [newClosedDate, setNewClosedDate] = useState('');
+  const [closedDatesSaving, setClosedDatesSaving] = useState(false);
+  const [closedDatesError, setClosedDatesError] = useState('');
+
+  // Feature flags
+  const [featureFlags, setFeatureFlags] = useState({ favoriteDetailer: false });
+  const [featureFlagsSaving, setFeatureFlagsSaving] = useState({});
 
   const formatDateTimeLocal = (value) => {
     const date = new Date(value);
@@ -710,9 +756,10 @@ export default function AdminSettings() {
             Wednesday: data.businessHours.wednesday || '09:00-18:00',
             Thursday:  data.businessHours.thursday  || '09:00-18:00',
             Friday:    data.businessHours.friday    || '00:00-00:00',
-            Saturday:  data.businessHours.saturday  || '10:00-16:00',
+            Saturday:  data.businessHours.saturday  || '00:00-00:00',
           });
         }
+        if (Array.isArray(data?.closedDates)) setClosedDates(data.closedDates);
                 if (data?.businessConfig) {
                   const bc = data.businessConfig;
                   setBiz(b => ({
@@ -728,6 +775,11 @@ export default function AdminSettings() {
                 }
       })
       .catch(() => {});
+
+    // Load feature flags
+    settingsAPI.getFeatureFlags().then(flags => {
+      setFeatureFlags(f => ({ ...f, ...flags }));
+    }).catch(() => {});
   }, []);
 
   const handleSave = async () => {
@@ -865,6 +917,38 @@ export default function AdminSettings() {
 
   const updateBusinessHours = (day, start, end) => {
     setBusinessHours(prev => ({ ...prev, [day]: `${start}-${end}` }));
+  };
+
+  const handleAddClosedDate = async () => {
+    if (!newClosedDate) return;
+    const updated = [...new Set([...closedDates, newClosedDate])].sort();
+    setClosedDatesSaving(true); setClosedDatesError('');
+    try {
+      await settingsAPI.updateClosedDates(updated);
+      setClosedDates(updated);
+      setNewClosedDate('');
+    } catch (err) { setClosedDatesError(err?.response?.data?.message || ui.failedToSaveClosedDates); }
+    finally { setClosedDatesSaving(false); }
+  };
+
+  const handleRemoveClosedDate = async (date) => {
+    const updated = closedDates.filter(d => d !== date);
+    setClosedDatesSaving(true); setClosedDatesError('');
+    try {
+      await settingsAPI.updateClosedDates(updated);
+      setClosedDates(updated);
+    } catch (err) { setClosedDatesError(err?.response?.data?.message || ui.failedToSaveClosedDates); }
+    finally { setClosedDatesSaving(false); }
+  };
+
+  const handleToggleFeatureFlag = async (flag) => {
+    const current = featureFlags[flag] || false;
+    setFeatureFlagsSaving(p => ({ ...p, [flag]: true }));
+    try {
+      await settingsAPI.setFeatureFlag(flag, !current);
+      setFeatureFlags(f => ({ ...f, [flag]: !current }));
+    } catch { }
+    finally { setFeatureFlagsSaving(p => ({ ...p, [flag]: false })); }
   };
 
   const exampleFee = policy.feeType === 'Percent'
@@ -1301,6 +1385,93 @@ export default function AdminSettings() {
                   style={{ background:'rgba(16,185,129,.15)', border:'1px solid rgba(16,185,129,.35)', color:'#10b981' }}>
                   {bizHoursSaving ? ui.saving : bizHoursSaved ? <><CheckCircle size={14} /> {ui.saved}</> : <><Save size={14} /> {ui.saveBusinessHours}</>}
                 </button>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Special Closed Days card ── */}
+          <div className="glass-card relative overflow-hidden card-stagger">
+            <div className="absolute top-0 left-0 right-0 h-[2px]"
+              style={{ background:'linear-gradient(90deg,transparent,#ef4444 38%,#f97316 62%,transparent)' }} />
+            <div className="absolute top-0 left-0 w-[3px] h-full"
+              style={{ background:'linear-gradient(180deg,#ef4444 0%,#ef444444 60%,transparent 100%)' }} />
+
+            <div className="p-7">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center"
+                  style={{ background:'rgba(239,68,68,.12)', border:'1px solid rgba(239,68,68,.24)' }}>
+                  <Clock size={14} style={{ color:'#ef4444' }} />
+                </div>
+                <h2 className="premium-heading text-xl font-bold text-[var(--heading-color)]">{ui.closedDays}</h2>
+              </div>
+              <p className="text-sm text-[var(--muted-color)] mb-5 ml-11">{ui.closedDaysDesc}</p>
+              <div className="mb-5"><div className="spectrum-line" /></div>
+
+              {closedDatesError && (
+                <div className="flex items-start gap-3 rounded-xl border border-rose-500/25 bg-rose-500/8 px-4 py-3 mb-5">
+                  <AlertCircle size={14} className="text-rose-400 flex-shrink-0 mt-0.5" />
+                  <p className="text-rose-300 text-sm font-semibold">{closedDatesError}</p>
+                </div>
+              )}
+
+              <div className="flex gap-2 mb-4">
+                <input type="date" value={newClosedDate}
+                  onChange={e => setNewClosedDate(e.target.value)}
+                  className="field-input flex-1" />
+                <button type="button" onClick={handleAddClosedDate} disabled={closedDatesSaving || !newClosedDate}
+                  className="px-4 py-2.5 rounded-xl text-xs font-bold transition disabled:opacity-50"
+                  style={{ background:'rgba(239,68,68,.15)', border:'1px solid rgba(239,68,68,.35)', color:'#f87171' }}>
+                  {ui.addClosedDate}
+                </button>
+              </div>
+
+              {closedDates.length === 0 ? (
+                <p className="text-xs text-[var(--muted-color)] mb-2">{ui.closedDatesNone}</p>
+              ) : (
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {closedDates.map(d => (
+                    <span key={d} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold"
+                      style={{ background:'rgba(239,68,68,.10)', color:'#f87171', border:'1px solid rgba(239,68,68,.28)' }}>
+                      {d}
+                      <button type="button" onClick={() => handleRemoveClosedDate(d)} disabled={closedDatesSaving}
+                        className="hover:text-rose-200 transition-colors ml-0.5 disabled:opacity-50">
+                        x
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* ── Feature Flags card ── */}
+          <div className="glass-card relative overflow-hidden card-stagger">
+            <div className="absolute top-0 left-0 right-0 h-[2px]"
+              style={{ background:'linear-gradient(90deg,transparent,#8b5cf6 38%,#06b6d4 62%,transparent)' }} />
+            <div className="absolute top-0 left-0 w-[3px] h-full"
+              style={{ background:'linear-gradient(180deg,#8b5cf6 0%,#8b5cf644 60%,transparent 100%)' }} />
+
+            <div className="p-7">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center"
+                  style={{ background:'rgba(139,92,246,.12)', border:'1px solid rgba(139,92,246,.24)' }}>
+                  <FlaskConical size={14} style={{ color:'#8b5cf6' }} />
+                </div>
+                <h2 className="premium-heading text-xl font-bold text-[var(--heading-color)]">{ui.featureFlags}</h2>
+              </div>
+              <p className="text-sm text-[var(--muted-color)] mb-5 ml-11">{ui.featureFlagsDesc}</p>
+              <div className="mb-5"><div className="spectrum-line" /></div>
+
+              <div className="flex items-center justify-between p-4 rounded-xl border border-[var(--border-color)]">
+                <div>
+                  <p className="font-bold text-sm text-[var(--heading-color)] mb-0.5">{ui.featureFlagFavoriteDetailer}</p>
+                  <p className="text-xs text-[var(--muted-color)]">{ui.featureFlagFavoriteDetailerDesc}</p>
+                </div>
+                {featureFlagsSaving.favoriteDetailer ? (
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary" />
+                ) : (
+                  <Toggle checked={featureFlags.favoriteDetailer || false} onClick={() => handleToggleFeatureFlag('favoriteDetailer')} />
+                )}
               </div>
             </div>
           </div>

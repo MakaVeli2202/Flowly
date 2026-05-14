@@ -17,7 +17,7 @@ namespace Glanz.API.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.5")
+                .HasAnnotation("ProductVersion", "8.0.11")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -190,6 +190,9 @@ namespace Glanz.API.Migrations
                     b.Property<int>("PaymentStatus")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("PreferredWorkerId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("ReferralCode")
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)");
@@ -280,6 +283,8 @@ namespace Glanz.API.Migrations
                     b.HasIndex("IdempotencyKey")
                         .IsUnique()
                         .HasFilter("\"IdempotencyKey\" IS NOT NULL");
+
+                    b.HasIndex("PreferredWorkerId");
 
                     b.HasIndex("UserId");
 
@@ -805,6 +810,9 @@ namespace Glanz.API.Migrations
                         .HasPrecision(10, 2)
                         .HasColumnType("decimal(10,2)");
 
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Tier")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -842,6 +850,56 @@ namespace Glanz.API.Migrations
                     b.HasIndex("ServiceId");
 
                     b.ToTable("PackageServices");
+                });
+
+            modelBuilder.Entity("Glanz.API.Models.PageView", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("DeviceType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime>("FirstSeen")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("IpAddress")
+                        .HasMaxLength(45)
+                        .HasColumnType("character varying(45)");
+
+                    b.Property<bool>("IsNewVisitor")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("LastHeartbeat")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Page")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<string>("Referrer")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("SessionId")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("PageViews");
                 });
 
             modelBuilder.Entity("Glanz.API.Models.Product", b =>
@@ -902,6 +960,9 @@ namespace Glanz.API.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<decimal?>("DiscountPercent")
+                        .HasColumnType("numeric");
+
                     b.Property<DateTime?>("FirstBookingAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -933,65 +994,6 @@ namespace Glanz.API.Migrations
                     b.ToTable("Referrals");
                 });
 
-            modelBuilder.Entity("Glanz.API.Models.PageView", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
-
-                    b.Property<string>("DeviceType")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasDefaultValue("Desktop")
-                        .HasColumnType("character varying(20)");
-
-                    b.Property<DateTime>("FirstSeen")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("IpAddress")
-                        .HasMaxLength(45)
-                        .HasColumnType("character varying(45)");
-
-                    b.Property<bool>("IsNewVisitor")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTime>("LastHeartbeat")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Page")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasDefaultValue("/")
-                        .HasColumnType("character varying(255)");
-
-                    b.Property<string>("Referrer")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<string>("SessionId")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
-                    b.Property<string>("Source")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasDefaultValue("Direct")
-                        .HasColumnType("character varying(50)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("FirstSeen");
-
-                    b.HasIndex("LastHeartbeat");
-
-                    b.HasIndex("SessionId");
-
-                    b.ToTable("PageViews");
-                });
-
             modelBuilder.Entity("Glanz.API.Models.Service", b =>
                 {
                     b.Property<int>("Id")
@@ -1016,6 +1018,9 @@ namespace Glanz.API.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -1160,6 +1165,11 @@ namespace Glanz.API.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("CompensationType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -1211,6 +1221,9 @@ namespace Glanz.API.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<decimal?>("PercentageRate")
+                        .HasColumnType("decimal(5,2)");
+
                     b.Property<string>("Phone")
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
@@ -1240,6 +1253,13 @@ namespace Glanz.API.Migrations
                         .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
+
+                    b.Property<string>("ShortCode")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("SkillsJson")
+                        .HasColumnType("text");
 
                     b.Property<string>("StaffType")
                         .IsRequired()
@@ -1492,6 +1512,9 @@ namespace Glanz.API.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("AllowPreferredWorker")
+                        .HasColumnType("boolean");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -1499,6 +1522,13 @@ namespace Glanz.API.Migrations
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
+
+                    b.Property<string>("EmailVerificationToken")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime?>("EmailVerificationTokenExpiry")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("ExpoPushToken")
                         .HasMaxLength(500)
@@ -1519,28 +1549,14 @@ namespace Glanz.API.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
-                    b.Property<bool>("IsEmailVerified")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("EmailVerificationToken")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<DateTime?>("EmailVerificationTokenExpiry")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("PasswordResetToken")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<DateTime?>("PasswordResetTokenExpiry")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("HomeHouseNumber")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
                     b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsEmailVerified")
                         .HasColumnType("boolean");
 
                     b.Property<DateTime?>("LastBookedDate")
@@ -1575,6 +1591,13 @@ namespace Glanz.API.Migrations
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<string>("PasswordResetToken")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime?>("PasswordResetTokenExpiry")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Phone")
                         .HasMaxLength(20)
@@ -1836,12 +1859,18 @@ namespace Glanz.API.Migrations
                         .WithMany()
                         .HasForeignKey("AssignedWorkerId");
 
+                    b.HasOne("Glanz.API.Models.Staff", "PreferredWorker")
+                        .WithMany()
+                        .HasForeignKey("PreferredWorkerId");
+
                     b.HasOne("Glanz.API.Models.User", "User")
                         .WithMany("Bookings")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("AssignedWorker");
+
+                    b.Navigation("PreferredWorker");
 
                     b.Navigation("User");
                 });

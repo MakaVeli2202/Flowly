@@ -44,6 +44,11 @@ export const authAPI = {
     return response.data;
   }),
 
+  getActiveWorkerNames: async () => withRetry(async () => {
+    const response = await apiClient.get('/Auth/workers/active-names');
+    return response.data;
+  }),
+
   createWorker: async (data) => withRetry(async () => {
     const response = await apiClient.post('/Auth/register-worker', data);
     return response.data;
@@ -133,4 +138,7 @@ export const authAPI = {
 
   resetPassword: (token, newPassword, confirmNewPassword) =>
     apiClient.post('/Auth/reset-password', { token, newPassword, confirmNewPassword }),
+
+  setAllowPreferredWorker: (userId, allow) =>
+    apiClient.put(`/Auth/users/${userId}/allow-preferred-worker`, { allow }),
 };

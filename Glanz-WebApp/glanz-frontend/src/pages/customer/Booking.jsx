@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toDateKey, parseDateKey, toLocalIsoDate } from '../../utils/dateUtils';
 import { bookingsAPI } from '../../api/bookings';
+import { authAPI } from '../../api/auth';
 import { offersAPI } from '../../api/offers';
 import { subscriptionsAPI } from '../../api/subscriptions';
 import { useAuth } from '../../context/AuthContext';
@@ -20,7 +21,7 @@ import BookingSidebar             from './booking/BookingSidebar';
 
 /* ── BookingForm (orchestrator) ─────────────────────────────────────────── */
 function BookingForm({ isTapMode }) {
-  const _features = useFeatures();
+  const features = useFeatures();
   const { lang } = useLanguage();
   const { bookingPageConfig } = getSiteContent(lang);
   const _timeSlots     = bookingPageConfig.timeSlots || [];
@@ -47,6 +48,8 @@ function BookingForm({ isTapMode }) {
   const [availabilityLoading, setAvailabilityLoading] = useState(false);
   const [slotsLoading,        setSlotsLoading]        = useState(false);
   const [availableSlots,      setAvailableSlots]      = useState(null);
+  const [preferredWorkerId,   setPreferredWorkerId]   = useState(null);
+  const [workersList,         setWorkersList]         = useState([]);
   const [quote,               setQuote]               = useState(null);
   const [quoteLoading,        setQuoteLoading]        = useState(false);
   const [calendarMonth,       setCalendarMonth]       = useState(() => {
@@ -226,7 +229,7 @@ function BookingForm({ isTapMode }) {
     if (!formData.scheduledDate) { setAvailableSlots([]); return; }
     let cancelled = false;
     setSlotsLoading(true);
-    bookingsAPI.getAvailableSlots(formData.scheduledDate, totalDuration, formData.vehicleType)
+    bookingsAPI.getAvailableSlots(formData.scheduledDate, totalDuration, formData.vehicleType, preferredWorkerId)
       .then((slots) => {
         if (!cancelled) {
           const filtered = slots || [];
@@ -237,7 +240,7 @@ function BookingForm({ isTapMode }) {
       .catch(() => { if (!cancelled) setAvailableSlots([]); })
       .finally(() => { if (!cancelled) setSlotsLoading(false); });
     return () => { cancelled = true; };
-  }, [formData.scheduledDate, totalDuration, formData.vehicleType]);
+  }, [formData.scheduledDate, totalDuration, formData.vehicleType, preferredWorkerId]);
 
   useEffect(() => {
     if (!isAuthenticated) { setMyCoupons([]); return; }
@@ -250,6 +253,11 @@ function BookingForm({ isTapMode }) {
       .then((sub) => setMySubscription((sub?.isActive || sub?.status === 'Active') ? sub : null))
       .catch(() => setMySubscription(null));
   }, [isAuthenticated, isAdmin]);
+
+  useEffect(() => {
+    if (!features?.favoriteDetailer || !user?.allowPreferredWorker) { setWorkersList([]); return; }
+    authAPI.getActiveWorkerNames().then(w => setWorkersList(w || [])).catch(() => setWorkersList([]));
+  }, [features?.favoriteDetailer, user?.allowPreferredWorker]);
 
   // Quote: debounced 400ms
   useEffect(() => {
@@ -345,6 +353,7 @@ function BookingForm({ isTapMode }) {
         customerSubscriptionId: (mySubscription?.isActive || mySubscription?.status === 'Active')
           ? (mySubscription.id ?? null)
           : null,
+        preferredWorkerId:      preferredWorkerId || null,
       };
 
       // ── No payment mode: create booking directly ───────────────────────
@@ -483,6 +492,9 @@ function BookingForm({ isTapMode }) {
                   minDateObj={minDateObj}
                   selectedDateObj={selectedDateObj}
                   onSelectDate={onSelectCalendarDate}
+                  workersList={workersList}
+                  preferredWorkerId={preferredWorkerId}
+                  setPreferredWorkerId={setPreferredWorkerId}
                 />
 
                 <BookingDetailsCheckoutStep

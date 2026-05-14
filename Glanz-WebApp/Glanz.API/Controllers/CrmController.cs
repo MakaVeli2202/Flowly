@@ -68,7 +68,8 @@ namespace Glanz.API.Controllers
                     TotalBookingsCount = stats?.TotalBookings ?? 0,
                     LastBookedDate = lastBooked,
                     c.CreatedAt,
-                    DaysSinceLastBooking = daysSince
+                    DaysSinceLastBooking = daysSince,
+                    c.AllowPreferredWorker
                 };
             }).ToList();
 
@@ -233,7 +234,8 @@ namespace Glanz.API.Controllers
                         DaysSinceLastBooking = daysSinceLast == int.MaxValue ? -1 : daysSinceLast,
                         Segment = segmentName,
                         CreatedAt = c.CreatedAt,
-                        IsAtRisk = daysSinceLast > AtRiskDaysThreshold && totalBookings > 0
+                        IsAtRisk = daysSinceLast > AtRiskDaysThreshold && totalBookings > 0,
+                        AllowPreferredWorker = c.AllowPreferredWorker
                     };
                 })
                 .Where(c => c != null)
@@ -534,7 +536,8 @@ namespace Glanz.API.Controllers
                 DaysSinceLastBooking = daysSinceLast,
                 Segment = DetermineSegmentByData(c),
                 CreatedAt = c.CreatedAt,
-                IsAtRisk = daysSinceLast > AtRiskDaysThreshold && c.TotalBookingsCount > 0
+                IsAtRisk = daysSinceLast > AtRiskDaysThreshold && c.TotalBookingsCount > 0,
+                AllowPreferredWorker = c.AllowPreferredWorker
             };
         }
 

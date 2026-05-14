@@ -140,6 +140,7 @@ namespace Glanz.API.DTOs
         public decimal? PercentageRate { get; set; }
         public List<string>? Skills { get; set; }
         public bool MustChangePassword { get; set; }
+        public bool AllowPreferredWorker { get; set; }
     }
 
     /// <summary>Per-day shift override for a single day of week.</summary>
@@ -185,6 +186,12 @@ namespace Glanz.API.DTOs
     {
         [Required]
         public bool IsActive { get; set; }
+    }
+
+    public class AllowPreferredWorkerDto
+    {
+        [Required]
+        public bool Allow { get; set; }
     }
 
     public class UpdateWorkerSalaryDto

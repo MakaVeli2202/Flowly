@@ -62,4 +62,21 @@ export const settingsAPI = {
     const response = await apiClient.post('/Dev/run-full-cleanup');
     return response.data;
   },
+
+  getFeatureFlags: async () => withRetry(async () => {
+    const response = await apiClient.get('/Config/features');
+    return response.data;
+  }),
+
+  updateClosedDates: async (dates) => withRetry(async () => {
+    return settingsAPI.updateSystemSettings({ ClosedDates: dates });
+  }),
+
+  setFeatureFlag: async (flag, enabled) => withRetry(async () => {
+    const response = await apiClient.put(`/Config/features/${flag}`, { enabled });
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('system-settings-changed'));
+    }
+    return response.data;
+  }),
 };

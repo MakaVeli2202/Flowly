@@ -69,6 +69,9 @@ namespace Glanz.API.DTOs
         [StringLength(500)]
         public string? LeadSourceDetails { get; set; }
 
+        // Optional: customer's preferred detailer (only honoured when feature flag is on and user.AllowPreferredWorker=true)
+        public int? PreferredWorkerId { get; set; }
+
         [Required]
         public List<BookingPackageDto> Packages { get; set; } = new();
     }
@@ -485,7 +488,7 @@ namespace Glanz.API.DTOs
         public string Wednesday { get; set; } = "09:00-18:00";
         public string Thursday { get; set; } = "09:00-18:00";
         public string Friday { get; set; } = "00:00-00:00";
-        public string Saturday { get; set; } = "10:00-16:00";
+        public string Saturday { get; set; } = "00:00-00:00";
     }
 
     // ── Customer: self-service booking edit ─────────────────────────────────

@@ -121,6 +121,12 @@ namespace Glanz.API.Models
         /// </summary>
         public bool HasUsedReferralCode { get; set; }
 
+        /// <summary>
+        /// When true, this customer can select a preferred detailer during booking.
+        /// Enabled per-user by admin (e.g. for VIP customers).
+        /// </summary>
+        public bool AllowPreferredWorker { get; set; } = false;
+
         public ICollection<Booking> Bookings { get; set; } = new List<Booking>();
     }
 }

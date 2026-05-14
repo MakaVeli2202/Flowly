@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { crmAPI } from '../../api/crm';
+import { authAPI } from '../../api/auth';
 import { useLanguage } from '../../context/LanguageContext';
 import {
   Users, TrendingUp, AlertTriangle, Star, DollarSign, 
@@ -173,7 +174,9 @@ const UI_BY_LANG = {
     quickAction1: 'Select customers -> Use the checkbox to select multiple customers',
     quickAction2: 'Quick Tag -> Click VIP, Fleet, or Commercial buttons to tag selected customers',
     quickAction3: 'Add Custom Tag -> Type a tag and click the tag icon to apply',
-    quickAction4: 'Edit Customer -> Click the edit icon to add notes or manually set tags'
+    quickAction4: 'Edit Customer -> Click the edit icon to add notes or manually set tags',
+    allowPreferredWorker: 'Favourite Detailer',
+    allowPreferredWorkerDesc: 'Allow this customer to select a preferred detailer during booking (VIP feature).'
   },
   ar: {
     title: 'لوحة CRM',
@@ -254,7 +257,9 @@ const UI_BY_LANG = {
     quickAction1: 'اختيار العملاء -> استخدم مربع الاختيار لتحديد عدة عملاء',
     quickAction2: 'وسم سريع -> انقر ازرار VIP او Fleet او Commercial لوسم العملاء المحددين',
     quickAction3: 'إضافة وسم مخصص -> اكتب الوسم ثم انقر ايقونة الوسم للتطبيق',
-    quickAction4: 'تعديل العميل -> انقر ايقونة التعديل لإضافة ملاحظات او تحديد الوسوم يدويًا'
+    quickAction4: 'تعديل العميل -> انقر ايقونة التعديل لإضافة ملاحظات او تحديد الوسوم يدويًا',
+    allowPreferredWorker: 'المنظف المفضل',
+    allowPreferredWorkerDesc: 'السماح لهذا العميل باختيار منظف مفضل عند الحجز (ميزة للعملاء المميزين).'
   },
   de: {
     title: 'CRM-Dashboard',
@@ -335,7 +340,9 @@ const UI_BY_LANG = {
     quickAction1: 'Kunden auswahlen -> Mit der Checkbox mehrere Kunden auswahlen',
     quickAction2: 'Schnell-Tag -> Klicke VIP-, Fleet- oder Commercial-Buttons fur ausgewahlte Kunden',
     quickAction3: 'Benutzerdefinierten Tag hinzufugen -> Tag eingeben und auf das Tag-Symbol klicken',
-    quickAction4: 'Kunde bearbeiten -> Auf das Bearbeiten-Symbol klicken, um Notizen oder Tags zu setzen'
+    quickAction4: 'Kunde bearbeiten -> Auf das Bearbeiten-Symbol klicken, um Notizen oder Tags zu setzen',
+    allowPreferredWorker: 'Lieblingsreiniger',
+    allowPreferredWorkerDesc: 'Diesem Kunden ermoglichen, bei der Buchung einen bevorzugten Reiniger auszuwahlen (VIP-Funktion).'
   },
 };
 
@@ -436,6 +443,16 @@ export default function AdminCrm() {
       loadData();
     } catch (err) {
       console.error('Update error:', err);
+    }
+  };
+
+  const toggleAllowPreferredWorker = async () => {
+    const next = !editingCustomer.allowPreferredWorker;
+    try {
+      await authAPI.setAllowPreferredWorker(editingCustomer.id, next);
+      setEditingCustomer(c => ({ ...c, allowPreferredWorker: next }));
+    } catch (err) {
+      console.error('Toggle preferred worker error:', err);
     }
   };
 
@@ -1276,6 +1293,18 @@ export default function AdminCrm() {
                 </div>
               </div>
             </div>
+
+              <div className="mt-4 flex items-center justify-between p-3 rounded-lg"
+                style={{ background: 'rgba(139,92,246,.08)', border: '1px solid rgba(139,92,246,.20)' }}>
+                <div>
+                  <p className="text-sm font-semibold" style={{ color: 'var(--heading-color)' }}>{ui.allowPreferredWorker}</p>
+                  <p className="text-xs mt-0.5" style={{ color: 'var(--muted-color)' }}>{ui.allowPreferredWorkerDesc}</p>
+                </div>
+                <button type="button" onClick={toggleAllowPreferredWorker}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ${editingCustomer.allowPreferredWorker ? 'bg-purple-500' : 'bg-gray-400'}`}>
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200 ${editingCustomer.allowPreferredWorker ? 'translate-x-6' : 'translate-x-1'}`} />
+                </button>
+              </div>
 
             <div className="flex gap-3 mt-6">
               <button

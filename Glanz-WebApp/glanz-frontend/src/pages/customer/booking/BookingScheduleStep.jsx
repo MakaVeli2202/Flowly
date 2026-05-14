@@ -16,6 +16,9 @@ function BookingScheduleStep({
   totalDuration,
   minDateObj, selectedDateObj,
   onSelectDate,
+  workersList = [],
+  preferredWorkerId,
+  setPreferredWorkerId,
 }) {
   const calendarCells = useMemo(() => getCalendarCells(calendarMonth), [calendarMonth]);
 
@@ -95,6 +98,20 @@ function BookingScheduleStep({
 
         {/* Time slot */}
         <div>
+          {workersList.length > 0 && (
+            <div className="mb-4">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-color)] mb-2">Preferred Detailer</p>
+              <select
+                value={preferredWorkerId ?? ''}
+                onChange={e => setPreferredWorkerId(e.target.value ? Number(e.target.value) : null)}
+                className="w-full px-3 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--surface-bg)] text-[var(--text-color)] text-sm">
+                <option value="">Any available detailer</option>
+                {workersList.map(w => (
+                  <option key={w.id} value={w.id}>{w.firstName} {w.lastName}</option>
+                ))}
+              </select>
+            </div>
+          )}
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-color)] mb-3">Time Slot</p>
           <TimeSlotDropdown
             value={formData.timeSlot}

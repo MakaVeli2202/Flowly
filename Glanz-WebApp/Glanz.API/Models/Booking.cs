@@ -159,12 +159,18 @@ namespace Glanz.API.Models
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
+        // Customer's preferred detailer (optional, set at booking time when feature enabled)
+        public int? PreferredWorkerId { get; set; }
+
         // Navigation properties
         [ForeignKey("UserId")]
         public User? User { get; set; }
 
         [ForeignKey("AssignedWorkerId")]
         public Staff? AssignedWorker { get; set; }
+
+        [ForeignKey("PreferredWorkerId")]
+        public Staff? PreferredWorker { get; set; }
 
         public ICollection<BookingItem> BookingItems { get; set; } = new List<BookingItem>();
         public ICollection<BookingChecklistItem> ChecklistItems { get; set; } = new List<BookingChecklistItem>();

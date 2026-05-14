@@ -171,6 +171,7 @@ namespace Glanz.API.Controllers
                 CreatedAt = user.CreatedAt,
                 FirstWashCompletedAt = user.FirstWashCompletedAt,
                 TotalBookingsCount = user.TotalBookingsCount,
+                AllowPreferredWorker = user.AllowPreferredWorker,
             };
         }
 
@@ -457,6 +458,18 @@ namespace Glanz.API.Controllers
             }
         }
 
+        [Authorize]
+        [HttpGet("workers/active-names")]
+        public async Task<ActionResult> GetActiveWorkerNames()
+        {
+            var workers = await _context.Staff
+                .Where(s => s.IsActive)
+                .OrderBy(s => s.FirstName).ThenBy(s => s.LastName)
+                .Select(s => new { s.Id, s.FirstName, s.LastName })
+                .ToListAsync();
+            return Ok(workers);
+        }
+
         [Authorize(Roles = "Admin")]
         [HttpGet("workers")]
         public async Task<ActionResult<IEnumerable<UserDto>>> GetWorkers()
@@ -597,6 +610,20 @@ namespace Glanz.API.Controllers
                 Console.WriteLine($"Update worker status error: {ex.Message}");
                 return StatusCode(500, new { message = "Failed to update worker status" });
             }
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpPut("users/{id}/allow-preferred-worker")]
+        public async Task<IActionResult> SetAllowPreferredWorker(int id, [FromBody] AllowPreferredWorkerDto dto)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
+            if (user == null)
+                return NotFound(new { message = "User not found." });
+
+            user.AllowPreferredWorker = dto.Allow;
+            user.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Updated.", allowPreferredWorker = user.AllowPreferredWorker });
         }
 
         [Authorize(Roles = "Admin")]

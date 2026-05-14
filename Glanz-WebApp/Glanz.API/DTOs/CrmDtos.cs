@@ -95,6 +95,7 @@ namespace Glanz.API.DTOs
         public string Segment { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
         public bool IsAtRisk { get; set; }
+        public bool AllowPreferredWorker { get; set; }
     }
 
     public class CrmDashboardDto

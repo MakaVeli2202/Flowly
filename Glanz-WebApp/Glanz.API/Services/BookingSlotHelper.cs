@@ -36,8 +36,10 @@ namespace Glanz.API.Services
             { "Wednesday", ("09:00", "18:00") },
             { "Thursday",  ("09:00", "18:00") },
             { "Friday",    ("00:00", "00:00") },
-            { "Saturday",  ("10:00", "16:00") },
+            { "Saturday",  ("00:00", "00:00") },
         };
+
+        private static HashSet<string> _closedDates = new(StringComparer.OrdinalIgnoreCase);
 
         private static TimeZoneInfo _businessTz = ResolveBusinessTimeZone(null);
 
@@ -85,7 +87,7 @@ namespace Glanz.API.Services
                 { "Wednesday", hours.Wednesday ?? "09:00-18:00" },
                 { "Thursday",  hours.Thursday  ?? "09:00-18:00" },
                 { "Friday",    hours.Friday    ?? "00:00-00:00" },
-                { "Saturday",  hours.Saturday  ?? "10:00-16:00" },
+                { "Saturday",  hours.Saturday  ?? "00:00-00:00" },
             };
 
             foreach (var (day, range) in dayMap)
@@ -100,6 +102,16 @@ namespace Glanz.API.Services
                 }
             }
         }
+
+        internal static void SetClosedDatesFromSettings(IEnumerable<string>? dates)
+        {
+            _closedDates = dates == null
+                ? new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+                : new HashSet<string>(dates, StringComparer.OrdinalIgnoreCase);
+        }
+
+        internal static bool IsDateClosed(DateOnly date)
+            => _closedDates.Contains(date.ToString("yyyy-MM-dd"));
 
         internal static List<string> GetDailySlots(string dayName)
         {

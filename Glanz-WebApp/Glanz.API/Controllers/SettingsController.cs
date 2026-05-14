@@ -37,6 +37,7 @@ namespace Glanz.API.Controllers
         private const string ReferralRewardKey    = "referral.rewardAmount";
         private const string ReferralDiscountKey  = "referral.discountPercent"; // Discount for referred user
         private const string ReferralRequiredBookingsKey = "referral.requiredBookingsForReward"; // How many bookings needed for referrer reward
+        private const string ClosedDatesKey           = "booking.closedDates";
 
         private static readonly Dictionary<string, (string Start, string End)> DefaultBusinessHours = new()
     {
@@ -46,7 +47,7 @@ namespace Glanz.API.Controllers
         { "Wednesday", ("09:00", "18:00") },
         { "Thursday",  ("09:00", "18:00") },
         { "Friday",    ("00:00", "00:00") },
-        { "Saturday",  ("10:00", "16:00") },
+        { "Saturday",  ("00:00", "00:00") },
     };
 
     // Safe in-code defaults — used when the SystemSettings row is absent.
@@ -83,7 +84,7 @@ namespace Glanz.API.Controllers
         [HttpGet]
         public async Task<IActionResult> GetSettings()
         {
-            var keys = new[] { MultipliersKey, WorkerTravelKey, SmsFollowUpKey, SitePublishedKey, SiteLaunchDateKey, DiscountKey, BusinessHoursKey, BusinessConfigKey };
+            var keys = new[] { MultipliersKey, WorkerTravelKey, SmsFollowUpKey, SitePublishedKey, SiteLaunchDateKey, DiscountKey, BusinessHoursKey, BusinessConfigKey, ClosedDatesKey, ReferralRewardKey, ReferralDiscountKey, ReferralRequiredBookingsKey };
             var rows = await _context.SystemSettings
                 .AsNoTracking()
                 .Where(s => keys.Contains(s.Key))
@@ -206,6 +207,19 @@ namespace Glanz.API.Controllers
                 referralRequiredBookings = parsedRequired;
             }
 
+            // ── closed dates ─────────────────────────────────────────────────────
+            var closedDates = new List<string>();
+            var closedRaw = GetVal(ClosedDatesKey);
+            if (!string.IsNullOrWhiteSpace(closedRaw))
+            {
+                try
+                {
+                    var parsed = JsonSerializer.Deserialize<List<string>>(closedRaw, _jsonOpts);
+                    if (parsed != null) closedDates = parsed;
+                }
+                catch { }
+            }
+
             return Ok(new
             {
                 pricing = new { vehicleMultipliers },
@@ -218,6 +232,7 @@ namespace Glanz.API.Controllers
                 referralRewardAmount,
                 referralDiscountPercent,
                 referralRequiredBookings,
+                closedDates,
             });
         }
 
@@ -301,6 +316,19 @@ namespace Glanz.API.Controllers
             {
                 var json = JsonSerializer.Serialize(dto.BusinessConfig, _jsonOpts);
                 updates.Add((BusinessConfigKey, json));
+            }
+
+            if (dto.ClosedDates != null)
+            {
+                // Validate all are valid date strings
+                var valid = dto.ClosedDates
+                    .Where(d => DateOnly.TryParse(d, out _))
+                    .Select(d => DateOnly.Parse(d).ToString("yyyy-MM-dd"))
+                    .Distinct()
+                    .OrderBy(d => d)
+                    .ToList();
+                updates.Add((ClosedDatesKey, JsonSerializer.Serialize(valid, _jsonOpts)));
+                BookingSlotHelper.SetClosedDatesFromSettings(valid);
             }
 
             if (updates.Count == 0)
@@ -492,6 +520,7 @@ namespace Glanz.API.Controllers
         public VehicleMultipliersDto? VehicleMultipliers     { get; set; } // Vehicle type multipliers
         public BusinessHoursPerDayDto? BusinessHours         { get; set; }
         public BusinessConfigDto?      BusinessConfig        { get; set; }
+        public List<string>?           ClosedDates           { get; set; }
     }
 
     public class VehicleMultipliersDto
