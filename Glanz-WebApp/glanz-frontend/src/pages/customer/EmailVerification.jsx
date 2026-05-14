@@ -26,6 +26,11 @@ function EmailVerification() {
   const timerRef = useRef(null);
 
   useEffect(() => {
+    // Auto-send a fresh code when the page loads so one is always ready in the logs.
+    if (email) {
+      authAPI.sendVerificationEmail(email).catch(() => {});
+      startCooldown();
+    }
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, []);
 

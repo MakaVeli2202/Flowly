@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View, Text, TextInput, StyleSheet,
   KeyboardAvoidingView, Platform, SafeAreaView, TouchableOpacity,
@@ -55,6 +55,11 @@ export default function VerifyEmailScreen({ route, navigation }) {
   const [loading,     setLoading]     = useState(false);
   const [resending,   setResending]   = useState(false);
   const inputRef = useRef(null);
+
+  // Auto-send a fresh code on mount so one is always ready in the logs.
+  useEffect(() => {
+    if (email) authAPI.sendVerification({ email }).catch(() => {});
+  }, []);
 
   const onVerify = async () => {
     if (!code.trim()) { setError(t('verifyEmail.errors.codeRequired')); return; }
