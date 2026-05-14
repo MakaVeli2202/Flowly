@@ -4,8 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { theme } from '../theme/theme';
-import { API_BASE_URL } from '../config/api';
-import apiClient from '../api/apiClient';
+import apiClient from '../api/axios';
 
 const G = (a) => `rgba(200,169,107,${a})`;
 
