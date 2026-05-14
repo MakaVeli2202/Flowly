@@ -1784,5 +1784,17 @@ These were found by grepping `TODO`, `FIXME`, `HACK`, `XXX` across the codebase 
 
 ---
 
+## TODO: Restore Local-Speed Performance
+
+The deployed site is slow (~60s first load) due to free-tier hosting limitations (Render spins down after 15 min inactivity). **Goal: restore the fine, smooth, fast feel of local development.**
+
+Top priorities:
+- Upgrade Render backend from free tier (or add uptime pinger) to eliminate cold starts
+- Keep API warm with an uptime monitor (e.g. UptimeRobot free plan pinging `/api/health` every 5 min)
+- Consider self-hosting or a cheap VPS if budget allows
+- Do NOT accept sluggish UX as "just how it is" -- local dev proves it can be instant
+
+---
+
 *Last updated: 2026-05-14*
 *Maintained by: Backend & Mobile lead*
