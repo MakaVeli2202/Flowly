@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   AlertCircle, CheckCircle, Edit2, Plus, Power, Trash2, X,
   Zap, Star, Crown, ChevronDown, ChevronUp, GripVertical,

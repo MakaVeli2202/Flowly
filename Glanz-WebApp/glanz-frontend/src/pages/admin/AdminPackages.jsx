@@ -351,7 +351,6 @@ function ManagePackages() {
   };
 
   const handleToggleActive = (id, isCurrentlyActive, name) => {
-    const action = isCurrentlyActive ? 'deactivate' : 'activate';
     showConfirm(
       isCurrentlyActive ? ui.deactivateTitle : ui.activateTitle,
       isCurrentlyActive ? ui.deactivateMsg(name) : ui.activateMsg(name),

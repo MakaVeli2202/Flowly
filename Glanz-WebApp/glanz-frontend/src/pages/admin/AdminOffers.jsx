@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { offersAPI } from '../../api/offers';
 import {
   Plus, Edit2, Trash2, Ticket, AlertCircle, CheckCircle,
@@ -557,7 +557,7 @@ function OfferCard({ offer, onEdit, onDelete }) {
 }
 
 /* ─── Loyalty progress row ───────────────────────────────────────────────── */
-function LoyaltyRow({ row, loyaltyOffers, onAssign }) {
+function LoyaltyRow({ row, loyaltyOffers, onAssign: _onAssign }) {
   const fmtShort = (d) => d ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : null;
 
   return (
@@ -687,7 +687,6 @@ const TABS = [
 
 export default function AdminOffers() {
   const { t } = useLanguage();
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const initialTab = searchParams.get('tab') || 'offers';
   const [offers,          setOffers]         = useState([]);
@@ -1232,7 +1231,7 @@ export default function AdminOffers() {
                     <span className="text-right">Member Since</span>
                   </div>
                   <div className="divide-y divide-[var(--border-color)]">
-                    {sortedProgress.map((u, idx) => {
+                    {sortedProgress.map((u) => {
                       const checked = selected.has(u.userId);
                       return (
                         <label key={u.userId}

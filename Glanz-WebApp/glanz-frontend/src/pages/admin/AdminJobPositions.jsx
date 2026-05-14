@@ -1,5 +1,5 @@
 // AdminJobPositions.jsx — Admin CRUD for job positions
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { Briefcase, Plus, Trash2, Edit3, Save, X, Check, AlertCircle, ToggleLeft, ToggleRight } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 

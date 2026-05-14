@@ -358,13 +358,6 @@ export default function AdminPayroll() {
 <div class="footer"><p>${footerText||'This is a system-generated payslip and does not require signature.'}</p><p style="margin-top:5px;">Generated: ${new Date().toLocaleString()}</p></div>
 </div></body></html>`.trim();
 
-          const downloadHtml = () => {
-            const blob = new Blob([htmlSlip], { type:'text/html' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url; a.download = `PaySlip_${worker.workerName?.replace(/\s+/g,'_')}_${payrollMonth}_${payrollYear}.html`;
-            a.click(); URL.revokeObjectURL(url);
-          };
           const printPdf = () => {
             const w = window.open('','_blank');
             if (w) { w.document.write(htmlSlip); w.document.close(); w.print(); }

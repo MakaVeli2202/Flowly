@@ -1,7 +1,6 @@
 // AdminSettings.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { settingsAPI } from '../../api/settings';
-import { authAPI } from '../../api/auth';
 import { formatQAR } from '../../utils/currency';
 import { Settings, Shield, CheckCircle, AlertCircle, Save, Building2, Clock, MessageSquare, DollarSign, Gift, FlaskConical, Trash2, Database } from 'lucide-react';
 import { getBusiness, saveBusiness } from '../../config/business';
@@ -607,7 +606,7 @@ export default function AdminSettings() {
 
   // Site visibility state
   const [sitePublished,    setSitePublished]    = useState(false);
-  const [siteSaving,       setSiteSaving]       = useState(false);
+  const [_siteSaving,      setSiteSaving]       = useState(false);
   const [siteSaved,        setSiteSaved]        = useState(false);
   const [siteError,        setSiteError]        = useState('');
 
