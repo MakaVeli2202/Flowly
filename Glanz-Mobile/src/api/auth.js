@@ -23,4 +23,8 @@ export const authAPI = {
   updateWorkerSalary: async (workerId, monthlySalary) => (await apiClient.put(`/Auth/workers/${workerId}/salary`, { monthlySalary })).data,
   getPayrollSummary: async (month, year) => (await apiClient.get('/Auth/workers/payroll', { params: { month, year } })).data,
   forceChangePassword: async (data) => (await apiClient.post('/Auth/force-change-password', data)).data,
+  sendVerification: async (data) => (await apiClient.post('/Auth/send-verification', data)).data,
+  verifyEmail: async (data) => (await apiClient.post('/Auth/verify-email', data)).data,
+  forgotPassword: async (data) => (await apiClient.post('/Auth/forgot-password', data)).data,
+  resetPassword: async (data) => (await apiClient.post('/Auth/reset-password', data)).data,
 };

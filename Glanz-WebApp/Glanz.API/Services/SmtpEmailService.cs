@@ -89,12 +89,18 @@ namespace Glanz.API.Services
         {
             var host = _config["Email:SmtpHost"];
 
-            // Dev mode or SMTP not configured: log instead of sending so the flow
-            // is fully testable without an external mail account.
+            // Dev mode or SMTP not configured: print directly to console so the OTP
+            // is always visible regardless of log level or filtering.
             if (_env.IsDevelopment() || string.IsNullOrWhiteSpace(host)
                 || host.StartsWith("TODO", StringComparison.OrdinalIgnoreCase))
             {
-                _logger.LogWarning("📧 {Message}", devLogMessage);
+                var border = new string('=', 64);
+                Console.WriteLine();
+                Console.WriteLine(border);
+                Console.WriteLine($"  DEV EMAIL (not sent)");
+                Console.WriteLine($"  {devLogMessage}");
+                Console.WriteLine(border);
+                Console.WriteLine();
                 return;
             }
 

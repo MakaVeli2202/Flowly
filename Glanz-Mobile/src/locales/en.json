@@ -831,7 +831,9 @@
     "active": "Active",
     "userFallback": "User",
     "auth": {
-      "createAccount": "Create Account"
+      "createAccount": "Create Account",
+      "verifyEmail": "Verify Email",
+      "forgotPassword": "Forgot Password"
     },
     "customer": {
       "confirmation": "Confirmation",
@@ -947,6 +949,38 @@
       "OfferAssigned": "New Offer",
       "LoyaltyReward": "Loyalty Reward",
       "LowStock": "Low Stock Alert"
+    }
+  },
+  "verifyEmail": {
+    "title": "Verify Email",
+    "caption": "Enter the 6-digit code sent to {{email}}",
+    "codeLabel": "Verification Code",
+    "codePlaceholder": "000000",
+    "verifyBtn": "Verify Email",
+    "verifying": "Verifying...",
+    "noCode": "Didn't receive a code?",
+    "resendBtn": " Resend",
+    "resending": "Resending...",
+    "resendSuccess": "A new code has been sent to your email.",
+    "success": "Email verified! Redirecting to login...",
+    "errors": {
+      "codeRequired": "Please enter the verification code.",
+      "invalid": "Invalid or expired verification code.",
+      "resendFailed": "Failed to resend code. Please try again."
+    }
+  },
+  "forgotPassword": {
+    "title": "Forgot Password",
+    "caption": "Enter your email and we'll send reset instructions.",
+    "sentCaption": "Check your inbox",
+    "emailLabel": "Email Address",
+    "sendBtn": "Send Reset Link",
+    "sending": "Sending...",
+    "backToLogin": "Back to Login",
+    "sentMessage": "Reset instructions have been sent to {{email}}. Follow the link in the email to set a new password.",
+    "errors": {
+      "emailRequired": "Please enter your email address.",
+      "failed": "Something went wrong. Please try again."
     }
   }
 }

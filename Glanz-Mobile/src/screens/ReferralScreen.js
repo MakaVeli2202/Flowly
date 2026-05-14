@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Share, ActivityIndicator
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Share, ActivityIndicator, Clipboard,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
@@ -30,15 +30,11 @@ export default function ReferralScreen({ navigation }) {
     }
   };
 
-  const copyCode = async () => {
+  const copyCode = () => {
     if (!referralData?.referralCode) return;
-    try {
-      await navigator.clipboard.writeText(referralData.referralCode);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      Alert.alert('Error', 'Failed to copy code');
-    }
+    Clipboard.setString(referralData.referralCode);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const shareCode = () => {
@@ -72,70 +68,57 @@ export default function ReferralScreen({ navigation }) {
         <View style={{ width: 40 }} />
       </View>
 
-      {/* Referral Code Card - Unlocked */}
-      {isUnlocked ? (
-        <View style={styles.unlockedCard}>
-          <View style={styles.cardHeader}>
-            <Ionicons name="gift" size={24} color="#fff" />
-            <Text style={styles.cardTitle}>Your Referral Code</Text>
-          </View>
-          
-          <View style={styles.codeContainer}>
-            <Text style={styles.referralCode}>{referralData?.referralCode || '...'}</Text>
-            <Text style={styles.codeSubtext}>
-              Share this code with friends and earn rewards after their first booking
-            </Text>
-          </View>
-
-          <View style={styles.buttonRow}>
-            <TouchableOpacity 
-              style={[styles.button, styles.outlineButton]} 
-              onPress={copyCode}
-            >
-              <Ionicons name={copied ? "checkmark" : "copy"} size={18} color="#fff" />
-              <Text style={styles.buttonText}>
-                {copied ? 'Copied!' : 'Copy'}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={[styles.button, styles.primaryButton]} 
-              onPress={shareCode}
-            >
-              <Ionicons name="share-social" size={18} color={theme.colors.primary} />
-              <Text style={[styles.buttonText, { color: theme.colors.primary }]}>Share</Text>
-            </TouchableOpacity>
-          </View>
+      {/* Referral Code Card */}
+      <View style={isUnlocked ? styles.unlockedCard : styles.lockedCard}>
+        <View style={styles.cardHeader}>
+          <Ionicons name={isUnlocked ? "gift" : "lock-closed"} size={24} color="#fff" />
+          <Text style={styles.cardTitle}>
+            {isUnlocked ? 'Your Referral Code' : 'Referral Code Locked'}
+          </Text>
         </View>
-      ) : (
-        /* Locked State */
-        <View style={styles.lockedCard}>
-          <View style={styles.cardHeader}>
-            <Ionicons name="lock-closed" size={24} color="#fff" />
-            <Text style={styles.cardTitle}>Referral Code Locked</Text>
-          </View>
-          
-          <View style={styles.lockedContent}>
-            <Ionicons name="sparkles" size={48} color="#fff" />
-            <Text style={styles.lockedText}>
-              Complete your first service to unlock your referral code!
-            </Text>
-            <View style={styles.rewardBadge}>
-              <Ionicons name="gift" size={16} color="#fff" />
-              <Text style={styles.rewardText}>
-                Earn rewards when you refer friends
-              </Text>
-            </View>
-          </View>
 
-          <TouchableOpacity 
-            style={[styles.button, styles.primaryButton]} 
-            onPress={() => navigation.navigate('Booking')}
+        <View style={styles.codeContainer}>
+          <Text style={[styles.referralCode, !isUnlocked && styles.referralCodeLocked]}>
+            {referralData?.referralCode || '...'}
+          </Text>
+          <Text style={styles.codeSubtext}>
+            {isUnlocked
+              ? 'Share this code with friends and earn rewards after their first booking'
+              : 'Complete your first service to unlock sharing'}
+          </Text>
+        </View>
+
+        <View style={styles.buttonRow}>
+          <TouchableOpacity
+            style={[styles.button, styles.outlineButton, !isUnlocked && styles.buttonDisabled]}
+            onPress={isUnlocked ? copyCode : undefined}
+            disabled={!isUnlocked}
           >
-            <Ionicons name="sparkles" size={18} color={theme.colors.primary} />
-            <Text style={[styles.buttonText, { color: theme.colors.primary }]}>Book Now</Text>
+            <Ionicons name={copied ? "checkmark" : "copy"} size={18} color="#fff" />
+            <Text style={styles.buttonText}>{copied ? 'Copied!' : 'Copy'}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.button, styles.primaryButton, !isUnlocked && styles.bookNowButton]}
+            onPress={isUnlocked ? shareCode : () => navigation.navigate('Booking')}
+          >
+            <Ionicons
+              name={isUnlocked ? "share-social" : "sparkles"}
+              size={18}
+              color={theme.colors.primary}
+            />
+            <Text style={[styles.buttonText, { color: theme.colors.primary }]}>
+              {isUnlocked ? 'Share' : 'Book Now'}
+            </Text>
           </TouchableOpacity>
         </View>
-      )}
+
+        {!isUnlocked && (
+          <View style={styles.rewardBadge}>
+            <Ionicons name="gift" size={16} color="#fff" />
+            <Text style={styles.rewardText}>Earn rewards when you refer friends</Text>
+          </View>
+        )}
+      </View>
 
       {/* Stats */}
       <View style={styles.statsRow}>
@@ -297,6 +280,15 @@ const styles = StyleSheet.create({
   rewardText: {
     fontSize: 12,
     color: '#fff',
+  },
+  referralCodeLocked: {
+    opacity: 0.7,
+  },
+  buttonDisabled: {
+    opacity: 0.45,
+  },
+  bookNowButton: {
+    backgroundColor: '#fff',
   },
   statsRow: {
     flexDirection: 'row',

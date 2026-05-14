@@ -94,7 +94,12 @@ export default function LoginScreen({ navigation }) {
       setError('');
       await login(email.trim(), password);
     } catch (err) {
-      setError(err?.response?.data?.message || 'Login failed. Please try again.');
+      const data = err?.response?.data;
+      if (data?.requiresEmailVerification) {
+        navigation.navigate('VerifyEmail', { email: data.email || email.trim() });
+        return;
+      }
+      setError(data?.message || 'Login failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -249,8 +254,18 @@ export default function LoginScreen({ navigation }) {
             </PressableScale>
           </Animated.View>
 
+          {/* ── Forgot password ────────────────────────── */}
+          <Animated.View entering={FadeInUp.duration(400).delay(500)} style={s.forgotRow}>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('ForgotPassword')}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Text style={s.linkText}>Forgot password?</Text>
+            </TouchableOpacity>
+          </Animated.View>
+
           {/* ── Footer ─────────────────────────────────── */}
-          <Animated.View entering={FadeInUp.duration(400).delay(520)} style={s.footerRow}>
+          <Animated.View entering={FadeInUp.duration(400).delay(540)} style={s.footerRow}>
             <Text style={s.footerText}>Don't have an account?</Text>
             <TouchableOpacity
               onPress={() => navigation.navigate('Register')}
@@ -356,6 +371,11 @@ const s = StyleSheet.create({
     gap: 8,
   },
   btnText: { color: theme.colors.ink, fontWeight: '800', fontSize: 16 },
+
+  /* Forgot password */
+  forgotRow: {
+    marginTop: 4, alignItems: 'flex-end',
+  },
 
   /* Footer */
   footerRow: {

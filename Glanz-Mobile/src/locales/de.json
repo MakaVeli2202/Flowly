@@ -831,7 +831,9 @@
     "active": "Aktiv",
     "userFallback": "Benutzer",
     "auth": {
-      "createAccount": "Konto erstellen"
+      "createAccount": "Konto erstellen",
+      "verifyEmail": "E-Mail bestatigen",
+      "forgotPassword": "Passwort vergessen"
     },
     "customer": {
       "confirmation": "Bestaetigung",
@@ -947,6 +949,38 @@
       "OfferAssigned": "Neues Angebot",
       "LoyaltyReward": "Treuebonus",
       "LowStock": "Niedriger Lagerbestand"
+    }
+  },
+  "verifyEmail": {
+    "title": "E-Mail bestatigen",
+    "caption": "Gib den 6-stelligen Code ein, der an {{email}} gesendet wurde",
+    "codeLabel": "Bestatigungscode",
+    "codePlaceholder": "000000",
+    "verifyBtn": "E-Mail bestatigen",
+    "verifying": "Wird bestatigt...",
+    "noCode": "Keinen Code erhalten?",
+    "resendBtn": " Erneut senden",
+    "resending": "Wird gesendet...",
+    "resendSuccess": "Ein neuer Code wurde an deine E-Mail gesendet.",
+    "success": "E-Mail bestatigt! Weiterleitung zur Anmeldung...",
+    "errors": {
+      "codeRequired": "Bitte gib den Bestatigungscode ein.",
+      "invalid": "Ungultiger oder abgelaufener Bestatigungscode.",
+      "resendFailed": "Code konnte nicht erneut gesendet werden. Bitte versuche es erneut."
+    }
+  },
+  "forgotPassword": {
+    "title": "Passwort vergessen",
+    "caption": "Gib deine E-Mail ein und wir senden dir Anweisungen zum Zurucksetzen.",
+    "sentCaption": "Uberpruf deinen Posteingang",
+    "emailLabel": "E-Mail-Adresse",
+    "sendBtn": "Link senden",
+    "sending": "Wird gesendet...",
+    "backToLogin": "Zuruck zur Anmeldung",
+    "sentMessage": "Anweisungen zum Zurucksetzen wurden an {{email}} gesendet. Folge dem Link in der E-Mail.",
+    "errors": {
+      "emailRequired": "Bitte gib deine E-Mail-Adresse ein.",
+      "failed": "Etwas ist schiefgelaufen. Bitte versuche es erneut."
     }
   }
 }

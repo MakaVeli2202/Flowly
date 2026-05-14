@@ -58,6 +58,8 @@ import AdminSkillsScreen from '../screens/AdminSkillsScreen';
 import AdminJobApplicationsScreen from '../screens/AdminJobApplicationsScreen';
 import AdminDevSettingsScreen from '../screens/AdminDevSettingsScreen';
 import ForceChangePasswordScreen from '../screens/ForceChangePasswordScreen';
+import VerifyEmailScreen from '../screens/VerifyEmailScreen';
+import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
 
 const Stack  = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -444,8 +446,10 @@ function AuthStack() {
   const { t } = useTranslation();
   return (
     <Stack.Navigator screenOptions={SHARED_HEADER_OPTIONS}>
-      <Stack.Screen name="Login"    component={LoginScreen}    options={{ headerShown: false }}       />
-      <Stack.Screen name="Register" component={RegisterScreen} options={{ title: t('navigation.auth.createAccount') }} />
+      <Stack.Screen name="Login"          component={LoginScreen}          options={{ headerShown: false }} />
+      <Stack.Screen name="Register"       component={RegisterScreen}       options={{ title: t('navigation.auth.createAccount') }} />
+      <Stack.Screen name="VerifyEmail"    component={VerifyEmailScreen}    options={{ title: t('navigation.auth.verifyEmail') }} />
+      <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} options={{ title: t('navigation.auth.forgotPassword') }} />
     </Stack.Navigator>
   );
 }
