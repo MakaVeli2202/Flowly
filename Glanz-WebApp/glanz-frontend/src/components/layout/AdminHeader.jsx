@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Bell, LogOut, Sun, Moon, Globe, ChevronDown, CheckCheck, Menu, X, BookOpen, Users, Calendar, Clock, DollarSign, MapPin, Settings, Wrench, BarChart2, Package, UserCheck, Play, Pause, Car, AlertTriangle, Gift, Tag, Star } from 'lucide-react';
+import { LayoutDashboard, Bell, LogOut, Sun, Moon, Globe, ChevronDown, CheckCheck, Menu, X, BookOpen, Users, Calendar, Clock, DollarSign, MapPin, Settings, Wrench, BarChart2, Package, UserCheck, Play, Pause, Car, AlertTriangle, Gift, Tag, Star, TrendingUp } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { notificationsAPI } from '../../api/notifications';
 import { subscribeToNotifications } from '../../api/notificationBus';
@@ -65,6 +65,7 @@ export function AdminHeader({ theme, onToggleTheme }) {
     { to: '/admin/workers/management',  labelKey: 'navbar.shifts',      icon: Clock },
     { to: '/admin/payroll',             labelKey: 'navbar.payroll',     icon: DollarSign },
     { to: '/admin/live-map',            labelKey: 'navbar.liveMap',     icon: MapPin },
+    { to: '/admin/analytics',          labelKey: 'navbar.analytics',   icon: TrendingUp },
     { to: '/admin/settings',            labelKey: 'common.settings',    icon: Settings },
     { to: '/admin/dev-settings',        labelKey: 'navbar.devSettings', icon: Wrench },
     { to: '/admin/translations',        labelKey: 'navbar.translations', icon: Globe },
@@ -73,7 +74,7 @@ export function AdminHeader({ theme, onToggleTheme }) {
   const ADMIN_GROUPS = [
     {
       titleKey: 'navbar.operations',
-      links: ['/admin/bookings', '/admin/workers/schedule', '/admin/workers/management', '/admin/live-map', '/admin/payroll'],
+      links: ['/admin/bookings', '/admin/workers/schedule', '/admin/workers/management', '/admin/live-map', '/admin/analytics', '/admin/payroll'],
     },
     {
       titleKey: 'navbar.management',

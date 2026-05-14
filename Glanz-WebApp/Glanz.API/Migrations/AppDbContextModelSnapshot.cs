@@ -933,6 +933,65 @@ namespace Glanz.API.Migrations
                     b.ToTable("Referrals");
                 });
 
+            modelBuilder.Entity("Glanz.API.Models.PageView", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("DeviceType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasDefaultValue("Desktop")
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime>("FirstSeen")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("IpAddress")
+                        .HasMaxLength(45)
+                        .HasColumnType("character varying(45)");
+
+                    b.Property<bool>("IsNewVisitor")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("LastHeartbeat")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Page")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasDefaultValue("/")
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<string>("Referrer")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("SessionId")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasDefaultValue("Direct")
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FirstSeen");
+
+                    b.HasIndex("LastHeartbeat");
+
+                    b.HasIndex("SessionId");
+
+                    b.ToTable("PageViews");
+                });
+
             modelBuilder.Entity("Glanz.API.Models.Service", b =>
                 {
                     b.Property<int>("Id")

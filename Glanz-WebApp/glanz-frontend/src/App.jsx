@@ -18,6 +18,7 @@ import ProtectedRoute       from './components/shared/ProtectedRoute';
 import WhatsAppWidget      from './components/shared/WhatsAppWidget';
 import RainBackground       from './components/shared/RainBackground';
 import LoadingCircle        from './components/shared/LoadingCircle';
+import { usePageTracking } from './hooks/usePageTracking';
 
 // ─── Customer pages (eager) ───────────────────────────────────────────────────
 import Home                from './pages/customer/Home';
@@ -66,6 +67,7 @@ const LiveMapTracking        = lazy(() => import('./pages/admin/LiveMapTracking'
 const AdminDevSettings       = lazy(() => import('./pages/admin/AdminDevSettings'));
 const AdminCrm               = lazy(() => import('./pages/admin/AdminCrm'));
 const AdminTranslations      = lazy(() => import('./pages/admin/AdminTranslations'));
+const AdminAnalytics         = lazy(() => import('./pages/admin/AdminAnalytics'));
 const SubscriptionBooking    = lazy(() => import('./pages/customer/SubscriptionBooking'));
 
 // ─── Admin fallback ───────────────────────────────────────────────────────────
@@ -153,6 +155,7 @@ function ScrollToTop() {
 // ─── Route tree ───────────────────────────────────────────────────────────────
 
 function AppRoutes() {
+  usePageTracking();
   const location = useLocation();
 
   useEffect(() => {
@@ -245,6 +248,7 @@ function AppRoutes() {
         {adminRoute('/admin/dev-settings',         AdminDevSettings)}
         {adminRoute('/admin/crm',                 AdminCrm)}
         {adminRoute('/admin/translations',        AdminTranslations)}
+        {adminRoute('/admin/analytics',           AdminAnalytics)}
 
         <Route path="/subscription-booking" element={
           <ProtectedRoute><Suspense fallback={<AdminFallback />}><SubscriptionBooking /></Suspense></ProtectedRoute>
