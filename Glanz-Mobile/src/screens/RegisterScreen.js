@@ -114,7 +114,7 @@ function PasswordField({ label, value, onChange, placeholder, visible, setVisibl
 /* ══════════════════════════════════════════════════════════
    SCREEN
 ══════════════════════════════════════════════════════════ */
-export default function RegisterScreen() {
+export default function RegisterScreen({ navigation }) {
   const { register } = useAuth();
   const [form,         setForm]        = useState({ firstName: '', lastName: '', email: '', password: '', referralCode: '' });
   const [showPassword, setShowPassword] = useState(false);
@@ -137,13 +137,17 @@ export default function RegisterScreen() {
     try {
       setLoading(true);
       setError('');
-      await register({
+      const res = await register({
         firstName: form.firstName.trim(),
         lastName:  form.lastName.trim(),
         email:     form.email.trim(),
         password:  form.password,
         referralCode: form.referralCode.trim() || undefined,
       });
+      if (res?.requiresEmailVerification) {
+        navigation.navigate('VerifyEmail', { email: res.email || form.email.trim() });
+        return;
+      }
     } catch (err) {
       setError(err?.response?.data?.message || 'Registration failed. Please try again.');
     } finally {

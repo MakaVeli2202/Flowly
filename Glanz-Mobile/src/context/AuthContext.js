@@ -104,6 +104,7 @@ export function AuthProvider({ children }) {
 
   const register = async (data) => {
     const res = await authAPI.register(data);
+    if (res.requiresEmailVerification) return res;
     await secureSet('token', res.token);
     if (res.refreshToken) await secureSet('refreshToken', res.refreshToken);
     await AsyncStorage.setItem('user', JSON.stringify(res.user));
