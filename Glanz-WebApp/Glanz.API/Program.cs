@@ -397,21 +397,6 @@ app.MapControllers();
 app.MapHealthChecks("/healthz");
 app.MapHub<GlanzHub>("/hubs/glanz");
 
-// Auto-apply migrations on startup
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    try
-    {
-        await db.Database.MigrateAsync();
-        Console.WriteLine("Database migrations applied successfully.");
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"Migration warning: {ex.Message}");
-    }
-}
-
 app.Run();
 
 static async Task EnsurePostgresSchemaCompatibilityAsync(AppDbContext dbContext)
