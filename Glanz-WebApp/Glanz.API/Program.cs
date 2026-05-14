@@ -444,7 +444,20 @@ WHERE bi.""PackageId"" = p.""Id""
 
         await EnsureColumnAsync(connection, "Packages", "SortOrder", "integer NOT NULL DEFAULT 0");
         await EnsureColumnAsync(connection, "Services", "SortOrder", "integer NOT NULL DEFAULT 0");
+        // Staff extended fields (AddStaffExtendedFields + AddMustChangePassword)
+        await EnsureColumnAsync(connection, "Staff", "ShortCode", "character varying(10) NULL");
+        await EnsureColumnAsync(connection, "Staff", "CompensationType", "character varying(20) NOT NULL DEFAULT 'Salary'");
+        await EnsureColumnAsync(connection, "Staff", "PercentageRate", "decimal(5,2) NULL");
+        await EnsureColumnAsync(connection, "Staff", "SkillsJson", "text NULL");
         await EnsureColumnAsync(connection, "Staff", "MustChangePassword", "boolean NOT NULL DEFAULT false");
+        await EnsureIndexAsync(connection, "IX_Staff_ShortCode", "CREATE UNIQUE INDEX IF NOT EXISTS \"IX_Staff_ShortCode\" ON \"Staff\" (\"ShortCode\") WHERE \"ShortCode\" IS NOT NULL;");
+
+        // Email verification columns (AddEmailVerification)
+        await EnsureColumnAsync(connection, "Users", "IsEmailVerified", "boolean NOT NULL DEFAULT true");
+        await EnsureColumnAsync(connection, "Users", "EmailVerificationToken", "character varying(200) NULL");
+        await EnsureColumnAsync(connection, "Users", "EmailVerificationTokenExpiry", "timestamp with time zone NULL");
+        await EnsureColumnAsync(connection, "Users", "PasswordResetToken", "character varying(200) NULL");
+        await EnsureColumnAsync(connection, "Users", "PasswordResetTokenExpiry", "timestamp with time zone NULL");
         await EnsurePageViewsTableAsync(connection);
 
         await EnsureSlotReservationsTableAsync(connection);
