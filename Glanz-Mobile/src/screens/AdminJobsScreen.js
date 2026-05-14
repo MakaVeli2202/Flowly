@@ -27,7 +27,6 @@ import { API_BASE_URL } from '../config/api';
 const statusOptions       = ['Pending', 'Confirmed', 'InProgress', 'Completed', 'Cancelled'];
 const workerStatusOptions  = ['Pending', 'Confirmed', 'InProgress', 'Paused', 'Completed'];
 const workerArrivalCooldownMs  = 5 * 60 * 1000;
-const workerTestDayOffsetDays  = 2;
 
 const statusColors = {
   Pending:    '#FBBF24',
@@ -59,8 +58,10 @@ const isSameDay = (dateValue, compareDate = new Date(), dayOffset = 0) => {
   return bookingKey === toLocalDateKey(adjusted);
 };
 
-const isWorkerTodayTestDay = (dateValue, compareDate = new Date()) =>
-  isSameDay(dateValue, compareDate, 0) || isSameDay(dateValue, compareDate, workerTestDayOffsetDays);
+const isWithinWorkerWindow = (dateValue, compareDate = new Date()) =>
+  isSameDay(dateValue, compareDate, 0) ||
+  isSameDay(dateValue, compareDate, 1) ||
+  isSameDay(dateValue, compareDate, 2);
 
 const resolveProfileImageUrl = (value) => {
   if (!value) return null;
@@ -377,7 +378,7 @@ export default function AdminJobsScreen({ route, navigation }) {
     const sorted = [...bookings].sort((a, b) => getBookingSortValue(a) - getBookingSortValue(b));
     const base = (mode === 'today' || isWorkerView)
       ? sorted.filter((b) => isWorkerView
-          ? isWorkerTodayTestDay(b.scheduledDate, new Date())
+          ? isWithinWorkerWindow(b.scheduledDate, new Date())
           : isSameDay(b.scheduledDate, new Date()))
       : sorted;
     if (!isWorkerView) return base;
