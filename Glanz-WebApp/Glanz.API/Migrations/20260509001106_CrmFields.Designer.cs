@@ -3,6 +3,7 @@ using System;
 using Glanz.API.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Glanz.API.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260509001106_CrmFields")]
+    partial class CrmFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -180,19 +183,8 @@ namespace Glanz.API.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<int>("LeadSource")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("LeadSourceDetails")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
                     b.Property<int>("PaymentStatus")
                         .HasColumnType("integer");
-
-                    b.Property<string>("ReferralCode")
-                        .HasMaxLength(30)
-                        .HasColumnType("character varying(30)");
 
                     b.Property<string>("ReschedulePreferredDate")
                         .HasColumnType("text");
@@ -584,85 +576,6 @@ namespace Glanz.API.Migrations
                     b.ToTable("JobPositions");
                 });
 
-            modelBuilder.Entity("Glanz.API.Models.Lead", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int?>("AssignedToUserId")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("ConvertedToBookingId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Email")
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
-
-                    b.Property<string>("FbLeadId")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Fbclid")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Gclid")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("LastContactedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("Notes")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<string>("Phone")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
-                    b.Property<string>("PreferredService")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<int>("Source")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("SourceDetails")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("UtmCampaign")
-                        .HasColumnType("text");
-
-                    b.Property<string>("UtmContent")
-                        .HasColumnType("text");
-
-                    b.Property<string>("UtmTerm")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AssignedToUserId");
-
-                    b.HasIndex("ConvertedToBookingId");
-
-                    b.ToTable("Leads");
-                });
-
             modelBuilder.Entity("Glanz.API.Models.Notification", b =>
                 {
                     b.Property<int>("Id")
@@ -889,48 +802,6 @@ namespace Glanz.API.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Products");
-                });
-
-            modelBuilder.Entity("Glanz.API.Models.Referral", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("FirstBookingAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("ReferredUserId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("ReferrerId")
-                        .HasColumnType("integer");
-
-                    b.Property<decimal>("RewardAmount")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("numeric(10,2)");
-
-                    b.Property<DateTime?>("RewardedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("RewardedBookingId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ReferredUserId");
-
-                    b.HasIndex("ReferrerId");
-
-                    b.ToTable("Referrals");
                 });
 
             modelBuilder.Entity("Glanz.API.Models.Service", b =>
@@ -1447,32 +1318,9 @@ namespace Glanz.API.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<DateTime?>("FirstWashCompletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("HasUsedReferralCode")
-                        .HasColumnType("boolean");
-
                     b.Property<string>("HomeAddress")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
-
-                    b.Property<bool>("IsEmailVerified")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("EmailVerificationToken")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<DateTime?>("EmailVerificationTokenExpiry")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("PasswordResetToken")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<DateTime?>("PasswordResetTokenExpiry")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("HomeHouseNumber")
                         .HasMaxLength(100)
@@ -1527,17 +1375,6 @@ namespace Glanz.API.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
-                    b.Property<string>("ReferralCode")
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
-                    b.Property<decimal>("ReferralPoints")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("numeric(10,2)");
-
-                    b.Property<int?>("ReferredByUserId")
-                        .HasColumnType("integer");
-
                     b.Property<string>("RefreshToken")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
@@ -1580,8 +1417,6 @@ namespace Glanz.API.Migrations
                     b.HasIndex("Phone")
                         .IsUnique()
                         .HasFilter("\"Phone\" IS NOT NULL AND \"Phone\" <> ''");
-
-                    b.HasIndex("ReferredByUserId");
 
                     b.ToTable("Users");
                 });
@@ -1865,21 +1700,6 @@ namespace Glanz.API.Migrations
                     b.Navigation("JobPosition");
                 });
 
-            modelBuilder.Entity("Glanz.API.Models.Lead", b =>
-                {
-                    b.HasOne("Glanz.API.Models.User", "AssignedToUser")
-                        .WithMany()
-                        .HasForeignKey("AssignedToUserId");
-
-                    b.HasOne("Glanz.API.Models.Booking", "ConvertedToBooking")
-                        .WithMany()
-                        .HasForeignKey("ConvertedToBookingId");
-
-                    b.Navigation("AssignedToUser");
-
-                    b.Navigation("ConvertedToBooking");
-                });
-
             modelBuilder.Entity("Glanz.API.Models.Notification", b =>
                 {
                     b.HasOne("Glanz.API.Models.User", "Admin")
@@ -1920,25 +1740,6 @@ namespace Glanz.API.Migrations
                     b.Navigation("Package");
 
                     b.Navigation("Service");
-                });
-
-            modelBuilder.Entity("Glanz.API.Models.Referral", b =>
-                {
-                    b.HasOne("Glanz.API.Models.User", "ReferredUser")
-                        .WithMany()
-                        .HasForeignKey("ReferredUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Glanz.API.Models.User", "Referrer")
-                        .WithMany()
-                        .HasForeignKey("ReferrerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ReferredUser");
-
-                    b.Navigation("Referrer");
                 });
 
             modelBuilder.Entity("Glanz.API.Models.ServiceProduct", b =>
@@ -2049,15 +1850,6 @@ namespace Glanz.API.Migrations
                     b.Navigation("Package");
 
                     b.Navigation("Plan");
-                });
-
-            modelBuilder.Entity("Glanz.API.Models.User", b =>
-                {
-                    b.HasOne("Glanz.API.Models.User", "ReferredByUser")
-                        .WithMany()
-                        .HasForeignKey("ReferredByUserId");
-
-                    b.Navigation("ReferredByUser");
                 });
 
             modelBuilder.Entity("Glanz.API.Models.UserOffer", b =>
