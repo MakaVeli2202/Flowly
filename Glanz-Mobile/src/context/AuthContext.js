@@ -160,6 +160,7 @@ export function AuthProvider({ children }) {
 
   const value = useMemo(() => ({
     user,
+    setUser,
     token,
     loading,
     isAuthenticated: !!token,

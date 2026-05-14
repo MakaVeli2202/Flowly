@@ -112,6 +112,7 @@ function adminRoute(path, _PageComponent) {
 // ─── 404 ──────────────────────────────────────────────────────────────────────
 
 import NotFound from './components/ui/not-found';
+import ForceChangePassword from './pages/shared/ForceChangePassword';
 
 // function NotFound() {
 //   return (
@@ -253,6 +254,9 @@ function AppRoutes() {
         <Route path="/subscription-booking" element={
           <ProtectedRoute><Suspense fallback={<AdminFallback />}><SubscriptionBooking /></Suspense></ProtectedRoute>
         } />
+
+        {/* ── Force password change (staff first login) ───────────────── */}
+        <Route path="/force-change-password" element={<ForceChangePassword />} />
 
         {/* ── Catch-all 404 ──────────────────────────────────────────── */}
         <Route path="*" element={<NotFound />} />

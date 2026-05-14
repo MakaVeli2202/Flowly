@@ -67,6 +67,9 @@ namespace Glanz.API.Models
 
         public bool IsActive { get; set; } = true;
 
+        /// <summary>Set to true when admin creates the account; cleared after first successful password change.</summary>
+        public bool MustChangePassword { get; set; } = false;
+
         [Column(TypeName = "decimal(10,2)")]
         public decimal? MonthlySalary { get; set; }
 

@@ -22,4 +22,5 @@ export const authAPI = {
   deleteWorker: async (workerId) => (await apiClient.delete(`/Auth/workers/${workerId}`)).data,
   updateWorkerSalary: async (workerId, monthlySalary) => (await apiClient.put(`/Auth/workers/${workerId}/salary`, { monthlySalary })).data,
   getPayrollSummary: async (month, year) => (await apiClient.get('/Auth/workers/payroll', { params: { month, year } })).data,
+  forceChangePassword: async (data) => (await apiClient.post('/Auth/force-change-password', data)).data,
 };

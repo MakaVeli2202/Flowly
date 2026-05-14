@@ -34,6 +34,11 @@ export const authAPI = {
     return response.data;
   }),
 
+  forceChangePassword: async (data) => {
+    const response = await apiClient.post('/Auth/force-change-password', data);
+    return response.data;
+  },
+
   getWorkers: async () => withRetry(async () => {
     const response = await apiClient.get('/Auth/workers');
     return response.data;

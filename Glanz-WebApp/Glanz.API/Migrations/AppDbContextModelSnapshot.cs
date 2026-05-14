@@ -1204,6 +1204,9 @@ namespace Glanz.API.Migrations
                     b.Property<decimal?>("MonthlySalary")
                         .HasColumnType("decimal(10,2)");
 
+                    b.Property<bool>("MustChangePassword")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasColumnType("text");

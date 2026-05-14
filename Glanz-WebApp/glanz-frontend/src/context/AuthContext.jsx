@@ -204,6 +204,7 @@ export function AuthProvider({ children }) {
 
     const value = {
     user,
+    setUser,
     token,
     isAuthenticated: !!token,
     isAdmin: user?.role === 'Admin',

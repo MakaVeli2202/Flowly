@@ -139,6 +139,7 @@ namespace Glanz.API.DTOs
         public string? CompensationType { get; set; }
         public decimal? PercentageRate { get; set; }
         public List<string>? Skills { get; set; }
+        public bool MustChangePassword { get; set; }
     }
 
     /// <summary>Per-day shift override for a single day of week.</summary>
@@ -301,6 +302,17 @@ namespace Glanz.API.DTOs
         public int UserId { get; set; }
         [Required]
         public string Message { get; set; } = string.Empty;
+    }
+
+    public class ForceChangePasswordDto
+    {
+        [Required]
+        [MinLength(8)]
+        public string NewPassword { get; set; } = string.Empty;
+
+        [Required]
+        [MinLength(8)]
+        public string ConfirmNewPassword { get; set; } = string.Empty;
     }
 
     public class RefreshTokenRequestDto

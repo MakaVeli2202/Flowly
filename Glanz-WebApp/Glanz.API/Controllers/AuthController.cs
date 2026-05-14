@@ -200,6 +200,7 @@ namespace Glanz.API.Controllers
                 Skills = string.IsNullOrWhiteSpace(staff.SkillsJson)
                     ? new List<string>()
                     : System.Text.Json.JsonSerializer.Deserialize<List<string>>(staff.SkillsJson),
+                MustChangePassword = staff.MustChangePassword,
             };
         }
 
@@ -427,6 +428,7 @@ namespace Glanz.API.Controllers
                         : null,
                     IBAN = string.IsNullOrWhiteSpace(dto.IBAN) ? null : dto.IBAN.Trim(),
                     IsActive = true,
+                    MustChangePassword = true,
                     WorkingDays = _configuration["BusinessSettings:DefaultWorkerWorkingDays"]
                         ?? "Monday,Tuesday,Wednesday,Thursday,Friday,Saturday",
                     ShiftStart = _configuration["BusinessSettings:DefaultWorkerShiftStart"] ?? "08:00",
@@ -977,6 +979,37 @@ namespace Glanz.API.Controllers
                 Console.WriteLine($"Change password error: {ex.Message}");
                 return StatusCode(500, new { message = "Failed to change password" });
             }
+        }
+
+        /// <summary>
+        /// Used on first login when MustChangePassword = true.
+        /// Does not require the old password — only works while the flag is set.
+        /// </summary>
+        [Authorize]
+        [HttpPost("force-change-password")]
+        public async Task<ActionResult> ForceChangePassword(ForceChangePasswordDto dto)
+        {
+            if (dto.NewPassword != dto.ConfirmNewPassword)
+                return BadRequest(new { message = "Passwords do not match" });
+
+            var userId = User.GetCurrentUserId();
+
+            var staff = await _context.Staff.FindAsync(userId);
+            if (staff == null)
+                return BadRequest(new { message = "This endpoint is only for staff accounts." });
+
+            if (!staff.MustChangePassword)
+                return BadRequest(new { message = "No forced password change is required." });
+
+            if (BCrypt.Net.BCrypt.Verify(dto.NewPassword, staff.PasswordHash))
+                return BadRequest(new { message = "New password must differ from the current password." });
+
+            staff.PasswordHash       = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
+            staff.MustChangePassword = false;
+            staff.UpdatedAt          = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Password updated. You can now continue." });
         }
 
         [HttpGet("customers")]

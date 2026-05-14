@@ -57,6 +57,7 @@ import AdminPlansScreen from '../screens/AdminPlansScreen';
 import AdminSkillsScreen from '../screens/AdminSkillsScreen';
 import AdminJobApplicationsScreen from '../screens/AdminJobApplicationsScreen';
 import AdminDevSettingsScreen from '../screens/AdminDevSettingsScreen';
+import ForceChangePasswordScreen from '../screens/ForceChangePasswordScreen';
 
 const Stack  = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -540,18 +541,27 @@ function WorkerStack() {
 }
 
 export default function AppNavigator({ navigationRef }) {
-  const { isAuthenticated, isAdmin, isWorker } = useAuth();
+  const { isAuthenticated, isAdmin, isWorker, user } = useAuth();
+
+  const mustChange = isAuthenticated && user?.mustChangePassword;
+
   return (
     <>
-      {isWorker && isAuthenticated && <WorkerLocationBridge />}
+      {isWorker && isAuthenticated && !mustChange && <WorkerLocationBridge />}
       <NavigationContainer theme={navTheme} ref={navigationRef}>
-        {isAuthenticated
-          ? isAdmin
-            ? <AdminStack />
-            : isWorker
-              ? <WorkerStack />
-              : <CustomerStack />
-          : <AuthStack />}
+        {mustChange
+          ? (
+            <Stack.Navigator screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="ForceChangePassword" component={ForceChangePasswordScreen} />
+            </Stack.Navigator>
+          )
+          : isAuthenticated
+            ? isAdmin
+              ? <AdminStack />
+              : isWorker
+                ? <WorkerStack />
+                : <CustomerStack />
+            : <AuthStack />}
       </NavigationContainer>
     </>
   );

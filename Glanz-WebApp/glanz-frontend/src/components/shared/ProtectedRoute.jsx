@@ -18,7 +18,7 @@ import LoadingCircle from './LoadingCircle';
  * [Authorize(Roles = "Admin")] attribute on the backend controller action.
  */
 function ProtectedRoute({ children, requireAdmin = false, requireCustomer = false }) {
-  const { isAuthenticated, isAdmin, isEmployee, loading } = useAuth();
+  const { isAuthenticated, isAdmin, isEmployee, loading, user } = useAuth();
 
   if (loading) {
     return <LoadingCircle fullScreen label="Checking access..." sizeClass="h-12 w-12" />;
@@ -26,6 +26,10 @@ function ProtectedRoute({ children, requireAdmin = false, requireCustomer = fals
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (user?.mustChangePassword) {
+    return <Navigate to="/force-change-password" replace />;
   }
 
   if (requireAdmin && !isAdmin) {
