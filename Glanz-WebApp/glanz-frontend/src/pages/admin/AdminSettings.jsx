@@ -607,14 +607,14 @@ export default function AdminSettings() {
   // Site visibility state
   const [sitePublished,    setSitePublished]    = useState(false);
   const [_siteSaving,      setSiteSaving]       = useState(false);
-  const [siteSaved,        setSiteSaved]        = useState(false);
-  const [siteError,        setSiteError]        = useState('');
+  const [_siteSaved,       setSiteSaved]        = useState(false);
+  const [_siteError,       setSiteError]        = useState('');
 
   // Launch date state
   const [launchDate,       setLaunchDate]       = useState('2026-06-01T00:00');
-  const [launchSaving,     setLaunchSaving]     = useState(false);
-  const [launchSaved,      setLaunchSaved]      = useState(false);
-  const [launchError,      setLaunchError]      = useState('');
+  const [_launchSaving,    setLaunchSaving]     = useState(false);
+  const [_launchSaved,     setLaunchSaved]      = useState(false);
+  const [_launchError,     setLaunchError]      = useState('');
 
   // Subscription discount state
   const [discountPct,      setDiscountPct]      = useState(10);
@@ -765,7 +765,7 @@ export default function AdminSettings() {
     finally { setSmsSaving(false); }
   };
 
-  const handleToggleSitePublished = async () => {
+  const _handleToggleSitePublished = async () => {
     const next = !sitePublished;
     try {
       setSiteSaving(true); setSiteError('');
@@ -777,7 +777,7 @@ export default function AdminSettings() {
     finally { setSiteSaving(false); }
   };
 
-  const handleSaveLaunchDate = async () => {
+  const _handleSaveLaunchDate = async () => {
     if (!launchDate) {
       setLaunchError(ui.launchDateRequired);
       return;
@@ -808,7 +808,7 @@ export default function AdminSettings() {
     finally { setDiscountSaving(false); }
   };
 
-  const handleSaveReferralReward = async () => {
+  const _handleSaveReferralReward = async () => {
     const v = Number(referralReward);
     if (!Number.isFinite(v) || v < 0 || v > 500) {
       setReferralError(ui.referralRewardRangeError); return;
@@ -822,7 +822,7 @@ export default function AdminSettings() {
     finally { setReferralSaving(false); }
   };
 
-  const handleSaveReferralDiscount = async () => {
+  const _handleSaveReferralDiscount = async () => {
     const v = Number(referralDiscountPct);
     if (!Number.isFinite(v) || v < 0 || v > 100) {
       setReferralDiscountError(ui.referralDiscountRangeError); return;

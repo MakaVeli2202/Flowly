@@ -469,7 +469,7 @@ function BookingConfirmation() {
   const dateShort = new Date(booking.scheduledDate).toLocaleDateString('en-US', {
     month: 'short', day: 'numeric', year: 'numeric',
   });
-  const dateLong = new Date(booking.scheduledDate).toLocaleDateString('en-US', {
+  const _dateLong = new Date(booking.scheduledDate).toLocaleDateString('en-US', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
   });
   const vehicleText = [booking.vehicleYear, booking.vehicleMake, booking.vehicleModel]

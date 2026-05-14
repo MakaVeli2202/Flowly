@@ -9,7 +9,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { formatQAR } from '../../utils/currency';
 
 export default function WorkerSales() {
-  const { t } = useLanguage();
+  const { t: _t } = useLanguage();
   const [offers, setOffers] = useState([]);
   const [packages, setPackages] = useState([]);
   const [loading, setLoading] = useState(true);

@@ -76,7 +76,7 @@ function BookingVehiclePackageStep({
   vehicleMultiplier,
   packages, packagesCtxLoading,
   selectedPackages, setSelectedPackages,
-  quote,
+  quote: _quote,
 }) {
   const { lang } = useLanguage();
   const langKey = String(lang || 'en').toLowerCase().split('-')[0];

@@ -7,7 +7,7 @@ import { Copy, Share2, Gift, Users, CheckCircle, Clock, Award, ArrowLeft, Lock, 
 import LoadingCircle from '../../components/shared/LoadingCircle';
 
 export default function Referrals() {
-  const { user, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const { lang } = useLanguage();
   const navigate = useNavigate();
   

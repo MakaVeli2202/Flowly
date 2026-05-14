@@ -181,7 +181,7 @@ function MyBookings() {
   const [successModal,       setSuccessModal]       = useState(null);
   const [loyalty,            setLoyalty]            = useState(null);
   const [copiedCode,         setCopiedCode]         = useState(null);
-  const [activatingLoyalty,  setActivatingLoyalty]  = useState(false);
+  const [_activatingLoyalty, _setActivatingLoyalty]  = useState(false);
   const [reviewStep,         setReviewStep]         = useState(1);
   const [screenshotFile,     setScreenshotFile]     = useState(null);
   const [screenshotPreview, setScreenshotPreview]  = useState(null);
@@ -259,7 +259,7 @@ function MyBookings() {
   };
 
   const fetchLoyalty = async () => {
-    try { setLoyalty(await offersAPI.getMyLoyalty()); } catch {}
+    try { setLoyalty(await offersAPI.getMyLoyalty()); } catch { /* empty */ }
   };
 
   const retryFetch = () => {
@@ -309,7 +309,7 @@ function MyBookings() {
     try {
       setFeeLoading(true);
       setCancellationFeeInfo(await bookingsAPI.getCancellationFee(bookingId));
-    } catch {}
+    } catch { /* empty */ }
     finally { setFeeLoading(false); }
   };
 
@@ -396,7 +396,7 @@ function MyBookings() {
 
     let loadedPackages = allPackages;
     if (allPackages.length === 0) {
-      try { loadedPackages = await packagesAPI.getAll(lang) || []; setAllPackages(loadedPackages); } catch {}
+      try { loadedPackages = await packagesAPI.getAll(lang) || []; setAllPackages(loadedPackages); } catch { /* empty */ }
     }
     await loadEditSlots(initDate, initPackages, initVehicleType, loadedPackages);
   };
@@ -431,7 +431,7 @@ function MyBookings() {
     }
   };
 
-  const handleEditVehicleChange = (e) => {
+  const _handleEditVehicleChange = (e) => {
     const newType = e.target.value;
     setEditForm(prev => ({ ...prev, vehicleType: newType }));
     if (editForm.scheduledDate) {

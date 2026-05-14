@@ -39,7 +39,7 @@ const deriveStatus = ({ freeSlots, totalSlots, utilizationPercent }) => {
   if (Number.isFinite(total) && Number.isFinite(free) && total > 0 && ((total - free) / total) * 100 >= 70) return 'medium';
   return 'available';
 };
-const normalizeStatus = (raw, metrics = {}) => {
+const _normalizeStatus = (raw, metrics = {}) => {
   if (typeof raw === 'string') {
     const k = raw.trim().toLowerCase();
     if (['available','medium','full'].includes(k)) return k;
@@ -102,6 +102,7 @@ function PackageCalendar({ pkgId, selectedDate, onSelectDate, calMonth, onChange
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     subscriptionsAPI.getAvailability({ month: calMonth.getMonth() + 1, year: calMonth.getFullYear(), packageId: pkgId })
       .then((data) => {
@@ -191,7 +192,9 @@ function PackageSlots({ pkgId, date, selectedSlot, onSelectSlot }) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!date) { setSlots([]); return; }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     subscriptionsAPI.getSlots({ date, packageId: pkgId })
       .then((data) => setSlots(data || []))

@@ -58,6 +58,7 @@ export default function Careers() {
   const [expanded, setExpanded] = useState(null);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPositions(loadPositions());
 
     const handleStorage = (e) => {

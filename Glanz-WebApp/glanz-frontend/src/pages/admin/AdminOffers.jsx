@@ -557,7 +557,7 @@ function OfferCard({ offer, onEdit, onDelete }) {
 }
 
 /* ─── Loyalty progress row ───────────────────────────────────────────────── */
-function LoyaltyRow({ row, loyaltyOffers, onAssign: _onAssign }) {
+function LoyaltyRow({ row, loyaltyOffers }) {
   const fmtShort = (d) => d ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : null;
 
   return (

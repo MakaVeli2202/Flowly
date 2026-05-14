@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useRef, useState, Suspense, lazy } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState, Suspense } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Link, useNavigate } from 'react-router-dom';
@@ -531,6 +531,7 @@ function ReviewCard({ review }) {
 function useCountUp(target, duration = 2000, started = false) {
   const [value, setValue] = useState(0);
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!started || target === 0) { setValue(target); return; }
     let startTime = null;
     const step = (ts) => {
@@ -1436,7 +1437,7 @@ function Home() {
           <div className="grid md:grid-cols-3 gap-6 md:gap-8 relative">
             <div className="hidden md:block absolute top-[3.5rem] left-[calc(33.33%_+_2rem)] right-[calc(33.33%_+_2rem)] h-px"
               style={{ background: 'linear-gradient(90deg, rgba(200,169,107,0.5), rgba(14,165,160,0.5))' }} />
-            {howItWorks.map((item, i) => {
+            {howItWorks.map((item) => {
               const StepIcon = item.Icon;
               return (
                 <div key={item.step}
@@ -1601,7 +1602,7 @@ function Home() {
         <div className="container mx-auto px-4">
           {loading.packages ? (
             <LoadingCircle label="Loading services..." className="min-h-[220px]" sizeClass="h-10 w-10" />
-          ) : serviceHighlights.map((service, index) => (
+          ) : serviceHighlights.map((service) => (
             <div key={service.title} className="mb-20 last:mb-0 flex flex-col gap-10" dir="ltr" style={{ direction: 'ltr' }}>
               <div className="flex-1">
                 <h2 className="premium-heading text-3xl font-bold text-[var(--heading-color)] mb-6">{service.title}</h2>

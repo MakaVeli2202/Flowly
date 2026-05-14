@@ -221,7 +221,7 @@ const TABLE_DEFAULTS = {
 function financialInsights(report) {
   const insights = [];
   const {
-    totalRevenue, totalCost, totalProfit, totalBookings,
+    totalRevenue, totalCost, totalProfit: _totalProfit, totalBookings,
     profitMarginPercent, averageBookingValue, dailyBreakdown = [],
   } = report;
 

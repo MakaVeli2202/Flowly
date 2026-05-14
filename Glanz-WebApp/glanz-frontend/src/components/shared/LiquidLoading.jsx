@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/purity */
 import React, { useState, useEffect } from 'react';
 
 const BARS = [

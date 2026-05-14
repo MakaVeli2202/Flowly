@@ -1,5 +1,5 @@
 // ManageStaff.jsx
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authAPI } from '../../api/auth';
 import AppModal from '../../components/shared/AppModal';
@@ -171,67 +171,19 @@ function ManageStaff() {
   const [workers,            setWorkers]            = useState([]);
   const [loading,            setLoading]            = useState(true);
   const [error,              setError]              = useState('');
-  const [showAddForm,        setShowAddForm]        = useState(false);
-  const [showPassword,       setShowPassword]       = useState({});
   const [deletingId,         setDeletingId]         = useState(null);
   const [savingId,           setSavingId]           = useState(null);
   const [editingScheduleId,  setEditingScheduleId]  = useState(null);
   const [scheduleData,       setScheduleData]       = useState({ workingDays:[], shiftStart:'09:00', shiftEnd:'18:00', dayOverrides:{} });
   const [scheduleSavingId,   setScheduleSavingId]   = useState(null);
-  const [formData,           setFormData]           = useState({ firstName:'', lastName:'', email:'', phone:'', password:'' });
-  const [salaryInputs,     setSalaryInputs]     = useState({});
-  const [salarySavingId,   setSalarySavingId]   = useState(null);
-  const [salarySavedId,    setSalarySavedId]    = useState(null);
-  const [salaryError,      setSalaryError]      = useState('');
-  const [payroll,          setPayroll]          = useState([]);
-  const [payrollMonth,     setPayrollMonth]     = useState(new Date().getMonth() + 1);
-  const [payrollYear,      setPayrollYear]      = useState(new Date().getFullYear());
-  const [payrollLoading,   setPayrollLoading]   = useState(false);
+  const [payrollMonth]     = useState(new Date().getMonth() + 1);
+  const [payrollYear]      = useState(new Date().getFullYear());
   const [payModal, setPayModal] = useState({ open: false, worker: null, onConfirm: null });
   const [detailsModal, setDetailsModal] = useState({ open: false, worker: null });
   const business = getBusiness();
   const closePayModal = () => setPayModal(m => ({ ...m, open: false, onConfirm: null }));
   const closeDetailsModal = () => setDetailsModal(m => ({ ...m, open: false, worker: null }));
-  const downloadPaySlip = (worker) => {
-    const companyName = business.name || 'Glanz';
-    const companyLogo = business.logo || '';
-    const companyAddress = business.location || '';
-    const companyPhone = business.phone || '';
-    const companyEmail = business.email || '';
-    const footerText = '';
-    let slipText = '';
-    if (companyLogo) {
-      slipText += `[Logo: ${companyLogo}]\n`;
-    }
-    slipText += `
-${companyName}
-${companyAddress ? companyAddress : ''}
-${companyPhone ? 'Phone: ' + companyPhone : ''}
-${companyEmail ? 'Email: ' + companyEmail : ''}
-========================
-PAY SLIP
-========================
-Employee: ${worker.workerName}
-Period: ${['January','February','March','April','May','June','July','August','September','October','November','December'][payrollMonth-1]} ${payrollYear}
-------------------------
-Monthly Salary: QAR ${worker.monthlySalary?.toLocaleString() || 0}
-Jobs Completed: ${worker.jobsCompleted || 0}
-Revenue Generated: QAR ${worker.totalRevenue?.toLocaleString() || 0}
-Status: ${worker.isPaid ? 'PAID' : 'UNPAID'}
-${worker.isPaid && worker.paidAt ? 'Paid On: ' + new Date(worker.paidAt).toLocaleDateString() : ''}
-------------------------
-${footerText}
-Generated: ${new Date().toLocaleString()}
-    `.trim();
-    const blob = new Blob([slipText], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `PaySlip_${worker.workerName?.replace(/\s+/g, '_')}_${payrollMonth}_${payrollYear}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-  const [modal, setModal] = useState({ open:false, title:'', message:'', variant:'info', onConfirm:null });
+  const [_modal, setModal] = useState({ open:false, title:'', message:'', variant:'info', onConfirm:null });
   const closeModal  = () => setModal(m => ({ ...m, open:false, onConfirm:null }));
   const showConfirm = (title, message, variant, onConfirm) =>
     setModal({ open:true, title, message, variant, onConfirm });
@@ -250,19 +202,8 @@ Generated: ${new Date().toLocaleString()}
           toast.error(`⚠️ Payroll due: ${result.unpaidCount} worker(s) unpaid (QAR ${result.totalAmount?.toLocaleString()}). Please pay before end of month.`, { duration: 8000 });
         }
       }
-    } catch { }
+    } catch { /* empty */ }
   };
-
-  const fetchPayroll = useCallback(async () => {
-    try {
-      setPayrollLoading(true);
-      const data = await authAPI.getPayrollSummary(payrollMonth, payrollYear);
-      setPayroll(data || []);
-    } catch { setPayroll([]); }
-    finally { setPayrollLoading(false); }
-  }, [payrollMonth, payrollYear]);
-
-  useEffect(() => { if (workers.length > 0) fetchPayroll(); }, [workers.length, fetchPayroll]);
 
   const fetchWorkers = async () => {
     try {
@@ -271,26 +212,6 @@ Generated: ${new Date().toLocaleString()}
       setWorkers(data || []); setError('');
     } catch (err) { setError(err.response?.data?.message || 'Failed to load staff'); }
     finally { setLoading(false); }
-  };
-
-  const handleInputChange = e => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleAddWorker = async e => {
-    e.preventDefault();
-    if (!formData.firstName.trim() || !formData.lastName.trim() || !formData.email.trim() || !formData.password.trim() || !formData.phone.trim()) {
-      setError('Please fill in all fields'); return;
-    }
-    try {
-      setSavingId('new');
-      await authAPI.createWorker({ firstName: formData.firstName.trim(), lastName: formData.lastName.trim(), email: formData.email.trim(), phone: formData.phone.trim(), password: formData.password });
-      setFormData({ firstName:'', lastName:'', email:'', phone:'', password:'' });
-      setShowAddForm(false); setError('');
-      await fetchWorkers();
-    } catch (err) { setError(err.response?.data?.message || 'Failed to add worker'); }
-    finally { setSavingId(null); }
   };
 
   const handleDeleteWorker = (workerId, workerName) => {
@@ -354,19 +275,6 @@ Generated: ${new Date().toLocaleString()}
     finally { setScheduleSavingId(null); }
   };
 
-  const handleSaveSalary = async (workerId) => {
-    const val = parseFloat(salaryInputs[workerId]);
-    if (!Number.isFinite(val) || val < 0) { setSalaryError(ui.salaryError); return; }
-    try {
-      setSalarySavingId(workerId); setSalaryError('');
-      await authAPI.updateWorkerSalary(workerId, val);
-      setSalarySavedId(workerId);
-      setTimeout(() => setSalarySavedId(null), 2500);
-      await fetchWorkers();
-    } catch (err) { setSalaryError(err?.response?.data?.message || 'Failed to save salary.'); }
-    finally { setSalarySavingId(null); }
-  };
-
   const getEffectiveShift = day => {
     const override = scheduleData.dayOverrides[day];
     if (override) return { start: override.start, end: override.end, custom: true };
@@ -386,7 +294,6 @@ Generated: ${new Date().toLocaleString()}
     </>
   );
 
-  const inp = 'field-input';
 
   return (
     <>
@@ -789,7 +696,7 @@ Generated: ${new Date().toLocaleString()}
 </body>
 </html>`.trim();
 
-          const downloadSlip = () => {
+          const _downloadSlip = () => {
             const blob = new Blob([htmlSlip], { type: 'text/html' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -904,7 +811,7 @@ Generated: ${new Date().toLocaleString()}
                 try {
                   await authAPI.markWorkerPaid(worker.workerId, payrollMonth, payrollYear);
                   closeDetailsModal();
-                  fetchPayroll();
+                  await fetchWorkers();
                   toast.success('Payment recorded!');
                 } catch (err) { toast.error(err?.response?.data?.message || 'Failed to record payment'); }
               }} className="w-full py-2.5 rounded-xl bg-primary text-white text-sm font-bold hover:bg-primary/90 transition flex items-center justify-center gap-2">

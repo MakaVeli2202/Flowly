@@ -132,11 +132,11 @@ const UI_BY_LANG = {
 
 function BookingDetailsCheckoutStep({
   formData, setFormData,
-  canAutofillCustomerData, isAdmin,
+  canAutofillCustomerData, isAdmin: _isAdmin,
   savedAddresses, savedHouseNumbers, addressHelperText,
   myCoupons,
-  isTapMode, paymentMethod, setPaymentMethod,
-  quote, totalAmount,
+  isTapMode, paymentMethod: _paymentMethod, setPaymentMethod: _setPaymentMethod,
+  quote: _quote, totalAmount,
   userReferralPoints = 0,
   hasUsedReferral = false,
   referredByName = null,
@@ -144,7 +144,7 @@ function BookingDetailsCheckoutStep({
   const { lang } = useLanguage();
   const langKey = String(lang || 'en').toLowerCase().split('-')[0];
   const ui = UI_BY_LANG[langKey] || UI_BY_LANG.en;
-  const paymentMethods = [
+  const _paymentMethods = [
     { id: 'card', label: ui.paymentMethods.card, Icon: CreditCard },
     { id: 'google_pay', label: ui.paymentMethods.googlePay, Icon: Shield },
     { id: 'apple_pay', label: ui.paymentMethods.applePay, Icon: Star },

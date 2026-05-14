@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Check, Star, Zap, Crown, ArrowRight, Shield,
-  CalendarDays, UserCheck, HeadphonesIcon, Infinity,
+  CalendarDays, UserCheck, HeadphonesIcon, Infinity as InfinityIcon,
 } from 'lucide-react';
 import { subscriptionsAPI } from '../../api/subscriptions';
 import { useAuth } from '../../context/AuthContext';
@@ -160,7 +160,7 @@ const VEHICLE_CONFIG = {
 /* ── Feature icon helper ─────────────────────────────────────────────────── */
 const featureIcon = (feature) => {
   if (/cleaner|dedicated|same/i.test(feature)) return <UserCheck size={13} className="flex-shrink-0" />;
-  if (/unlimited/i.test(feature))              return <Infinity   size={13} className="flex-shrink-0" />;
+  if (/unlimited/i.test(feature))              return <InfinityIcon size={13} className="flex-shrink-0" />;
   if (/schedule|recurring|weekly/i.test(feature)) return <CalendarDays size={13} className="flex-shrink-0" />;
   if (/VIP|support/i.test(feature))            return <HeadphonesIcon size={13} className="flex-shrink-0" />;
   if (/priority/i.test(feature))               return <Shield     size={13} className="flex-shrink-0" />;

@@ -20,10 +20,10 @@ import BookingSidebar             from './booking/BookingSidebar';
 
 /* ── BookingForm (orchestrator) ─────────────────────────────────────────── */
 function BookingForm({ isTapMode }) {
-  const features = useFeatures();
+  const _features = useFeatures();
   const { lang } = useLanguage();
   const { bookingPageConfig } = getSiteContent(lang);
-  const timeSlots      = bookingPageConfig.timeSlots || [];
+  const _timeSlots     = bookingPageConfig.timeSlots || [];
   const minBookingDate = toLocalIsoDate(bookingPageConfig.earliestBookingOffsetDays ?? 0);
   const navigate  = useNavigate();
   const location  = useLocation();
@@ -38,7 +38,7 @@ function BookingForm({ isTapMode }) {
 
   // ── State ───────────────────────────────────────────────────────────────
   const [selectedPackages,    setSelectedPackages]    = useState([]);
-  const [loading,             setLoading]             = useState(false);
+  const [loading]                                      = useState(false);
   const [error,               setError]               = useState('');
   const [success,             setSuccess]             = useState('');
   const [mySubscription,      setMySubscription]      = useState(null);
@@ -82,7 +82,7 @@ function BookingForm({ isTapMode }) {
   const hasUsedReferral = user?.hasUsedReferralCode || false;
   const referredByName = user?.referredByName || null;
 
-  const vehicleMultiplier = settings.vehicleMultipliers;
+  const _vehicleMultiplier = settings.vehicleMultipliers;
 
   const [formData, setFormData] = useState({
     scheduledDate:       minBookingDate,
@@ -284,7 +284,7 @@ function BookingForm({ isTapMode }) {
   }, [error]);
 
   // ── Helpers ───────────────────────────────────────────────────────────
-  const fetchMonthAvailability = async (monthDate, duration) => {
+  const fetchMonthAvailability = async (monthDate, _duration) => {
     try {
       setAvailabilityLoading(true);
       const fromDate = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);

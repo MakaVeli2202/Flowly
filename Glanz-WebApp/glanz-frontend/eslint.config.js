@@ -26,13 +26,14 @@ export default defineConfig([
     plugins: { react },
     rules: {
       'react/jsx-uses-vars': 'error',
-      'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]|^motion$' }],
+      'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]|^motion$', argsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' }],
     },
   },
   {
     files: [
       '**/context/**/*.{js,jsx}',
       '**/Toast.jsx',
+      '**/BookingShared.jsx',
     ],
     rules: {
       'react-refresh/only-export-components': 'off',

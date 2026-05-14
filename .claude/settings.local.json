@@ -80,7 +80,14 @@
       "PowerShell(Get-ChildItem \"e:\\\\VS-Code\\\\Glanz\\\\Glanz-WebApp\\\\Glanz.API\\\\Migrations\" -File | ForEach-Object { Remove-Item $_.FullName -Force -Confirm:$false }; Write-Host \"Done\")",
       "PowerShell(dotnet tool update --global dotnet-ef 2>&1)",
       "PowerShell(dotnet ef --version 2>&1)",
-      "PowerShell($env:DOTNET_ROLL_FORWARD = \"Major\"; Set-Location \"e:\\\\VS-Code\\\\Glanz\\\\Glanz-WebApp\\\\Glanz.API\"; dotnet ef migrations add InitialCreate 2>&1)"
+      "PowerShell($env:DOTNET_ROLL_FORWARD = \"Major\"; Set-Location \"e:\\\\VS-Code\\\\Glanz\\\\Glanz-WebApp\\\\Glanz.API\"; dotnet ef migrations add InitialCreate 2>&1)",
+      "PowerShell(Get-ChildItem \"e:\\\\VS-Code\\\\Glanz\\\\Glanz-WebApp\\\\Glanz.API\\\\Migrations\" -File | ForEach-Object { Remove-Item $_.FullName -Force -Confirm:$false }; Write-Host \"Cleared\")",
+      "Bash(npx eslint *)",
+      "Bash(rm lint-out.json)",
+      "Bash(node lint-parser.mjs)",
+      "Bash(rm lint-out.json lint-parser.mjs)",
+      "PowerShell(cd \"e:\\\\VS-Code\\\\Glanz\\\\Glanz-WebApp\\\\glanz-frontend\"; npx eslint . 2>&1 | Select-String \"error\" | ForEach-Object { $_.Line.Trim\\(\\) })",
+      "PowerShell(cd \"e:\\\\VS-Code\\\\Glanz\\\\Glanz-WebApp\\\\glanz-frontend\"; npx eslint . 2>&1 | Select-String \"error\" | Select-String -NotMatch \"✖|problems\" | ForEach-Object { $_.Line.Trim\\(\\) } | Select-Object -First 50)"
     ],
     "additionalDirectories": [
       "e:\\VS-Code\\Glanz\\.claude"

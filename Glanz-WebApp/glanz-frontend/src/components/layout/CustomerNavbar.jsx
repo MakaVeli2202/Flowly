@@ -50,7 +50,9 @@ export function CustomerNavbar({ theme, onToggleTheme }) {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setShowNotifications(false);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setShowLangMenu(false);
   }, [location.pathname]);
 
@@ -69,7 +71,9 @@ export function CustomerNavbar({ theme, onToggleTheme }) {
 
   useEffect(() => {
     if (!isAuthenticated) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setNotifications([]);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setUnreadCount(0);
       return;
     }

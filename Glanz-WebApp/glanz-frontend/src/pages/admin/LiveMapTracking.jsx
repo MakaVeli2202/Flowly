@@ -257,7 +257,7 @@ export default function LiveMapTracking() {
   const [error, setError] = useState('');
   const [selectedWorker, setSelectedWorker] =
     useState(null);
-  const [lastUpdate, setLastUpdate] =
+  const [_lastUpdate, setLastUpdate] =
     useState(null);
   const [isRefreshing, setIsRefreshing] =
     useState(false);

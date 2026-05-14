@@ -61,7 +61,7 @@ export default function SubscriptionBooking() {
         const active = (pkgsRes || []).filter(p => p.isActive);
         setPackages(active);
         if (active.length === 1) setSelectedPkg(active[0]);
-      } catch (e) {
+      } catch {
         setError('Failed to load subscription data.');
       } finally {
         setLoading(false);
@@ -156,7 +156,7 @@ export default function SubscriptionBooking() {
       const active = (pkgsRes || []).filter(p => p.isActive);
       setPackages(active);
       if (active.length === 1) setSelectedPkg(active[0]);
-    } catch (e) {
+    } catch {
       setError('Failed to load subscription data.');
     } finally {
       setLoading(false);
