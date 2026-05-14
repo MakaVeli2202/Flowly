@@ -49,6 +49,7 @@ namespace Glanz.API.DTOs
         public string? Description { get; set; }
         public int DefaultDurationMinutes { get; set; }
         public bool IsActive { get; set; }
+        public int SortOrder { get; set; }
         public decimal EstimatedCost { get; set; }
         public List<ServiceProductDto> Products { get; set; } = new();
         public DateTime CreatedAt { get; set; }

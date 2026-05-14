@@ -39,5 +39,10 @@ export const packagesAPI = {
   toggleActive: async (id) => withRetry(async () => {
     const response = await apiClient.patch(`/Packages/${id}/toggle-active`);
     return response.data;
-  })
+  }),
+
+  reorder: async (items) => withRetry(async () => {
+    const response = await apiClient.put('/Packages/reorder', items);
+    return response.data;
+  }),
 };

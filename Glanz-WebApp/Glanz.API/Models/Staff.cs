@@ -39,6 +39,21 @@ namespace Glanz.API.Models
         [StringLength(50)]
         public string StaffType { get; set; } = "Detailer";
 
+        /// <summary>Unique 2–4 char admin-defined identifier, e.g. "MOMA". Must be unique across all Staff.</summary>
+        [StringLength(10)]
+        public string? ShortCode { get; set; }
+
+        /// <summary>"Salary" or "Percentage"</summary>
+        [StringLength(20)]
+        public string CompensationType { get; set; } = "Salary";
+
+        /// <summary>Percentage rate per completed job (0–100). Only used when CompensationType = "Percentage".</summary>
+        [Column(TypeName = "decimal(5,2)")]
+        public decimal? PercentageRate { get; set; }
+
+        /// <summary>JSON array of skill names, e.g. ["Polish","Ceramic Coat","Interior"]</summary>
+        public string? SkillsJson { get; set; }
+
         [StringLength(200)]
         public string WorkingDays { get; set; } = "Monday,Tuesday,Wednesday,Thursday,Friday";
 

@@ -4,6 +4,7 @@ import { servicesAPI } from '../../api/services';
 import {
   Plus, Edit2, Trash2, AlertCircle, CheckCircle, Check,
   Eye, EyeOff, X, ShoppingBag, TrendingUp, Clock,
+  ChevronUp, ChevronDown,
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { formatQAR } from '../../utils/currency';
@@ -255,6 +256,7 @@ function ManagePackages() {
   const [editingPackage,    setEditingPackage]    = useState(null);
   const [togglingPackageId, setTogglingPackageId] = useState(null);
   const [modal, setModal] = useState({ open: false, title: '', message: '', variant: 'danger', onConfirm: null });
+  const [reordering, setReordering] = useState(false);
 
   const showConfirm = (title, message, variant, onConfirm) =>
     setModal({ open: true, title, message, variant, onConfirm });
@@ -310,6 +312,20 @@ function ManagePackages() {
       }
       resetForm(); fetchData();
     } catch (err) { setError(err.response?.data?.message || ui.saveFail); }
+  };
+
+  const movePackage = async (idx, dir) => {
+    const next = [...packages];
+    const swap = idx + dir;
+    if (swap < 0 || swap >= next.length) return;
+    [next[idx], next[swap]] = [next[swap], next[idx]];
+    const reordered = next.map((p, i) => ({ ...p, sortOrder: i }));
+    setPackages(reordered);
+    setReordering(true);
+    try {
+      await packagesAPI.reorder(reordered.map((p, i) => ({ id: p.id, sortOrder: i })));
+    } catch { fetchData(); }
+    finally { setReordering(false); }
   };
 
   const handleEdit = (pkg) => {
@@ -740,6 +756,24 @@ function ManagePackages() {
 
                     {/* Action buttons */}
                     <div className="flex gap-2">
+                      <div className="flex flex-col gap-1">
+                        <button
+                          type="button"
+                          disabled={reordering || idx === 0}
+                          onClick={() => movePackage(idx, -1)}
+                          className="p-1.5 rounded-lg border border-[var(--border-color)] text-[var(--muted-color)] hover:border-primary/40 hover:text-primary transition disabled:opacity-30"
+                        >
+                          <ChevronUp size={12} />
+                        </button>
+                        <button
+                          type="button"
+                          disabled={reordering || idx === packages.length - 1}
+                          onClick={() => movePackage(idx, 1)}
+                          className="p-1.5 rounded-lg border border-[var(--border-color)] text-[var(--muted-color)] hover:border-primary/40 hover:text-primary transition disabled:opacity-30"
+                        >
+                          <ChevronDown size={12} />
+                        </button>
+                      </div>
                       <button onClick={() => handleEdit(pkg)}
                         className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl border border-primary/30 text-primary text-xs font-bold hover:bg-primary/10 transition">
                         <Edit2 size={12} /> Edit

@@ -53,9 +53,26 @@ namespace Glanz.API.DTOs
         [Phone]
         public string Phone { get; set; } = string.Empty;
 
-        // "Detailer" | "Staff"
+        // "Detailer" | "Receptionist" | "Bookkeeper" | "Manager" | "Other"
         [StringLength(50)]
         public string StaffType { get; set; } = "Detailer";
+
+        /// <summary>Unique 2–4 char short code, e.g. "MOMA".</summary>
+        [StringLength(10)]
+        public string? ShortCode { get; set; }
+
+        /// <summary>"Salary" or "Percentage"</summary>
+        [StringLength(20)]
+        public string CompensationType { get; set; } = "Salary";
+
+        /// <summary>Monthly salary — only if CompensationType = "Salary".</summary>
+        public decimal? SalaryAmount { get; set; }
+
+        /// <summary>Percentage rate per job — only if CompensationType = "Percentage".</summary>
+        public decimal? PercentageRate { get; set; }
+
+        /// <summary>List of skill names.</summary>
+        public List<string>? Skills { get; set; }
 
         [StringLength(100)]
         public string? IBAN { get; set; }
@@ -118,6 +135,10 @@ namespace Glanz.API.DTOs
         public decimal? MonthlySalary { get; set; }
         public string? IBAN { get; set; }
         public string? StaffType { get; set; }
+        public string? ShortCode { get; set; }
+        public string? CompensationType { get; set; }
+        public decimal? PercentageRate { get; set; }
+        public List<string>? Skills { get; set; }
     }
 
     /// <summary>Per-day shift override for a single day of week.</summary>
@@ -308,5 +329,13 @@ namespace Glanz.API.DTOs
         public string Token          { get; set; } = string.Empty;
         public string NewPassword    { get; set; } = string.Empty;
         public string ConfirmNewPassword { get; set; } = string.Empty;
+    }
+
+    public class SuggestShortCodeDto
+    {
+        [Required]
+        public string FirstName { get; set; } = string.Empty;
+        [Required]
+        public string LastName  { get; set; } = string.Empty;
     }
 }

@@ -49,6 +49,7 @@ namespace Glanz.API.Controllers
                 var lang = ResolveRequestedLanguage();
                 var services = await _context.Services
                     .Where(s => s.IsActive)
+                    .OrderBy(s => s.SortOrder).ThenBy(s => s.Id)
                     .Include(s => s.ServiceProducts)
                     .ThenInclude(sp => sp.Product)
                     .ToListAsync();
@@ -66,6 +67,7 @@ namespace Glanz.API.Controllers
                         : s.Description,
                     DefaultDurationMinutes = s.DefaultDurationMinutes,
                     IsActive = s.IsActive,
+                    SortOrder = s.SortOrder,
                     EstimatedCost = s.ServiceProducts.Sum(sp => sp.QuantityUsed * sp.Product.CostPerUnit),
                     Products = s.ServiceProducts.Select(sp => new ServiceProductDto
                     {
@@ -289,6 +291,28 @@ namespace Glanz.API.Controllers
             {
                 Console.WriteLine($"Error updating service: {ex.Message}");
                 return StatusCode(500, new { message = "Failed to update service" });
+            }
+        }
+
+        [HttpPut("reorder")]
+        public async Task<ActionResult> ReorderServices([FromBody] List<ReorderItemDto> items)
+        {
+            try
+            {
+                var ids = items.Select(i => i.Id).ToList();
+                var services = await _context.Services.Where(s => ids.Contains(s.Id)).ToListAsync();
+                foreach (var svc in services)
+                {
+                    var item = items.FirstOrDefault(i => i.Id == svc.Id);
+                    if (item != null) svc.SortOrder = item.SortOrder;
+                }
+                await _context.SaveChangesAsync();
+                return Ok(new { message = "Services reordered." });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error reordering services: {ex.Message}");
+                return StatusCode(500, new { message = "Failed to reorder services" });
             }
         }
 

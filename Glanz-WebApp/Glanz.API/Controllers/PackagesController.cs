@@ -47,6 +47,7 @@ namespace Glanz.API.Controllers
                 var lang = ResolveRequestedLanguage();
                 var packages = await _context.Packages
                     .Where(p => p.IsActive)
+                    .OrderBy(p => p.SortOrder).ThenBy(p => p.Id)
                     .Include(p => p.PackageServices)
                         .ThenInclude(ps => ps.Service)
                             .ThenInclude(s => s.ServiceProducts)
@@ -85,6 +86,7 @@ namespace Glanz.API.Controllers
                         EstimatedDurationMinutes = p.EstimatedDurationMinutes,
                         ImageUrl = p.ImageUrl,
                         IsActive = p.IsActive,
+                        SortOrder = p.SortOrder,
                         EstimatedCost = estimatedCost,
                         EstimatedProfit = profit,
                         ProfitMarginPercent = profitMargin,
@@ -161,6 +163,7 @@ namespace Glanz.API.Controllers
                     EstimatedDurationMinutes = package.EstimatedDurationMinutes,
                     ImageUrl = package.ImageUrl,
                     IsActive = package.IsActive,
+                    SortOrder = package.SortOrder,
                     EstimatedCost = estimatedCost,
                     EstimatedProfit = profit,
                     ProfitMarginPercent = profitMargin,
@@ -277,6 +280,7 @@ namespace Glanz.API.Controllers
                     EstimatedDurationMinutes = createdPackage.EstimatedDurationMinutes,
                     ImageUrl = createdPackage.ImageUrl,
                     IsActive = createdPackage.IsActive,
+                    SortOrder = createdPackage.SortOrder,
                     EstimatedCost = estimatedCost,
                     EstimatedProfit = profit,
                     ProfitMarginPercent = profitMargin,
@@ -401,6 +405,7 @@ namespace Glanz.API.Controllers
             {
                 var lang = ResolveRequestedLanguage();
                 var packages = await _context.Packages
+                    .OrderBy(p => p.SortOrder).ThenBy(p => p.Id)
                     .Include(p => p.PackageServices)
                         .ThenInclude(ps => ps.Service)
                             .ThenInclude(s => s.ServiceProducts)
@@ -433,6 +438,7 @@ namespace Glanz.API.Controllers
                         EstimatedDurationMinutes = p.EstimatedDurationMinutes,
                         ImageUrl = p.ImageUrl,
                         IsActive = p.IsActive,
+                        SortOrder = p.SortOrder,
                         EstimatedCost = estimatedCost,
                         EstimatedProfit = profit,
                         ProfitMarginPercent = profitMargin,
@@ -485,6 +491,29 @@ namespace Glanz.API.Controllers
             {
                 Console.WriteLine($"Error deleting package: {ex.Message}");
                 return StatusCode(500, new { message = "Failed to delete package" });
+            }
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpPut("reorder")]
+        public async Task<ActionResult> ReorderPackages([FromBody] List<ReorderItemDto> items)
+        {
+            try
+            {
+                var ids = items.Select(i => i.Id).ToList();
+                var packages = await _context.Packages.Where(p => ids.Contains(p.Id)).ToListAsync();
+                foreach (var pkg in packages)
+                {
+                    var item = items.FirstOrDefault(i => i.Id == pkg.Id);
+                    if (item != null) pkg.SortOrder = item.SortOrder;
+                }
+                await _context.SaveChangesAsync();
+                return Ok(new { message = "Packages reordered." });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error reordering packages: {ex.Message}");
+                return StatusCode(500, new { message = "Failed to reorder packages" });
             }
         }
 

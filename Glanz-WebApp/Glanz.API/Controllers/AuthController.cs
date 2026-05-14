@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Glanz.API.Data;
 using Glanz.API.Models;
 using Glanz.API.DTOs;
+using Glanz.API.Helpers;
 using Glanz.API.Services;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -193,6 +194,12 @@ namespace Glanz.API.Controllers
                 MonthlySalary = staff.MonthlySalary,
                 IBAN = staff.IBAN,
                 StaffType = staff.StaffType,
+                ShortCode = staff.ShortCode,
+                CompensationType = staff.CompensationType,
+                PercentageRate = staff.PercentageRate,
+                Skills = string.IsNullOrWhiteSpace(staff.SkillsJson)
+                    ? new List<string>()
+                    : System.Text.Json.JsonSerializer.Deserialize<List<string>>(staff.SkillsJson),
             };
         }
 
@@ -393,6 +400,14 @@ namespace Glanz.API.Controllers
                     return BadRequest(new { message = "Email already registered" });
                 }
 
+                // Validate ShortCode uniqueness
+                if (!string.IsNullOrWhiteSpace(dto.ShortCode))
+                {
+                    var code = dto.ShortCode.Trim().ToUpperInvariant();
+                    if (await _context.Staff.AnyAsync(s => s.ShortCode == code))
+                        return BadRequest(new { message = $"Short code '{code}' is already taken." });
+                }
+
                 var staff = new Staff
                 {
                     FirstName = dto.FirstName,
@@ -403,6 +418,13 @@ namespace Glanz.API.Controllers
                     ProfileImageUrl = GetRandomDefaultAvatarUrl(),
                     Role = "Employee",
                     StaffType = string.IsNullOrWhiteSpace(dto.StaffType) ? "Detailer" : dto.StaffType,
+                    ShortCode = string.IsNullOrWhiteSpace(dto.ShortCode) ? null : dto.ShortCode.Trim().ToUpperInvariant(),
+                    CompensationType = string.IsNullOrWhiteSpace(dto.CompensationType) ? "Salary" : dto.CompensationType,
+                    MonthlySalary = dto.CompensationType == "Salary" ? dto.SalaryAmount : null,
+                    PercentageRate = dto.CompensationType == "Percentage" ? dto.PercentageRate : null,
+                    SkillsJson = dto.Skills != null && dto.Skills.Count > 0
+                        ? System.Text.Json.JsonSerializer.Serialize(dto.Skills)
+                        : null,
                     IBAN = string.IsNullOrWhiteSpace(dto.IBAN) ? null : dto.IBAN.Trim(),
                     IsActive = true,
                     WorkingDays = _configuration["BusinessSettings:DefaultWorkerWorkingDays"]
@@ -451,6 +473,54 @@ namespace Glanz.API.Controllers
                 Console.WriteLine($"Get workers error: {ex.Message}");
                 return StatusCode(500, new { message = "Failed to get workers" });
             }
+        }
+
+        /// <summary>Check if a short code is available. Returns { available: bool, suggestions: string[] }.</summary>
+        [Authorize(Roles = "Admin")]
+        [HttpGet("workers/check-short-code")]
+        public async Task<ActionResult> CheckShortCode([FromQuery] string code, [FromQuery] int? excludeId = null)
+        {
+            if (string.IsNullOrWhiteSpace(code))
+                return BadRequest(new { message = "Code is required." });
+
+            var normalized = code.Trim().ToUpperInvariant();
+            var query = _context.Staff.Where(s => s.ShortCode == normalized);
+            if (excludeId.HasValue) query = query.Where(s => s.Id != excludeId.Value);
+            var taken = await query.AnyAsync();
+
+            var suggestions = new List<string>();
+            if (taken)
+            {
+                // Generate up to 5 alternatives by appending digits or swapping chars
+                for (int i = 1; suggestions.Count < 5; i++)
+                {
+                    var candidate = normalized.Length < 4
+                        ? $"{normalized}{i}"
+                        : $"{normalized[..3]}{i}";
+                    var candidateTaken = await _context.Staff.AnyAsync(s => s.ShortCode == candidate);
+                    if (!candidateTaken) suggestions.Add(candidate);
+                    if (i > 20) break;
+                }
+            }
+
+            return Ok(new { available = !taken, normalized, suggestions });
+        }
+
+        /// <summary>Suggest a short code generated from first/last name using the priority cascade.</summary>
+        [Authorize(Roles = "Admin")]
+        [HttpPost("workers/suggest-shortcode")]
+        public async Task<ActionResult> SuggestShortCode([FromBody] SuggestShortCodeDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.FirstName) || string.IsNullOrWhiteSpace(dto.LastName))
+                return BadRequest(new { message = "firstName and lastName are required." });
+
+            var existingCodes = await _context.Staff
+                .Where(s => s.ShortCode != null)
+                .Select(s => s.ShortCode!)
+                .ToListAsync();
+
+            var suggested = ShortCodeHelper.GenerateShortCode(dto.FirstName, dto.LastName, existingCodes.ToHashSet());
+            return Ok(new { suggested });
         }
 
         [Authorize(Roles = "Admin")]

@@ -4,7 +4,8 @@ import {
   ToggleLeft, ToggleRight, AlertTriangle, CheckCircle2, Info,
   Rocket, RefreshCw, Terminal, CreditCard, MessageSquare, Star,
   ChevronRight, Wrench, ShieldAlert, LogOut, Database, Trash2,
-  Globe, Server, Eye, EyeOff, BarChart3, Loader2,
+  Globe, Server, Eye, EyeOff, BarChart3, Loader2, Clock, Save, AlertCircle,
+  FastForward, Play, RotateCcw, FlaskConical,
 } from 'lucide-react';
 import { useFeatures } from '../../context/FeaturesContext';
 import { useSettings } from '../../context/SettingsContext';
@@ -205,6 +206,51 @@ export default function AdminDevSettings() {
   const [resetError, setResetError] = useState('');
   const [resetSuccess, setResetSuccess] = useState(null);
 
+  // Launch configuration state
+  const [launchDate,    setLaunchDate]    = useState('');
+  const [launchSaving,  setLaunchSaving]  = useState(false);
+  const [launchSaved,   setLaunchSaved]   = useState(false);
+  const [launchError,   setLaunchError]   = useState('');
+
+  // Dev Testing Panel state
+  const TEST_MODE_KEY = 'glanz.dev-test-mode';
+  const [testModeActive, setTestModeActive] = useState(() => !!localStorage.getItem(TEST_MODE_KEY));
+  const [devOps, setDevOps] = useState({
+    sim7d:    { loading: false, result: null, error: '' },
+    cleanup30: { loading: false, result: null, error: '' },
+    fullCleanup: { loading: false, result: null, error: '' },
+  });
+
+  const formatDateTimeLocal = (value) => {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day   = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const mins  = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${mins}`;
+  };
+
+  useEffect(() => {
+    settingsAPI.getSystemSettings().then(data => {
+      if (data?.site?.launchDate) {
+        try { setLaunchDate(formatDateTimeLocal(data.site.launchDate)); } catch { setLaunchDate(''); }
+      }
+    }).catch(() => {});
+  }, []);
+
+  const handleSaveLaunchDate = async () => {
+    if (!launchDate) { setLaunchError('Launch date is required.'); return; }
+    try {
+      setLaunchSaving(true); setLaunchError('');
+      await settingsAPI.updateSystemSettings({ SiteLaunchDate: new Date(launchDate).toISOString() });
+      setLaunchSaved(true);
+      setTimeout(() => setLaunchSaved(false), 3000);
+    } catch (err) { setLaunchError(err?.response?.data?.message || 'Failed to save launch date.'); }
+    finally { setLaunchSaving(false); }
+  };
+
   const fetchStats = useCallback(async () => {
     setStatsLoading(true);
     try {
@@ -277,6 +323,26 @@ export default function AdminDevSettings() {
     } finally {
       setResetLoading(false);
     }
+  };
+
+  const runDevOp = async (key, apiFn) => {
+    setDevOps(prev => ({ ...prev, [key]: { loading: true, result: null, error: '' } }));
+    localStorage.setItem(TEST_MODE_KEY, '1');
+    setTestModeActive(true);
+    try {
+      const data = await apiFn();
+      setDevOps(prev => ({ ...prev, [key]: { loading: false, result: data, error: '' } }));
+      await fetchStats();
+    } catch (err) {
+      const msg = err?.response?.data?.message || 'Operation failed.';
+      setDevOps(prev => ({ ...prev, [key]: { loading: false, result: null, error: msg } }));
+    }
+  };
+
+  const handleResetTestMode = () => {
+    localStorage.removeItem(TEST_MODE_KEY);
+    setTestModeActive(false);
+    setDevOps({ sim7d: { loading: false, result: null, error: '' }, cleanup30: { loading: false, result: null, error: '' }, fullCleanup: { loading: false, result: null, error: '' } });
   };
 
   const anyDevFlagActive = DEV_FLAGS.some(f => devFlags[f.key]);
@@ -494,6 +560,168 @@ export default function AdminDevSettings() {
           <p className="text-xs text-[var(--muted-color)] mt-2 ml-1">
             Edit at <Link to="/admin/settings" className="text-primary hover:underline">Admin → Settings</Link>
           </p>
+        </section>
+
+        {/* ── Launch Configuration ── */}
+        <section className="mb-10">
+          <div className="flex items-center gap-2 mb-4">
+            <Clock size={15} className="text-primary" />
+            <h2 className="text-sm font-bold uppercase tracking-widest text-[var(--heading-color)]">
+              Launch Configuration
+            </h2>
+            <span className="text-xs text-[var(--muted-color)] ml-1">(countdown timer target date)</span>
+          </div>
+          <div className="glass-card p-5">
+            <p className="text-xs text-[var(--muted-color)] mb-4">
+              Set the countdown timer target date and time. Visitors will see a countdown until this moment when the site is in private mode.
+            </p>
+            {launchError && (
+              <div className="flex items-start gap-3 rounded-xl border border-rose-500/25 bg-rose-500/8 px-4 py-3 mb-4">
+                <AlertCircle size={14} className="text-rose-400 flex-shrink-0 mt-0.5" />
+                <p className="text-rose-300 text-sm">{launchError}</p>
+              </div>
+            )}
+            <div className="mb-4">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)] block mb-2">Launch Date &amp; Time</label>
+              <input
+                type="datetime-local"
+                value={launchDate}
+                onChange={e => setLaunchDate(e.target.value)}
+                disabled={launchSaving}
+                className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--surface-bg)] text-[var(--text-color)] text-sm focus:outline-none focus:border-primary/60 disabled:opacity-50"
+              />
+            </div>
+            {launchDate && (
+              <div className="rounded-xl border p-3 mb-4" style={{ background:'rgba(6,182,212,.07)', borderColor:'rgba(6,182,212,.28)' }}>
+                <p className="text-xs text-[var(--muted-color)]">
+                  <span style={{ color:'#06b6d4', fontWeight:700 }}>Target: </span>
+                  {new Date(launchDate).toLocaleString()}
+                </p>
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={handleSaveLaunchDate}
+              disabled={launchSaving}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition disabled:opacity-50"
+              style={{ background:'rgba(6,182,212,.15)', border:'1px solid rgba(6,182,212,.35)', color:'#22d3ee' }}
+            >
+              {launchSaving ? 'Saving…' : launchSaved ? <><CheckCircle2 size={14}/> Saved</> : <><Save size={14}/> Save Launch Date</>}
+            </button>
+          </div>
+        </section>
+
+        {/* ── Dev Testing Panel ── */}
+        <section className="mb-10">
+          <div className="flex items-center justify-between gap-3 mb-4">
+            <div className="flex items-center gap-2">
+              <FlaskConical size={15} className="text-primary" />
+              <h2 className="text-sm font-bold uppercase tracking-widest text-[var(--heading-color)]">
+                Dev Testing Panel
+              </h2>
+              <span className="text-xs text-[var(--muted-color)] ml-1">(simulate time-based events)</span>
+            </div>
+            {testModeActive && (
+              <div className="flex items-center gap-2">
+                <span className="flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full border border-amber-500/40 bg-amber-500/12 text-amber-400">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                  Test Mode Active
+                </span>
+                <button
+                  type="button"
+                  onClick={handleResetTestMode}
+                  className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1.5 rounded-lg border border-[var(--border-color)] text-[var(--muted-color)] hover:border-primary/40 hover:text-primary transition"
+                >
+                  <RotateCcw size={11} /> Reset
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-3">
+            {/* Simulate 7-Day Forward */}
+            {[
+              {
+                opKey: 'sim7d',
+                label: 'Simulate 7 Days Forward',
+                description: 'Deletes read notifications older than 7 days, stale unread notifications older than 14 days, expired slot reservations, and cancels pending unpaid bookings older than 7 days.',
+                icon: FastForward,
+                accent: '#c8a96b',
+                apiFn: () => settingsAPI.simulateTimeForward(7),
+              },
+              {
+                opKey: 'cleanup30',
+                label: 'Cleanup Notifications (30d)',
+                description: 'Permanently deletes all notifications (read and unread) older than 30 days. Use to clear notification backlog during testing.',
+                icon: Trash2,
+                accent: '#0ea5a0',
+                apiFn: () => settingsAPI.cleanupNotifications(30),
+              },
+              {
+                opKey: 'fullCleanup',
+                label: 'Run Full Cleanup',
+                description: 'Comprehensive sweep: expired slot reservations, read notifications 30d+, unread notifications 90d+, stale pending bookings 7d+.',
+                icon: Play,
+                accent: '#8b5cf6',
+                apiFn: () => settingsAPI.runFullCleanup(),
+              },
+            ].map(({ opKey, label, description, icon: Icon, accent, apiFn }) => {
+              const op = devOps[opKey];
+              return (
+                <div key={opKey} className="glass-card p-5" style={{ borderTop: `2px solid ${accent}30` }}>
+                  <div className="flex items-start gap-4">
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
+                      style={{ background: `${accent}15`, border: `1px solid ${accent}30` }}>
+                      <Icon size={16} style={{ color: accent }} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-[var(--heading-color)] mb-1">{label}</p>
+                      <p className="text-xs text-[var(--muted-color)] leading-relaxed mb-3">{description}</p>
+
+                      {op.error && (
+                        <div className="flex items-start gap-2 rounded-lg border border-rose-500/25 bg-rose-500/8 px-3 py-2 mb-3 text-xs text-rose-300">
+                          <AlertCircle size={13} className="flex-shrink-0 mt-0.5" />
+                          {op.error}
+                        </div>
+                      )}
+
+                      {op.result && (
+                        <div className="rounded-lg border border-green-500/25 bg-green-500/8 px-3 py-2 mb-3">
+                          <p className="text-xs font-semibold text-green-400 mb-1">{op.result.message}</p>
+                          {op.result.results && (
+                            <div className="flex flex-wrap gap-x-4 gap-y-1">
+                              {Object.entries(op.result.results).map(([k, v]) => (
+                                <span key={k} className="text-[11px] text-[var(--muted-color)]">
+                                  <span className="font-bold text-[var(--text-color)]">{v}</span> {k.replace(/([A-Z])/g, ' $1').toLowerCase()}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                          {op.result.deleted != null && (
+                            <span className="text-[11px] text-[var(--muted-color)]">
+                              <span className="font-bold text-[var(--text-color)]">{op.result.deleted}</span> deleted
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                      <button
+                        type="button"
+                        disabled={op.loading}
+                        onClick={() => runDevOp(opKey, apiFn)}
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        style={{ background: `${accent}15`, border: `1px solid ${accent}35`, color: accent }}
+                      >
+                        {op.loading
+                          ? <><Loader2 size={13} className="animate-spin" /> Running…</>
+                          : <><Icon size={13} /> {label}</>}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </section>
 
         {/* ── Deployment readiness checklist ── */}

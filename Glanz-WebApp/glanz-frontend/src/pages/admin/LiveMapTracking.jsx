@@ -118,7 +118,8 @@ function WorkerDetailPanel({
 
   return (
     <div
-      className="absolute right-4 top-4 w-80 bg-[var(--card-bg)] backdrop-blur-md border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden z-[9999]"
+      className="absolute right-4 top-4 w-80 backdrop-blur-md border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden z-[9999]"
+      style={{ background: 'var(--surface-bg)' }}
     >
       <div
         className="p-4 border-b border-[var(--border-color)] flex items-center justify-between"
@@ -950,9 +951,10 @@ export default function LiveMapTracking() {
         {/* SIDEBAR */}
 
         <div
-          className="absolute left-4 top-4 bottom-4 w-72 bg-[var(--card-bg)]/90 backdrop-blur-md border border-[var(--border-color)] rounded-2xl overflow-hidden"
+          className="absolute left-4 top-4 bottom-4 w-72 backdrop-blur-md border border-[var(--border-color)] rounded-2xl overflow-hidden"
           style={{
             zIndex: 1000,
+            background: 'var(--surface-bg)',
           }}
         >
           <div className="p-3 border-b border-[var(--border-color)]">

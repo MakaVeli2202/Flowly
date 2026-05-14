@@ -1,10 +1,11 @@
 // ManageStaff.jsx
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { authAPI } from '../../api/auth';
 import AppModal from '../../components/shared/AppModal';
 import { useToast } from '../../components/shared/Toast';
 import { Users, Plus, Trash2, AlertCircle, Mail, Phone, Eye, EyeOff,
-  CalendarDays, ChevronDown, ChevronUp, Save, X, CheckCircle, DollarSign, FileText, Download, Wallet, Check, Clock, Bell } from 'lucide-react';
+  CalendarDays, ChevronDown, ChevronUp, Save, X, CheckCircle, DollarSign, FileText, Download, Wallet, Check, Clock, Bell, Hash, Zap, Percent } from 'lucide-react';
 import { getBusiness } from '../../config/business';
 import { useLanguage } from '../../context/LanguageContext';
 
@@ -163,6 +164,7 @@ function PrismaticCursorOrb() {
 }
 
 function ManageStaff() {
+  const navigate = useNavigate();
   const { t, lang } = useLanguage();
   const localeKey = String(lang || '').startsWith('ar') ? 'ar' : String(lang || '').startsWith('de') ? 'de' : 'en';
   const ui = UI_BY_LANG[localeKey] || UI_BY_LANG.en;
@@ -416,11 +418,10 @@ Generated: ${new Date().toLocaleString()}
               </div>
               <p className="text-sm text-[var(--muted-color)] ml-12">{ui.subtitle}</p>
             </div>
-            <div className={showAddForm ? '' : 'cta-prism-glow rounded-xl'}>
-              <button type="button" onClick={() => setShowAddForm(p => !p)}
+            <div className="cta-prism-glow rounded-xl">
+              <button type="button" onClick={() => navigate('/admin/staff/add')}
                 className="flex items-center gap-2.5 px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-bold hover:bg-primary/90 transition">
-                {showAddForm ? <X size={15} /> : <Plus size={15} />}
-                {showAddForm ? ui.closeForm : ui.addDetailer}
+                <Plus size={15} /> {ui.addDetailer}
               </button>
             </div>
           </div>
@@ -434,72 +435,6 @@ Generated: ${new Date().toLocaleString()}
             </div>
           )}
 
-          {/* ── Add Worker Form ── */}
-          {showAddForm && (
-            <div className="glass-card relative overflow-hidden card-stagger">
-              <div className="absolute top-0 left-0 w-[3px] h-full"
-                style={{ background:'linear-gradient(180deg,#c8a96b 0%,#c8a96b44 60%,transparent 100%)' }} />
-              <div className="prism-ray" style={{ left:'70%', width:'12%', animation:'prism-ray-sweep 18s ease-in-out 3s infinite' }} />
-              <div className="p-7">
-                <div className="flex items-center justify-between gap-4 mb-4">
-                  <div>
-                    <div className="flex items-center gap-3 mb-1">
-                      <span className="h-px w-5" style={{ background:'linear-gradient(90deg,transparent,#c8a96b)' }} />
-                      <p className="text-[.58rem] font-bold uppercase tracking-[.24em]" style={{ color:'#c8a96b' }}>New Member</p>
-                      <span className="h-px w-5" style={{ background:'linear-gradient(90deg,#c8a96b,transparent)' }} />
-                    </div>
-                    <h2 className="premium-heading text-xl font-bold text-[var(--heading-color)]">{ui.addNewDetailer}</h2>
-                  </div>
-                  <button type="button" onClick={() => { setShowAddForm(false); setFormData({ firstName:'', lastName:'', email:'', phone:'', password:'' }); }}
-                    className="w-8 h-8 rounded-xl border border-[var(--border-color)] flex items-center justify-center text-[var(--muted-color)] hover:bg-white/5 transition">
-                    <X size={14} />
-                  </button>
-                </div>
-                <div className="mb-5"><div className="spectrum-line" /></div>
-
-                <form onSubmit={handleAddWorker} className="space-y-5">
-                  <div className="grid md:grid-cols-2 gap-5">
-                    <div><label className="field-label">{ui.firstName}</label><input type="text" name="firstName" value={formData.firstName} onChange={handleInputChange} className={inp} placeholder="Enter first name" /></div>
-                    <div><label className="field-label">{ui.lastName}</label><input type="text" name="lastName" value={formData.lastName} onChange={handleInputChange} className={inp} placeholder="Enter last name" /></div>
-                    <div>
-                      <label className="field-label">{ui.email}</label>
-                      <div className="relative"><Mail size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--muted-color)]" />
-                        <input type="email" name="email" value={formData.email} onChange={handleInputChange} className={inp} style={{ paddingLeft:'2.25rem' }} placeholder="detailer@example.com" />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="field-label">{ui.phone}</label>
-                      <div className="relative"><Phone size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--muted-color)]" />
-                        <input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} className={inp} style={{ paddingLeft:'2.25rem' }} placeholder="+974XXXXXXXX" />
-                      </div>
-                    </div>
-                    <div className="md:col-span-2">
-                      <label className="field-label">{ui.password}</label>
-                      <div className="relative">
-                        <input type={showPassword.newWorker ? 'text' : 'password'} name="password" value={formData.password} onChange={handleInputChange} className={inp} style={{ paddingRight:'2.5rem' }} placeholder="Minimum 8 characters" />
-                        <button type="button" onClick={() => setShowPassword(p => ({ ...p, newWorker:!p.newWorker }))}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--muted-color)] hover:text-[var(--text-color)]">
-                          {showPassword.newWorker ? <EyeOff size={16}/> : <Eye size={16}/>}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex gap-3 pt-1">
-                    <div className="cta-prism-glow rounded-xl">
-                      <button type="submit" disabled={savingId === 'new'}
-                        className="flex items-center gap-2 bg-primary text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-primary/90 transition disabled:opacity-50">
-                        {savingId === 'new' ? ui.adding : <><CheckCircle size={14}/> {ui.addDetailer}</>}
-                      </button>
-                    </div>
-                    <button type="button" onClick={() => { setShowAddForm(false); setFormData({ firstName:'', lastName:'', email:'', phone:'', password:'' }); }}
-                      className="px-6 py-2.5 rounded-xl border border-[var(--border-color)] text-sm font-bold text-[var(--text-color)] hover:bg-white/5 transition">
-                      {ui.cancel}
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          )}
 
           {/* ── Empty state ── */}
           {workers.length === 0 ? (
@@ -513,7 +448,7 @@ Generated: ${new Date().toLocaleString()}
               <h3 className="premium-heading text-xl font-bold text-[var(--heading-color)] mb-1.5">{t('noStaffYet')}</h3>
               <p className="text-sm text-[var(--muted-color)] mb-5">{t('startByAdding')}</p>
               <div className="cta-prism-glow rounded-xl inline-flex">
-                <button onClick={() => setShowAddForm(true)}
+                <button onClick={() => navigate('/admin/staff/add')}
                   className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-bold hover:bg-primary/90 transition">
                   <Plus size={15}/> {ui.addFirstDetailer}
                 </button>
@@ -554,6 +489,46 @@ Generated: ${new Date().toLocaleString()}
                               </div>
                             )}
                           </div>
+                          {/* Type + short code + compensation badges */}
+                          <div className="flex flex-wrap gap-1.5 mt-2">
+                            {worker.staffType && (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                                style={{ background:'rgba(14,165,160,.10)', border:'1px solid rgba(14,165,160,.25)', color:'#0ea5a0' }}>
+                                {worker.staffType}
+                              </span>
+                            )}
+                            {worker.shortCode && (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full font-mono"
+                                style={{ background:'rgba(200,169,107,.12)', border:'1px solid rgba(200,169,107,.30)', color:'#c8a96b' }}>
+                                <Hash size={9} className="inline mr-0.5" />{worker.shortCode}
+                              </span>
+                            )}
+                            {worker.compensationType === 'Percentage' ? (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                                style={{ background:'rgba(168,85,247,.10)', border:'1px solid rgba(168,85,247,.25)', color:'#a855f7' }}>
+                                <Percent size={9} className="inline mr-0.5" />{worker.percentageRate ?? 0}% per job
+                              </span>
+                            ) : worker.monthlySalary != null ? (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                                style={{ background:'rgba(34,197,94,.10)', border:'1px solid rgba(34,197,94,.25)', color:'#22c55e' }}>
+                                QAR {worker.monthlySalary.toLocaleString()}/mo
+                              </span>
+                            ) : null}
+                          </div>
+                          {/* Skills */}
+                          {Array.isArray(worker.skills) && worker.skills.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-2">
+                              {worker.skills.slice(0, 4).map(s => (
+                                <span key={s} className="text-[10px] px-2 py-0.5 rounded-full"
+                                  style={{ background:'rgba(200,169,107,.07)', border:'1px solid rgba(200,169,107,.18)', color:'var(--muted-color)' }}>
+                                  {s}
+                                </span>
+                              ))}
+                              {worker.skills.length > 4 && (
+                                <span className="text-[10px] text-[var(--muted-color)]">+{worker.skills.length - 4} more</span>
+                              )}
+                            </div>
+                          )}
                           <p className="text-[10px] text-[var(--muted-color)] mt-2">
                             Added {new Date(worker.createdAt).toLocaleDateString()}
                           </p>
@@ -734,108 +709,7 @@ Generated: ${new Date().toLocaleString()}
             </div>
           )}
 
-          {/* ── Payroll Summary ── */}
-          {workers.length > 0 && (
-            <div className="glass-card relative overflow-hidden card-stagger mt-2">
-              <div className="absolute top-0 left-0 right-0 h-[2px]"
-                style={{ background:'linear-gradient(90deg,transparent,#c8a96b 38%,#10b981 62%,transparent)' }} />
-              <div className="absolute top-0 left-0 w-[3px] h-full"
-                style={{ background:'linear-gradient(180deg,#c8a96b 0%,#c8a96b44 60%,transparent 100%)' }} />
-              <div className="p-6">
-                <div className="flex flex-wrap items-center justify-between gap-4 mb-5">
-                   <div className="flex items-center gap-2">
-                     <DollarSign size={15} style={{ color:'#c8a96b' }} />
-                     <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)]">{t('payrollSummary')}</p>
-                   </div>
-                  <div className="flex items-center gap-2">
-                    <select value={payrollMonth} onChange={e => setPayrollMonth(Number(e.target.value))}
-                      className="px-3 py-1.5 rounded-xl border border-[var(--border-color)] bg-[var(--surface-bg)] text-[var(--text-color)] text-xs font-bold focus:outline-none">
-                      {['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].map((m,i) => (
-                        <option key={i+1} value={i+1}>{m}</option>
-                      ))}
-                    </select>
-                    <input type="number" min={2020} max={2099} value={payrollYear}
-                      onChange={e => setPayrollYear(Number(e.target.value))}
-                      className="w-20 px-3 py-1.5 rounded-xl border border-[var(--border-color)] bg-[var(--surface-bg)] text-[var(--text-color)] text-xs font-bold focus:outline-none" />
-                  </div>
-                </div>
-                <div className="mb-4"><div className="spectrum-line" /></div>
-
-                {payrollLoading ? (
-                  <div className="flex justify-center py-6">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
-                  </div>
-                ) : payroll.length === 0 ? (
-                  <p className="text-xs text-[var(--muted-color)] text-center py-4">{ui.noPayrollData}</p>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-[var(--border-color)]">
-                          <th className="px-3 py-2.5 text-left text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)]">Worker</th>
-                          <th className="px-3 py-2.5 text-left text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)]">Salary</th>
-                          <th className="px-3 py-2.5 text-left text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)]">Jobs</th>
-                          <th className="px-3 py-2.5 text-left text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)]">Revenue</th>
-                          <th className="px-3 py-2.5 text-left text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)]">Status</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-[var(--border-color)]">
-                        {payroll.map(p => (
-                          <tr key={p.workerId} className="hover:bg-white/[.015] transition">
-                            <td className="px-3 py-3 font-bold text-[var(--heading-color)]">{p.workerName}</td>
-                            <td className="px-3 py-3 font-black text-primary">
-                              {p.monthlySalary != null ? `QAR ${p.monthlySalary.toLocaleString()}` : <span className="text-[var(--muted-color)] font-normal italic">Not set</span>}
-                            </td>
-                            <td className="px-3 py-3 text-[var(--text-color)]">{p.jobsCompleted}</td>
-                            <td className="px-3 py-3 text-green-400 font-bold">QAR {p.totalRevenue.toLocaleString()}</td>
-                            <td className="px-3 py-3">
-                              <div className="flex flex-col gap-1">
-                                {p.isPaid ? (
-                                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold"
-                                    style={{ background:'rgba(34,197,94,.10)', border:'1px solid rgba(34,197,94,.28)', color:'#22c55e' }}>
-                                    <Check size={10} /> Paid
-                                  </span>
-                                ) : p.monthlySalary != null ? (
-                                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold"
-                                    style={{ background:'rgba(245,158,11,.10)', border:'1px solid rgba(245,158,11,.28)', color:'#fbbf24' }}>
-                                    <Clock size={10} /> Unpaid
-                                  </span>
-                                ) : (
-                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-bold"
-                                    style={{ background:'rgba(148,163,184,.10)', border:'1px solid rgba(148,163,184,.28)', color:'#94a3b8' }}>
-                                    Salary unset
-                                  </span>
-                                )}
-                                <button
-                                  onClick={() => setDetailsModal({ open: true, worker: p })}
-                                  className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold border transition hover:bg-white/5 w-fit"
-                                  style={{ borderColor:'rgba(200,169,107,.40)', color:'#c8a96b' }}>
-                                  <FileText size={10} /> Pay Slip
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                      <tfoot>
-                        <tr className="border-t-2 border-[var(--border-color)]">
-                          <td className="px-3 py-3 text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)]">Total</td>
-                          <td className="px-3 py-3 font-black text-primary">QAR {payroll.reduce((s,p) => s + (p.monthlySalary ?? 0), 0).toLocaleString()}</td>
-                          <td className="px-3 py-3 font-bold text-[var(--text-color)]">{payroll.reduce((s,p) => s + p.jobsCompleted, 0)}</td>
-                          <td className="px-3 py-3 font-bold text-green-400">QAR {payroll.reduce((s,p) => s + p.totalRevenue, 0).toLocaleString()}</td>
-                          <td className="px-3 py-3">
-                            <span className="text-[10px] font-bold text-[var(--muted-color)]">
-                              {payroll.filter(p => p.isPaid).length}/{payroll.length} paid
-                            </span>
-                          </td>
-                        </tr>
-                      </tfoot>
-                    </table>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
+          {/* Payroll is managed on /admin/payroll */}
 
         </div>
       </div>

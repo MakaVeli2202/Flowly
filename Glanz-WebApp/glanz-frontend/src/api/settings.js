@@ -47,4 +47,19 @@ export const settingsAPI = {
     const response = await apiClient.post('/AdminSettings/reset-database', { password, mode });
     return response.data;
   },
+
+  simulateTimeForward: async (days = 7) => {
+    const response = await apiClient.post(`/Dev/simulate-time-forward?days=${days}`);
+    return response.data;
+  },
+
+  cleanupNotifications: async (days = 30) => {
+    const response = await apiClient.post(`/Dev/cleanup-notifications?days=${days}`);
+    return response.data;
+  },
+
+  runFullCleanup: async () => {
+    const response = await apiClient.post('/Dev/run-full-cleanup');
+    return response.data;
+  },
 };

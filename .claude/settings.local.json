@@ -69,7 +69,16 @@
       "Bash(xargs -I {} basename {})",
       "Bash(xargs -I {} bash -c 'echo \"=== $\\(basename {}\\) ===\" && head -30 {}')",
       "Bash(npx expo *)",
-      "Bash(npx vite *)"
+      "Bash(npx vite *)",
+      "Bash(Get-ChildItem -Path \"e:\\\\VS-Code\\\\Glanz\" -Directory)",
+      "Bash(Select-Object Name)",
+      "Bash(Get-ChildItem -Path \"e:\\\\VS-Code\\\\Glanz\" -Force)",
+      "Bash(Select-Object Name, PSIsContainer)",
+      "Bash(Format-Table -AutoSize)",
+      "Bash(mkdir \"e:\\\\VS-Code\\\\Glanz\\\\.claude\\\\skills\")"
+    ],
+    "additionalDirectories": [
+      "e:\\VS-Code\\Glanz\\.claude"
     ]
   }
 }

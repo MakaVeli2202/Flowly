@@ -77,6 +77,18 @@ export const authAPI = {
     return response.data;
   }),
 
+  checkShortCode: async (code, excludeId = null) => withRetry(async () => {
+    const params = { code };
+    if (excludeId) params.excludeId = excludeId;
+    const response = await apiClient.get('/Auth/workers/check-short-code', { params });
+    return response.data;
+  }),
+
+  suggestShortCode: async (firstName, lastName) => withRetry(async () => {
+    const response = await apiClient.post('/Auth/workers/suggest-shortcode', { firstName, lastName });
+    return response.data;
+  }),
+
   checkPayrollDue: async () => withRetry(async () => {
     const response = await apiClient.get('/Auth/workers/payroll/check-due');
     return response.data;

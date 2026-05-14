@@ -29,5 +29,10 @@ export const servicesAPI = {
   delete: async (id) => withRetry(async () => {
     const response = await apiClient.delete(`/Services/${id}`);
     return response.data;
-  })
+  }),
+
+  reorder: async (items) => withRetry(async () => {
+    const response = await apiClient.put('/Services/reorder', items);
+    return response.data;
+  }),
 };

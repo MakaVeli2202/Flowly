@@ -53,6 +53,7 @@ const AdminReportOperational = lazy(() => import('./pages/admin/AdminReportOpera
 const AdminContent           = lazy(() => import('./pages/admin/AdminContent'));
 const AdminOffers            = lazy(() => import('./pages/admin/AdminOffers'));
 const AdminStaff             = lazy(() => import('./pages/admin/AdminStaff'));
+const AdminAddStaff          = lazy(() => import('./pages/admin/AdminAddStaff'));
 const AdminNotifications     = lazy(() => import('./pages/admin/AdminNotifications'));
 const AdminWorkerSchedule    = lazy(() => import('./pages/admin/AdminWorkerSchedule'));
 const AdminSettings          = lazy(() => import('./pages/admin/AdminSettings'));
@@ -60,7 +61,6 @@ const AdminPlans             = lazy(() => import('./pages/admin/AdminPlans'));
 const AdminJobPositions      = lazy(() => import('./pages/admin/AdminJobPositions'));
 const AdminSkills            = lazy(() => import('./pages/admin/AdminSkills'));
 const AdminWorkerManagement   = lazy(() => import('./pages/admin/AdminWorkerManagement'));
-const AdminWorkerSales       = lazy(() => import('./pages/admin/AdminWorkerSales'));
 const AdminPayroll           = lazy(() => import('./pages/admin/AdminPayroll'));
 const LiveMapTracking        = lazy(() => import('./pages/admin/LiveMapTracking'));
 const AdminDevSettings       = lazy(() => import('./pages/admin/AdminDevSettings'));
@@ -233,13 +233,13 @@ function AppRoutes() {
         {adminRoute('/admin/content',             AdminContent)}
         {adminRoute('/admin/offers',              AdminOffers)}
         {adminRoute('/admin/staff',               AdminStaff)}
+        {adminRoute('/admin/staff/add',           AdminAddStaff)}
         {adminRoute('/admin/notifications',       AdminNotifications)}
         {adminRoute('/admin/workers/schedule',    AdminWorkerSchedule)}
         {adminRoute('/admin/settings',            AdminSettings)}
         {adminRoute('/admin/job-positions',       AdminJobPositions)}
         {adminRoute('/admin/skills',              AdminSkills)}
         {adminRoute('/admin/workers/management', AdminWorkerManagement)}
-        {adminRoute('/admin/workers/sales',     AdminWorkerSales)}
         {adminRoute('/admin/subscription-bookings', AdminSubscriptionBookings)}
         {adminRoute('/admin/payroll',              AdminPayroll)}
         {adminRoute('/admin/live-map',             LiveMapTracking)}

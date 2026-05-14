@@ -61,11 +61,18 @@ namespace Glanz.API.DTOs
         public int EstimatedDurationMinutes { get; set; }
         public string? ImageUrl { get; set; }
         public bool IsActive { get; set; }
+        public int SortOrder { get; set; }
         public decimal EstimatedCost { get; set; }
         public decimal EstimatedProfit { get; set; }
         public decimal ProfitMarginPercent { get; set; }
         public List<PackageServiceDetailDto> Services { get; set; } = new();
         public DateTime CreatedAt { get; set; }
+    }
+
+    public class ReorderItemDto
+    {
+        public int Id { get; set; }
+        public int SortOrder { get; set; }
     }
 
     public class PackageServiceDetailDto

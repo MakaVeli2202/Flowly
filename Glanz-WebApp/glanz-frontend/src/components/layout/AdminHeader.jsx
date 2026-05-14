@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Bell, LogOut, Sun, Moon, Globe, ChevronDown, CheckCheck, Menu, X, BookOpen, Users, Calendar, Clock, Briefcase, DollarSign, MapPin, Settings, Wrench, BarChart2, Package, UserCheck, Play, Pause, Car, AlertTriangle, Gift, Tag, Star } from 'lucide-react';
+import { LayoutDashboard, Bell, LogOut, Sun, Moon, Globe, ChevronDown, CheckCheck, Menu, X, BookOpen, Users, Calendar, Clock, DollarSign, MapPin, Settings, Wrench, BarChart2, Package, UserCheck, Play, Pause, Car, AlertTriangle, Gift, Tag, Star } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { notificationsAPI } from '../../api/notifications';
 import { subscribeToNotifications } from '../../api/notificationBus';
@@ -63,7 +63,6 @@ export function AdminHeader({ theme, onToggleTheme }) {
     { to: '/admin/staff',               labelKey: 'navbar.staff',       icon: Users },
     { to: '/admin/workers/schedule',    labelKey: 'navbar.schedule',    icon: Calendar },
     { to: '/admin/workers/management',  labelKey: 'navbar.shifts',      icon: Clock },
-    { to: '/admin/workers/sales',       labelKey: 'navbar.salesKit',    icon: Briefcase },
     { to: '/admin/payroll',             labelKey: 'navbar.payroll',     icon: DollarSign },
     { to: '/admin/live-map',            labelKey: 'navbar.liveMap',     icon: MapPin },
     { to: '/admin/settings',            labelKey: 'common.settings',    icon: Settings },
@@ -74,7 +73,7 @@ export function AdminHeader({ theme, onToggleTheme }) {
   const ADMIN_GROUPS = [
     {
       titleKey: 'navbar.operations',
-      links: ['/admin/bookings', '/admin/workers/schedule', '/admin/workers/management', '/admin/workers/sales', '/admin/live-map', '/admin/payroll'],
+      links: ['/admin/bookings', '/admin/workers/schedule', '/admin/workers/management', '/admin/live-map', '/admin/payroll'],
     },
     {
       titleKey: 'navbar.management',
