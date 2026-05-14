@@ -442,6 +442,10 @@ WHERE bi.""PackageId"" = p.""Id""
             await backfillCmd.ExecuteNonQueryAsync();
         }
 
+        await EnsureColumnAsync(connection, "Packages", "SortOrder", "integer NOT NULL DEFAULT 0");
+        await EnsureColumnAsync(connection, "Services", "SortOrder", "integer NOT NULL DEFAULT 0");
+        await EnsureColumnAsync(connection, "Staff", "MustChangePassword", "boolean NOT NULL DEFAULT false");
+
         await EnsureSlotReservationsTableAsync(connection);
         // ServiceSubscriptions table must exist before we can add columns to it.
         await EnsureSubscriptionsTableAsync(connection);
