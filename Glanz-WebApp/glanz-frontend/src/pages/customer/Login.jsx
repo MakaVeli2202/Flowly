@@ -234,7 +234,10 @@ function Login() {
                     <label className="block text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-color)]">
                       {ui.password}
                     </label>
-                    <Link to="/forgot-password" className="text-[11px] text-primary hover:text-primary/80 transition-colors">
+                    <Link
+                      to={`/forgot-password${formData.email ? `?email=${encodeURIComponent(formData.email)}` : ''}`}
+                      className="text-[11px] text-primary hover:text-primary/80 transition-colors"
+                    >
                       Forgot password?
                     </Link>
                   </div>

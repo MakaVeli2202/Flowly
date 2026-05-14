@@ -257,7 +257,7 @@ export default function LoginScreen({ navigation }) {
           {/* ── Forgot password ────────────────────────── */}
           <Animated.View entering={FadeInUp.duration(400).delay(500)} style={s.forgotRow}>
             <TouchableOpacity
-              onPress={() => navigation.navigate('ForgotPassword')}
+              onPress={() => navigation.navigate('ForgotPassword', { email: email.trim() })}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
               <Text style={s.linkText}>Forgot password?</Text>

@@ -67,7 +67,7 @@ function FocusInput({ iconName, style, ...inputProps }) {
 
 export default function ForgotPasswordScreen({ navigation }) {
   const { t } = useTranslation();
-  const [email,   setEmail]   = useState('');
+  const [email,   setEmail]   = useState(route?.params?.email || '');
   const [error,   setError]   = useState('');
   const [sent,    setSent]    = useState(false);
   const [loading, setLoading] = useState(false);

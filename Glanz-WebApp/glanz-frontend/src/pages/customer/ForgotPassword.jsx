@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { KeyRound, Mail, AlertCircle, ArrowRight, CheckCircle } from 'lucide-react';
 import SEO from '../../components/shared/SEO';
 import { authAPI } from '../../api/auth';
@@ -13,7 +13,8 @@ const PRISM_CSS = `${BASE_PRISM_CSS}
 `;
 
 function ForgotPassword() {
-  const [email,   setEmail]   = useState('');
+  const [searchParams] = useSearchParams();
+  const [email,   setEmail]   = useState(searchParams.get('email') || '');
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState('');
   const [sent,    setSent]    = useState(false);
