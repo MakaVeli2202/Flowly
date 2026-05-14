@@ -10,122 +10,42 @@ namespace Glanz.API.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropIndex(
-                name: "IX_PageViews_FirstSeen",
-                table: "PageViews");
+            // All DDL uses IF NOT EXISTS / DO blocks to be idempotent — the startup
+            // compatibility check may have already created some of these columns.
 
-            migrationBuilder.DropIndex(
-                name: "IX_PageViews_LastHeartbeat",
-                table: "PageViews");
+            migrationBuilder.Sql(@"DROP INDEX IF EXISTS ""IX_PageViews_FirstSeen"";");
+            migrationBuilder.Sql(@"DROP INDEX IF EXISTS ""IX_PageViews_LastHeartbeat"";");
+            migrationBuilder.Sql(@"DROP INDEX IF EXISTS ""IX_PageViews_SessionId"";");
 
-            migrationBuilder.DropIndex(
-                name: "IX_PageViews_SessionId",
-                table: "PageViews");
+            migrationBuilder.Sql(@"ALTER TABLE ""Users""  ADD COLUMN IF NOT EXISTS ""AllowPreferredWorker"" boolean NOT NULL DEFAULT false;");
+            migrationBuilder.Sql(@"ALTER TABLE ""Staff""  ADD COLUMN IF NOT EXISTS ""CompensationType""    character varying(20) NOT NULL DEFAULT '';");
+            migrationBuilder.Sql(@"ALTER TABLE ""Staff""  ADD COLUMN IF NOT EXISTS ""PercentageRate""      numeric(5,2) NULL;");
+            migrationBuilder.Sql(@"ALTER TABLE ""Staff""  ADD COLUMN IF NOT EXISTS ""ShortCode""           character varying(10) NULL;");
+            migrationBuilder.Sql(@"ALTER TABLE ""Staff""  ADD COLUMN IF NOT EXISTS ""SkillsJson""          text NULL;");
+            migrationBuilder.Sql(@"ALTER TABLE ""Services"" ADD COLUMN IF NOT EXISTS ""SortOrder""         integer NOT NULL DEFAULT 0;");
+            migrationBuilder.Sql(@"ALTER TABLE ""Referrals"" ADD COLUMN IF NOT EXISTS ""DiscountPercent""  numeric NULL;");
+            migrationBuilder.Sql(@"ALTER TABLE ""Packages"" ADD COLUMN IF NOT EXISTS ""SortOrder""         integer NOT NULL DEFAULT 0;");
+            migrationBuilder.Sql(@"ALTER TABLE ""Bookings"" ADD COLUMN IF NOT EXISTS ""PreferredWorkerId"" integer NULL;");
 
-            migrationBuilder.AddColumn<bool>(
-                name: "AllowPreferredWorker",
-                table: "Users",
-                type: "boolean",
-                nullable: false,
-                defaultValue: false);
+            // Remove defaults that were only needed for the NOT NULL constraint population
+            migrationBuilder.Sql(@"ALTER TABLE ""PageViews"" ALTER COLUMN ""Source""     DROP DEFAULT;");
+            migrationBuilder.Sql(@"ALTER TABLE ""PageViews"" ALTER COLUMN ""Page""       DROP DEFAULT;");
+            migrationBuilder.Sql(@"ALTER TABLE ""PageViews"" ALTER COLUMN ""DeviceType"" DROP DEFAULT;");
 
-            migrationBuilder.AddColumn<string>(
-                name: "CompensationType",
-                table: "Staff",
-                type: "character varying(20)",
-                maxLength: 20,
-                nullable: false,
-                defaultValue: "");
+            migrationBuilder.Sql(@"CREATE INDEX IF NOT EXISTS ""IX_Bookings_PreferredWorkerId"" ON ""Bookings"" (""PreferredWorkerId"");");
 
-            migrationBuilder.AddColumn<decimal>(
-                name: "PercentageRate",
-                table: "Staff",
-                type: "numeric(5,2)",
-                nullable: true);
-
-            migrationBuilder.AddColumn<string>(
-                name: "ShortCode",
-                table: "Staff",
-                type: "character varying(10)",
-                maxLength: 10,
-                nullable: true);
-
-            migrationBuilder.AddColumn<string>(
-                name: "SkillsJson",
-                table: "Staff",
-                type: "text",
-                nullable: true);
-
-            migrationBuilder.AddColumn<int>(
-                name: "SortOrder",
-                table: "Services",
-                type: "integer",
-                nullable: false,
-                defaultValue: 0);
-
-            migrationBuilder.AddColumn<decimal>(
-                name: "DiscountPercent",
-                table: "Referrals",
-                type: "numeric",
-                nullable: true);
-
-            migrationBuilder.AlterColumn<string>(
-                name: "Source",
-                table: "PageViews",
-                type: "character varying(50)",
-                maxLength: 50,
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "character varying(50)",
-                oldMaxLength: 50,
-                oldDefaultValue: "Direct");
-
-            migrationBuilder.AlterColumn<string>(
-                name: "Page",
-                table: "PageViews",
-                type: "character varying(255)",
-                maxLength: 255,
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "character varying(255)",
-                oldMaxLength: 255,
-                oldDefaultValue: "/");
-
-            migrationBuilder.AlterColumn<string>(
-                name: "DeviceType",
-                table: "PageViews",
-                type: "character varying(20)",
-                maxLength: 20,
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "character varying(20)",
-                oldMaxLength: 20,
-                oldDefaultValue: "Desktop");
-
-            migrationBuilder.AddColumn<int>(
-                name: "SortOrder",
-                table: "Packages",
-                type: "integer",
-                nullable: false,
-                defaultValue: 0);
-
-            migrationBuilder.AddColumn<int>(
-                name: "PreferredWorkerId",
-                table: "Bookings",
-                type: "integer",
-                nullable: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Bookings_PreferredWorkerId",
-                table: "Bookings",
-                column: "PreferredWorkerId");
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_Bookings_Staff_PreferredWorkerId",
-                table: "Bookings",
-                column: "PreferredWorkerId",
-                principalTable: "Staff",
-                principalColumn: "Id");
+            migrationBuilder.Sql(@"
+DO $$ BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints
+        WHERE constraint_name = 'FK_Bookings_Staff_PreferredWorkerId'
+          AND table_name = 'Bookings'
+    ) THEN
+        ALTER TABLE ""Bookings""
+            ADD CONSTRAINT ""FK_Bookings_Staff_PreferredWorkerId""
+            FOREIGN KEY (""PreferredWorkerId"") REFERENCES ""Staff"" (""Id"");
+    END IF;
+END $$;");
         }
 
         /// <inheritdoc />
