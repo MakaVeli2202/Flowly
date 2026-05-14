@@ -26,8 +26,7 @@ public static class DevelopmentDataSeeder
         if (!seedDemoData)
             return;
 
-        var hasData = await db.Users.AnyAsync()
-                   || await db.Services.AnyAsync()
+        var hasData = await db.Services.AnyAsync()
                    || await db.Packages.AnyAsync();
 
         if (hasData)
