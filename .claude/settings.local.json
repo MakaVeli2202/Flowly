@@ -75,7 +75,12 @@
       "Bash(Get-ChildItem -Path \"e:\\\\VS-Code\\\\Glanz\" -Force)",
       "Bash(Select-Object Name, PSIsContainer)",
       "Bash(Format-Table -AutoSize)",
-      "Bash(mkdir \"e:\\\\VS-Code\\\\Glanz\\\\.claude\\\\skills\")"
+      "Bash(mkdir \"e:\\\\VS-Code\\\\Glanz\\\\.claude\\\\skills\")",
+      "Bash(Get-ChildItem \"e:\\\\VS-Code\\\\Glanz\\\\Glanz-WebApp\\\\Glanz.API\\\\Migrations\" -Name)",
+      "PowerShell(Get-ChildItem \"e:\\\\VS-Code\\\\Glanz\\\\Glanz-WebApp\\\\Glanz.API\\\\Migrations\" -File | ForEach-Object { Remove-Item $_.FullName -Force -Confirm:$false }; Write-Host \"Done\")",
+      "PowerShell(dotnet tool update --global dotnet-ef 2>&1)",
+      "PowerShell(dotnet ef --version 2>&1)",
+      "PowerShell($env:DOTNET_ROLL_FORWARD = \"Major\"; Set-Location \"e:\\\\VS-Code\\\\Glanz\\\\Glanz-WebApp\\\\Glanz.API\"; dotnet ef migrations add InitialCreate 2>&1)"
     ],
     "additionalDirectories": [
       "e:\\VS-Code\\Glanz\\.claude"
