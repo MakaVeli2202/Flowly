@@ -5,11 +5,12 @@ import {
   Rocket, RefreshCw, Terminal, CreditCard, MessageSquare, Star,
   ChevronRight, Wrench, ShieldAlert, LogOut, Database, Trash2,
   Globe, Server, Eye, EyeOff, BarChart3, Loader2, Clock, Save, AlertCircle,
-  FastForward, Play, RotateCcw, FlaskConical,
+  FastForward, Play, RotateCcw, FlaskConical, KeyRound, ExternalLink, Copy,
 } from 'lucide-react';
 import { useFeatures } from '../../context/FeaturesContext';
 import { useSettings } from '../../context/SettingsContext';
 import { settingsAPI } from '../../api/settings';
+import { authAPI } from '../../api/auth';
 import AppModal from '../../components/shared/AppModal';
 
 /* ─── Dev flags stored in localStorage ──────────────────────────────────────*/
@@ -212,6 +213,12 @@ export default function AdminDevSettings() {
   const [launchSaved,   setLaunchSaved]   = useState(false);
   const [launchError,   setLaunchError]   = useState('');
 
+  // Dev Auth Tools state
+  const [resetTestEmail,   setResetTestEmail]   = useState('');
+  const [resetTestLoading, setResetTestLoading] = useState(false);
+  const [resetTestResult,  setResetTestResult]  = useState(null);
+  const [resetTestError,   setResetTestError]   = useState('');
+
   // Dev Testing Panel state
   const TEST_MODE_KEY = 'glanz.dev-test-mode';
   const [testModeActive, setTestModeActive] = useState(() => !!localStorage.getItem(TEST_MODE_KEY));
@@ -343,6 +350,17 @@ export default function AdminDevSettings() {
     localStorage.removeItem(TEST_MODE_KEY);
     setTestModeActive(false);
     setDevOps({ sim7d: { loading: false, result: null, error: '' }, cleanup30: { loading: false, result: null, error: '' }, fullCleanup: { loading: false, result: null, error: '' } });
+  };
+
+  const handleGenerateResetLink = async () => {
+    if (!resetTestEmail.trim()) { setResetTestError('Enter an email address.'); return; }
+    setResetTestLoading(true); setResetTestError(''); setResetTestResult(null);
+    try {
+      const data = await authAPI.devGenerateResetToken(resetTestEmail.trim());
+      setResetTestResult(data);
+    } catch (err) {
+      setResetTestError(err?.response?.data?.message || 'Failed to generate token.');
+    } finally { setResetTestLoading(false); }
   };
 
   const anyDevFlagActive = DEV_FLAGS.some(f => devFlags[f.key]);
@@ -718,6 +736,80 @@ export default function AdminDevSettings() {
                 </div>
               );
             })}
+          </div>
+        </section>
+
+        {/* ── Dev Auth Tools ── */}
+        <section className="mb-10">
+          <div className="flex items-center gap-2 mb-4">
+            <KeyRound size={15} className="text-primary" />
+            <h2 className="text-sm font-bold uppercase tracking-widest text-[var(--heading-color)]">
+              Dev Auth Tools
+            </h2>
+            <span className="text-xs text-[var(--muted-color)] ml-1">(password reset testing)</span>
+          </div>
+
+          <div className="glass-card p-5" style={{ borderTop: '2px solid rgba(200,169,107,0.3)' }}>
+            <p className="text-xs text-[var(--muted-color)] mb-4">
+              Generates a real password reset token for any email without sending an email. Use this to test the reset-password flow end-to-end.
+            </p>
+
+            <div className="flex gap-3 mb-4">
+              <input
+                type="email"
+                value={resetTestEmail}
+                onChange={e => { setResetTestEmail(e.target.value); setResetTestError(''); setResetTestResult(null); }}
+                placeholder="user@example.com"
+                className="flex-1 px-3 py-2 rounded-xl border border-[var(--border-color)] bg-[var(--surface-bg)] text-[var(--text-color)] text-sm placeholder:text-[var(--muted-color)] focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition"
+              />
+              <button
+                type="button"
+                disabled={resetTestLoading}
+                onClick={handleGenerateResetLink}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ background: 'rgba(200,169,107,0.15)', border: '1px solid rgba(200,169,107,0.35)', color: '#c8a96b' }}
+              >
+                {resetTestLoading ? <Loader2 size={13} className="animate-spin" /> : <KeyRound size={13} />}
+                {resetTestLoading ? 'Generating...' : 'Generate Link'}
+              </button>
+            </div>
+
+            {resetTestError && (
+              <div className="flex items-start gap-2 rounded-lg border border-rose-500/25 bg-rose-500/8 px-3 py-2 mb-3 text-xs text-rose-300">
+                <AlertCircle size={13} className="flex-shrink-0 mt-0.5" />{resetTestError}
+              </div>
+            )}
+
+            {resetTestResult && (
+              <div className="rounded-lg border border-green-500/25 bg-green-500/8 px-4 py-3 space-y-2">
+                <p className="text-xs font-bold text-green-400">Token generated - valid for 6 hours</p>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 text-[11px] text-[var(--text-color)] bg-[var(--surface-bg)] rounded-lg px-2 py-1.5 break-all border border-[var(--border-color)]">
+                    {resetTestResult.resetUrl}
+                  </code>
+                  <button
+                    type="button"
+                    onClick={() => navigator.clipboard?.writeText(resetTestResult.resetUrl)}
+                    className="p-1.5 rounded-lg border border-[var(--border-color)] text-[var(--muted-color)] hover:text-primary transition flex-shrink-0"
+                    title="Copy link"
+                  >
+                    <Copy size={12} />
+                  </button>
+                  <a
+                    href={resetTestResult.resetUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-1.5 rounded-lg border border-[var(--border-color)] text-[var(--muted-color)] hover:text-primary transition flex-shrink-0"
+                    title="Open link"
+                  >
+                    <ExternalLink size={12} />
+                  </a>
+                </div>
+                <p className="text-[11px] text-[var(--muted-color)]">
+                  Raw token: <span className="font-mono text-[var(--text-color)]">{resetTestResult.token}</span>
+                </p>
+              </div>
+            )}
           </div>
         </section>
 

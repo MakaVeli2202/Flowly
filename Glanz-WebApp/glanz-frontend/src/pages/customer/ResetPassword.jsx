@@ -42,7 +42,8 @@ function ResetPassword() {
       setSuccess(true);
       setTimeout(() => navigate('/login', { state: { message: 'Password reset successfully. Please sign in.' } }), 2000);
     } catch (err) {
-      setError(err.response?.data?.message || 'Reset failed. The link may have expired.');
+      console.error('[ResetPassword] error:', err?.response?.status, err?.response?.data, err?.message);
+      setError(err.response?.data?.message || err.response?.data?.Message || 'Reset failed. The link may have expired.');
     } finally { setLoading(false); }
   };
 

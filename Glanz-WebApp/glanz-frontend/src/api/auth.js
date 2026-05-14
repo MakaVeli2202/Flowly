@@ -139,6 +139,9 @@ export const authAPI = {
   resetPassword: (token, newPassword, confirmNewPassword) =>
     apiClient.post('/Auth/reset-password', { token, newPassword, confirmNewPassword }),
 
+  devGenerateResetToken: (email) =>
+    apiClient.post('/Auth/dev-generate-reset-token', { email }).then(r => r.data),
+
   setAllowPreferredWorker: (userId, allow) =>
     apiClient.put(`/Auth/users/${userId}/allow-preferred-worker`, { allow }),
 };

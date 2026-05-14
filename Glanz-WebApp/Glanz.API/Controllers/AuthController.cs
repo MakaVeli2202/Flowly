@@ -1495,6 +1495,9 @@ namespace Glanz.API.Controllers
         [HttpPost("reset-password")]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
         {
+            if (_env.IsDevelopment())
+                Console.WriteLine($"[ResetPassword] token_len={dto.Token?.Length} pw_len={dto.NewPassword?.Length} utcNow={DateTime.UtcNow:O}");
+
             if (dto.NewPassword != dto.ConfirmNewPassword)
                 return BadRequest(new { message = "Passwords do not match." });
 
@@ -1503,7 +1506,12 @@ namespace Glanz.API.Controllers
                 .Where(u => u.PasswordResetToken != null && u.PasswordResetTokenExpiry > DateTime.UtcNow)
                 .ToListAsync();
 
+            if (_env.IsDevelopment())
+                Console.WriteLine($"[ResetPassword] candidates={candidates.Count} expiries=[{string.Join(", ", candidates.Select(c => c.PasswordResetTokenExpiry?.ToString("O") ?? "null"))}]");
+
             var user = candidates.FirstOrDefault(u => BCrypt.Net.BCrypt.Verify(dto.Token, u.PasswordResetToken!));
+            if (_env.IsDevelopment())
+                Console.WriteLine($"[ResetPassword] matched={user != null}");
             if (user == null)
                 return BadRequest(new { message = "Invalid or expired reset token." });
 
@@ -1529,6 +1537,31 @@ namespace Glanz.API.Controllers
         {
             return Convert.ToBase64String(RandomNumberGenerator.GetBytes(32))
                 .Replace('+', '-').Replace('/', '_').TrimEnd('=');
+        }
+
+        /// <summary>Dev-only: generates a real reset token for an email without sending email.</summary>
+        [AllowAnonymous]
+        [HttpPost("dev-generate-reset-token")]
+        public async Task<IActionResult> DevGenerateResetToken([FromBody] ForgotPasswordDto dto)
+        {
+            if (!_env.IsDevelopment())
+                return NotFound();
+
+            var normalizedEmail = dto.Email.Trim().ToLowerInvariant();
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == normalizedEmail);
+            if (user == null)
+                return NotFound(new { message = "User not found." });
+
+            var token = GenerateSecureToken();
+            user.PasswordResetToken       = BCrypt.Net.BCrypt.HashPassword(token);
+            user.PasswordResetTokenExpiry = DateTime.UtcNow.AddHours(6);
+            user.UpdatedAt                = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            var frontendUrl = _configuration["FrontendUrl"] ?? "http://localhost:5173";
+            var resetUrl    = $"{frontendUrl}/reset-password?token={Uri.EscapeDataString(token)}";
+
+            return Ok(new { token, resetUrl });
         }
     }
 }
