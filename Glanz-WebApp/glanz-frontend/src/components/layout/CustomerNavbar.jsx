@@ -135,13 +135,13 @@ export function CustomerNavbar({ theme, onToggleTheme }) {
               <Link
                 key={link.to}
                 to={link.to}
-                className="text-gray-300 hover:text-white transition-colors font-medium"
+                className="text-[var(--heading-color)] hover:text-primary transition-colors font-medium"
               >
                 {t(link.label.toLowerCase())}
               </Link>
             ))}
             {isAuthenticated && (
-              <Link to="/my-bookings" className="text-gray-300 hover:text-white transition-colors font-medium">
+              <Link to="/my-bookings" className="text-[var(--heading-color)] hover:text-primary transition-colors font-medium">
                 {t('myBookings')}
               </Link>
             )}
@@ -153,7 +153,7 @@ export function CustomerNavbar({ theme, onToggleTheme }) {
               <button
                 type="button"
                 onClick={() => setShowLangMenu(v => !v)}
-                className="flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-white/10 text-gray-300 transition-all text-xs"
+                className="flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-black/5 text-[var(--heading-color)] transition-all text-xs"
               >
                 <Globe size={14} />
                 {lang.toUpperCase()}
@@ -181,7 +181,7 @@ export function CustomerNavbar({ theme, onToggleTheme }) {
             <button
               type="button"
               onClick={onToggleTheme}
-              className="p-2 rounded-lg hover:bg-white/10 text-gray-300 transition-all"
+              className="p-2 rounded-lg hover:bg-black/5 text-[var(--heading-color)] transition-all"
             >
               {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
             </button>
@@ -193,7 +193,7 @@ export function CustomerNavbar({ theme, onToggleTheme }) {
                   <button
                     type="button"
                     onClick={() => setShowNotifications(v => !v)}
-                    className="relative p-2 rounded-lg hover:bg-white/10 text-gray-300 transition-all"
+                    className="relative p-2 rounded-lg hover:bg-black/5 text-[var(--heading-color)] transition-all"
                   >
                     <Bell size={16} />
                     {unreadCount > 0 && (
@@ -251,7 +251,7 @@ export function CustomerNavbar({ theme, onToggleTheme }) {
 
                 {/* Profile - hide from employees */}
                 {!isEmployee && (
-                  <Link to="/profile" className="text-gray-300 hover:text-white transition-colors font-medium text-sm">
+                  <Link to="/profile" className="text-[var(--heading-color)] hover:text-primary transition-colors font-medium text-sm">
                     {user?.firstName || t('profile')}
                   </Link>
                 )}
@@ -273,7 +273,7 @@ export function CustomerNavbar({ theme, onToggleTheme }) {
             )}
           </div>
 
-          <button className="sm:hidden flex items-center justify-center w-8 h-8 text-gray-300 focus:outline-none" onClick={toggleMenu} aria-label={isOpen ? 'Close Menu' : 'Open Menu'}>
+          <button className="sm:hidden flex items-center justify-center w-8 h-8 text-[var(--heading-color)] focus:outline-none" onClick={toggleMenu} aria-label={isOpen ? 'Close Menu' : 'Open Menu'}>
             {isOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
@@ -283,12 +283,12 @@ export function CustomerNavbar({ theme, onToggleTheme }) {
                          ${isOpen ? 'max-h-[1000px] opacity-100 pt-4' : 'max-h-0 opacity-0 pt-0 pointer-events-none'}`}>
           <nav className="flex flex-col items-center space-y-4 text-base w-full">
             {CUSTOMER_LINKS.map((link) => (
-              <Link key={link.to} to={link.to} className="text-gray-300 hover:text-white transition-colors w-full text-center" onClick={() => setIsOpen(false)}>
+              <Link key={link.to} to={link.to} className="text-[var(--heading-color)] hover:text-primary transition-colors w-full text-center" onClick={() => setIsOpen(false)}>
                 {t(link.label.toLowerCase())}
               </Link>
             ))}
             {isAuthenticated && (
-              <Link to="/my-bookings" className="text-gray-300 hover:text-white transition-colors w-full text-center" onClick={() => setIsOpen(false)}>
+              <Link to="/my-bookings" className="text-[var(--heading-color)] hover:text-primary transition-colors w-full text-center" onClick={() => setIsOpen(false)}>
                 {t('myBookings')}
               </Link>
             )}
@@ -297,7 +297,7 @@ export function CustomerNavbar({ theme, onToggleTheme }) {
             {isAuthenticated ? (
               <>
                 {!isEmployee && (
-                  <Link to="/profile" className="text-gray-300 hover:text-white transition-colors w-full text-center" onClick={() => setIsOpen(false)}>
+                  <Link to="/profile" className="text-[var(--heading-color)] hover:text-primary transition-colors w-full text-center" onClick={() => setIsOpen(false)}>
                     <User size={16} className="inline mr-2" />
                     {t('profile')}
                   </Link>
