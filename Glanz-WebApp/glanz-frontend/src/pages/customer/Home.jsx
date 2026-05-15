@@ -375,13 +375,22 @@ const PRISM_CSS = `
 .spectrum-line {
   height: 1.5px;
   background: linear-gradient(90deg,
-    transparent 0%, color-mix(in srgb, var(--primary) 55%, transparent) 20%,
-    color-mix(in srgb, var(--secondary) 55%, transparent) 50%,
-    color-mix(in srgb, var(--primary) 55%, transparent) 80%, transparent 100%);
+    transparent 0%, rgba(200,169,107,0.70) 20%,
+    rgba(212,144,58,0.60) 50%,
+    rgba(200,169,107,0.70) 80%, transparent 100%);
   background-size: 200% 100%;
   animation: holo-sweep 5s linear infinite;
-  opacity: 0.55;
+  opacity: 0.65;
   width: 100%;
+}
+[data-theme='light'] .spectrum-line {
+  background: linear-gradient(90deg,
+    transparent 0%, rgba(168,136,255,0.75) 15%,
+    rgba(255,126,200,0.60) 35%,
+    rgba(92,199,245,0.70) 55%,
+    rgba(142,235,202,0.55) 72%,
+    rgba(168,136,255,0.75) 88%, transparent 100%);
+  opacity: 0.70;
 }
 
 /* ── Review card liquid glass ── */
@@ -632,6 +641,70 @@ const PRISM_CSS = `
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,1), inset 0 -2px 4px rgba(0,0,0,0.18),
     0 14px 36px -6px rgba(255,126,200,0.55);
+}
+
+/* ── Chrome composition over video (light mode) ── */
+.hero-aurora--video {
+  position: absolute; inset: -200px; pointer-events: none; filter: blur(80px);
+  opacity: 0.75; mix-blend-mode: screen;
+  background:
+    radial-gradient(circle at 22% 30%, rgba(255,126,200,0.55), transparent 35%),
+    radial-gradient(circle at 78% 22%, rgba(168,136,255,0.55), transparent 35%),
+    radial-gradient(circle at 50% 78%, rgba(92,199,245,0.50), transparent 38%),
+    radial-gradient(circle at 12% 88%, rgba(142,235,202,0.40), transparent 40%);
+  animation: orb-drift 20s ease-in-out infinite;
+}
+
+.hero-headline--on-video .chrome-text {
+  filter:
+    drop-shadow(0 2px 12px rgba(0,0,0,0.55))
+    drop-shadow(0 1px 0 rgba(255,255,255,0.35))
+    drop-shadow(0 -1px 0 rgba(0,0,0,0.5));
+}
+
+.hero-sub--on-video {
+  color: rgba(255,255,255,0.82) !important;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.55);
+}
+
+.btn-ghost-chrome--on-video {
+  color: #ffffff !important;
+  border-color: rgba(255,255,255,0.45) !important;
+}
+.btn-ghost-chrome--on-video:hover {
+  background: rgba(255,255,255,0.10) !important;
+  border-color: #ffffff !important;
+}
+
+.hero-trust--on-video { color: rgba(255,255,255,0.65) !important; }
+.hero-trust--on-video strong { color: #ffffff !important; }
+.hero-trust--on-video .hero-trust__dot { background: rgba(255,255,255,0.30) !important; }
+
+.hero-scroll-indicator--on-video > span { color: rgba(255,255,255,0.55) !important; }
+.hero-scroll-indicator--on-video .hero-scroll-indicator__icon {
+  border-color: rgba(255,255,255,0.30) !important;
+  color: rgba(255,255,255,0.75) !important;
+}
+
+/* Chrome headline — targets the inner animated span inside WordReveal */
+.hero-chrome-title .word-clip > span {
+  display: inline-block;
+  background: linear-gradient(180deg,
+    #ffffff 0%, #e8e8e8 20%, #ffffff 38%,
+    #b8b8b8 55%, #e0e0e0 72%, #ffffff 88%, #c0c0c0 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 2px 12px rgba(0,0,0,0.70));
+}
+
+/* Gold metallic headline — dark mode */
+.hero-gold-title .word-clip > span {
+  display: inline-block;
+  background: linear-gradient(180deg,
+    #f5dfa0 0%, #c8a96b 20%, #f0d080 40%,
+    #a88442 58%, #d4a855 75%, #f5dfa0 88%, #b8922e 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 `;
 
@@ -1087,11 +1160,7 @@ function Home() {
   /* ── State ── */
   const [stats, setStats]                           = useState({ carsDetailed: 0, happyClients: 0, activePackages: 0, yearsActive: 0 });
   const [statsStarted, setStatsStarted]             = useState(false);
-  const [useRealReviews, setUseRealReviews]         = useState(() => {
-    // Check if dev flag is enabled, default to true (use real reviews)
-    return localStorage.getItem('DEV_REVIEWS_TOGGLE') !== 'true' ? true : false;
-  });
-  const [reviews, setReviews]                       = useState([]);
+  const [reviews, setReviews]                       = useState(FALLBACK_REVIEWS);
   const [packages, setPackages]                     = useState([]);
   const [services, setServices]                     = useState([]);
   const [serviceAreas, setServiceAreas]             = useState(() => getBusiness().serviceAreas || getDefaultServiceAreasForLang(normalizedLang));
@@ -1162,20 +1231,12 @@ function Home() {
 
   /* ── Data fetching — parallelized ── */
   useEffect(() => {
-    // Handle review fetching with toggle and fallback logic
     const fetchReviews = async () => {
-      if (useRealReviews) {
-        try {
-          const data = await reviewsAPI.getPublic();
-          const realReviews = Array.isArray(data) ? data : [];
-          // Fallback to hardcoded if no real reviews
-          setReviews(realReviews.length > 0 ? realReviews : FALLBACK_REVIEWS);
-        } catch {
-          // On error, use fallback
-          setReviews(FALLBACK_REVIEWS);
-        }
-      } else {
-        // Toggle is OFF: use hardcoded reviews
+      try {
+        const data = await reviewsAPI.getPublic();
+        const real = Array.isArray(data) ? data : [];
+        setReviews(real.length > 0 ? real : FALLBACK_REVIEWS);
+      } catch {
         setReviews(FALLBACK_REVIEWS);
       }
     };
@@ -1202,7 +1263,7 @@ function Home() {
         console.error('Home page data fetch error:', err);
         setLoading({ stats: false, reviews: false, packages: false, services: false });
       });
-  }, [lang, useRealReviews]);
+  }, [lang]);
 
   // Reload service areas when admin updates business config
   useEffect(() => {
@@ -1441,10 +1502,6 @@ function Home() {
     setCurrentReviewIndex(p => (p >= max ? 0 : p + 1));
   };
 
-  const handleToggleReviews = () => {
-    setUseRealReviews(!useRealReviews);
-  };
-
   const marqueeSource  = services.length > 0
     ? services.map((s) => pickLocalizedField(s, 'name', lang) || s.name).filter(Boolean)
     : MARQUEE_ITEMS;
@@ -1490,225 +1547,148 @@ function Home() {
       <style>{PRISM_CSS}</style>
       <PrismaticCursorOrb />
 
-      {theme === 'light' ? (
-        /* ══ HERO — Chrome card on video (LIGHT MODE) ══ */
-        <section ref={heroSectionRef} className="relative min-h-screen flex items-center justify-center overflow-hidden">
-          {/* Same YouTube video */}
-          <div className="absolute inset-0 bg-black overflow-hidden" style={{ pointerEvents: 'none' }}>
-            <iframe
-              className="absolute"
-              style={{
-                top: '50%', left: '50%',
-                width: '100vw', height: '56.25vw',
-                minHeight: '100vh', minWidth: '177.77777778vh',
-                transform: 'translate(-50%, -50%)',
-                border: 0,
-              }}
-              src="https://www.youtube-nocookie.com/embed/ZeES31xz7CE?autoplay=1&mute=1&loop=1&playlist=ZeES31xz7CE&controls=0&rel=0&playsinline=1&modestbranding=1&enablejsapi=0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              title="Hero background"
-            />
-          </div>
-          {/* Lighter overlay — lets more video show, tinted lavender */}
-          <div className="absolute inset-0" style={{
-            background: [
-              'radial-gradient(ellipse 90% 80% at 50% 55%, rgba(10,5,40,0.04) 0%, rgba(10,5,40,0.42) 100%)',
-              'linear-gradient(to bottom, rgba(5,2,28,0.38) 0%, rgba(0,0,0,0.04) 38%, rgba(5,2,28,0.48) 100%)',
-              'radial-gradient(ellipse 50% 40% at 50% 50%, rgba(168,136,255,0.08), transparent 70%)',
-            ].join(', '),
-          }} />
-          {/* Lavender/cyan ambient orbs */}
-          <div className="absolute -top-28 -right-28 w-[560px] h-[560px] rounded-full pointer-events-none"
-            style={{ background: 'conic-gradient(from 0deg,rgba(168,136,255,.20),rgba(92,199,245,.16),rgba(255,126,200,.12),rgba(142,235,202,.14),rgba(168,136,255,.20))', filter: 'blur(88px)', animation: 'spectrum-float 16s ease-in-out infinite' }} />
-          <div className="absolute -bottom-36 -left-24 w-[460px] h-[460px] rounded-full pointer-events-none"
-            style={{ background: 'conic-gradient(from 180deg,rgba(92,199,245,.18),rgba(168,136,255,.14),rgba(255,126,200,.14),rgba(92,199,245,.18))', filter: 'blur(88px)', animation: 'spectrum-float 19s ease-in-out 5s infinite' }} />
+      {/* ══ HERO — Video (both themes) ══ */}
+      <section ref={heroSectionRef} className="relative min-h-screen flex items-center justify-center overflow-hidden">
+        {/* YouTube background video */}
+        <div className="absolute inset-0 bg-black overflow-hidden" style={{ pointerEvents: 'none' }}>
+          <iframe
+            className="absolute"
+            style={{
+              top: '50%', left: '50%',
+              width: '100vw', height: '56.25vw',
+              minHeight: '100vh', minWidth: '177.77777778vh',
+              transform: 'translate(-50%, -50%)',
+              border: 0,
+            }}
+            src="https://www.youtube-nocookie.com/embed/ZeES31xz7CE?autoplay=1&mute=1&loop=1&playlist=ZeES31xz7CE&controls=0&rel=0&playsinline=1&modestbranding=1&enablejsapi=0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            title="Hero background"
+          />
+        </div>
+        {/* Cinematic overlay */}
+        <div className="absolute inset-0" style={{
+          background: [
+            'radial-gradient(ellipse 90% 80% at 50% 55%, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.60) 100%)',
+            'linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.10) 38%, rgba(0,0,0,0.70) 100%)',
+          ].join(', '),
+        }} />
+        {/* Ambient orbs — holo in light, gold in dark */}
+        <div className="absolute -top-28 -right-28 w-[560px] h-[560px] rounded-full pointer-events-none" style={{
+          background: theme === 'light'
+            ? 'conic-gradient(from 0deg,rgba(168,136,255,.20),rgba(255,126,200,.12),rgba(92,199,245,.16),rgba(142,235,202,.12),rgba(168,136,255,.20))'
+            : 'conic-gradient(from 0deg,rgba(200,169,107,.18),rgba(168,132,60,.08),rgba(200,169,107,.14),rgba(240,208,128,.10))',
+          filter: 'blur(88px)', animation: 'spectrum-float 16s ease-in-out infinite',
+        }} />
+        <div className="absolute -bottom-36 -left-24 w-[460px] h-[460px] rounded-full pointer-events-none" style={{
+          background: theme === 'light'
+            ? 'conic-gradient(from 180deg,rgba(92,199,245,.18),rgba(168,136,255,.14),rgba(255,126,200,.14),rgba(92,199,245,.18))'
+            : 'conic-gradient(from 180deg,rgba(168,132,60,.14),rgba(200,169,107,.12),rgba(240,208,128,.08),rgba(200,169,107,.14))',
+          filter: 'blur(88px)', animation: 'spectrum-float 19s ease-in-out 5s infinite',
+        }} />
 
-          <div className="container mx-auto px-4 relative z-10 py-16 md:py-20 flex flex-col items-center">
-            <div ref={heroCardRef} className="hero-glass-light max-w-5xl w-full mx-auto" style={{ willChange: 'transform' }}>
-              <AdvBubbles dense />
-              {/* Top accent line — lavender/cyan */}
-              <div className="absolute top-0 left-[10%] right-[10%] h-[1.5px] hero-animate hero-animate-1"
-                style={{ background: 'linear-gradient(90deg,transparent,#a888ff 30%,#5cc7f5 70%,transparent)' }} />
-              <div className="relative z-10 px-8 md:px-16 py-10 md:py-12 text-center flex flex-col items-center">
-                {/* Logo — lavender glow */}
-                <div className="mb-6 hero-animate hero-animate-1">
-                  <img
-                    src={getBusiness().logo || '/GlanzLogo.png'} alt="Glanz"
-                    className="h-24 sm:h-28 md:h-36 w-auto object-contain mx-auto"
-                    style={{ filter: 'drop-shadow(0 0 40px rgba(168,136,255,0.55)) drop-shadow(0 0 20px rgba(92,199,245,0.45))' }}
-                  />
-                </div>
-                {/* Badge — lavender */}
-                <div className="flex items-center gap-3 mb-6 hero-animate hero-animate-1">
-                  <span className="flex-shrink-0 h-px w-12" style={{ background: 'linear-gradient(90deg,transparent,#a888ff)' }} />
-                  <p className="uppercase tracking-[0.30em] text-[0.68rem] font-bold whitespace-nowrap" style={{ color: '#a888ff' }}>{homePageContent.badge}</p>
-                  <span className="flex-shrink-0 h-px w-12" style={{ background: 'linear-gradient(90deg,#a888ff,transparent)' }} />
-                </div>
-                {/* Headline — chrome white/lavender gradient, readable on video */}
-                <h1 className="hero-chrome-headline hero-animate hero-animate-1">
-                  <WordReveal text={homePageContent.title} baseDelay={0.12} />
-                </h1>
-                {/* Rule — lavender */}
-                <div className="w-20 h-px mb-7 hero-animate hero-animate-2"
-                  style={{ background: 'linear-gradient(90deg,transparent,#a888ff,transparent)' }} />
-                {/* Description */}
-                <p className="text-base md:text-lg mb-10 max-w-2xl leading-relaxed hero-animate hero-animate-3"
-                  style={{ color: 'rgba(255,255,255,0.82)' }}>
-                  {homePageContent.description}
-                </p>
-                {/* CTAs */}
-                <div className="flex flex-wrap justify-center gap-4 mb-8 hero-animate hero-animate-4">
-                  <Link to={primaryCtaTarget} className="btn-chrome">{primaryCtaLabel}<ArrowRight size={18} /></Link>
-                  <Link to={secondaryCtaTarget} className="btn-ghost-chrome">{secondaryCtaLabel}</Link>
-                </div>
-                {/* Trust strip */}
-                <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 hero-animate hero-animate-4">
-                  <div className="flex items-center gap-1.5">
-                    {[...Array(5)].map((_, i) => <Star key={i} size={12} style={{ fill: '#5cc7f5', color: '#5cc7f5' }} />)}
-                    <span className="text-xs ml-1 font-medium" style={{ color: 'rgba(255,255,255,0.55)' }}>4.9 {ui.heroRating}</span>
-                  </div>
-                  <span className="h-3 w-px bg-white/20 hidden sm:block" />
-                  <span className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.55)' }}>{stats.happyClients > 0 ? `${stats.happyClients}+` : '100+'} {ui.heroHappyClients}</span>
-                  <span className="h-3 w-px bg-white/20 hidden sm:block" />
-                  <span className="flex items-center gap-1 text-xs font-medium" style={{ color: 'rgba(255,255,255,0.55)' }}><MapPin size={10} />{ui.heroMobileService}</span>
-                </div>
+        <div className="container mx-auto px-4 relative z-10 py-16 md:py-20 flex flex-col items-center">
+          <div ref={heroCardRef} className="hero-glass max-w-5xl w-full mx-auto" style={{ willChange: 'transform' }}>
+            <AdvBubbles dense />
+            <div className="absolute top-0 left-[10%] right-[10%] h-[1.5px] hero-animate hero-animate-1" style={{
+              background: theme === 'light'
+                ? 'linear-gradient(90deg,transparent,#a888ff 30%,#5cc7f5 70%,transparent)'
+                : 'linear-gradient(90deg,transparent,#c8a96b 30%,#f0d080 70%,transparent)',
+            }} />
+            <div className="relative z-10 px-8 md:px-16 py-10 md:py-12 text-center flex flex-col items-center">
+              <div className="mb-6 hero-animate hero-animate-1">
+                <img src={getBusiness().logo || '/GlanzLogo.png'} alt="Glanz" className="h-24 sm:h-28 md:h-36 w-auto object-contain mx-auto drop-shadow-xl" />
               </div>
-            </div>
-          </div>
-          {/* Scroll indicator */}
-          <div className="hidden sm:flex absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex-col items-center gap-2 hero-animate hero-animate-4">
-            <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ border: '1px solid rgba(255,255,255,0.28)' }}>
-              <ChevronDown size={14} className="animate-bounce" style={{ color: 'rgba(168,136,255,0.80)' }} />
-            </div>
-            <span className="text-[0.55rem] tracking-[0.22em] uppercase font-semibold" style={{ color: 'rgba(255,255,255,0.40)' }}>{ui.heroScroll}</span>
-          </div>
-        </section>
-      ) : (
-        /* ══ HERO — Video (DARK MODE, original) ══ */
-        <section ref={heroSectionRef} className="relative min-h-screen flex items-center justify-center overflow-hidden">
-          {/* YouTube background video */}
-          <div className="absolute inset-0 bg-black overflow-hidden" style={{ pointerEvents: 'none' }}>
-            <iframe
-              className="absolute"
-              style={{
-                top: '50%', left: '50%',
-                width: '100vw', height: '56.25vw',
-                minHeight: '100vh', minWidth: '177.77777778vh',
-                transform: 'translate(-50%, -50%)',
-                border: 0,
-              }}
-              src="https://www.youtube-nocookie.com/embed/ZeES31xz7CE?autoplay=1&mute=1&loop=1&playlist=ZeES31xz7CE&controls=0&rel=0&playsinline=1&modestbranding=1&enablejsapi=0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              title="Hero background"
-            />
-          </div>
-          {/* Cinematic overlay */}
-          <div className="absolute inset-0" style={{
-            background: [
-              'radial-gradient(ellipse 90% 80% at 50% 55%, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.60) 100%)',
-              'linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.10) 38%, rgba(0,0,0,0.70) 100%)',
-            ].join(', '),
-          }} />
-          {/* Ambient spectral orbs */}
-          <div className="absolute -top-28 -right-28 w-[560px] h-[560px] rounded-full pointer-events-none"
-            style={{ background: 'conic-gradient(from 0deg,rgba(200,169,107,.14),rgba(14,165,160,.10),rgba(200,169,107,.08),rgba(14,165,160,.14))', filter: 'blur(88px)', animation: 'spectrum-float 16s ease-in-out infinite' }} />
-          <div className="absolute -bottom-36 -left-24 w-[460px] h-[460px] rounded-full pointer-events-none"
-            style={{ background: 'conic-gradient(from 180deg,rgba(14,165,160,.12),rgba(200,169,107,.10),rgba(14,165,160,.10),rgba(200,169,107,.12))', filter: 'blur(88px)', animation: 'spectrum-float 19s ease-in-out 5s infinite' }} />
-
-          <div className="container mx-auto px-4 relative z-10 py-16 md:py-20 flex flex-col items-center">
-            <div ref={heroCardRef} className="hero-glass max-w-5xl w-full mx-auto" style={{ willChange: 'transform' }}>
-              <AdvBubbles dense />
-              <div className="absolute top-0 left-[10%] right-[10%] h-[1.5px] hero-animate hero-animate-1"
-                style={{ background: 'linear-gradient(90deg,transparent,var(--primary) 30%,var(--secondary) 70%,transparent)' }} />
-              <div className="relative z-10 px-8 md:px-16 py-10 md:py-12 text-center flex flex-col items-center">
-                <div className="mb-6 hero-animate hero-animate-1">
-                  <img src={getBusiness().logo || '/GlanzLogo.png'} alt="Glanz" className="h-24 sm:h-28 md:h-36 w-auto object-contain mx-auto drop-shadow-xl" />
-                </div>
-                <div className="flex items-center gap-3 mb-6 hero-animate hero-animate-1">
-                  <span className="flex-shrink-0 h-px w-12" style={{ background: 'linear-gradient(90deg,transparent,var(--primary))' }} />
+              {/* Badge */}
+              <div className="flex items-center gap-3 mb-6 hero-animate hero-animate-1">
+                <span className="flex-shrink-0 h-px w-12" style={{ background: theme === 'light' ? 'linear-gradient(90deg,transparent,#a888ff)' : 'linear-gradient(90deg,transparent,#c8a96b)' }} />
+                {theme === 'light' ? (
+                  <p className="uppercase text-[0.68rem] font-bold whitespace-nowrap" style={{
+                    letterSpacing: '0.30em',
+                    background: 'linear-gradient(90deg,#ff7eb4,#a888ff,#5cc7f5,#8ef7ca,#a888ff)',
+                    backgroundSize: '200% 100%',
+                    WebkitBackgroundClip: 'text', backgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    animation: 'holo-flow 8s ease-in-out infinite',
+                  }}>{homePageContent.badge}</p>
+                ) : (
                   <p className="uppercase tracking-[0.30em] text-primary text-[0.68rem] font-bold whitespace-nowrap">{homePageContent.badge}</p>
-                  <span className="flex-shrink-0 h-px w-12" style={{ background: 'linear-gradient(90deg,var(--primary),transparent)' }} />
+                )}
+                <span className="flex-shrink-0 h-px w-12" style={{ background: theme === 'light' ? 'linear-gradient(90deg,#a888ff,transparent)' : 'linear-gradient(90deg,#c8a96b,transparent)' }} />
+              </div>
+              {/* Headline */}
+              <h1 className={`${theme === 'light' ? 'hero-chrome-title' : 'hero-gold-title'} premium-heading text-6xl sm:text-7xl md:text-8xl font-bold mb-7 leading-[0.90] tracking-tight`}>
+                <WordReveal text={homePageContent.title} baseDelay={0.12} />
+              </h1>
+              <div className="w-20 h-px mb-7 hero-animate hero-animate-2" style={{
+                background: theme === 'light'
+                  ? 'linear-gradient(90deg,transparent,rgba(255,255,255,0.6),transparent)'
+                  : 'linear-gradient(90deg,transparent,#c8a96b,transparent)',
+              }} />
+              <p className="text-base md:text-lg text-white/75 mb-10 max-w-2xl leading-relaxed hero-animate hero-animate-3">
+                {homePageContent.description}
+              </p>
+              {/* Buttons */}
+              <div className="flex flex-wrap justify-center gap-4 mb-8 hero-animate hero-animate-4">
+                <Link to={primaryCtaTarget} className="btn-chrome text-base px-8 py-4" style={
+                  theme === 'light'
+                    ? { background: 'linear-gradient(90deg,#f5f5f5 0%,#ffffff 28%,#ececec 50%,#ffffff 72%,#d8d8d8 100%)', backgroundSize: '200% 100%', color: '#0a0d24', border: '1px solid rgba(255,255,255,0.85)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,1),inset 0 -2px 4px rgba(0,0,0,0.10),0 8px 28px -6px rgba(0,0,0,0.40)' }
+                    : { background: 'linear-gradient(135deg,#c8a96b 0%,#a88442 100%)', color: '#101823', border: '1px solid rgba(200,169,107,0.6)', boxShadow: '0 12px 35px rgba(200,169,107,0.38)' }
+                }>
+                  {primaryCtaLabel}<ArrowRight size={18} />
+                </Link>
+                <Link to={secondaryCtaTarget} className="btn-ghost-chrome text-base" style={
+                  theme === 'light'
+                    ? { color: 'rgba(255,255,255,0.92)', borderColor: 'rgba(255,255,255,0.45)' }
+                    : { color: 'rgba(255,255,255,0.85)', borderColor: 'rgba(200,169,107,0.45)' }
+                }>
+                  {secondaryCtaLabel}
+                </Link>
+              </div>
+              {/* Trust strip */}
+              <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 hero-animate hero-animate-4">
+                <div className="flex items-center gap-1.5">
+                  {[...Array(5)].map((_, i) => <Star key={i} size={12} className="fill-primary text-primary" />)}
+                  <span className="text-white/45 text-xs ml-1 font-medium">4.9 {ui.heroRating}</span>
                 </div>
-                <h1 className="premium-heading text-6xl sm:text-7xl md:text-8xl font-bold mb-7 leading-[0.90] text-white tracking-tight">
-                  <WordReveal text={homePageContent.title} baseDelay={0.12} />
-                </h1>
-                <div className="w-20 h-px mb-7 hero-animate hero-animate-2"
-                  style={{ background: 'linear-gradient(90deg,transparent,var(--primary),transparent)' }} />
-                <p className="text-base md:text-lg text-white/75 mb-10 max-w-2xl leading-relaxed hero-animate hero-animate-3">
-                  {homePageContent.description}
-                </p>
-                <div className="flex flex-wrap justify-center gap-4 mb-8 hero-animate hero-animate-4">
-                  <Link to={primaryCtaTarget} className="premium-btn text-base px-8 py-4">{primaryCtaLabel}<ArrowRight size={18} /></Link>
-                  <Link to={secondaryCtaTarget} className="secondary-cta text-base">{secondaryCtaLabel}</Link>
-                </div>
-                <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 hero-animate hero-animate-4">
-                  <div className="flex items-center gap-1.5">
-                    {[...Array(5)].map((_, i) => <Star key={i} size={12} className="fill-primary text-primary" />)}
-                    <span className="text-white/45 text-xs ml-1 font-medium">4.9 {ui.heroRating}</span>
-                  </div>
-                  <span className="h-3 w-px bg-white/15 hidden sm:block" />
-                  <span className="text-white/45 text-xs font-medium">{stats.happyClients > 0 ? `${stats.happyClients}+` : '100+'} {ui.heroHappyClients}</span>
-                  <span className="h-3 w-px bg-white/15 hidden sm:block" />
-                  <span className="flex items-center gap-1 text-white/45 text-xs font-medium"><MapPin size={10} />{ui.heroMobileService}</span>
-                </div>
+                <span className="h-3 w-px bg-white/15 hidden sm:block" />
+                <span className="text-white/45 text-xs font-medium">{stats.happyClients > 0 ? `${stats.happyClients}+` : '100+'} {ui.heroHappyClients}</span>
+                <span className="h-3 w-px bg-white/15 hidden sm:block" />
+                <span className="flex items-center gap-1 text-white/45 text-xs font-medium"><MapPin size={10} />{ui.heroMobileService}</span>
               </div>
             </div>
           </div>
-          <div className="hidden sm:flex absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex-col items-center gap-2 hero-animate hero-animate-4">
-            <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ border: '1px solid rgba(255,255,255,0.18)' }}>
-              <ChevronDown size={14} className="text-white/40 animate-bounce" />
-            </div>
-            <span className="text-white/30 text-[0.55rem] tracking-[0.22em] uppercase font-semibold">{ui.heroScroll}</span>
+        </div>
+        <div className="hidden sm:flex absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex-col items-center gap-2 hero-animate hero-animate-4">
+          <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ border: '1px solid rgba(255,255,255,0.18)' }}>
+            <ChevronDown size={14} className="text-white/40 animate-bounce" />
           </div>
-        </section>
-      )}
+          <span className="text-white/30 text-[0.55rem] tracking-[0.22em] uppercase font-semibold">{ui.heroScroll}</span>
+        </div>
+      </section>
 
       {/* ══ MARQUEE ══ */}
       <div className="py-[14px] border-y border-[var(--border-color)]"
         style={{ background: 'color-mix(in srgb, var(--surface-bg-alt) 70%, transparent)' }} aria-hidden="true">
         <div className="marquee-outer">
-          {loading.services ? (
-            <LoadingCircle label="Loading services..." className="py-2" sizeClass="h-6 w-6" />
-          ) : (
-            <div className="marquee-inner" style={{ animationDuration: `${marqueeDuration}s` }}>
-              {marqueeItems.map((item, i) => (
-                <span key={i} className="inline-flex items-center gap-2.5 px-5 text-[0.72rem] font-semibold tracking-[0.18em] uppercase whitespace-nowrap" style={{ color: 'var(--muted-color)' }}>
-                  <span style={{ color: 'var(--primary)', fontSize: '0.9rem', lineHeight: 1 }}>✦</span>{item}
-                </span>
-              ))}
-            </div>
-          )}
+          <div className="marquee-inner" style={{ animationDuration: `${marqueeDuration}s` }}>
+            {marqueeItems.map((item, i) => (
+              <span key={i} className="inline-flex items-center gap-2.5 px-5 text-[0.72rem] font-semibold tracking-[0.18em] uppercase whitespace-nowrap" style={{ color: 'var(--muted-color)' }}>
+                <span style={{ color: 'var(--primary)', fontSize: '0.9rem', lineHeight: 1 }}>✦</span>{item}
+              </span>
+            ))}
+          </div>
         </div>
       </div>
 
       {/* ══ STATS ══ */}
       <section className="py-8 md:py-10" ref={statsRef}>
         <div className="container mx-auto px-4">
-          {loading.stats ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {[1,2,3,4].map(i => (
-                <div key={i} className="glass-card p-6 text-center">
-                  <Skeleton variant="text" className="w-16 h-10 mx-auto mb-2" />
-                  <Skeleton variant="text" className="w-24 h-4 mx-auto" />
-                </div>
-              ))}
-            </div>
-          ) : errors.stats ? (
-            <EmptyState
-              icon="alert"
-              title="Failed to load stats"
-              description={errors.stats}
-              actionLabel="Try Again"
-              onAction={() => retryFetch('stats')}
-            />
-          ) : (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <StatCard number={stats.happyClients} suffix="+"   label={ui.statsHappyClients}      started={statsStarted} />
-              <StatCard number={stats.carsDetailed} suffix="+"   label={ui.statsCarsDetailed}       started={statsStarted} />
-              <StatCard number={4}                  suffix=".9★" label={ui.statsAverageRating}      started={statsStarted} />
-              <StatCard number={stats.yearsActive}  suffix="+"   label={ui.statsYearsExcellence} started={statsStarted} />
-            </div>
-          )}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <StatCard number={stats.happyClients} suffix="+"   label={ui.statsHappyClients}   started={statsStarted} />
+            <StatCard number={stats.carsDetailed} suffix="+"   label={ui.statsCarsDetailed}    started={statsStarted} />
+            <StatCard number={4}                  suffix=".9★" label={ui.statsAverageRating}   started={statsStarted} />
+            <StatCard number={stats.yearsActive}  suffix="+"   label={ui.statsYearsExcellence} started={statsStarted} />
+          </div>
         </div>
       </section>
 
@@ -1802,11 +1782,7 @@ function Home() {
               </div>
             </div>
 
-            {loading.packages ? (
-              <div className="w-[50vw] min-w-[520px] flex-shrink-0">
-                <LoadingCircle label="Loading services..." className="h-[420px]" sizeClass="h-10 w-10" />
-              </div>
-            ) : serviceHighlights.map((service, index) => {
+            {serviceHighlights.map((service, index) => {
               const accent = CARD_ACCENTS[index % CARD_ACCENTS.length];
               return (
               <div
@@ -1890,9 +1866,7 @@ function Home() {
       {/* ══ SERVICE HIGHLIGHTS — MOBILE ══ */}
       <section className="md:hidden py-8">
         <div className="container mx-auto px-4">
-          {loading.packages ? (
-            <LoadingCircle label="Loading services..." className="min-h-[220px]" sizeClass="h-10 w-10" />
-          ) : serviceHighlights.map((service) => (
+          {serviceHighlights.map((service) => (
             <div key={service.title} className="mb-20 last:mb-0 flex flex-col gap-10" dir="ltr" style={{ direction: 'ltr' }}>
               <div className="flex-1">
                 <h2 className="premium-heading text-3xl font-bold text-[var(--heading-color)] mb-6">{service.title}</h2>
@@ -2011,48 +1985,18 @@ function Home() {
             <div className="flex flex-col items-center gap-3">
               <img src="https://cdn.trustindex.io/assets/platform/Google/logo-dark.svg" alt="Google Reviews" className="h-8"
                 onError={e => { e.target.style.display = 'none'; }} />
-              <div className="flex items-center gap-3">
-                <a
-                  href="https://g.page/r/CbY8wgSE0iXGEAE/review"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold border border-primary/40 text-primary hover:bg-primary/10 transition-all duration-200"
-                >
-                  <Star size={14} className="fill-primary" />
-                  Leave a Review
-                </a>
-                {import.meta.env.DEV && (
-                  <button
-                    onClick={handleToggleReviews}
-                    className="inline-flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold border border-yellow-500/40 bg-yellow-500/5 text-yellow-600 hover:bg-yellow-500/10 transition-all duration-200"
-                    title="Toggle between real API reviews and hardcoded fallback reviews (dev mode only)"
-                  >
-                    {useRealReviews ? '🔴 REAL' : '🟡 HARDCODED'}
-                  </button>
-                )}
-              </div>
+              <a
+                href="https://g.page/r/CbY8wgSE0iXGEAE/review"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold border border-primary/40 text-primary hover:bg-primary/10 transition-all duration-200"
+              >
+                <Star size={14} className="fill-primary" />
+                Leave a Review
+              </a>
             </div>
           </div>
-          {loading.reviews ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {[1,2,3,4].map(i => <CardSkeleton key={i} />)}
-            </div>
-          ) : errors.reviews ? (
-            <EmptyState
-              icon="alert"
-              title="Failed to load reviews"
-              description={errors.reviews}
-              actionLabel="Try Again"
-              onAction={() => retryFetch('reviews')}
-            />
-          ) : reviews.length === 0 ? (
-            <EmptyState
-              icon="star"
-              title="No reviews yet"
-              description="Be the first to review our service!"
-            />
-          ) : (
-            <div>
+          <div>
               <div className="-mx-3">
                 <div ref={carouselRef} className="overflow-hidden"
                   onMouseDown={handleMouseDown} onMouseUp={handleMouseUp} onMouseLeave={() => setIsDragging(false)}
@@ -2092,7 +2036,6 @@ function Home() {
                 {currentReviewIndex + 1}–{Math.min(currentReviewIndex + visibleReviewCount, reviews.length)} of {reviews.length} reviews
               </p>
             </div>
-          )}
         </div>
       </section>
 
