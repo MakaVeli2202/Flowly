@@ -374,86 +374,75 @@ function Packages() {
               </p>
             </div>
           ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
               {filteredPackages.map((pkg, index) => {
-                const config = tierConfig[pkg.tier] || tierConfig.Standard;
-                const TierIcon = config.Icon;
+                const total = filteredPackages.length;
+                const isMiddle = index === 1;
                 const isExpanded = expandedPackageId === pkg.id;
-                const accentGrad = TIER_ACCENT[pkg.tier] || TIER_ACCENT.Standard;
+                const isPopular = pkg.popular ?? isMiddle;
+                const numLabel = `${String(index + 1).padStart(2, '0')} / ${String(total).padStart(2, '0')}`;
                 const packageName = pickLocalizedField(pkg, 'name', lang) || pkg.name;
                 const packageDescription = pickLocalizedField(pkg, 'description', lang) || pkg.description;
+                const services = pkg.services || [];
+                const visibleServices = isExpanded ? services : services.slice(0, 4);
+                const hasMore = services.length > 4;
 
-                return (
-                  <div
-                    key={pkg.id}
-                    className={`glass-card prism-glass overflow-hidden flex flex-col group transition-all duration-300 ${
-                      isExpanded ? 'ring-1 ring-primary/50' : ''
-                    }`}
-                    onMouseMove={(e) => {
-                      const r = e.currentTarget.getBoundingClientRect();
-                      e.currentTarget.style.setProperty('--px', `${((e.clientX - r.left) / r.width * 100).toFixed(1)}%`);
-                      e.currentTarget.style.setProperty('--py', `${((e.clientY - r.top) / r.height * 100).toFixed(1)}%`);
-                    }}
-                  >
-                    {/* Top accent line (tier-specific gradient) */}
-                    <div className="h-[2px] flex-shrink-0" style={{ background: accentGrad }} />
-                    {/* Prism ray */}
-                    <div className="prism-ray" style={{ left: '15%', width: '30%', animation: `prism-ray-sweep ${13 + index * 3}s ease-in-out ${index * 2}s infinite` }} />
-
-                    {/* Image */}
-                    <div className="relative h-48 overflow-hidden">
-                      <img
-                        src={pkg.imageUrl || 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=400'}
-                        alt={packageName}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/20 to-transparent" />
-                      <div className={`absolute top-3 right-3 ${config.badgeClass} border px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 backdrop-blur-sm`}>
-                        <TierIcon size={12} />
-                        {pkg.tier}
-                      </div>
-                      {/* Card number watermark */}
-                      <span className="absolute bottom-3 left-4 font-black text-white/10 pointer-events-none select-none"
-                        style={{ fontSize: '3.5rem', lineHeight: 1 }}>
-                        {String(index + 1).padStart(2, '0')}
-                      </span>
+                const CardContent = (
+                  <>
+                    <div className="pkg-card__head">
+                      <span className="pkg-card__num">{numLabel}</span>
+                      {isPopular && <span className="pkg-badge">Most Popular</span>}
                     </div>
-
-                    {/* Content */}
-                    <div className="p-6 flex flex-col flex-1 relative z-10">
-                      <h3 className="premium-heading text-xl font-bold mb-2 text-[var(--heading-color)]">{packageName}</h3>
-                      <p className="text-[var(--muted-color)] text-sm mb-5 leading-relaxed line-clamp-2">{packageDescription}</p>
-
-                      {/* Duration + Price */}
-                      <div className="flex items-center justify-between mb-5 pb-5 border-b border-[var(--border-color)]">
-                        <div className="flex items-center gap-1.5 text-[var(--muted-color)] text-sm">
-                          <Clock size={14} />
-                          <span>{pkg.estimatedDurationMinutes} {ui.minutesShort}</span>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-[0.6rem] uppercase tracking-[0.18em] text-[var(--muted-color)] font-semibold mb-0.5">{ui.startingAt}</p>
-                          <span className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                            {formatQAR(pkg.price)}
-                          </span>
-                        </div>
+                    <h3 className="pkg-card__title">{packageName}</h3>
+                    <p className="pkg-card__desc">{packageDescription}</p>
+                    <div className="pkg-card__meta">
+                      <Clock size={13} />
+                      <span>{pkg.estimatedDurationMinutes} {ui.minutesShort}</span>
+                    </div>
+                    <ul className="pkg-card__features">
+                      {visibleServices.map((svc, i) => (
+                        <li key={i}>
+                          <Check size={15} />
+                          {pickLocalizedField(svc, 'serviceName', lang)
+                            || pickLocalizedField(svc, 'name', lang)
+                            || svc?.serviceName || svc?.name || ui.serviceFallback}
+                        </li>
+                      ))}
+                    </ul>
+                    {hasMore && (
+                      <button className="pkg-card__expand-btn" onClick={() => togglePackageExpand(pkg.id)}>
+                        <ChevronDown size={13} className={isExpanded ? 'rotate-180' : ''} style={{ transition: 'transform 0.3s' }} />
+                        {isExpanded ? ui.showLess : `+ ${services.length - 4} ${ui.more}`}
+                      </button>
+                    )}
+                    <div className="pkg-card__foot">
+                      <div>
+                        <span className="pkg-card__price-label">{ui.startingAt}</span>
+                        <span className="pkg-card__price">{formatQAR(pkg.price)}</span>
                       </div>
-
-                      {/* Services list */}
-                      <ServicesList
-                        services={pkg.services || []}
-                        maxVisible={4}
-                        isExpanded={isExpanded}
-                        onToggle={() => togglePackageExpand(pkg.id)}
-                        labels={ui}
-                        lang={lang}
-                      />
-
-                      <button onClick={() => handleBookNow(pkg)} className="premium-btn w-full mt-auto">
+                      <button onClick={() => handleBookNow(pkg)} className="btn-chrome btn-chrome--sm">
                         {isAdmin ? ui.createCustomerBooking : ui.bookNow}
-                        <ArrowRight size={17} />
+                        <ArrowRight size={14} />
                       </button>
                     </div>
-                  </div>
+                    <span className="pkg-card__watermark" aria-hidden="true">
+                      {String(index + 1).padStart(2, '0')}
+                    </span>
+                  </>
+                );
+
+                if (isMiddle) {
+                  return (
+                    <article key={pkg.id} className="pkg-card pkg-card--holo">
+                      <div className="pkg-card__inner">{CardContent}</div>
+                    </article>
+                  );
+                }
+
+                return (
+                  <article key={pkg.id} className="pkg-card pkg-card--showroom">
+                    {CardContent}
+                  </article>
                 );
               })}
             </div>

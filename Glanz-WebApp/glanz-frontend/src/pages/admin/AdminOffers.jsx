@@ -42,60 +42,6 @@ const isExpiringSoon = (endsAt) => {
 };
 
 /* ─── PRISM CSS ──────────────────────────────────────────────────────────── */
-const PRISM_CSS = `
-@keyframes holo-sweep {
-  0%   { background-position: 0% 50%; }
-  100% { background-position: 300% 50%; }
-}
-@keyframes prism-ray-sweep {
-  0%   { transform: translateX(-130%) skewX(-15deg); opacity: 0; }
-  10%  { opacity: 1; } 90% { opacity: 1; }
-  100% { transform: translateX(460%) skewX(-15deg); opacity: 0; }
-}
-@keyframes card-enter {
-  from { transform: translateY(12px) scale(0.99); opacity: 0; }
-  to   { transform: translateY(0) scale(1); opacity: 1; }
-}
-.prism-cursor-blob {
-  position: fixed; pointer-events: none; z-index: 0;
-  border-radius: 50%; filter: blur(90px); mix-blend-mode: screen;
-  will-change: transform, background;
-}
-.prism-ray {
-  position: absolute; top: -30%; height: 160%; pointer-events: none;
-  transform: skewX(-18deg);
-  background: linear-gradient(90deg,
-    transparent 0%, rgba(255,55,55,.028) 15%, rgba(255,200,0,.038) 30%,
-    rgba(0,255,145,.030) 50%, rgba(0,145,255,.030) 70%,
-    rgba(195,0,255,.022) 85%, transparent 100%);
-}
-.prism-glass { position: relative; overflow: hidden; }
-.prism-glass::after {
-  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
-  background: radial-gradient(circle at var(--px,50%) var(--py,50%),
-    rgba(255,200,80,.09) 0%, rgba(80,255,160,.065) 30%,
-    rgba(40,130,255,.065) 55%, transparent 80%);
-  opacity: 0; transition: opacity 0.32s; mix-blend-mode: screen;
-}
-.prism-glass:hover::after { opacity: 1; }
-.spectrum-line {
-  height: 1.5px;
-  background: linear-gradient(90deg,
-    transparent 0%, rgba(255,0,100,.75) 12%, rgba(255,165,0,.80) 24%,
-    rgba(255,255,0,.80) 36%, rgba(0,255,100,.80) 48%,
-    rgba(0,150,255,.80) 60%, rgba(150,0,255,.75) 72%, transparent 85%);
-  background-size: 200% 100%;
-  animation: holo-sweep 5s linear infinite; opacity: 0.38;
-}
-.card-enter { animation: card-enter 0.45s cubic-bezier(0.22,1,0.36,1) both; }
-.fi { width:100%; padding:10px 14px; border-radius:12px; border:1px solid var(--border-color);
-  background:var(--surface-bg); color:var(--text-color); font-size:.875rem;
-  transition:border-color .2s, box-shadow .2s; outline:none; resize:none; }
-.fi:focus { border-color:rgba(200,169,107,.65); box-shadow:0 0 0 3px rgba(200,169,107,.12); }
-.fi:disabled { opacity:.38; cursor:not-allowed; }
-.fl { display:block; font-size:.68rem; font-weight:700; letter-spacing:.20em;
-  text-transform:uppercase; color:var(--muted-color); margin-bottom:6px; }
-`;
 
 /* ─── Cursor orb ─────────────────────────────────────────────────────────── */
 function CursorOrb() {
@@ -855,7 +801,6 @@ export default function AdminOffers() {
 
   return (
     <>
-      <style>{PRISM_CSS}</style>
       <CursorOrb />
 
       {/* Toast */}

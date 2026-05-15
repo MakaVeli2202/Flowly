@@ -51,31 +51,6 @@ const _normalizeStatus = (raw, metrics = {}) => {
 const VEHICLE_MULTIPLIERS = { Motorcycle: 0.8, Sedan: 1.0, SUV: 1.25, Pickup: 1.5 };
 const VEHICLE_OPTIONS = ['Motorcycle', 'Sedan', 'SUV', 'Pickup'];
 
-/* ── CSS ─────────────────────────────────────────────────── */
-const CSS = `
-@keyframes holo-sweep{0%{background-position:0% 50%}100%{background-position:300% 50%}}
-@keyframes cta-rainbow-glow{
-  0%,100%{box-shadow:0 0 0 1.5px rgba(255,80,80,.42),0 0 22px rgba(255,165,0,.15)}
-  33%{box-shadow:0 0 0 1.5px rgba(0,200,255,.42),0 0 22px rgba(160,0,255,.15)}
-  66%{box-shadow:0 0 0 1.5px rgba(0,255,120,.42),0 0 22px rgba(255,0,100,.15)}
-}
-.spectrum-line{height:1.5px;background:linear-gradient(90deg,transparent 0%,rgba(255,0,100,.80) 12%,rgba(255,165,0,.85) 24%,rgba(255,255,0,.85) 36%,rgba(0,255,100,.85) 48%,rgba(0,150,255,.85) 60%,rgba(150,0,255,.80) 72%,transparent 85%);background-size:200% 100%;animation:holo-sweep 5s linear infinite;opacity:0.38}
-.cta-glow{animation:cta-rainbow-glow 5s ease-in-out infinite}
-.sub-input{width:100%;padding:10px 14px;border-radius:12px;border:1px solid var(--border-color);background:var(--surface-bg);color:var(--text-color);font-size:.875rem;outline:none;transition:border-color .2s,box-shadow .2s}
-.sub-input:focus{border-color:rgba(200,169,107,.65);box-shadow:0 0 0 3px rgba(200,169,107,.12)}
-.sub-label{display:block;font-size:.68rem;font-weight:700;letter-spacing:.20em;text-transform:uppercase;color:var(--muted-color);margin-bottom:7px}
-.cal-day{width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .15s;border:1px solid transparent}
-.cal-day.available{color:var(--text-color)}
-.cal-day.available:hover{background:rgba(34,197,94,.18);border-color:rgba(34,197,94,.35);color:#22c55e}
-.cal-day.available.selected{background:rgba(34,197,94,.22);border-color:rgba(34,197,94,.55);color:#22c55e}
-.cal-day.medium{color:#eab308}
-.cal-day.medium:hover{background:rgba(234,179,8,.18);border-color:rgba(234,179,8,.35)}
-.cal-day.medium.selected{background:rgba(234,179,8,.22);border-color:rgba(234,179,8,.55)}
-.cal-day.full{color:var(--muted-color);opacity:.45;cursor:not-allowed}
-.cal-day.past{color:var(--muted-color);opacity:.3;cursor:not-allowed}
-.cal-day.empty{cursor:default}
-`;
-
 /* ── Section heading ─────────────────────────────────────── */
 function SectionHeading({ icon: Icon, children, step }) {
   return (
@@ -192,9 +167,7 @@ function PackageSlots({ pkgId, date, selectedSlot, onSelectSlot }) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (!date) { setSlots([]); return; }
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (!date) { setSlots([]); return; } // eslint-disable-line react-hooks/set-state-in-effect
     setLoading(true);
     subscriptionsAPI.getSlots({ date, packageId: pkgId })
       .then((data) => setSlots(data || []))
@@ -338,7 +311,6 @@ export default function SubscriptionCheckout() {
   return (
     <>
       <SEO title={`Subscribe — ${plan.name}`} />
-      <style>{CSS}</style>
 
       <div className="min-h-screen py-10 md:py-14"
         style={{ background: 'radial-gradient(circle at 12% 15%,rgba(200,169,107,0.06) 0%,transparent 38%),radial-gradient(circle at 88% 8%,rgba(14,165,160,0.05) 0%,transparent 32%)' }}>

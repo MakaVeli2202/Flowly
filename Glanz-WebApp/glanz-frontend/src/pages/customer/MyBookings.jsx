@@ -688,7 +688,7 @@ function MyBookings() {
 
               {/* Slot-blocked warning */}
               {editSlotWarning && (
-                <div className="rounded-xl border border-amber-500/30 bg-amber-500/8 p-4">
+                <div className="glass-card border-amber-500/30 p-4">
                   <p className="text-sm font-bold text-amber-400 mb-1">{ui.slotNotAvailable}</p>
                   <p className="text-xs text-amber-300/80">{editSlotWarning.message}</p>
                   {editSlotWarning.altSlots?.length > 0 && (
@@ -727,11 +727,11 @@ function MyBookings() {
                   </ul>
                   <div className="flex gap-2">
                     <button type="button" onClick={handleSaveEdit} disabled={editSaving}
-                      className="flex items-center gap-2 premium-btn px-5 py-2 text-sm disabled:opacity-60">
+                      className="flex items-center gap-2 btn-chrome px-5 py-2 text-sm disabled:opacity-60">
                       <Check size={14} /> {editSaving ? 'Saving...' : ui.yesSave}
                     </button>
                     <button type="button" onClick={() => setEditConfirm(false)}
-                      className="px-5 py-2 rounded-xl text-sm font-semibold border border-[var(--border-color)] text-[var(--muted-color)] hover:bg-white/5 transition">
+                      className="btn-ghost-chrome px-5 py-2 text-sm">
                       {ui.goBack}
                     </button>
                   </div>
@@ -741,7 +741,7 @@ function MyBookings() {
                   <button type="button"
                     onClick={() => setEditConfirm(true)}
                     disabled={editForm.packages !== undefined && editForm.packages.length === 0}
-                    className="flex-1 flex items-center justify-center gap-2 premium-btn py-2.5 text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                    className="flex-1 flex items-center justify-center gap-2 btn-chrome py-2.5 text-sm disabled:opacity-50 disabled:cursor-not-allowed">
                     <Check size={14} /> {ui.reviewSave}
                   </button>
                   <button type="button" onClick={() => setEditBooking(null)}
@@ -1082,7 +1082,7 @@ function MyBookings() {
                   </div>
                   <div className="grid sm:grid-cols-2 gap-3">
                     {loyalty.availableCoupons.slice(loyalty.programs?.filter(p => p.bookingsToNext === 0).length ?? 0).map((coupon) => (
-                      <div key={coupon.id} className="rounded-xl border p-4" style={{ borderColor: 'rgba(200,169,107,0.20)', background: 'rgba(200,169,107,0.04)' }}>
+                      <div key={coupon.id} className="glass-card p-4">
                         <p className="text-sm font-semibold text-[var(--heading-color)] mb-2">{coupon.offerName}</p>
                         <div className="flex items-center justify-between gap-2 rounded-lg px-3 py-2 mb-3" style={{ background: 'rgba(0,0,0,0.18)' }}>
                           <code className="text-yellow-300 font-mono text-sm font-bold tracking-widest">{coupon.personalCode}</code>
@@ -1232,7 +1232,7 @@ function MyBookings() {
                             <Star size={13} /> Feedback
                           </button>
                           <button onClick={() => handleBookAgain(booking)}
-                            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold premium-btn">
+                            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold btn-chrome">
                             Book Again <ArrowRight size={13} />
                           </button>
                         </>
@@ -1253,7 +1253,7 @@ function MyBookings() {
             <p className="text-[var(--muted-color)] text-sm mb-6">
               {filterStatus === 'All' ? "You haven't made any bookings yet." : `No ${filterStatus.toLowerCase()} bookings.`}
             </p>
-            <Link to="/booking" className="premium-btn inline-flex items-center gap-2 px-6 py-2.5 text-sm">
+            <Link to="/booking" className="btn-chrome inline-flex items-center gap-2 px-6 py-2.5 text-sm">
               Book Your First Service <ArrowRight size={15} />
             </Link>
           </div>

@@ -4,14 +4,6 @@ import { KeyRound, Mail, AlertCircle, ArrowRight, CheckCircle } from 'lucide-rea
 import SEO from '../../components/shared/SEO';
 import { authAPI } from '../../api/auth';
 
-import { BASE_PRISM_CSS } from '../../styles/authPageStyles';
-
-const PRISM_CSS = `${BASE_PRISM_CSS}
-.field-1    { animation: field-in 0.42s ease 0.30s both; }
-.btn-in     { animation: field-in 0.42s ease 0.48s both; }
-.footer-in  { animation: field-in 0.42s ease 0.60s both; }
-`;
-
 function ForgotPassword() {
   const [searchParams] = useSearchParams();
   const [email,   setEmail]   = useState(searchParams.get('email') || '');
@@ -36,7 +28,7 @@ function ForgotPassword() {
   return (
     <>
       <SEO title="Forgot Password" description="Reset your Glanz account password." noindex />
-      <style>{PRISM_CSS}</style>
+
 
       <div
         className="min-h-screen flex items-center justify-center px-4 py-16 relative"
@@ -138,7 +130,7 @@ function ForgotPassword() {
                     <div className="btn-in pt-1">
                       <div className="cta-prism-glow rounded-2xl">
                         <button type="submit" disabled={loading}
-                          className="premium-btn w-full py-3.5 text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                          className="btn-chrome w-full py-3.5 text-sm disabled:opacity-50 disabled:cursor-not-allowed">
                           {loading ? (
                             <span className="flex items-center justify-center gap-2">
                               <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />

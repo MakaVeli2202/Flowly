@@ -505,35 +505,6 @@ export default function AdminCrm() {
 
   return (
     <div className="p-6 min-h-screen" style={{ background: 'var(--surface-bg)' }}>
-      <style>{`
-        .stat-card { 
-          background: var(--card-bg); 
-          border: 1px solid var(--border-color); 
-          border-radius: 16px; 
-          padding: 20px;
-          transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .stat-card:hover { 
-          transform: translateY(-2px); 
-          box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-        }
-        .segment-badge {
-          display: inline-flex;
-          align-items: center;
-          gap: 4px;
-          padding: 4px 12px;
-          border-radius: 20px;
-          font-size: 12px;
-          font-weight: 600;
-        }
-        .help-card {
-          background: var(--card-bg);
-          border: 1px solid var(--border-color);
-          border-radius: 12px;
-          padding: 16px;
-          margin-bottom: 12px;
-        }
-      `}</style>
 
       <div className="flex items-center justify-between mb-6">
         <div>

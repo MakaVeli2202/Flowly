@@ -5,18 +5,6 @@ import { useLanguage } from '../../context/LanguageContext';
 
 const STORAGE_KEY = 'adminJobPositions';
 
-const PRISM_CSS = `
-@keyframes card-enter{from{transform:translateY(14px) scale(.988);opacity:0}to{transform:translateY(0) scale(1);opacity:1}}
-@keyframes spectrum-float{0%,100%{transform:translate(0,0) rotate(0deg);opacity:.18}33%{transform:translate(12px,-14px) rotate(120deg);opacity:.30}66%{transform:translate(-7px,8px) rotate(240deg);opacity:.22}}
-@keyframes prism-ray-sweep{0%{transform:translateX(-130%) skewX(-15deg);opacity:0}10%{opacity:1}90%{opacity:1}100%{transform:translateX(460%) skewX(-15deg);opacity:0}}
-@keyframes holo-sweep{0%{background-position:0% 50%}100%{background-position:300% 50%}}
-.prism-ray{position:absolute;top:-30%;height:160%;pointer-events:none;transform:skewX(-18deg);background:linear-gradient(90deg,transparent 0%,rgba(255,55,55,.030) 15%,rgba(255,200,0,.042) 30%,rgba(0,255,145,.034) 50%,rgba(0,145,255,.034) 70%,rgba(195,0,255,.026) 85%,transparent 100%)}
-.card-stagger{animation:card-enter .52s cubic-bezier(.22,1,.36,1) both}
-.spectrum-line{height:1.5px;background:linear-gradient(90deg,transparent 0%,rgba(255,0,100,.80) 12%,rgba(255,165,0,.85) 24%,rgba(255,255,0,.85) 36%,rgba(0,255,100,.85) 48%,rgba(0,150,255,.85) 60%,rgba(150,0,255,.80) 72%,transparent 85%);background-size:200% 100%;animation:holo-sweep 5s linear infinite;opacity:.40}
-.field-input{width:100%;padding:10px 14px;border-radius:12px;border:1px solid var(--border-color);background:var(--surface-bg);color:var(--text-color);font-size:.875rem;transition:border-color .2s,box-shadow .2s;outline:none}
-.field-input:focus{border-color:rgba(200,169,107,.65);box-shadow:0 0 0 3px rgba(200,169,107,.12)}
-.field-label{display:block;font-size:.68rem;font-weight:700;letter-spacing:.20em;text-transform:uppercase;color:var(--muted-color);margin-bottom:7px}
-`;
 
 function loadPositions() {
   try {
@@ -148,7 +136,6 @@ export default function AdminJobPositions() {
 
   return (
     <>
-      <style>{PRISM_CSS}</style>
       <div className="min-h-screen py-10 relative"
         style={{ background: 'radial-gradient(circle at 7% 6%, rgba(200,169,107,.05) 0%, transparent 38%), radial-gradient(circle at 93% 92%, rgba(14,165,160,.04) 0%, transparent 32%)' }}>
         <div className="absolute top-0 right-0 w-80 h-64 rounded-full pointer-events-none"

@@ -50,9 +50,7 @@ export function CustomerNavbar({ theme, onToggleTheme }) {
   }, []);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setShowNotifications(false);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setShowNotifications(false); // eslint-disable-line react-hooks/set-state-in-effect
     setShowLangMenu(false);
   }, [location.pathname]);
 
@@ -71,9 +69,7 @@ export function CustomerNavbar({ theme, onToggleTheme }) {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setNotifications([]);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setNotifications([]); // eslint-disable-line react-hooks/set-state-in-effect
       setUnreadCount(0);
       return;
     }
@@ -128,7 +124,7 @@ export function CustomerNavbar({ theme, onToggleTheme }) {
                          flex flex-col items-center
                          pl-6 pr-6 py-3 backdrop-blur-sm
                          ${isOpen ? 'rounded-xl' : 'rounded-full'}
-                         border border-[#333] bg-[#1f1f1f57]
+                         border border-[var(--border-color)] bg-[var(--nav-bg)]
                          w-[calc(100%-2rem)] max-w-6xl
                          transition-[border-radius] duration-0 ease-in-out`}>
 
@@ -163,14 +159,14 @@ export function CustomerNavbar({ theme, onToggleTheme }) {
                 {lang.toUpperCase()}
               </button>
               {showLangMenu && (
-                <div className="absolute right-0 top-full mt-2 w-40 rounded-xl border border-[#333] bg-[#1f1f1f] shadow-2xl z-50 py-1.5">
+                <div className="absolute right-0 top-full mt-2 w-40 rounded-xl border border-[var(--border-color)] bg-[var(--surface-bg)] shadow-2xl z-50 py-1.5">
                   {LANGUAGES.map(l => (
                     <button
                       key={l.code}
                       type="button"
                       onClick={() => { setLang(l.code); setShowLangMenu(false); }}
                       className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-all ${
-                        lang === l.code ? 'text-white' : 'text-gray-300 hover:text-white'
+                        lang === l.code ? 'text-[var(--heading-color)] font-semibold' : 'text-[var(--muted-color)] hover:text-[var(--heading-color)]'
                       }`}
                     >
                       <span>{l.flag}</span>
@@ -208,9 +204,9 @@ export function CustomerNavbar({ theme, onToggleTheme }) {
                   </button>
 
                   {showNotifications && (
-                    <div className="absolute right-0 top-full mt-3 w-96 rounded-xl border border-[#333] bg-[#1f1f1f] shadow-2xl z-50 flex flex-col max-h-[28rem]">
-                      <div className="flex items-center justify-between gap-3 px-4 pt-4 pb-3 border-b border-[#333]">
-                        <p className="text-sm font-bold text-white">{t('notifications')}</p>
+                    <div className="absolute right-0 top-full mt-3 w-96 rounded-xl border border-[var(--border-color)] bg-[var(--surface-bg)] shadow-2xl z-50 flex flex-col max-h-[28rem]">
+                      <div className="flex items-center justify-between gap-3 px-4 pt-4 pb-3 border-b border-[var(--border-color)]">
+                        <p className="text-sm font-bold text-[var(--heading-color)]">{t('notifications')}</p>
                         {unreadCount > 0 && (
                           <button
                             type="button"
@@ -241,7 +237,7 @@ export function CustomerNavbar({ theme, onToggleTheme }) {
                                 <Bell size={14} />
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="text-xs font-bold text-white truncate">{notif.type || 'Notification'}</p>
+                                <p className="text-xs font-bold text-[var(--heading-color)] truncate">{notif.type || 'Notification'}</p>
                                 <p className="text-xs text-gray-400 mt-1 line-clamp-2">{notif.message}</p>
                                 <span className="text-[10px] text-gray-500 mt-1 inline-block">{relativeTime(notif.createdAt)}</span>
                               </div>

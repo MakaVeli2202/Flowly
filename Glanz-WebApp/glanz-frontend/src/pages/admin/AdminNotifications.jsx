@@ -4,77 +4,6 @@ import { useLanguage } from '../../context/LanguageContext';
 import { notificationsAPI } from '../../api/notifications';
 
 /* ── PRISM CSS ─────────────────────────────────────────────── */
-const PRISM_CSS = `
-@keyframes holo-sweep {
-  0%   { background-position: 0% 50%; }
-  100% { background-position: 300% 50%; }
-}
-@keyframes prism-ray-sweep {
-  0%   { transform: translateX(-130%) skewX(-15deg); opacity: 0; }
-  10%  { opacity: 1; }
-  90%  { opacity: 1; }
-  100% { transform: translateX(460%) skewX(-15deg); opacity: 0; }
-}
-@keyframes spectrum-float {
-  0%,100% { transform: translate(0,0) rotate(0deg);           opacity: 0.18; }
-  33%      { transform: translate(10px,-12px) rotate(120deg); opacity: 0.28; }
-  66%      { transform: translate(-6px,7px)   rotate(240deg); opacity: 0.20; }
-}
-@keyframes cta-rainbow-glow {
-  0%,100% { box-shadow: 0 0 0 1.5px rgba(255,80,80,.42),  0 0 22px rgba(255,165,0,.14); }
-  33%      { box-shadow: 0 0 0 1.5px rgba(0,200,255,.42),  0 0 22px rgba(160,0,255,.14); }
-  66%      { box-shadow: 0 0 0 1.5px rgba(0,255,120,.42),  0 0 22px rgba(255,0,100,.14); }
-}
-@keyframes notif-enter {
-  from { transform: translateX(-10px) scale(0.98); opacity: 0; }
-  to   { transform: translateX(0)     scale(1);    opacity: 1; }
-}
-@keyframes bell-float {
-  0%,100% { transform: translateY(0)   rotate(0deg);   }
-  25%      { transform: translateY(-6px) rotate(-8deg); }
-  75%      { transform: translateY(-3px) rotate(6deg);  }
-}
-@keyframes unread-pulse {
-  0%,100% { box-shadow: 0 0 0 0 rgba(200,169,107,0); }
-  50%      { box-shadow: 0 0 0 4px rgba(200,169,107,0.12); }
-}
-
-.prism-cursor-blob {
-  position: fixed; pointer-events: none; z-index: 0;
-  border-radius: 50%; filter: blur(90px); mix-blend-mode: screen;
-  will-change: transform, background;
-}
-.prism-ray {
-  position: absolute; top: -30%; height: 160%; pointer-events: none;
-  transform: skewX(-18deg);
-  background: linear-gradient(90deg,
-    transparent 0%, rgba(255,55,55,.032) 15%, rgba(255,200,0,.044) 30%,
-    rgba(0,255,145,.036) 50%, rgba(0,145,255,.036) 70%,
-    rgba(195,0,255,.028) 85%, transparent 100%);
-}
-.prism-glass { position: relative; overflow: hidden; }
-.prism-glass::after {
-  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
-  background: radial-gradient(circle at var(--px,50%) var(--py,50%),
-    rgba(255,200,80,.10) 0%, rgba(80,255,160,.07) 30%,
-    rgba(40,130,255,.07) 55%, transparent 80%);
-  opacity: 0; transition: opacity 0.32s; mix-blend-mode: screen;
-}
-.prism-glass:hover::after { opacity: 1; }
-.spectrum-line {
-  height: 1.5px;
-  background: linear-gradient(90deg,
-    transparent 0%, rgba(255,0,100,.80) 12%, rgba(255,165,0,.85) 24%,
-    rgba(255,255,0,.85) 36%, rgba(0,255,100,.85) 48%,
-    rgba(0,150,255,.85) 60%, rgba(150,0,255,.80) 72%, transparent 85%);
-  background-size: 200% 100%;
-  animation: holo-sweep 5s linear infinite; opacity: 0.40;
-}
-.cta-prism-glow { animation: cta-rainbow-glow 5s ease-in-out infinite; }
-.notif-enter    { animation: notif-enter 0.42s cubic-bezier(0.22,1,0.36,1) both; }
-.bell-animate   { animation: bell-float 3.2s ease-in-out infinite; }
-.unread-pulse   { animation: unread-pulse 2.8s ease-in-out infinite; }
-`;
 
 /* ── Cursor orb ─────────────────────────────────────────────── */
 function PrismaticCursorOrb() {
@@ -230,7 +159,6 @@ function AdminNotifications() {
   /* ── Render ────────────────────────────────────────────────── */
   return (
     <>
-      <style>{PRISM_CSS}</style>
       <PrismaticCursorOrb />
 
       <div className="min-h-screen py-10 relative"

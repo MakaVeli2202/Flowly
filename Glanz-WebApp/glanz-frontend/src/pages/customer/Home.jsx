@@ -6,7 +6,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import {
   ArrowRight, Star, Shield, Clock, Award, Sparkles, Zap,
   MapPin, ChevronLeft, ChevronRight, ChevronDown, CheckCircle2,
-  CalendarDays, Car, X, RefreshCw, AlertTriangle,
+  CalendarDays, Car, X, RefreshCw, AlertTriangle, Check,
 } from 'lucide-react';
 import { useTheme } from '../../hooks/useTheme';
 import { getSiteContent } from '../../config/siteContent';
@@ -74,668 +74,6 @@ const reviewsAPI = {
     }
   },
 };
-
-/* ── PRISM CSS — Dual-Theme Liquid Glass ─────────────────── */
-const PRISM_CSS = `
-/* ── Keyframes ── */
-@keyframes holo-sweep {
-  0%   { background-position: 0% 50%; }
-  100% { background-position: 300% 50%; }
-}
-@keyframes prism-ray-sweep {
-  0%   { transform: translateX(-130%) skewX(-15deg); opacity: 0; }
-  10%  { opacity: 1; }
-  90%  { opacity: 1; }
-  100% { transform: translateX(460%) skewX(-15deg); opacity: 0; }
-}
-@keyframes spectrum-float {
-  0%,100% { transform: translate(0,0) rotate(0deg);          opacity: 0.28; }
-  33%      { transform: translate(18px,-24px) rotate(120deg); opacity: 0.55; }
-  66%      { transform: translate(-12px,12px) rotate(240deg); opacity: 0.38; }
-}
-@keyframes cta-rainbow-glow {
-  0%,100% { box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--primary) 45%, transparent),
-                        0 0 32px color-mix(in srgb, var(--primary) 18%, transparent); }
-  50%     { box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--secondary) 45%, transparent),
-                        0 0 32px color-mix(in srgb, var(--secondary) 18%, transparent); }
-}
-@keyframes prism-card-glow {
-  0%,100% { box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 35%, transparent),
-                        0 0 24px color-mix(in srgb, var(--primary) 14%, transparent); }
-  50%     { box-shadow: 0 0 0 1px color-mix(in srgb, var(--secondary) 35%, transparent),
-                        0 0 24px color-mix(in srgb, var(--secondary) 14%, transparent); }
-}
-
-/* ── NEW: Liquid glass animations ── */
-@keyframes liquid-shimmer {
-  0%,100% { background-position: 0% 50%; opacity: 0.75; }
-  50%      { background-position: 100% 50%; opacity: 1; }
-}
-@keyframes rain-drop {
-  0%   { transform: translateY(-110%) scaleY(0.6); opacity: 0; }
-  8%   { opacity: 0.55; transform: translateY(0%) scaleY(1); }
-  80%  { opacity: 0.18; }
-  100% { transform: translateY(700%) scaleY(0.4); opacity: 0; }
-}
-@keyframes wet-pulse {
-  0%,100% { opacity: 0.55; }
-  50%      { opacity: 0.85; }
-}
-@keyframes surface-ripple {
-  0%   { transform: scale(0); opacity: 0.6; }
-  100% { transform: scale(3); opacity: 0; }
-}
-
-/* ── Adv bubbles ── */
-@keyframes adv-bubble-float {
-  0% {
-    transform: translate3d(0, 16px, 0) scale(0.88);
-    opacity: 0;
-  }
-  16% {
-    transform: translate3d(var(--bubble-drift-a, -4px), 4px, 0) scale(0.98);
-    opacity: 0.42;
-  }
-  44% {
-    transform: translate3d(var(--bubble-drift-b, 8px), -12px, 0) scale(1.04);
-    opacity: 0.52;
-  }
-  72% {
-    transform: translate3d(var(--bubble-drift-c, -6px), -28px, 0) scale(1.08);
-    opacity: 0.44;
-  }
-  100% {
-    transform: translate3d(var(--bubble-drift-d, 4px), -42px, 0) scale(1.14);
-    opacity: 0;
-  }
-}
-
-.adv-card__droplets {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.adv-card__droplet {
-  --drop-size: 12px;
-  position: absolute;
-  opacity: 0;
-}
-
-.adv-card__droplet::before {
-  content: '';
-  position: absolute;
-  border-radius: 999px;
-  background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.92), rgba(255,255,255,0.14) 72%, transparent 100%);
-  filter: blur(0.5px);
-  opacity: 0.9;
-}
-
-.adv-card__droplet--bubble {
-  --drop-scale-x: 1;
-  --drop-scale-y: 1;
-  --bubble-drift-a: -4px;
-  --bubble-drift-b: 8px;
-  --bubble-drift-c: -6px;
-  --bubble-drift-d: 4px;
-  width: var(--drop-size);
-  height: var(--drop-size);
-  border-radius: 50%;
-  background:
-    radial-gradient(circle at 30% 30%, rgba(255,255,255,0.88) 0%, rgba(255,255,255,0.18) 16%, rgba(164,214,255,0.12) 44%, rgba(236,184,255,0.09) 63%, rgba(120,155,190,0.05) 78%, transparent 100%),
-    radial-gradient(circle at 68% 72%, rgba(130,255,220,0.08), transparent 52%);
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,0.22),
-    inset 0 -2px 5px rgba(100,130,160,0.10),
-    0 0 12px rgba(255,255,255,0.10),
-    0 0 20px rgba(184,223,255,0.10);
-  filter: blur(0.2px) saturate(1.08);
-  animation: adv-bubble-float 8.5s ease-in-out infinite;
-}
-
-.adv-card__droplet--bubble::before {
-  top: 18%;
-  left: 20%;
-  width: 30%;
-  height: 30%;
-  opacity: 0.72;
-}
-
-.adv-card__droplet--bubble::after {
-  display: none;
-}
-
-/* ── Cursor orb ── */
-.prism-cursor-blob {
-  position: fixed; pointer-events: none; z-index: 0;
-  border-radius: 50%; filter: blur(100px); mix-blend-mode: screen;
-  will-change: transform, background;
-}
-
-/* ══ GLASS CARD — theme-aware via CSS variables ══ */
-.glass-card {
-  background: var(--glass-card-bg) !important;
-  backdrop-filter: blur(36px) saturate(210%) brightness(1.08) !important;
-  -webkit-backdrop-filter: blur(36px) saturate(210%) brightness(1.08) !important;
-  border: 1px solid var(--border-color) !important;
-  box-shadow: var(--glass-card-shadow) !important;
-  position: relative;
-}
-
-/* Wet-glass top specular — mimics light through rain-streaked glass */
-.lq-top {
-  position: absolute; top: 0; left: 0; right: 0; height: 42%; pointer-events: none; z-index: 0;
-  background: linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.025) 55%, transparent 100%);
-  border-radius: inherit;
-  animation: wet-pulse 7s ease-in-out infinite;
-}
-
-/* Iridescent top shimmer line */
-.lq-bar {
-  position: absolute; top: 0; left: 0; right: 0; height: 1.5px; pointer-events: none; z-index: 1;
-  background: linear-gradient(90deg,
-    transparent 0%, var(--primary) 18%, rgba(255,255,255,1) 38%,
-    var(--secondary) 58%, color-mix(in srgb, var(--primary) 70%, transparent) 80%, transparent 100%);
-  background-size: 200% 100%;
-  animation: liquid-shimmer 5s ease-in-out infinite;
-}
-
-/* Rain-drop streak decorators */
-.lq-r1, .lq-r2, .lq-r3, .lq-r4 {
-  position: absolute; pointer-events: none; z-index: 0;
-  width: 1px; border-radius: 999px;
-  background: linear-gradient(180deg,
-    transparent 0%, rgba(255,255,255,0.50) 35%, color-mix(in srgb, var(--primary) 28%, transparent) 70%, transparent 100%);
-}
-.lq-r1 { animation: rain-drop 3.0s ease-in infinite 0.3s;  height: 65px; top: -65px; left: 12%; }
-.lq-r2 { animation: rain-drop 3.8s ease-in infinite 1.5s;  height: 85px; top: -85px; left: 38%; }
-.lq-r3 { animation: rain-drop 2.7s ease-in infinite 0.9s;  height: 55px; top: -55px; left: 64%; }
-.lq-r4 { animation: rain-drop 4.1s ease-in infinite 2.2s;  height: 75px; top: -75px; left: 82%; }
-
-/* ── Service cards: premium liquid glass ── */
-.service-liquid-card,
-.service-liquid-card-mobile {
-  background: rgba(5, 10, 18, 0.50) !important;
-  backdrop-filter: blur(38px) saturate(215%) brightness(1.08) !important;
-  -webkit-backdrop-filter: blur(38px) saturate(215%) brightness(1.08) !important;
-  border: 1px solid rgba(255,255,255,0.14) !important;
-  box-shadow:
-    inset 0 1.5px 0 rgba(255,255,255,0.20),
-    inset 0 -1px 0 rgba(0,0,0,0.20),
-    0 0 0 0.5px color-mix(in srgb, var(--primary) 24%, transparent),
-    0 32px 72px rgba(0,0,0,0.52),
-    0 0 84px color-mix(in srgb, var(--primary) 10%, transparent),
-    0 0 66px color-mix(in srgb, var(--secondary) 8%, transparent) !important;
-}
-
-.service-liquid-card::before,
-.service-liquid-card-mobile::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  z-index: 0;
-  background: linear-gradient(
-    145deg,
-    rgba(255,255,255,0.14) 0%,
-    rgba(255,255,255,0.045) 24%,
-    transparent 56%,
-    color-mix(in srgb, var(--secondary) 5%, transparent) 100%
-  );
-}
-
-.service-liquid-card:hover,
-.service-liquid-card-mobile:hover {
-  border-color: rgba(255,255,255,0.2) !important;
-  box-shadow:
-    inset 0 1.5px 0 rgba(255,255,255,0.22),
-    inset 0 -1px 0 rgba(0,0,0,0.22),
-    0 0 0 0.5px color-mix(in srgb, var(--primary) 32%, transparent),
-    0 36px 88px rgba(0,0,0,0.56),
-    0 0 104px color-mix(in srgb, var(--primary) 14%, transparent),
-    0 0 78px color-mix(in srgb, var(--secondary) 10%, transparent) !important;
-}
-[data-theme='light'] .service-liquid-card,
-[data-theme='light'] .service-liquid-card-mobile {
-  background: rgba(255, 255, 255, 0.76) !important;
-  border: 1px solid color-mix(in srgb, var(--primary) 18%, transparent) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.95),
-    0 0 0 0.5px color-mix(in srgb, var(--primary) 18%, transparent),
-    0 16px 48px rgba(10,13,36,0.14) !important;
-}
-
-/* ── Prism ray ── */
-.prism-ray {
-  position: absolute; top: -30%; height: 160%; pointer-events: none;
-  transform: skewX(-18deg);
-  background: linear-gradient(90deg,
-    transparent 0%, rgba(255,55,55,.065) 15%, rgba(255,200,0,.09) 30%,
-    rgba(0,255,145,.08) 50%, rgba(0,145,255,.08) 70%,
-    rgba(195,0,255,.06) 85%, transparent 100%);
-}
-
-/* ── Prism glass hover ── */
-.prism-glass { position: relative; overflow: hidden; transition: box-shadow 0.45s ease; }
-.prism-glass::after {
-  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
-  background: radial-gradient(
-    circle at var(--px,50%) var(--py,50%),
-    color-mix(in srgb, var(--primary) 22%, transparent) 0%,
-    color-mix(in srgb, var(--secondary) 16%, transparent) 50%,
-    transparent 80%
-  );
-  opacity: 0; transition: opacity 0.3s; mix-blend-mode: screen;
-}
-.prism-glass:hover::after { opacity: 1; }
-.prism-glass:hover        { animation: prism-card-glow 4s ease-in-out infinite; }
-
-/* ── Area chips ── */
-.area-chip-glow { position: relative; overflow: hidden; transition: transform 0.25s ease, box-shadow 0.3s ease; }
-.area-chip-glow::before {
-  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
-  background: linear-gradient(135deg,rgba(255,0,100,0) 0%,rgba(255,165,0,0) 33%,rgba(0,255,100,0) 66%,rgba(0,150,255,0) 100%);
-  opacity: 0; transition: opacity 0.35s, background 0.45s;
-}
-.area-chip-glow:hover {
-  transform: translateY(-4px) scale(1.08); border-color: rgba(255,255,255,.40) !important;
-  box-shadow: 0 0 24px rgba(255,100,0,.36), 0 0 44px rgba(0,255,150,.26),
-    0 0 64px rgba(0,100,255,.20), inset 0 0 22px rgba(255,220,0,.10);
-}
-.area-chip-glow:hover::before {
-  background: linear-gradient(135deg,rgba(255,0,100,.18) 0%,rgba(255,165,0,.18) 33%,rgba(0,255,100,.18) 66%,rgba(0,150,255,.18) 100%);
-  opacity: 1;
-}
-
-/* ── Feature cards — static, no hover ── */
-.feature-card                { cursor: default; }
-.feature-card:hover          { transform: none !important; animation: none !important; }
-.feature-card:hover::after   { opacity: 0 !important; }
-
-/* ── Stat holo ── */
-.stat-holo { position: relative; overflow: hidden; }
-.stat-holo::before {
-  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
-  background: linear-gradient(125deg,
-    rgba(255,0,100,.11) 0%, rgba(255,165,0,.11) 20%, rgba(255,255,0,.11) 40%,
-    rgba(0,255,100,.11) 60%, rgba(0,150,255,.11) 80%, rgba(150,0,255,.11) 100%);
-  background-size: 300% 300%;
-  animation: holo-sweep 8s ease infinite; mix-blend-mode: screen; opacity: 0; transition: opacity 0.4s;
-}
-.stat-holo:hover::before { opacity: 1; }
-
-/* ── CTA / spectrum ── */
-.cta-prism-glow { animation: cta-rainbow-glow 5s ease-in-out infinite; border-radius: inherit; }
-.cta-prism-glow > .glass-card {
-  border: none !important;
-}
-.spectrum-line {
-  height: 1.5px;
-  background: linear-gradient(90deg,
-    transparent 0%, rgba(200,169,107,0.70) 20%,
-    rgba(212,144,58,0.60) 50%,
-    rgba(200,169,107,0.70) 80%, transparent 100%);
-  background-size: 200% 100%;
-  animation: holo-sweep 5s linear infinite;
-  opacity: 0.65;
-  width: 100%;
-}
-[data-theme='light'] .spectrum-line {
-  background: linear-gradient(90deg,
-    transparent 0%, rgba(168,136,255,0.75) 15%,
-    rgba(255,126,200,0.60) 35%,
-    rgba(92,199,245,0.70) 55%,
-    rgba(142,235,202,0.55) 72%,
-    rgba(168,136,255,0.75) 88%, transparent 100%);
-  opacity: 0.70;
-}
-
-/* ── Review card liquid glass ── */
-.review-liquid {
-  background: var(--glass-card-bg) !important;
-  backdrop-filter: blur(36px) saturate(200%) brightness(1.06) !important;
-  -webkit-backdrop-filter: blur(36px) saturate(200%) brightness(1.06) !important;
-  border: 1px solid var(--border-color) !important;
-  box-shadow:
-    inset 0 1.5px 0 rgba(255,255,255,0.12),
-    0 0 0 0.5px color-mix(in srgb, var(--primary) 18%, transparent),
-    0 16px 44px rgba(0,0,0,0.50),
-    0 0 60px color-mix(in srgb, var(--primary) 5%, transparent) !important;
-  position: relative; overflow: hidden;
-}
-
-/* ══ Dark-mode video hero glass card ══ */
-.hero-glass {
-  position: relative; overflow: hidden;
-  border-radius: 24px;
-  background: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.12),
-    0 0 0 0.5px rgba(200,169,107,0.20),
-    0 32px 80px rgba(0,0,0,0.60);
-}
-.hero-animate   { opacity: 0; animation: hero-fade-up 0.8s cubic-bezier(0.22,1,0.36,1) forwards; }
-.hero-animate-1 { animation-delay: 0.15s; }
-.hero-animate-2 { animation-delay: 0.30s; }
-.hero-animate-3 { animation-delay: 0.45s; }
-.hero-animate-4 { animation-delay: 0.60s; }
-@keyframes hero-fade-up {
-  from { opacity: 0; transform: translateY(20px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-/* Light-mode hero glass card — frosted chrome on video */
-.hero-glass-light {
-  position: relative; overflow: hidden;
-  border-radius: 24px;
-  background: rgba(168, 136, 255, 0.07);
-  backdrop-filter: blur(40px) saturate(230%) brightness(1.20);
-  -webkit-backdrop-filter: blur(40px) saturate(230%) brightness(1.20);
-  border: 1px solid rgba(255, 255, 255, 0.38);
-  box-shadow:
-    inset 0 1.5px 0 rgba(255,255,255,0.72),
-    inset 0 -1px 0 rgba(168,136,255,0.22),
-    0 0 0 0.5px rgba(168,136,255,0.40),
-    0 32px 80px rgba(0,0,0,0.36),
-    0 0 80px rgba(168,136,255,0.22),
-    0 0 48px rgba(92,199,245,0.16);
-}
-
-/* Chrome headline — white-to-lavender, readable on video */
-.hero-chrome-headline {
-  font-family: 'Cormorant Garamond', Georgia, serif;
-  font-weight: 700; font-size: clamp(44px, 6vw, 88px);
-  line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 28px;
-  background: linear-gradient(180deg,
-    #ffffff 0%, #e0d4ff 28%, #c4b0ff 50%, #e0d4ff 72%, #ffffff 100%);
-  -webkit-background-clip: text; background-clip: text;
-  -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 2px 12px rgba(0,0,0,0.50));
-}
-
-/* ═══════════════════════════════════════
-   HERO — Chrome / Holographic (LIGHT)
-═══════════════════════════════════════ */
-.hero-chrome {
-  position: relative; min-height: 100vh;
-  display: flex; align-items: center; justify-content: center;
-  padding: 120px 0 80px; overflow: hidden;
-  background: var(--hero-bg);
-}
-
-.hero-aurora {
-  position: absolute; inset: -200px; pointer-events: none; filter: blur(80px);
-  background:
-    radial-gradient(circle at 22% 30%, rgba(255,126,200,0.48), transparent 35%),
-    radial-gradient(circle at 78% 22%, rgba(168,136,255,0.46), transparent 35%),
-    radial-gradient(circle at 50% 78%, rgba(92,199,245,0.40), transparent 38%),
-    radial-gradient(circle at 12% 88%, rgba(142,235,202,0.32), transparent 40%);
-  animation: orb-drift 20s ease-in-out infinite;
-}
-[data-theme='light'] .hero-aurora { opacity: 0.75; mix-blend-mode: multiply; }
-[data-theme='dark']  .hero-aurora { opacity: 0.65; mix-blend-mode: screen; }
-
-.hero-grid {
-  position: absolute; inset: 0; pointer-events: none;
-  background-image:
-    linear-gradient(var(--border-color) 1px, transparent 1px),
-    linear-gradient(90deg, var(--border-color) 1px, transparent 1px);
-  background-size: 80px 80px;
-  mask-image: radial-gradient(circle at 50% 40%, black 0%, transparent 75%);
-  -webkit-mask-image: radial-gradient(circle at 50% 40%, black 0%, transparent 75%);
-}
-
-.hero-chrome__inner {
-  position: relative; z-index: 5;
-  display: flex; flex-direction: column; align-items: center;
-  text-align: center; max-width: 900px; margin: 0 auto;
-}
-
-.hero-logo-wrap { position: relative; display: flex; justify-content: center; margin-bottom: 36px; }
-.hero-logo-img {
-  height: 200px; width: auto;
-  filter: drop-shadow(0 0 60px rgba(168,136,255,0.5)) drop-shadow(0 0 30px rgba(92,199,245,0.4));
-  position: relative; z-index: 2;
-}
-[data-theme='dark'] .hero-logo-img {
-  filter:
-    drop-shadow(0 0 60px color-mix(in srgb, var(--primary) 50%, transparent))
-    drop-shadow(0 0 30px color-mix(in srgb, var(--secondary) 40%, transparent));
-}
-.hero-logo-rings {
-  position: absolute; top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  width: 420px; height: 420px; pointer-events: none;
-}
-.hero-logo-rings::before, .hero-logo-rings::after {
-  content: ''; position: absolute; inset: 0; border-radius: 50%; border: 1px solid;
-  border-color: rgba(255,126,200,0.22) rgba(168,136,255,0.22) rgba(92,199,245,0.22) rgba(142,235,202,0.22);
-  animation: rim-rotate 30s linear infinite;
-}
-.hero-logo-rings::after { inset: 40px; animation-duration: 22s; animation-direction: reverse; opacity: 0.6; }
-
-.hero-eyebrow-row { display: flex; align-items: center; gap: 16px; margin-bottom: 28px; }
-.hero-eyebrow {
-  font-size: 11px; font-weight: 700; letter-spacing: 0.30em; text-transform: uppercase;
-  background: var(--holo-gradient); background-size: 200% 100%;
-  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
-  filter: brightness(1.1) saturate(1.2);
-  animation: holo-flow 8s ease-in-out infinite;
-}
-.hero-eyebrow-rule { width: 48px; height: 1px; }
-.hero-eyebrow-rule--l { background: linear-gradient(90deg, transparent, rgba(168,136,255,0.7)); }
-.hero-eyebrow-rule--r { background: linear-gradient(90deg, rgba(92,199,245,0.7), transparent); }
-
-.hero-headline {
-  font-family: 'Cormorant Garamond', Georgia, serif;
-  font-weight: 700; font-size: clamp(44px, 6vw, 90px);
-  line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 28px;
-  color: var(--heading-color);
-}
-.chrome-text {
-  background: var(--chrome-vertical);
-  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 1px 0 rgba(255,255,255,0.25)) drop-shadow(0 -1px 0 rgba(0,0,0,0.35));
-}
-[data-theme='light'] .chrome-text {
-  filter: drop-shadow(0 1px 0 rgba(255,255,255,0.6)) drop-shadow(0 -1px 0 rgba(10,13,36,0.25));
-}
-
-.hero-rule { width: 80px; height: 1px; margin: 0 auto 28px; background: linear-gradient(90deg, transparent, var(--primary), transparent); }
-.hero-sub { font-size: 17px; line-height: 1.6; color: var(--text-color); max-width: 580px; margin: 0 auto 40px; }
-.hero-ctas { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 56px; }
-
-/* ── btn-chrome: silver liquid chrome pill (light mode) ── */
-.btn-chrome {
-  display: inline-flex; align-items: center; gap: 10px;
-  padding: 14px 28px; font-weight: 700; font-size: 15px; color: #0a0d20;
-  background: linear-gradient(90deg,#b9bdcc 0%,#f6f7fa 22%,#e0e2ea 50%,#f6f7fa 78%,#b9bdcc 100%);
-  background-size: 200% 100%;
-  border: 1px solid rgba(255,255,255,0.85); border-radius: 999px;
-  box-shadow:
-    inset 0 1.5px 0 rgba(255,255,255,0.95),
-    inset 0 -2px 4px rgba(0,0,0,0.14),
-    0 8px 28px -6px rgba(0,0,0,0.38),
-    0 0 28px -8px rgba(168,136,255,0.45),
-    0 0 20px -6px rgba(92,199,245,0.38);
-  transition: transform 0.25s ease, box-shadow 0.25s ease, background-position 0.5s ease;
-  cursor: pointer; text-decoration: none;
-}
-.btn-chrome:hover {
-  transform: translateY(-2px); background-position: 100% 0%;
-  box-shadow:
-    inset 0 1.5px 0 rgba(255,255,255,1),
-    inset 0 -2px 4px rgba(0,0,0,0.18),
-    0 14px 38px -6px rgba(0,0,0,0.45),
-    0 0 40px -8px rgba(255,126,200,0.55),
-    0 0 32px -6px rgba(92,199,245,0.55);
-}
-.btn-chrome:active { transform: translateY(0px) scale(0.985); transition-duration: 0.08s; }
-
-/* ── dark mode: gold chrome override ── */
-[data-theme='dark'] .btn-chrome {
-  background: linear-gradient(135deg,#e8c97a 0%,#c8a96b 28%,#a07840 52%,#c8a96b 76%,#e8c97a 100%);
-  background-size: 200% 100%;
-  color: #0d0f14;
-  border: 1px solid rgba(232,201,122,0.65);
-  box-shadow:
-    inset 0 1.5px 0 rgba(255,255,255,0.5),
-    inset 0 -2px 4px rgba(0,0,0,0.25),
-    0 8px 28px -6px rgba(200,169,107,0.45),
-    0 0 32px -8px rgba(212,144,58,0.38);
-}
-[data-theme='dark'] .btn-chrome:hover {
-  transform: translateY(-2px); background-position: 100% 0%;
-  box-shadow:
-    inset 0 1.5px 0 rgba(255,255,255,0.6),
-    inset 0 -2px 4px rgba(0,0,0,0.28),
-    0 14px 40px -6px rgba(200,169,107,0.60),
-    0 0 50px -8px rgba(212,144,58,0.55);
-}
-
-.btn-ghost-chrome {
-  display: inline-flex; align-items: center; gap: 8px;
-  padding: 13px 24px; font-weight: 600; font-size: 14px;
-  color: var(--heading-color); background: transparent;
-  border: 1.5px solid rgba(150,155,175,0.55); border-radius: 999px;
-  transition: all 0.25s ease; cursor: pointer; text-decoration: none;
-}
-.btn-ghost-chrome:hover {
-  background: rgba(150,155,175,0.10);
-  border-color: rgba(150,155,175,0.90);
-  box-shadow: 0 0 18px -4px rgba(168,136,255,0.30);
-}
-[data-theme='dark'] .btn-ghost-chrome {
-  border-color: rgba(200,169,107,0.45);
-  color: var(--heading-color);
-}
-[data-theme='dark'] .btn-ghost-chrome:hover {
-  background: rgba(200,169,107,0.08);
-  border-color: rgba(200,169,107,0.80);
-  box-shadow: 0 0 18px -4px rgba(200,169,107,0.35);
-}
-
-.hero-trust { display: flex; align-items: center; justify-content: center; gap: 24px; flex-wrap: wrap; font-size: 13px; color: var(--muted-color); }
-.hero-trust strong { color: var(--heading-color); font-weight: 600; }
-.hero-trust__stars { display: inline-flex; gap: 2px; align-items: center; }
-.hero-trust__stars > span { margin-left: 8px; }
-.hero-trust__star { color: var(--holo-cyan); fill: var(--holo-cyan); }
-.hero-trust__dot { width: 4px; height: 4px; border-radius: 50%; background: var(--border-color-strong); }
-.hero-trust__loc { display: inline-flex; align-items: center; gap: 6px; }
-
-.droplet {
-  position: absolute; width: 8px; height: 12px;
-  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
-  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9) 0%, rgba(168,136,255,0.55) 40%, rgba(92,199,245,0.35) 70%, transparent 100%);
-  box-shadow: inset -1px -1px 2px rgba(0,0,0,0.2), 0 0 8px rgba(168,136,255,0.5);
-  pointer-events: none; animation: water-bead 6s ease-in infinite;
-}
-.droplet--sm { width: 6px; height: 9px; animation-duration: 7s; }
-.droplet--lg { width: 10px; height: 14px; animation-duration: 8s; }
-
-.hero-scroll-indicator {
-  position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%);
-  display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: 5;
-}
-.hero-scroll-indicator__icon {
-  width: 28px; height: 28px; border-radius: 50%;
-  border: 1px solid var(--border-color-strong);
-  display: flex; align-items: center; justify-content: center; color: var(--muted-color);
-}
-.hero-scroll-indicator > span { font-size: 10px; letter-spacing: 0.22em; color: var(--muted-color); text-transform: uppercase; }
-
-@keyframes water-bead {
-  0%   { transform: translateY(0) scale(1); opacity: 0; }
-  10%  { opacity: 0.8; }
-  100% { transform: translateY(-160px) scale(0.4); opacity: 0; }
-}
-@keyframes rim-rotate { to { transform: translate(-50%, -50%) rotate(360deg); } }
-@keyframes orb-drift {
-  0%, 100% { transform: translate(0,0) rotate(0deg); }
-  50%      { transform: translate(40px,-30px) rotate(180deg); }
-}
-@keyframes holo-flow {
-  0%, 100% { background-position: 0% 50%; }
-  50%      { background-position: 100% 50%; }
-}
-
-@media (max-width: 640px) {
-  .hero-logo-img { height: 140px; }
-  .hero-logo-rings { width: 300px; height: 300px; }
-  .hero-eyebrow-rule { width: 32px; }
-}
-
-
-/* ── Chrome composition over video (light mode) ── */
-.hero-aurora--video {
-  position: absolute; inset: -200px; pointer-events: none; filter: blur(80px);
-  opacity: 0.75; mix-blend-mode: screen;
-  background:
-    radial-gradient(circle at 22% 30%, rgba(255,126,200,0.55), transparent 35%),
-    radial-gradient(circle at 78% 22%, rgba(168,136,255,0.55), transparent 35%),
-    radial-gradient(circle at 50% 78%, rgba(92,199,245,0.50), transparent 38%),
-    radial-gradient(circle at 12% 88%, rgba(142,235,202,0.40), transparent 40%);
-  animation: orb-drift 20s ease-in-out infinite;
-}
-
-.hero-headline--on-video .chrome-text {
-  filter:
-    drop-shadow(0 2px 12px rgba(0,0,0,0.55))
-    drop-shadow(0 1px 0 rgba(255,255,255,0.35))
-    drop-shadow(0 -1px 0 rgba(0,0,0,0.5));
-}
-
-.hero-sub--on-video {
-  color: rgba(255,255,255,0.82) !important;
-  text-shadow: 0 2px 12px rgba(0,0,0,0.55);
-}
-
-.btn-ghost-chrome--on-video {
-  color: #ffffff !important;
-  border-color: rgba(255,255,255,0.45) !important;
-}
-.btn-ghost-chrome--on-video:hover {
-  background: rgba(255,255,255,0.10) !important;
-  border-color: #ffffff !important;
-}
-
-.hero-trust--on-video { color: rgba(255,255,255,0.65) !important; }
-.hero-trust--on-video strong { color: #ffffff !important; }
-.hero-trust--on-video .hero-trust__dot { background: rgba(255,255,255,0.30) !important; }
-
-.hero-scroll-indicator--on-video > span { color: rgba(255,255,255,0.55) !important; }
-.hero-scroll-indicator--on-video .hero-scroll-indicator__icon {
-  border-color: rgba(255,255,255,0.30) !important;
-  color: rgba(255,255,255,0.75) !important;
-}
-
-/* Chrome headline — targets the inner animated span inside WordReveal */
-.hero-chrome-title .word-clip > span {
-  display: inline-block;
-  background: linear-gradient(180deg,
-    #ffffff 0%, #e8e8e8 20%, #ffffff 38%,
-    #b8b8b8 55%, #e0e0e0 72%, #ffffff 88%, #c0c0c0 100%);
-  -webkit-background-clip: text; background-clip: text;
-  -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 2px 12px rgba(0,0,0,0.70));
-}
-
-/* Gold metallic headline — dark mode */
-.hero-gold-title .word-clip > span {
-  display: inline-block;
-  background: linear-gradient(180deg,
-    #f5dfa0 0%, #c8a96b 20%, #f0d080 40%,
-    #a88442 58%, #d4a855 75%, #f5dfa0 88%, #b8922e 100%);
-  -webkit-background-clip: text; background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-`;
 
 /* ── Prismatic cursor orb — RAF + lerp ───────────────────── */
 function PrismaticCursorOrb() {
@@ -867,7 +205,7 @@ function useCountUp(target, duration = 2000, started = false) {
 function StatCard({ number, suffix, label, started }) {
   const count = useCountUp(number, 2000, started);
   return (
-    <div className={`stat-card stat-holo${started ? ' stat-glow' : ''}`}>
+    <div className="stat-card stat-holo">
       <span className="stat-number">{count}{suffix}</span>
       <span className="stat-label">{label}</span>
     </div>
@@ -1029,7 +367,6 @@ const DOTS = [
 const PAGE_BG = [
   'radial-gradient(circle at 10% 15%, color-mix(in srgb, var(--primary) 18%, transparent), transparent 34%)',
   'radial-gradient(circle at 85% 8%, color-mix(in srgb, var(--secondary) 14%, transparent), transparent 30%)',
-  'linear-gradient(160deg, var(--surface-bg) 0%, var(--surface-bg-alt) 52%, var(--surface-bg) 100%)',
 ].join(', ');
 
 const HOME_UI_BY_LANG = {
@@ -1216,47 +553,6 @@ function Home() {
   // Tracks live package count for GSAP counter callback (avoids stale closure)
   const packageCountRef   = useRef(2);
 
-  // Loading states
-  const [loading, setLoading] = useState({
-    stats: true,
-    reviews: true,
-    packages: true,
-    services: true,
-  });
-  
-  // Error states with retry
-  const [errors, setErrors] = useState({
-    stats: null,
-    reviews: null,
-    packages: null,
-    services: null,
-  });
-
-  const retryFetch = (type) => {
-    setErrors(prev => ({ ...prev, [type]: null }));
-    setLoading(prev => ({ ...prev, [type]: true }));
-    
-    const fetchMap = {
-      stats: () => statsAPI.getPublic(),
-      reviews: () => reviewsAPI.getPublic(),
-      packages: () => packagesAPI.getAll(lang).then(data => data.filter(p => p.isActive)),
-      services: () => servicesAPI.getAll(lang).then(data => (data || []).filter(s => s.isActive !== false)),
-    };
-    
-    fetchMap[type]()
-      .then(data => {
-        if (type === 'stats') setStats(data);
-        else if (type === 'reviews') setReviews(data);
-        else if (type === 'packages') {
-          packageCountRef.current = Array.isArray(data) && data.length > 0 ? data.length : 3;
-          setPackages(data);
-        } else if (type === 'services') {
-          setServices(Array.isArray(data) ? data : []);
-        }
-      })
-      .catch(err => setErrors(prev => ({ ...prev, [type]: err.message })))
-      .finally(() => setLoading(prev => ({ ...prev, [type]: false })));
-  };
 
   /* ── Data fetching — parallelized ── */
   useEffect(() => {
@@ -1285,12 +581,8 @@ function Home() {
         return active;
       }).catch(() => []),
     ])
-      .then(() => {
-        setLoading({ stats: false, reviews: false, packages: false, services: false });
-      })
       .catch((err) => {
         console.error('Home page data fetch error:', err);
-        setLoading({ stats: false, reviews: false, packages: false, services: false });
       });
   }, [lang]);
 
@@ -1543,7 +835,7 @@ function Home() {
 
   // Service highlights: prefer real API packages, fallback to static cards.
   const serviceHighlights = packages.length > 0
-    ? packages.map(pkg => ({
+    ? packages.map((pkg, index) => ({
         title: pickLocalizedField(pkg, 'name', lang) || pkg.name,
         description: pickLocalizedField(pkg, 'description', lang) || pkg.description || '',
         features: pkg.services?.map(s => (
@@ -1555,12 +847,16 @@ function Home() {
         cta: ui.bookNow,
         link: '/booking',
         pkg,
+        price: pkg.price ?? null,
+        popular: pkg.popular ?? false,
       }))
-    : fallbackHighlights.map(item => ({
+    : fallbackHighlights.map((item, index) => ({
         ...item,
         cta: ui.bookNow,
         link: '/booking',
         pkg: null,
+        price: item.price ?? null,
+        popular: index === 1,
       }));
 
   /* ══════════════════════════════════════════════════════════
@@ -1573,13 +869,12 @@ function Home() {
         description="Glanz offers premium mobile car detailing across Qatar — exterior, interior, ceramic coating and more. We come to you. Book online today."
         jsonLd={buildLocalBusinessLd()}
       />
-      <style>{PRISM_CSS}</style>
       <PrismaticCursorOrb />
 
       {/* ══ HERO — Video (both themes) ══ */}
       <section ref={heroSectionRef} className="relative min-h-screen flex items-center justify-center overflow-hidden">
         {/* YouTube background video */}
-        <div className="absolute inset-0 bg-black overflow-hidden" style={{ pointerEvents: 'none' }}>
+        <div className={`absolute inset-0 overflow-hidden ${theme === 'light' ? 'bg-transparent' : 'bg-black'}`} style={{ pointerEvents: 'none' }}>
           <iframe
             className="absolute"
             style={{
@@ -1594,34 +889,31 @@ function Home() {
             title="Hero background"
           />
         </div>
-        {/* Cinematic overlay */}
-        <div className="absolute inset-0" style={{
-          background: theme === 'light'
-            ? [
-                'radial-gradient(ellipse 90% 80% at 50% 55%, rgba(0,0,0,0.50) 0%, rgba(0,0,0,0.92) 100%)',
-                'linear-gradient(to bottom, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.55) 38%, rgba(0,0,0,0.95) 100%)',
-              ].join(', ')
-            : [
-                'radial-gradient(ellipse 90% 80% at 50% 55%, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.60) 100%)',
-                'linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.10) 38%, rgba(0,0,0,0.70) 100%)',
-              ].join(', '),
-        }} />
-        {/* Ambient orbs — holo in light, gold in dark */}
-        <div className="absolute -top-28 -right-28 w-[560px] h-[560px] rounded-full pointer-events-none" style={{
-          background: theme === 'light'
-            ? 'conic-gradient(from 0deg,rgba(168,136,255,.20),rgba(255,126,200,.12),rgba(92,199,245,.16),rgba(142,235,202,.12),rgba(168,136,255,.20))'
-            : 'conic-gradient(from 0deg,rgba(200,169,107,.18),rgba(168,132,60,.08),rgba(200,169,107,.14),rgba(240,208,128,.10))',
-          filter: 'blur(88px)', animation: 'spectrum-float 16s ease-in-out infinite',
-        }} />
-        <div className="absolute -bottom-36 -left-24 w-[460px] h-[460px] rounded-full pointer-events-none" style={{
-          background: theme === 'light'
-            ? 'conic-gradient(from 180deg,rgba(92,199,245,.18),rgba(168,136,255,.14),rgba(255,126,200,.14),rgba(92,199,245,.18))'
-            : 'conic-gradient(from 180deg,rgba(168,132,60,.14),rgba(200,169,107,.12),rgba(240,208,128,.08),rgba(200,169,107,.14))',
-          filter: 'blur(88px)', animation: 'spectrum-float 19s ease-in-out 5s infinite',
-        }} />
+        {/* Cinematic overlay — dark only; light = no veil so video shows raw */}
+        {theme !== 'light' && (
+          <div className="absolute inset-0" style={{
+            background: [
+              'radial-gradient(ellipse 90% 80% at 50% 55%, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.60) 100%)',
+              'linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.10) 38%, rgba(0,0,0,0.70) 100%)',
+            ].join(', '),
+          }} />
+        )}
+        {/* Ambient orbs — dark only */}
+        {theme !== 'light' && (
+          <>
+            <div className="absolute -top-28 -right-28 w-[560px] h-[560px] rounded-full pointer-events-none" style={{
+              background: 'conic-gradient(from 0deg,rgba(200,169,107,.18),rgba(168,132,60,.08),rgba(200,169,107,.14),rgba(240,208,128,.10))',
+              filter: 'blur(88px)', animation: 'spectrum-float 16s ease-in-out infinite',
+            }} />
+            <div className="absolute -bottom-36 -left-24 w-[460px] h-[460px] rounded-full pointer-events-none" style={{
+              background: 'conic-gradient(from 180deg,rgba(168,132,60,.14),rgba(200,169,107,.12),rgba(240,208,128,.08),rgba(200,169,107,.14))',
+              filter: 'blur(88px)', animation: 'spectrum-float 19s ease-in-out 5s infinite',
+            }} />
+          </>
+        )}
 
         <div className="container mx-auto px-4 relative z-10 py-16 md:py-20 flex flex-col items-center">
-          <div ref={heroCardRef} className="hero-glass max-w-5xl w-full mx-auto" style={{ willChange: 'transform' }}>
+          <div ref={heroCardRef} className={`${theme === 'light' ? 'hero-glass-light' : 'hero-glass'} max-w-5xl w-full mx-auto`} style={{ willChange: 'transform' }}>
             <AdvBubbles dense />
             <div className="absolute top-0 left-[10%] right-[10%] h-[1.5px] hero-animate hero-animate-1" style={{
               background: theme === 'light'
@@ -1666,7 +958,7 @@ function Home() {
                 <Link to={primaryCtaTarget} className="btn-chrome text-base px-8 py-4">
                   {primaryCtaLabel}<ArrowRight size={18} />
                 </Link>
-                <Link to={secondaryCtaTarget} className="btn-ghost-chrome text-base">
+                <Link to={secondaryCtaTarget} className="btn-ghost-chrome btn-ghost-chrome--on-video text-base">
                   {secondaryCtaLabel}
                 </Link>
               </div>
@@ -1694,7 +986,7 @@ function Home() {
 
       {/* ══ MARQUEE ══ */}
       <div className="py-[14px] border-y border-[var(--border-color)]"
-        style={{ background: 'color-mix(in srgb, var(--surface-bg-alt) 70%, transparent)' }} aria-hidden="true">
+        style={{ background: 'rgba(0,0,0,0.12)' }} aria-hidden="true">
         <div className="marquee-outer">
           <div className="marquee-inner" style={{ animationDuration: `${marqueeDuration}s` }}>
             {marqueeItems.map((item, i) => (
@@ -1725,7 +1017,7 @@ function Home() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-12 process-heading">
             <p className="uppercase tracking-[0.26em] text-primary text-[0.68rem] font-bold mb-3">{ui.howItWorksLabel}</p>
-            <h2 className="premium-heading text-4xl md:text-5xl font-bold text-[var(--heading-color)]">{ui.howItWorksTitle}</h2>
+            <h2 className="premium-heading metallic-heading text-4xl md:text-5xl font-bold">{ui.howItWorksTitle}</h2>
             <p className="text-[var(--muted-color)] text-base md:text-lg mt-4 max-w-xl mx-auto leading-relaxed">
               {ui.howItWorksDescription}
             </p>
@@ -1753,7 +1045,7 @@ function Home() {
                       style={{ background: `color-mix(in srgb, ${item.accent} 18%, transparent)`, border: `1px solid color-mix(in srgb, ${item.accent} 28%, transparent)` }}>
                       <StepIcon size={22} style={{ color: item.accent }} />
                     </div>
-                    <h3 className="premium-heading text-xl font-bold text-[var(--heading-color)] mb-3">{item.title}</h3>
+                    <h3 className="premium-heading metallic-heading text-xl font-bold mb-3">{item.title}</h3>
                     <p className="text-sm text-[var(--muted-color)] leading-relaxed">{item.description}</p>
                   </div>
                 </div>
@@ -1796,7 +1088,7 @@ function Home() {
           >
             <div className="w-[36vw] max-w-[500px] flex-shrink-0 flex flex-col justify-center pr-8">
               <p className="text-[0.62rem] font-bold tracking-[0.28em] uppercase text-primary mb-5">{ui.sectionLabel}</p>
-              <h2 className="premium-heading text-4xl lg:text-5xl font-bold text-[var(--heading-color)] leading-[0.95] mb-6">
+              <h2 className="premium-heading metallic-heading text-4xl lg:text-5xl font-bold leading-[0.95] mb-6">
                 {ui.sectionTitle}
               </h2>
               <p className="text-[var(--muted-color)] text-base leading-relaxed mb-8">
@@ -1809,67 +1101,46 @@ function Home() {
             </div>
 
             {serviceHighlights.map((service, index) => {
-              const accent = CARD_ACCENTS[index % CARD_ACCENTS.length];
-              return (
-              <div
-                key={service.title}
-                className="service-h-card service-liquid-card glass-card prism-glass flex-shrink-0 flex flex-col justify-between relative overflow-hidden"
-                style={{ width: '500px', height: '540px', padding: '40px' }}
-                onMouseMove={(e) => {
-                  const r = e.currentTarget.getBoundingClientRect();
-                  e.currentTarget.style.setProperty('--px', `${((e.clientX - r.left) / r.width  * 100).toFixed(1)}%`);
-                  e.currentTarget.style.setProperty('--py', `${((e.clientY - r.top)  / r.height * 100).toFixed(1)}%`);
-                }}
-              >
-                <AdvBubbles dense />
-                <div className="absolute top-0 left-0 right-0 h-[2px]"
-                  style={{ background: `linear-gradient(90deg, transparent, ${accent}, rgba(255,255,255,0.6), ${accent}, transparent)`, animation: 'liquid-shimmer 5s ease-in-out infinite', backgroundSize: '200% 100%' }} />
-                <span className="absolute bottom-4 right-6 font-black pointer-events-none select-none"
-                  style={{ fontSize: '9rem', lineHeight: 1, color: accent, opacity: 0.045 }}>
-                  {String(index + 1).padStart(2, '0')}
-                </span>
-                <div className="relative z-10">
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-6 text-[0.6rem] font-bold tracking-[0.2em] uppercase"
-                    style={{ border: `1px solid color-mix(in srgb, ${accent} 45%, transparent)`, color: accent, background: `color-mix(in srgb, ${accent} 12%, transparent)` }}>
-                    {String(index + 1).padStart(2, '0')}
+              const total = serviceHighlights.length;
+              const cardContent = (
+                <>
+                  <div className="pkg-card__head">
+                    <span className="pkg-card__num">{String(index + 1).padStart(2, '0')} / {String(total).padStart(2, '0')}</span>
                   </div>
-                  <h3 className="premium-heading text-2xl font-bold text-[var(--heading-color)] mb-4 leading-tight">{service.title}</h3>
-                  <p className="text-sm text-[var(--muted-color)] leading-relaxed mb-6 line-clamp-3">{service.description}</p>
-                </div>
-                <div className="relative z-10">
-                  <ul className="space-y-2.5 mb-4">
-                    {service.features.slice(0, 4).map(feat => (
-                      <li key={feat} className="flex items-center gap-3 text-sm text-[var(--text-color)]">
-                        <CheckCircle2 size={13} className="text-primary flex-shrink-0" style={{ opacity: 0.8 }} />
-                        <span>{feat}</span>
-                      </li>
+                  <h3 className="pkg-card__title">{service.title}</h3>
+                  <p className="pkg-card__desc line-clamp-2">{service.description}</p>
+                  <ul className="pkg-card__features">
+                    {service.features.slice(0, 5).map(feat => (
+                      <li key={feat}><Check size={15} />{feat}</li>
                     ))}
+                    {service.features.length > 5 && (
+                      <li>
+                        <button onClick={() => setExpandedService(service)} className="flex items-center gap-1 text-xs text-primary hover:opacity-70 transition-opacity">
+                          <ChevronRight size={11} />+{service.features.length - 5} {ui.moreServices}
+                        </button>
+                      </li>
+                    )}
                   </ul>
-                  {service.features.length > 4 && (
-                    <button
-                      onClick={() => setExpandedService(service)}
-                      className="flex items-center gap-1.5 text-xs text-primary hover:opacity-70 transition-opacity mb-5"
-                    >
-                      <ChevronRight size={12} />
-                      +{service.features.length - 4} {ui.moreServices}
-                    </button>
-                  )}
-                  <div className="flex items-center gap-3 mt-auto">
-                    <button
-                      onClick={() => navigate(service.link, service.pkg ? { state: { selectedPackage: service.pkg } } : {})}
-                      className="btn-chrome inline-flex items-center gap-2 text-sm px-5 py-2.5"
-                    >
-                      {service.cta}<ArrowRight size={15} />
-                    </button>
-                    <button
-                      onClick={() => setExpandedService(service)}
-                      className="text-xs text-[var(--muted-color)] hover:text-primary transition-colors underline underline-offset-2"
-                    >
-                      {ui.viewAllDetails}
+                  <div className="pkg-card__foot">
+                    <div>
+                      <span className="pkg-card__price-label">Starting at</span>
+                      <span className="pkg-card__price">{service.price != null ? `QR ${service.price}` : '—'}</span>
+                    </div>
+                    <button onClick={() => navigate(service.link, service.pkg ? { state: { selectedPackage: service.pkg } } : {})} className={service.popular ? 'btn-holo-sm' : 'btn-chrome btn-chrome--sm'}>
+                      Book <ArrowRight size={14} />
                     </button>
                   </div>
-                </div>
-              </div>
+                  <span className="pkg-card__watermark" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
+                </>
+              );
+              return service.popular ? (
+                <article key={service.title} className="pkg-card pkg-card--holo flex-shrink-0" style={{ width: '480px' }}>
+                  <div className="pkg-card__inner">{cardContent}</div>
+                </article>
+              ) : (
+                <article key={service.title} className="pkg-card pkg-card--showroom flex-shrink-0" style={{ width: '480px' }}>
+                  <div className="pkg-card__inner">{cardContent}</div>
+                </article>
               );
             })}
 
@@ -1892,29 +1163,42 @@ function Home() {
       {/* ══ SERVICE HIGHLIGHTS — MOBILE ══ */}
       <section className="md:hidden py-8">
         <div className="container mx-auto px-4">
-          {serviceHighlights.map((service) => (
-            <div key={service.title} className="mb-20 last:mb-0 flex flex-col gap-10" dir="ltr" style={{ direction: 'ltr' }}>
-              <div className="flex-1">
-                <h2 className="premium-heading text-3xl font-bold text-[var(--heading-color)] mb-6">{service.title}</h2>
-                <p className="text-base text-[var(--muted-color)] leading-relaxed mb-8">{service.description}</p>
-                <button
-                  onClick={() => navigate(service.link, service.pkg ? { state: { selectedPackage: service.pkg } } : {})}
-                  className="btn-chrome inline-flex items-center gap-2"
-                >{service.cta}<ArrowRight size={18} /></button>
-              </div>
-               <div className="service-liquid-card-mobile glass-card p-7 relative overflow-hidden">
-                <AdvBubbles />
-                <p className="text-[0.62rem] font-bold tracking-[0.22em] uppercase text-primary mb-5 relative z-10">{ui.whatsIncluded}</p>
-                <ul className="space-y-3.5 relative z-10">
+          {serviceHighlights.map((service, index) => {
+            const total = serviceHighlights.length;
+            const cardContent = (
+              <>
+                <div className="pkg-card__head">
+                  <span className="pkg-card__num">{String(index + 1).padStart(2, '0')} / {String(total).padStart(2, '0')}</span>
+                  {service.popular && <span className="pkg-badge">Most Popular</span>}
+                </div>
+                <h3 className="pkg-card__title">{service.title}</h3>
+                <p className="pkg-card__desc">{service.description}</p>
+                <ul className="pkg-card__features">
                   {service.features.map(feat => (
-                    <li key={feat} className="flex items-center gap-3 text-sm text-[var(--text-color)]">
-                      <CheckCircle2 size={14} className="text-primary flex-shrink-0" style={{ opacity: 0.8 }} /><span>{feat}</span>
-                    </li>
+                    <li key={feat}><Check size={14} />{feat}</li>
                   ))}
-                 </ul>
-                 </div>
-            </div>
-          ))}
+                </ul>
+                <div className="pkg-card__foot">
+                  <div>
+                    <span className="pkg-card__price-label">Starting at</span>
+                    <span className="pkg-card__price">{service.price != null ? `QR ${service.price}` : '—'}</span>
+                  </div>
+                  <button onClick={() => navigate(service.link, service.pkg ? { state: { selectedPackage: service.pkg } } : {})} className={service.popular ? 'btn-holo-sm' : 'btn-chrome btn-chrome--sm'}>
+                    Book <ArrowRight size={14} />
+                  </button>
+                </div>
+              </>
+            );
+            return service.popular ? (
+              <article key={service.title} className="pkg-card pkg-card--holo mb-6 last:mb-0">
+                <div className="pkg-card__inner">{cardContent}</div>
+              </article>
+            ) : (
+              <article key={service.title} className="pkg-card pkg-card--showroom mb-6 last:mb-0">
+                <div className="pkg-card__inner">{cardContent}</div>
+              </article>
+            );
+          })}
         </div>
       </section>
 
@@ -1924,7 +1208,7 @@ function Home() {
       <section ref={areasSectionRef} className="py-8 md:py-10">
         <div className="container mx-auto px-4">
           <div className="text-center mb-10 areas-heading">
-            <h2 className="premium-heading text-3xl md:text-4xl font-bold text-[var(--heading-color)] mb-4">
+            <h2 className="premium-heading metallic-heading text-3xl md:text-4xl font-bold mb-4">
               {ui.serviceAreasTitle}
             </h2>
             <p className="text-[var(--muted-color)] text-base md:text-lg">{ui.serviceAreasDescription}</p>
@@ -1933,6 +1217,7 @@ function Home() {
             {serviceAreas.map((city) => (
               <div key={city}
                 className="area-chip glass-card area-chip-glow px-5 py-4 flex items-center gap-2.5 cursor-pointer group"
+                style={{ background: 'rgba(200, 210, 235, 0.10)', borderColor: 'rgba(200, 210, 235, 0.20)' }}
                 onMouseMove={(e) => {
                   const r = e.currentTarget.getBoundingClientRect();
                   e.currentTarget.style.setProperty('--px', `${((e.clientX - r.left) / r.width  * 100).toFixed(1)}%`);
@@ -1952,7 +1237,7 @@ function Home() {
           <div ref={brandRef} className="cta-prism-glow rounded-2xl">
             <div className="glass-card p-8 md:p-12 text-center relative overflow-hidden">
               <AdvBubbles dense />
-              <h2 className="premium-heading text-3xl md:text-4xl font-bold text-[var(--heading-color)] mb-6 relative z-10">{brandValue.title}</h2>
+              <h2 className="premium-heading metallic-heading text-3xl md:text-4xl font-bold mb-6 relative z-10">{brandValue.title}</h2>
               <p className="text-base md:text-lg text-[var(--muted-color)] leading-relaxed max-w-3xl mx-auto relative z-10">{brandValue.description}</p>
             </div>
           </div>
@@ -1964,7 +1249,7 @@ function Home() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <p className="uppercase tracking-[0.26em] text-primary text-[0.68rem] font-bold mb-3">{ui.featuresLabel}</p>
-            <h2 className="premium-heading text-4xl md:text-5xl font-bold text-[var(--heading-color)]">{ui.featuresTitle}</h2>
+            <h2 className="premium-heading metallic-heading text-4xl md:text-5xl font-bold">{ui.featuresTitle}</h2>
           </div>
           <div className="grid md:grid-cols-4 gap-6">
             {homePageContent.features.map((feature, index) => {
@@ -1985,7 +1270,7 @@ function Home() {
                     <div className={`${feature.iconBgClass} w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-5`}>
                       <FeatureIcon className={feature.iconColorClass} size={26} />
                     </div>
-                    <h3 className="premium-heading text-xl font-bold mb-2 text-[var(--heading-color)]">{feature.title}</h3>
+                    <h3 className="premium-heading metallic-heading text-xl font-bold mb-2">{feature.title}</h3>
                     <p className="text-[var(--muted-color)] text-sm leading-relaxed">{feature.description}</p>
                   </div>
                 </div>
@@ -2000,9 +1285,19 @@ function Home() {
       {/* ══ REVIEWS ══ */}
       <section className="py-8 md:py-10">
         <div className="container mx-auto px-4">
+          {/* Header */}
           <div className="text-center mb-12 reveal-up">
-            <div className="inline-flex items-center gap-3 mb-4">
-              <div className="flex gap-1">{[...Array(5)].map((_, i) => <Star key={i} size={20} className="fill-primary text-primary" />)}</div>
+            <div className="inline-flex items-center gap-3 mb-3">
+              <div className="flex gap-1">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} size={20}
+                    style={{
+                      color: ['#ff7eb4','#a888ff','#5cc7f5','#8ef7ca','#ff7eb4'][i],
+                      fill:  ['#ff7eb4','#a888ff','#5cc7f5','#8ef7ca','#ff7eb4'][i],
+                      filter: `drop-shadow(0 0 5px ${ ['rgba(255,126,180,0.6)','rgba(168,136,255,0.6)','rgba(92,199,245,0.6)','rgba(142,247,202,0.6)','rgba(255,126,180,0.6)'][i] })`,
+                    }} />
+                ))}
+              </div>
               <p className="text-xl font-bold text-[var(--heading-color)]">EXCELLENT</p>
             </div>
             <p className="text-[var(--muted-color)] text-sm mb-3">
@@ -2011,57 +1306,75 @@ function Home() {
             <div className="flex flex-col items-center gap-3">
               <img src="https://cdn.trustindex.io/assets/platform/Google/logo-dark.svg" alt="Google Reviews" className="h-8"
                 onError={e => { e.target.style.display = 'none'; }} />
-              <a
-                href="https://g.page/r/CbY8wgSE0iXGEAE/review"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold border border-primary/40 text-primary hover:bg-primary/10 transition-all duration-200"
-              >
+              <a href="https://g.page/r/CbY8wgSE0iXGEAE/review" target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold border border-primary/40 text-primary hover:bg-primary/10 transition-all duration-200">
                 <Star size={14} className="fill-primary" />
                 Leave a Review
               </a>
             </div>
           </div>
-          <div>
-              <div className="-mx-3">
-                <div ref={carouselRef} className="overflow-hidden"
-                  onMouseDown={handleMouseDown} onMouseUp={handleMouseUp} onMouseLeave={() => setIsDragging(false)}
-                  onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}
-                  style={{ cursor: isDragging ? 'grabbing' : 'grab' }}>
-                  <div className="flex transition-transform duration-500 ease-out"
-                    style={{ transform: `translateX(-${currentReviewIndex * (100 / visibleReviewCount)}%)` }}>
-                    {reviews.map(review => (
-                      <div key={review.id} className="flex-shrink-0 px-3" style={{ width: `${100 / visibleReviewCount}%` }}>
-                        <ReviewCard review={review} />
+
+          {/* Carousel */}
+          <div className="reviews-viewport"
+            ref={carouselRef}
+            onMouseDown={handleMouseDown} onMouseUp={handleMouseUp} onMouseLeave={() => setIsDragging(false)}
+            onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}
+            style={{ cursor: isDragging ? 'grabbing' : 'grab' }}>
+            <div className="reviews-track"
+              style={{ transform: `translateX(-${currentReviewIndex * (100 / visibleReviewCount)}%)`, transition: 'transform 0.6s cubic-bezier(0.2,0.8,0.2,1)' }}>
+              {reviews.map((review) => (
+                <div key={review.id} className="reviews-slide" style={{ width: `${100 / visibleReviewCount}%` }}>
+                  {theme === 'light' ? (
+                    <article className="review-card">
+                      <span className="review-card__quote" aria-hidden="true">&ldquo;</span>
+                      <div className="review-card__stars" aria-label={`${review.rating ?? 5} out of 5 stars`}>
+                        {[...Array(review.rating ?? 5)].map((_, j) => <Star key={j} size={14} />)}
                       </div>
-                    ))}
-                  </div>
+                      <p className="review-card__text">{review.text}</p>
+                      <div className="review-card__meta">
+                        <div className="review-card__avatar" aria-hidden="true">
+                          {review.fallbackInitials || review.author.split(' ').map(s => s[0]).slice(0, 2).join('').toUpperCase()}
+                        </div>
+                        <div>
+                          <div className="review-card__name">{review.author}</div>
+                          <div className="review-card__date">{review.date}</div>
+                        </div>
+                      </div>
+                    </article>
+                  ) : (
+                    <ReviewCard review={review} />
+                  )}
                 </div>
-              </div>
-              <div className="flex items-center justify-center gap-4 mt-8">
-                <button onClick={handlePrevReview} aria-label="Previous reviews"
-                  className="p-2.5 rounded-full border border-[var(--border-color)] bg-[var(--cta-soft-bg)] text-[var(--text-color)] hover:bg-primary hover:text-[#101823] hover:border-primary transition-all duration-200">
-                  <ChevronLeft size={18} />
-                </button>
-                {reviewDotsCount > 1 && (
-                  <div className="flex items-center gap-2">
-                    {[...Array(reviewDotsCount)].map((_, i) => (
-                      <button key={i} onClick={() => setCurrentReviewIndex(i * visibleReviewCount)} aria-label={`Go to review group ${i + 1}`}
-                        className={`h-2 rounded-full transition-all cursor-pointer ${
-                          i === Math.floor(currentReviewIndex / visibleReviewCount) ? 'bg-primary w-6' : 'bg-[var(--border-color)] w-2 hover:bg-primary/50'
-                        }`} />
-                    ))}
-                  </div>
-                )}
-                <button onClick={handleNextReview} aria-label="Next reviews"
-                  className="p-2.5 rounded-full border border-[var(--border-color)] bg-[var(--cta-soft-bg)] text-[var(--text-color)] hover:bg-primary hover:text-[#101823] hover:border-primary transition-all duration-200">
-                  <ChevronRight size={18} />
-                </button>
-              </div>
-              <p className="text-center mt-3 text-xs text-[var(--muted-color)]">
-                {currentReviewIndex + 1}–{Math.min(currentReviewIndex + visibleReviewCount, reviews.length)} of {reviews.length} reviews
-              </p>
+              ))}
             </div>
+          </div>
+
+          {/* Controls */}
+          <div className="reviews-controls">
+            <button type="button" className="reviews-arrow" aria-label="Previous reviews"
+              onClick={handlePrevReview}
+              disabled={currentReviewIndex === 0}>
+              <ChevronLeft size={18} />
+            </button>
+            {reviewDotsCount > 1 && (
+              <div className="reviews-dots">
+                {[...Array(reviewDotsCount)].map((_, i) => (
+                  <button key={i} type="button"
+                    className={`reviews-dot${i === Math.floor(currentReviewIndex / visibleReviewCount) ? ' reviews-dot--active' : ''}`}
+                    aria-label={`Go to review group ${i + 1}`}
+                    onClick={() => setCurrentReviewIndex(i * visibleReviewCount)} />
+                ))}
+              </div>
+            )}
+            <button type="button" className="reviews-arrow" aria-label="Next reviews"
+              onClick={handleNextReview}
+              disabled={currentReviewIndex >= Math.max(0, reviews.length - visibleReviewCount)}>
+              <ChevronRight size={18} />
+            </button>
+          </div>
+          <p className="text-center mt-3 text-xs" style={{ color: 'var(--primary)' }}>
+            {currentReviewIndex + 1}–{Math.min(currentReviewIndex + visibleReviewCount, reviews.length)} of {reviews.length} reviews
+          </p>
         </div>
       </section>
 
@@ -2073,7 +1386,7 @@ function Home() {
               <AdvBubbles dense />
               <div className="flex items-center justify-center gap-3 mb-4">
                 <Sparkles className="text-primary" size={22} />
-                <h2 className="premium-heading text-4xl md:text-5xl font-bold text-[var(--heading-color)]">{homePageContent.curatedTitle}</h2>
+                <h2 className="premium-heading metallic-heading text-4xl md:text-5xl font-bold">{homePageContent.curatedTitle}</h2>
                 <Sparkles className="text-primary" size={22} />
               </div>
               <p className="text-[var(--muted-color)] mb-10 text-base md:text-lg max-w-2xl mx-auto">{homePageContent.curatedDescription}</p>
@@ -2099,7 +1412,7 @@ function Home() {
                   <span className="uppercase tracking-[0.24em] text-primary text-[0.68rem] font-bold">Ready to Transform Your Vehicle</span>
                   <Zap className="text-primary" size={18} />
                 </div>
-                <h2 className="premium-heading text-4xl md:text-5xl font-bold mb-4 text-[var(--heading-color)]">{homePageContent.finalTitle}</h2>
+                <h2 className="premium-heading metallic-heading text-4xl md:text-5xl font-bold mb-4">{homePageContent.finalTitle}</h2>
                 <p className="text-base md:text-lg text-[var(--muted-color)] mb-9 max-w-xl mx-auto">{homePageContent.finalDescription}</p>
                 <Link to={finalCtaTarget} className="btn-chrome">{finalCtaLabel}<ArrowRight size={20} /></Link>
               </div>
@@ -2126,7 +1439,7 @@ function Home() {
               style={{ background: `linear-gradient(90deg, transparent, ${CARD_ACCENTS[0]}, ${CARD_ACCENTS[1]}, transparent)` }} />
             {/* Header */}
             <div className="flex items-start justify-between p-6 pb-4 flex-shrink-0">
-              <h3 className="premium-heading text-xl font-bold text-[var(--heading-color)] leading-tight pr-4">
+              <h3 className="premium-heading metallic-heading text-xl font-bold leading-tight pr-4">
                 {expandedService.title}
               </h3>
               <button
@@ -2169,7 +1482,7 @@ function Home() {
       {/* ══ FLOATING CTA ══ */}
       {!isAdmin && (
         <Link to="/booking" aria-label="Book your detailing service"
-          className={`floating-cta-btn btn-chrome${showFloatingCta ? ' visible' : ''}`}>
+          className={`floating-cta-btn${showFloatingCta ? ' visible' : ''}`}>
           <Sparkles size={15} />Book Now
         </Link>
       )}

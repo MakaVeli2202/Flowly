@@ -179,44 +179,6 @@ const UI_BY_LANG = {
 /* ══════════════════════════════════════════════════════════════
    PRISM CSS
 ══════════════════════════════════════════════════════════════ */
-const PRISM_CSS = `
-@keyframes holo-sweep {
-  0%   { background-position: 0% 50%; }
-  100% { background-position: 300% 50%; }
-}
-@keyframes prism-ray-sweep {
-  0%   { transform: translateX(-130%) skewX(-15deg); opacity: 0; }
-  10%  { opacity: 1; } 90% { opacity: 1; }
-  100% { transform: translateX(460%) skewX(-15deg); opacity: 0; }
-}
-@keyframes spectrum-float {
-  0%,100% { transform: translate(0,0) rotate(0deg); opacity: 0.18; }
-  33%      { transform: translate(12px,-14px) rotate(120deg); opacity: 0.30; }
-  66%      { transform: translate(-7px,8px) rotate(240deg); opacity: 0.22; }
-}
-@keyframes card-enter {
-  from { transform: translateY(14px) scale(0.988); opacity: 0; }
-  to   { transform: translateY(0) scale(1); opacity: 1; }
-}
-.prism-cursor-blob {
-  position: fixed; pointer-events: none; z-index: 0;
-  border-radius: 50%; filter: blur(90px); mix-blend-mode: screen; will-change: transform, background;
-}
-.prism-ray {
-  position: absolute; top: -30%; height: 160%; pointer-events: none; transform: skewX(-18deg);
-  background: linear-gradient(90deg, transparent 0%, rgba(255,55,55,.030) 15%,
-    rgba(255,200,0,.042) 30%, rgba(0,255,145,.034) 50%, rgba(0,145,255,.034) 70%,
-    rgba(195,0,255,.026) 85%, transparent 100%);
-}
-.spectrum-line {
-  height: 1.5px;
-  background: linear-gradient(90deg, transparent 0%, rgba(255,0,100,.80) 12%,
-    rgba(255,165,0,.85) 24%, rgba(255,255,0,.85) 36%, rgba(0,255,100,.85) 48%,
-    rgba(0,150,255,.85) 60%, rgba(150,0,255,.80) 72%, transparent 85%);
-  background-size: 200% 100%; animation: holo-sweep 5s linear infinite; opacity: 0.40;
-}
-.card-stagger { animation: card-enter 0.52s cubic-bezier(0.22,1,0.36,1) both; }
-`;
 
 function PrismaticCursorOrb() {
   const ref = useRef(null);
@@ -509,7 +471,6 @@ function WorkerSchedule() {
   /* ── Render ─────────────────────────────────────────────────── */
   return (
     <>
-      <style>{PRISM_CSS}</style>
       <PrismaticCursorOrb />
 
       <div className="min-h-screen py-10 relative"

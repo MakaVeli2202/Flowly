@@ -13,7 +13,7 @@ import { ArrowRight, Shield, CheckCircle, Clock, MapPin, Star, CreditCard } from
 import { getSiteContent } from '../../config/siteContent';
 import { useFeatures } from '../../context/FeaturesContext';
 
-import { PRISM_CSS, PrismaticCursorOrb, StatusBanner, normalizeStatusKey } from './booking/BookingShared';
+import { PrismaticCursorOrb, StatusBanner, normalizeStatusKey } from './booking/BookingShared';
 import BookingVehiclePackageStep  from './booking/BookingVehiclePackageStep';
 import BookingScheduleStep        from './booking/BookingScheduleStep';
 import BookingDetailsCheckoutStep from './booking/BookingDetailsCheckoutStep';
@@ -406,7 +406,6 @@ function BookingForm({ isTapMode }) {
   /* ── Render ─────────────────────────────────────────────────────────── */
   return (
     <>
-      <style>{PRISM_CSS}</style>
       <PrismaticCursorOrb />
 
       <div
@@ -522,7 +521,7 @@ function BookingForm({ isTapMode }) {
                     <button
                       type="submit"
                       disabled={loading || paymentProcessing || selectedPackages.length === 0}
-                      className="premium-btn w-full py-4 text-base disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="btn-chrome w-full py-4 text-base disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {paymentProcessing ? (
                         <span className="flex items-center justify-center gap-2">

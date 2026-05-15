@@ -26,17 +26,6 @@ function loadSkills() {
   catch { return DEFAULT_SKILLS; }
 }
 
-const PRISM_CSS = `
-@keyframes holo-sweep{0%{background-position:0% 50%}100%{background-position:300% 50%}}
-@keyframes cta-rainbow-glow{0%,100%{box-shadow:0 0 0 1.5px rgba(255,80,80,.42),0 0 22px rgba(255,165,0,.15)}33%{box-shadow:0 0 0 1.5px rgba(0,200,255,.42),0 0 22px rgba(160,0,255,.15)}66%{box-shadow:0 0 0 1.5px rgba(0,255,120,.42),0 0 22px rgba(255,0,100,.15)}}
-@keyframes card-enter{from{transform:translateY(14px) scale(.988);opacity:0}to{transform:translateY(0) scale(1);opacity:1}}
-.spectrum-line{height:1.5px;background:linear-gradient(90deg,transparent 0%,rgba(255,0,100,.80) 12%,rgba(255,165,0,.85) 24%,rgba(255,255,0,.85) 36%,rgba(0,255,100,.85) 48%,rgba(0,150,255,.85) 60%,rgba(150,0,255,.80) 72%,transparent 85%);background-size:200% 100%;animation:holo-sweep 5s linear infinite;opacity:.40}
-.cta-prism-glow{animation:cta-rainbow-glow 5s ease-in-out infinite}
-.card-stagger{animation:card-enter .52s cubic-bezier(.22,1,.36,1) both}
-.field-input{width:100%;padding:10px 14px;border-radius:12px;border:1px solid var(--border-color);background:var(--surface-bg);color:var(--text-color);font-size:.875rem;transition:border-color .2s,box-shadow .2s;outline:none}
-.field-input:focus{border-color:rgba(200,169,107,.65);box-shadow:0 0 0 3px rgba(200,169,107,.12)}
-.field-label{display:block;font-size:.68rem;font-weight:700;letter-spacing:.20em;text-transform:uppercase;color:var(--muted-color);margin-bottom:7px}
-`;
 
 export default function AdminAddStaff() {
   const navigate = useNavigate();
@@ -191,7 +180,6 @@ export default function AdminAddStaff() {
 
   return (
     <>
-      <style>{PRISM_CSS}</style>
       <div className="min-h-screen py-10 relative" style={{
         background: 'radial-gradient(circle at 7% 6%,rgba(200,169,107,.05) 0%,transparent 38%),radial-gradient(circle at 93% 92%,rgba(14,165,160,.04) 0%,transparent 32%)',
       }}>

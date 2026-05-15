@@ -13,113 +13,6 @@ import { formatQAR } from '../../utils/currency';
 import { Skeleton } from '../../components/shared/Skeleton';
 import { EmptyState } from '../../components/shared/EmptyState';
 
-/* ── PRISM CSS ─────────────────────────────────────────────── */
-const PRISM_CSS = `
-@keyframes holo-sweep {
-  0%   { background-position: 0% 50%; }
-  100% { background-position: 300% 50%; }
-}
-@keyframes prism-ray-sweep {
-  0%   { transform: translateX(-130%) skewX(-15deg); opacity: 0; }
-  10%  { opacity: 1; }
-  90%  { opacity: 1; }
-  100% { transform: translateX(460%) skewX(-15deg); opacity: 0; }
-}
-@keyframes spectrum-float {
-  0%,100% { transform: translate(0,0) rotate(0deg);          opacity: 0.28; }
-  33%      { transform: translate(18px,-24px) rotate(120deg); opacity: 0.55; }
-  66%      { transform: translate(-12px,12px) rotate(240deg); opacity: 0.38; }
-}
-@keyframes cta-rainbow-glow {
-  0%,100% { box-shadow: 0 0 0 1.5px rgba(255,80,80,.5),  0 0 28px rgba(255,165,0,.2), 0 0 55px rgba(0,255,100,.15); }
-  25%      { box-shadow: 0 0 0 1.5px rgba(255,210,0,.5),  0 0 28px rgba(0,255,150,.2), 0 0 55px rgba(0,150,255,.15); }
-  50%      { box-shadow: 0 0 0 1.5px rgba(0,200,255,.5),  0 0 28px rgba(160,0,255,.2), 0 0 55px rgba(255,0,100,.15); }
-  75%      { box-shadow: 0 0 0 1.5px rgba(0,255,120,.5),  0 0 28px rgba(255,0,100,.2), 0 0 55px rgba(255,210,0,.15); }
-}
-@keyframes prism-card-glow {
-  0%,100% { box-shadow: 0 0 0 1px rgba(255,100,80,.4),  0 0 20px rgba(255,165,0,.16), 0 0 44px rgba(0,255,100,.12); }
-  33%      { box-shadow: 0 0 0 1px rgba(0,160,255,.4),   0 0 20px rgba(160,0,255,.16), 0 0 44px rgba(255,0,100,.12); }
-  66%      { box-shadow: 0 0 0 1px rgba(0,255,150,.4),   0 0 20px rgba(255,255,0,.16),  0 0 44px rgba(0,100,255,.12); }
-}
-@keyframes check-scale-in {
-  0%   { transform: scale(0.4) rotate(-10deg); opacity: 0; }
-  65%  { transform: scale(1.1) rotate(2deg);   opacity: 1; }
-  100% { transform: scale(1)   rotate(0deg);   opacity: 1; }
-}
-@keyframes hero-ring-pulse {
-  0%,100% { transform: scale(1);     opacity: 0.35; }
-  50%      { transform: scale(1.07); opacity: 0.58; }
-}
-@keyframes card-float-in {
-  from { transform: translateY(22px); opacity: 0; }
-  to   { transform: translateY(0);    opacity: 1; }
-}
-@keyframes ref-slide-up {
-  from { transform: translateY(14px); opacity: 0; }
-  to   { transform: translateY(0);    opacity: 1; }
-}
-@keyframes step-line-grow {
-  from { transform: scaleY(0); }
-  to   { transform: scaleY(1); }
-}
-
-/* ── Cursor orb ── */
-.prism-cursor-blob {
-  position: fixed; pointer-events: none; z-index: 0;
-  border-radius: 50%; filter: blur(85px); mix-blend-mode: screen;
-  will-change: transform, background;
-}
-/* ── Prism ray ── */
-.prism-ray {
-  position: absolute; top: -30%; height: 160%; pointer-events: none;
-  transform: skewX(-18deg);
-  background: linear-gradient(90deg,
-    transparent 0%, rgba(255,55,55,.055) 15%, rgba(255,200,0,.08) 30%,
-    rgba(0,255,145,.07) 50%, rgba(0,145,255,.07) 70%,
-    rgba(195,0,255,.05) 85%, transparent 100%);
-}
-/* ── Prism glass hover ── */
-.prism-glass { position: relative; overflow: hidden; transition: box-shadow 0.45s ease; }
-.prism-glass::after {
-  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
-  background: radial-gradient(
-    circle at var(--px,50%) var(--py,50%),
-    rgba(255,200,80,.2) 0%, rgba(80,255,160,.14) 25%,
-    rgba(40,130,255,.14) 50%, rgba(200,40,255,.1) 70%, transparent 86%
-  );
-  opacity: 0; transition: opacity 0.3s; mix-blend-mode: screen;
-}
-.prism-glass:hover::after { opacity: 1; }
-.prism-glass:hover        { animation: prism-card-glow 4s ease-in-out infinite; }
-/* ── CTA glow ── */
-.cta-prism-glow { animation: cta-rainbow-glow 5s ease-in-out infinite; }
-/* ── Spectrum separator ── */
-.spectrum-line {
-  height: 1.5px;
-  background: linear-gradient(90deg,
-    transparent 0%, rgba(255,0,100,.85) 12%, rgba(255,165,0,.9) 24%,
-    rgba(255,255,0,.9) 36%, rgba(0,255,100,.9) 48%,
-    rgba(0,150,255,.9) 60%, rgba(150,0,255,.85) 72%, transparent 85%);
-  background-size: 200% 100%;
-  animation: holo-sweep 5s linear infinite; opacity: 0.45;
-}
-/* ── Entry animations ── */
-.check-animate   { animation: check-scale-in 0.7s cubic-bezier(0.34,1.56,0.64,1) 0.15s both; }
-.ring-pulse      { animation: hero-ring-pulse 3.5s ease-in-out infinite; }
-.ref-animate     { animation: ref-slide-up 0.5s ease 0.9s both; }
-.card-in-1  { animation: card-float-in 0.55s ease 0.35s both; }
-.card-in-2  { animation: card-float-in 0.55s ease 0.48s both; }
-.card-in-3  { animation: card-float-in 0.55s ease 0.61s both; }
-.card-in-4  { animation: card-float-in 0.55s ease 0.74s both; }
-.card-in-5  { animation: card-float-in 0.55s ease 0.87s both; }
-.card-in-6  { animation: card-float-in 0.55s ease 1.00s both; }
-.card-in-7  { animation: card-float-in 0.55s ease 1.13s both; }
-.step-line  {
-  width: 1px; background: linear-gradient(180deg, rgba(34,197,94,0.4), transparent);
-  transform-origin: top; animation: step-line-grow 0.4s ease both;
-}
-`;
-
 /* ── Prismatic cursor orb ─────────────────────────────────── */
 function PrismaticCursorOrb() {
   const ref = useRef(null);
@@ -447,7 +340,6 @@ function BookingConfirmation() {
   if (!booking) {
     return (
       <>
-        <style>{PRISM_CSS}</style>
         <PrismaticCursorOrb />
         <div className="min-h-screen flex items-center justify-center py-20 px-4">
           <div className="text-center max-w-sm mx-auto">
@@ -456,7 +348,7 @@ function BookingConfirmation() {
             </div>
             <h2 className="premium-heading text-2xl font-bold text-[var(--heading-color)] mb-3">Booking Not Found</h2>
             <p className="text-[var(--muted-color)] mb-8">We couldn't locate a booking with that reference number.</p>
-            <Link to="/" className="premium-btn inline-flex items-center gap-2">
+            <Link to="/" className="btn-chrome inline-flex items-center gap-2">
               Return Home <ArrowRight size={16} />
             </Link>
           </div>
@@ -487,7 +379,6 @@ function BookingConfirmation() {
 
   return (
     <>
-      <style>{PRISM_CSS}</style>
       <PrismaticCursorOrb />
 
       <div
@@ -757,7 +648,7 @@ function BookingConfirmation() {
             <div className="cta-prism-glow rounded-2xl flex-1 sm:flex-none">
               <Link
                 to={isAdmin ? '/admin/bookings' : '/my-bookings'}
-                className="premium-btn w-full sm:w-auto px-8 py-3.5 flex items-center justify-center gap-2 text-sm"
+                className="btn-chrome w-full sm:w-auto px-8 py-3.5 flex items-center justify-center gap-2 text-sm"
               >
                 {isAdmin ? 'Open All Bookings' : 'View My Bookings'}
                 <ArrowRight size={16} />

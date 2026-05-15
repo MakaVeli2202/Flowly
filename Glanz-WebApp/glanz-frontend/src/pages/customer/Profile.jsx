@@ -543,7 +543,7 @@ function Profile() {
             <button
               type="submit"
               disabled={saving}
-              className="premium-btn disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn-chrome disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Save size={16} />
               {saving ? 'Saving…' : 'Save Profile'}
@@ -627,7 +627,7 @@ function Profile() {
             <button
               type="submit"
               disabled={changingPassword}
-              className="premium-btn disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn-chrome disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <KeyRound size={16} />
               {changingPassword ? 'Updating…' : 'Change Password'}

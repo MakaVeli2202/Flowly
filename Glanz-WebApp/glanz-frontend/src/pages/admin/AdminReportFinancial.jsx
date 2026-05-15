@@ -8,65 +8,6 @@ import { useLanguage } from '../../context/LanguageContext';
 import { generateFinancialPDF } from '../../utils/reportPDF';
 
 /* PRISM_CSS — identical to ManageProducts above */
-const PRISM_CSS = `
-@keyframes holo-sweep {
-  0%   { background-position: 0% 50%; }
-  100% { background-position: 300% 50%; }
-}
-@keyframes prism-ray-sweep {
-  0%   { transform: translateX(-130%) skewX(-15deg); opacity: 0; }
-  10%  { opacity: 1; } 90% { opacity: 1; }
-  100% { transform: translateX(460%) skewX(-15deg); opacity: 0; }
-}
-@keyframes spectrum-float {
-  0%,100% { transform: translate(0,0) rotate(0deg); opacity: 0.18; }
-  33%      { transform: translate(12px,-14px) rotate(120deg); opacity: 0.30; }
-  66%      { transform: translate(-7px,8px) rotate(240deg); opacity: 0.22; }
-}
-@keyframes cta-rainbow-glow {
-  0%,100% { box-shadow: 0 0 0 1.5px rgba(255,80,80,.42),  0 0 22px rgba(255,165,0,.15); }
-  33%      { box-shadow: 0 0 0 1.5px rgba(0,200,255,.42),  0 0 22px rgba(160,0,255,.15); }
-  66%      { box-shadow: 0 0 0 1.5px rgba(0,255,120,.42),  0 0 22px rgba(255,0,100,.15); }
-}
-@keyframes card-enter {
-  from { transform: translateY(14px) scale(0.988); opacity: 0; }
-  to   { transform: translateY(0) scale(1); opacity: 1; }
-}
-.prism-cursor-blob {
-  position: fixed; pointer-events: none; z-index: 0;
-  border-radius: 50%; filter: blur(90px); mix-blend-mode: screen; will-change: transform, background;
-}
-.prism-ray {
-  position: absolute; top: -30%; height: 160%; pointer-events: none; transform: skewX(-18deg);
-  background: linear-gradient(90deg, transparent 0%, rgba(255,55,55,.030) 15%,
-    rgba(255,200,0,.042) 30%, rgba(0,255,145,.034) 50%, rgba(0,145,255,.034) 70%,
-    rgba(195,0,255,.026) 85%, transparent 100%);
-}
-.prism-glass { position: relative; overflow: hidden; }
-.prism-glass::after {
-  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
-  background: radial-gradient(circle at var(--px,50%) var(--py,50%),
-    rgba(255,200,80,.10) 0%, rgba(80,255,160,.07) 30%, rgba(40,130,255,.07) 55%, transparent 80%);
-  opacity: 0; transition: opacity 0.32s; mix-blend-mode: screen;
-}
-.prism-glass:hover::after { opacity: 1; }
-.spectrum-line {
-  height: 1.5px;
-  background: linear-gradient(90deg, transparent 0%, rgba(255,0,100,.80) 12%,
-    rgba(255,165,0,.85) 24%, rgba(255,255,0,.85) 36%, rgba(0,255,100,.85) 48%,
-    rgba(0,150,255,.85) 60%, rgba(150,0,255,.80) 72%, transparent 85%);
-  background-size: 200% 100%; animation: holo-sweep 5s linear infinite; opacity: 0.40;
-}
-.cta-prism-glow { animation: cta-rainbow-glow 5s ease-in-out infinite; }
-.card-stagger   { animation: card-enter 0.52s cubic-bezier(0.22,1,0.36,1) both; }
-.field-input {
-  padding: 10px 14px; border-radius: 12px;
-  border: 1px solid var(--border-color); background: var(--surface-bg);
-  color: var(--text-color); font-size: 0.875rem;
-  transition: border-color 0.2s, box-shadow 0.2s; outline: none;
-}
-.field-input:focus { border-color: rgba(200,169,107,0.65); box-shadow: 0 0 0 3px rgba(200,169,107,0.12); }
-`;
 
 function PrismaticCursorOrb() {
   const ref = useRef(null);
@@ -138,7 +79,6 @@ function FinancialReport() {
 
   if (loading) return (
     <>
-      <style>{PRISM_CSS}</style>
       <div className="flex flex-col items-center justify-center min-h-screen gap-4">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
         <p className="text-[var(--muted-color)] text-sm">Loading report…</p>
@@ -148,7 +88,6 @@ function FinancialReport() {
 
   if (!report) return (
     <>
-      <style>{PRISM_CSS}</style>
       <div className="flex flex-col items-center justify-center min-h-screen gap-3">
         <BarChart2 size={40} className="text-[var(--muted-color)]" />
         <p className="text-[var(--muted-color)] text-sm">No data available for the selected range.</p>
@@ -158,7 +97,6 @@ function FinancialReport() {
 
   return (
     <>
-      <style>{PRISM_CSS}</style>
       <PrismaticCursorOrb />
 
       <div className="min-h-screen py-10 relative"

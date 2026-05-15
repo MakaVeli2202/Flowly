@@ -21,40 +21,6 @@ const VEHICLE_META = {
 };
 
 /* ── CSS injected once ──────────────────────────────────────── */
-const PAGE_CSS = `
-@keyframes holo-sweep { 0%{background-position:0% 50%} 100%{background-position:300% 50%} }
-@keyframes prism-ray-sweep {
-  0%{transform:translateX(-130%) skewX(-15deg);opacity:0}
-  10%{opacity:1} 90%{opacity:1}
-  100%{transform:translateX(460%) skewX(-15deg);opacity:0}
-}
-@keyframes card-enter { from{transform:translateY(14px) scale(0.988);opacity:0} to{transform:translateY(0) scale(1);opacity:1} }
-@keyframes cta-rainbow-glow {
-  0%,100%{box-shadow:0 0 0 1.5px rgba(255,80,80,.42),0 0 22px rgba(255,165,0,.15)}
-  33%{box-shadow:0 0 0 1.5px rgba(0,200,255,.42),0 0 22px rgba(160,0,255,.15)}
-  66%{box-shadow:0 0 0 1.5px rgba(0,255,120,.42),0 0 22px rgba(255,0,100,.15)}
-}
-.prism-ray {
-  position:absolute;top:-30%;height:160%;pointer-events:none;transform:skewX(-18deg);
-  background:linear-gradient(90deg,transparent 0%,rgba(255,55,55,.030) 15%,rgba(255,200,0,.042) 30%,rgba(0,255,145,.034) 50%,rgba(0,145,255,.034) 70%,rgba(195,0,255,.026) 85%,transparent 100%);
-}
-.spectrum-line {
-  height:1.5px;
-  background:linear-gradient(90deg,transparent 0%,rgba(255,0,100,.80) 12%,rgba(255,165,0,.85) 24%,rgba(255,255,0,.85) 36%,rgba(0,255,100,.85) 48%,rgba(0,150,255,.85) 60%,rgba(150,0,255,.80) 72%,transparent 85%);
-  background-size:200% 100%;animation:holo-sweep 5s linear infinite;opacity:0.40;
-}
-.cta-prism-glow{animation:cta-rainbow-glow 5s ease-in-out infinite}
-.card-stagger{animation:card-enter 0.52s cubic-bezier(0.22,1,0.36,1) both}
-.plan-field-input {
-  width:100%;padding:10px 14px;border-radius:12px;
-  border:1px solid var(--border-color);background:var(--surface-bg);
-  color:var(--text-color);font-size:0.875rem;
-  transition:border-color 0.2s,box-shadow 0.2s;outline:none;
-}
-.plan-field-input:focus{border-color:rgba(200,169,107,0.65);box-shadow:0 0 0 3px rgba(200,169,107,0.12)}
-.plan-field-input:disabled{opacity:0.45;cursor:not-allowed}
-.plan-field-label{display:block;font-size:0.68rem;font-weight:700;letter-spacing:0.20em;text-transform:uppercase;color:var(--muted-color);margin-bottom:7px}
-`;
 
 /* ── Feature list editor ────────────────────────────────────── */
 function FeatureListEditor({ features, onChange }) {
@@ -271,7 +237,6 @@ function AdminPlans() {
 
   if (loading) return (
     <>
-      <style>{PAGE_CSS}</style>
       <div className="flex flex-col items-center justify-center min-h-screen gap-4">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
         <p className="text-[var(--muted-color)] text-sm">Loading plans…</p>
@@ -284,7 +249,6 @@ function AdminPlans() {
 
   return (
     <>
-      <style>{PAGE_CSS}</style>
 
       <div className="min-h-screen py-10 relative">
         <div className="absolute top-0 right-0 w-80 h-64 rounded-full pointer-events-none"

@@ -169,8 +169,8 @@ export function AdminHeader({ theme, onToggleTheme }) {
   };
 
   return (
-    <div className={`flex sticky px-4 z-50 top-0 w-full bg-[#0d1117] items-center h-16 justify-between transition-border duration-300 ${
-      scrolled ? "border-b border-gray-800" : "border-b-0"
+    <div className={`flex sticky px-4 z-50 top-0 w-full bg-[var(--surface-bg)] items-center h-16 justify-between transition-border duration-300 ${
+      scrolled ? "border-b border-[var(--border-color)]" : "border-b-0"
     }`}>
       <div className="flex items-center justify-between w-full mx-auto max-w-7xl">
         {/* Desktop Nav */}
@@ -181,7 +181,7 @@ export function AdminHeader({ theme, onToggleTheme }) {
              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
                location.pathname === '/admin'
                  ? 'bg-primary text-white'
-                 : 'text-gray-300 hover:text-white hover:bg-white/10'
+                 : 'text-[var(--muted-color)] hover:text-[var(--heading-color)] hover:bg-white/10'
              }`}
            >
              <LayoutDashboard size={14} className="inline mr-1.5" />
@@ -193,18 +193,18 @@ export function AdminHeader({ theme, onToggleTheme }) {
 <button
   type="button"
   onClick={() => setShowAdminMenu((v) => !v)}
-  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-all"
+  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium text-[var(--muted-color)] hover:text-[var(--heading-color)] hover:bg-white/10 transition-all"
 >
   {t('navbar.admin')}
   <ChevronDown size={14} className={`transition-transform ${showAdminMenu ? 'rotate-180' : ''}`} />
 </button>
 
             {showAdminMenu && (
-              <div className="absolute left-0 top-full mt-3 w-[38rem] rounded-2xl border border-gray-800 bg-[#0d1117] shadow-2xl z-50 p-3">
+              <div className="absolute left-0 top-full mt-3 w-[38rem] rounded-2xl border border-[var(--border-color)] bg-[var(--surface-bg)] shadow-2xl z-50 p-3">
                 <div className="grid grid-cols-2 gap-3">
                   {ADMIN_GROUPS.map((group) => (
-                    <div key={group.titleKey} className="rounded-xl border border-gray-800 p-2">
-                       <p className="px-2 pb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-gray-500">
+                    <div key={group.titleKey} className="rounded-xl border border-[var(--border-color)] p-2">
+                       <p className="px-2 pb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--muted-color)]">
                          {t(group.titleKey)}
                        </p>
                       <div className="space-y-1">
@@ -219,12 +219,12 @@ export function AdminHeader({ theme, onToggleTheme }) {
                               className={`block rounded-lg px-2.5 py-2 transition-all ${
                                 location.pathname === item.to
                                   ? 'bg-primary/15 text-primary'
-                                  : 'text-gray-400 hover:text-white hover:bg-white/5'
+                                  : 'text-[var(--muted-color)] hover:text-[var(--heading-color)] hover:bg-white/5'
                               }`}
                               onClick={() => setShowAdminMenu(false)}
                             >
                               <div className="flex items-start gap-2.5">
-                                <span className="mt-0.5 rounded-md border border-gray-700 p-1.5"><Icon size={14} /></span>
+                                <span className="mt-0.5 rounded-md border border-[var(--border-color)] p-1.5"><Icon size={14} /></span>
                                 <span className="min-w-0">
                                   <span className="block text-xs font-semibold">
                                     {t(item.labelKey)}
@@ -256,14 +256,14 @@ export function AdminHeader({ theme, onToggleTheme }) {
               {lang.toUpperCase()}
             </button>
             {showLangMenu && (
-              <div className="absolute right-0 top-full mt-2 w-40 rounded-xl border border-gray-800 bg-[#0d1117] shadow-2xl z-50 py-1.5">
+              <div className="absolute right-0 top-full mt-2 w-40 rounded-xl border border-[var(--border-color)] bg-[var(--surface-bg)] shadow-2xl z-50 py-1.5">
                 {LANGUAGES.map(l => (
                   <button
                     key={l.code}
                     type="button"
                     onClick={() => { setLang(l.code); setShowLangMenu(false); }}
                     className={`w-full flex items-center gap-2 px-3 py-2 text-sm transition-all ${
-                      lang === l.code ? 'text-white' : 'text-gray-400 hover:text-white'
+                      lang === l.code ? 'text-[var(--heading-color)] font-semibold' : 'text-[var(--muted-color)] hover:text-[var(--heading-color)]'
                     }`}
                   >
                     <span>{l.flag}</span>
@@ -299,8 +299,8 @@ export function AdminHeader({ theme, onToggleTheme }) {
             </button>
 
             {showNotifications && (
-              <div className="absolute right-0 top-full mt-3 w-96 rounded-xl border border-gray-800 bg-[#0d1117] shadow-2xl z-50 flex flex-col max-h-[28rem]">
-                <div className="flex items-center justify-between gap-3 px-4 pt-4 pb-3 border-b border-gray-800">
+              <div className="absolute right-0 top-full mt-3 w-96 rounded-xl border border-[var(--border-color)] bg-[var(--surface-bg)] shadow-2xl z-50 flex flex-col max-h-[28rem]">
+                <div className="flex items-center justify-between gap-3 px-4 pt-4 pb-3 border-b border-[var(--border-color)]">
                   <p className="text-sm font-bold text-white">{t('notifications')}</p>
                   {unreadCount > 0 && (
                     <button
@@ -337,7 +337,7 @@ export function AdminHeader({ theme, onToggleTheme }) {
                             <IconComponent size={14} />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-xs font-bold text-white truncate">{config.label}</p>
+                            <p className="text-xs font-bold text-[var(--heading-color)] truncate">{config.label}</p>
                             <p className="text-xs text-gray-400 mt-1 line-clamp-2">{notif.message}</p>
                             <span className="text-[10px] text-gray-500 mt-1 inline-block">{relativeTime(notif.createdAt)}</span>
                           </div>
@@ -351,7 +351,7 @@ export function AdminHeader({ theme, onToggleTheme }) {
           </div>
 
           {/* User Menu */}
-          <div className="flex items-center gap-2 pl-2 border-l border-gray-800">
+          <div className="flex items-center gap-2 pl-2 border-l border-[var(--border-color)]">
             <span className="text-sm text-gray-300 hidden sm:block">{user?.firstName || t('navbar.admin')}</span>
             <button
               onClick={handleLogout}
@@ -374,7 +374,7 @@ export function AdminHeader({ theme, onToggleTheme }) {
 
       {/* Mobile Menu */}
       {showAdminMenu && (
-        <div className="lg:hidden absolute top-16 left-0 right-0 bg-[#0d1117] border-b border-gray-800 p-4">
+        <div className="lg:hidden absolute top-16 left-0 right-0 bg-[var(--surface-bg)] border-b border-[var(--border-color)] p-4">
           <div className="space-y-1">
 {ADMIN_LINKS.map((link) => {
   const { to, label, icon } = link;
@@ -387,7 +387,7 @@ export function AdminHeader({ theme, onToggleTheme }) {
     className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition ${
       location.pathname === to
         ? 'bg-primary/10 text-primary font-semibold'
-        : 'text-gray-400 hover:text-white hover:bg-white/5'
+        : 'text-[var(--muted-color)] hover:text-[var(--heading-color)] hover:bg-white/5'
     }`}
   >
     <Icon size={16} />

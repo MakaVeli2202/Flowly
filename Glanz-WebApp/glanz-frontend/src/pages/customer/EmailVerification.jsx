@@ -4,14 +4,6 @@ import { Mail, CheckCircle, AlertCircle, ArrowRight, RefreshCw } from 'lucide-re
 import SEO from '../../components/shared/SEO';
 import { authAPI } from '../../api/auth';
 
-import { BASE_PRISM_CSS } from '../../styles/authPageStyles';
-
-const PRISM_CSS = `${BASE_PRISM_CSS}
-.field-1    { animation: field-in 0.42s ease 0.30s both; }
-.btn-in     { animation: field-in 0.42s ease 0.50s both; }
-.footer-in  { animation: field-in 0.42s ease 0.62s both; }
-`;
-
 function EmailVerification() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -26,12 +18,12 @@ function EmailVerification() {
   const timerRef = useRef(null);
 
   useEffect(() => {
-    // Auto-send a fresh code when the page loads so one is always ready in the logs.
     if (email) {
       authAPI.sendVerificationEmail(email).catch(() => {});
       startCooldown();
     }
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const startCooldown = () => {
@@ -87,8 +79,6 @@ function EmailVerification() {
   return (
     <>
       <SEO title="Verify Email" description="Verify your email address to complete registration." noindex />
-      <style>{PRISM_CSS}</style>
-
       <div
         className="min-h-screen flex items-center justify-center px-4 py-16 relative"
         style={{
@@ -181,7 +171,7 @@ function EmailVerification() {
                     <div className="btn-in pt-1">
                       <div className="cta-prism-glow rounded-2xl">
                         <button type="submit" disabled={loading || code.length !== 6}
-                          className="premium-btn w-full py-3.5 text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                          className="btn-chrome w-full py-3.5 text-sm disabled:opacity-50 disabled:cursor-not-allowed">
                           {loading ? (
                             <span className="flex items-center justify-center gap-2">
                               <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />

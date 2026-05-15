@@ -9,18 +9,7 @@ import SEO from '../../components/shared/SEO';
 import AddressAutocompleteInput from '../../components/shared/AddressAutocompleteInput';
 import { DateWheelPicker } from '../../components/shared/DateWheelPicker';
 import PrismaticCursorOrb from '../../components/shared/PrismaticCursorOrb';
-import { BASE_PRISM_CSS } from '../../styles/authPageStyles';
 import { pwStrength, STRENGTH_BAR, STRENGTH_LABEL, STRENGTH_CLR } from '../../utils/passwordStrength';
-
-const PRISM_CSS = `${BASE_PRISM_CSS}
-.field-1    { animation: field-in 0.42s ease 0.30s both; }
-.field-2    { animation: field-in 0.42s ease 0.40s both; }
-.field-3    { animation: field-in 0.42s ease 0.50s both; }
-.field-4    { animation: field-in 0.42s ease 0.60s both; }
-.field-5    { animation: field-in 0.42s ease 0.70s both; }
-.btn-in     { animation: field-in 0.42s ease 0.82s both; }
-.footer-in  { animation: field-in 0.42s ease 0.94s both; }
-`;
 
 /* ══════════════════════════════════════════════════════════════
    REGISTER
@@ -93,7 +82,6 @@ function Register() {
   return (
     <>
       <SEO title="Create Account" description="Create your free Glanz account and book professional mobile car detailing anywhere in Qatar." noindex />
-      <style>{PRISM_CSS}</style>
       <PrismaticCursorOrb />
 
       <div
@@ -363,7 +351,7 @@ function Register() {
                 <div className="btn-in pt-2">
                   <div className="cta-prism-glow rounded-2xl">
                     <button type="submit" disabled={loading}
-                      className="premium-btn w-full py-3.5 text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                      className="btn-chrome w-full py-3.5 text-sm disabled:opacity-50 disabled:cursor-not-allowed">
                       {loading ? (
                         <span className="flex items-center justify-center gap-2">
                           <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />

@@ -102,7 +102,7 @@ const PrivacyPolicy = () => {
           <p className="text-[var(--muted-color)] mb-2">{ui.changesBody}</p>
         </div>
         
-        <Link to="/" className="premium-btn inline-flex mt-8">
+        <Link to="/" className="btn-chrome inline-flex mt-8">
           {ui.goHome} <ArrowRight size={16} />
         </Link>
       </div>
