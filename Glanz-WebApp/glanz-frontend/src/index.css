@@ -116,6 +116,13 @@
     radial-gradient(ellipse 55% 45% at 86% 8%,  rgba(168,136,255,0.20), transparent 60%),
     radial-gradient(ellipse 70% 40% at 50% 100%, rgba(92,199,245,0.14), transparent 60%),
     linear-gradient(180deg, #f3f5fa 0%, #e7eaf2 50%, #eef0f6 100%);
+
+  /* Chrome metallic — indigo/violet so it reads on light backgrounds */
+  --chrome-vertical: linear-gradient(180deg,
+    #1e1b4b 0%, #4c1d95 18%, #7c3aed 38%, #a78bfa 52%,
+    #7c3aed 68%, #4c1d95 84%, #1e1b4b 100%);
+  --chrome-horizontal: linear-gradient(90deg,
+    #2e1065 0%, #7c3aed 22%, #c4b5fd 50%, #7c3aed 78%, #2e1065 100%);
 }
 
 /* ─────────────────────────────────────────────────────────

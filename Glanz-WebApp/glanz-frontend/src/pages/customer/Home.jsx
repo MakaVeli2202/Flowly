@@ -8,6 +8,7 @@ import {
   MapPin, ChevronLeft, ChevronRight, ChevronDown, CheckCircle2,
   CalendarDays, Car, X, RefreshCw, AlertTriangle,
 } from 'lucide-react';
+import { useTheme } from '../../hooks/useTheme';
 import { getSiteContent } from '../../config/siteContent';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -397,8 +398,31 @@ const PRISM_CSS = `
   position: relative; overflow: hidden;
 }
 
+/* ══ Dark-mode video hero glass card ══ */
+.hero-glass {
+  position: relative; overflow: hidden;
+  border-radius: 24px;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.12),
+    0 0 0 0.5px rgba(200,169,107,0.20),
+    0 32px 80px rgba(0,0,0,0.60);
+}
+.hero-animate   { opacity: 0; animation: hero-fade-up 0.8s cubic-bezier(0.22,1,0.36,1) forwards; }
+.hero-animate-1 { animation-delay: 0.15s; }
+.hero-animate-2 { animation-delay: 0.30s; }
+.hero-animate-3 { animation-delay: 0.45s; }
+.hero-animate-4 { animation-delay: 0.60s; }
+@keyframes hero-fade-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 /* ═══════════════════════════════════════
-   HERO — Chrome / Holographic
+   HERO — Chrome / Holographic (LIGHT)
 ═══════════════════════════════════════ */
 .hero-chrome {
   position: relative; min-height: 100vh;
@@ -472,8 +496,8 @@ const PRISM_CSS = `
 
 .hero-headline {
   font-family: 'Cormorant Garamond', Georgia, serif;
-  font-weight: 700; font-size: clamp(64px, 11vw, 168px);
-  line-height: 0.92; letter-spacing: -0.025em; margin-bottom: 28px;
+  font-weight: 700; font-size: clamp(44px, 6vw, 90px);
+  line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 28px;
   color: var(--heading-color);
 }
 .chrome-text {
@@ -1021,6 +1045,7 @@ function Home() {
     .map((item, i) => ({ ...item, accent: i % 2 === 0 ? 'var(--primary)' : 'var(--secondary)' }));
   const brandValue = BRAND_VALUE_BY_LANG[normalizedLang] || BRAND_VALUE_BY_LANG.en;
   const { homePageContent } = getSiteContent(lang);
+  const theme = useTheme();
   const { isAdmin } = useAuth();
   const navigate = useNavigate();
   const primaryCtaTarget   = isAdmin ? '/admin/bookings' : '/booking';
@@ -1436,68 +1461,132 @@ function Home() {
       <style>{PRISM_CSS}</style>
       <PrismaticCursorOrb />
 
-      {/* ══ HERO — Chrome / Holographic ══ */}
-      <section ref={heroSectionRef} className="hero-chrome">
-        <div className="hero-aurora" />
-        <div className="hero-grid" />
-        {/* Water droplets */}
-        <div className="droplet" style={{ top: '18%', left: '12%' }} />
-        <div className="droplet droplet--sm" style={{ top: '64%', left: '8%', animationDelay: '1.4s' }} />
-        <div className="droplet droplet--lg" style={{ top: '24%', right: '14%', animationDelay: '0.6s' }} />
-        <div className="droplet" style={{ top: '72%', right: '10%', animationDelay: '2.1s' }} />
+      {theme === 'light' ? (
+        /* ══ HERO — Chrome / Holographic (LIGHT MODE) ══ */
+        <section ref={heroSectionRef} className="hero-chrome">
+          <div className="hero-aurora" />
+          <div className="hero-grid" />
+          <div className="droplet" style={{ top: '18%', left: '12%' }} />
+          <div className="droplet droplet--sm" style={{ top: '64%', left: '8%', animationDelay: '1.4s' }} />
+          <div className="droplet droplet--lg" style={{ top: '24%', right: '14%', animationDelay: '0.6s' }} />
+          <div className="droplet" style={{ top: '72%', right: '10%', animationDelay: '2.1s' }} />
 
-        <div className="container mx-auto px-4 relative z-10">
-          <div ref={heroCardRef} className="hero-chrome__inner" style={{ willChange: 'transform' }}>
-            {/* Logo with rings */}
-            <div className="hero-logo-wrap">
-              <div className="hero-logo-rings" aria-hidden="true" />
-              <img src={getBusiness().logo || '/GlanzLogo.png'} alt="Glanz" className="hero-logo-img" />
-            </div>
-
-            {/* Eyebrow badge */}
-            <div className="hero-eyebrow-row">
-              <span className="hero-eyebrow-rule hero-eyebrow-rule--l" />
-              <p className="hero-eyebrow">{homePageContent.badge}</p>
-              <span className="hero-eyebrow-rule hero-eyebrow-rule--r" />
-            </div>
-
-            {/* Headline */}
-            <h1 className="hero-headline">
-              <span className="chrome-text"><WordReveal text={homePageContent.title} baseDelay={0.12} /></span>
-            </h1>
-
-            {/* Rule */}
-            <div className="hero-rule" />
-
-            {/* Description */}
-            <p className="hero-sub">{homePageContent.description}</p>
-
-            {/* CTAs */}
-            <div className="hero-ctas">
-              <Link to={primaryCtaTarget} className="btn-chrome">{primaryCtaLabel}<ArrowRight size={18} /></Link>
-              <Link to={secondaryCtaTarget} className="btn-ghost-chrome">{secondaryCtaLabel}</Link>
-            </div>
-
-            {/* Trust strip */}
-            <div className="hero-trust">
-              <span className="hero-trust__stars">
-                {[...Array(5)].map((_, i) => <Star key={i} size={12} className="hero-trust__star" />)}
-                <span><strong>4.9</strong> {ui.heroRating}</span>
-              </span>
-              <span className="hero-trust__dot" />
-              <span><strong>{stats.happyClients > 0 ? `${stats.happyClients}+` : '100+'}</strong> {ui.heroHappyClients}</span>
-              <span className="hero-trust__dot" />
-              <span className="hero-trust__loc"><MapPin size={11} />{ui.heroMobileService}</span>
+          <div className="container mx-auto px-4 relative z-10">
+            <div ref={heroCardRef} className="hero-chrome__inner" style={{ willChange: 'transform' }}>
+              <div className="hero-logo-wrap">
+                <div className="hero-logo-rings" aria-hidden="true" />
+                <img src={getBusiness().logo || '/GlanzLogo.png'} alt="Glanz" className="hero-logo-img" />
+              </div>
+              <div className="hero-eyebrow-row">
+                <span className="hero-eyebrow-rule hero-eyebrow-rule--l" />
+                <p className="hero-eyebrow">{homePageContent.badge}</p>
+                <span className="hero-eyebrow-rule hero-eyebrow-rule--r" />
+              </div>
+              <h1 className="hero-headline">
+                <span className="chrome-text"><WordReveal text={homePageContent.title} baseDelay={0.12} /></span>
+              </h1>
+              <div className="hero-rule" />
+              <p className="hero-sub">{homePageContent.description}</p>
+              <div className="hero-ctas">
+                <Link to={primaryCtaTarget} className="btn-chrome">{primaryCtaLabel}<ArrowRight size={18} /></Link>
+                <Link to={secondaryCtaTarget} className="btn-ghost-chrome">{secondaryCtaLabel}</Link>
+              </div>
+              <div className="hero-trust">
+                <span className="hero-trust__stars">
+                  {[...Array(5)].map((_, i) => <Star key={i} size={12} className="hero-trust__star" />)}
+                  <span><strong>4.9</strong> {ui.heroRating}</span>
+                </span>
+                <span className="hero-trust__dot" />
+                <span><strong>{stats.happyClients > 0 ? `${stats.happyClients}+` : '100+'}</strong> {ui.heroHappyClients}</span>
+                <span className="hero-trust__dot" />
+                <span className="hero-trust__loc"><MapPin size={11} />{ui.heroMobileService}</span>
+              </div>
             </div>
           </div>
-        </div>
+          <div className="hero-scroll-indicator">
+            <div className="hero-scroll-indicator__icon"><ChevronDown size={14} /></div>
+            <span>{ui.heroScroll}</span>
+          </div>
+        </section>
+      ) : (
+        /* ══ HERO — Video (DARK MODE, original) ══ */
+        <section ref={heroSectionRef} className="relative min-h-screen flex items-center justify-center overflow-hidden">
+          {/* YouTube background video */}
+          <div className="absolute inset-0 bg-black overflow-hidden" style={{ pointerEvents: 'none' }}>
+            <iframe
+              className="absolute"
+              style={{
+                top: '50%', left: '50%',
+                width: '100vw', height: '56.25vw',
+                minHeight: '100vh', minWidth: '177.77777778vh',
+                transform: 'translate(-50%, -50%)',
+                border: 0,
+              }}
+              src="https://www.youtube-nocookie.com/embed/ZeES31xz7CE?autoplay=1&mute=1&loop=1&playlist=ZeES31xz7CE&controls=0&rel=0&playsinline=1&modestbranding=1&enablejsapi=0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              title="Hero background"
+            />
+          </div>
+          {/* Cinematic overlay */}
+          <div className="absolute inset-0" style={{
+            background: [
+              'radial-gradient(ellipse 90% 80% at 50% 55%, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.60) 100%)',
+              'linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.10) 38%, rgba(0,0,0,0.70) 100%)',
+            ].join(', '),
+          }} />
+          {/* Ambient spectral orbs */}
+          <div className="absolute -top-28 -right-28 w-[560px] h-[560px] rounded-full pointer-events-none"
+            style={{ background: 'conic-gradient(from 0deg,rgba(200,169,107,.14),rgba(14,165,160,.10),rgba(200,169,107,.08),rgba(14,165,160,.14))', filter: 'blur(88px)', animation: 'spectrum-float 16s ease-in-out infinite' }} />
+          <div className="absolute -bottom-36 -left-24 w-[460px] h-[460px] rounded-full pointer-events-none"
+            style={{ background: 'conic-gradient(from 180deg,rgba(14,165,160,.12),rgba(200,169,107,.10),rgba(14,165,160,.10),rgba(200,169,107,.12))', filter: 'blur(88px)', animation: 'spectrum-float 19s ease-in-out 5s infinite' }} />
 
-        {/* Scroll indicator */}
-        <div className="hero-scroll-indicator">
-          <div className="hero-scroll-indicator__icon"><ChevronDown size={14} /></div>
-          <span>{ui.heroScroll}</span>
-        </div>
-      </section>
+          <div className="container mx-auto px-4 relative z-10 py-16 md:py-20 flex flex-col items-center">
+            <div ref={heroCardRef} className="hero-glass max-w-5xl w-full mx-auto" style={{ willChange: 'transform' }}>
+              <AdvBubbles dense />
+              <div className="absolute top-0 left-[10%] right-[10%] h-[1.5px] hero-animate hero-animate-1"
+                style={{ background: 'linear-gradient(90deg,transparent,var(--primary) 30%,var(--secondary) 70%,transparent)' }} />
+              <div className="relative z-10 px-8 md:px-16 py-10 md:py-12 text-center flex flex-col items-center">
+                <div className="mb-6 hero-animate hero-animate-1">
+                  <img src={getBusiness().logo || '/GlanzLogo.png'} alt="Glanz" className="h-24 sm:h-28 md:h-36 w-auto object-contain mx-auto drop-shadow-xl" />
+                </div>
+                <div className="flex items-center gap-3 mb-6 hero-animate hero-animate-1">
+                  <span className="flex-shrink-0 h-px w-12" style={{ background: 'linear-gradient(90deg,transparent,var(--primary))' }} />
+                  <p className="uppercase tracking-[0.30em] text-primary text-[0.68rem] font-bold whitespace-nowrap">{homePageContent.badge}</p>
+                  <span className="flex-shrink-0 h-px w-12" style={{ background: 'linear-gradient(90deg,var(--primary),transparent)' }} />
+                </div>
+                <h1 className="premium-heading text-6xl sm:text-7xl md:text-8xl font-bold mb-7 leading-[0.90] text-white tracking-tight">
+                  <WordReveal text={homePageContent.title} baseDelay={0.12} />
+                </h1>
+                <div className="w-20 h-px mb-7 hero-animate hero-animate-2"
+                  style={{ background: 'linear-gradient(90deg,transparent,var(--primary),transparent)' }} />
+                <p className="text-base md:text-lg text-white/75 mb-10 max-w-2xl leading-relaxed hero-animate hero-animate-3">
+                  {homePageContent.description}
+                </p>
+                <div className="flex flex-wrap justify-center gap-4 mb-8 hero-animate hero-animate-4">
+                  <Link to={primaryCtaTarget} className="premium-btn text-base px-8 py-4">{primaryCtaLabel}<ArrowRight size={18} /></Link>
+                  <Link to={secondaryCtaTarget} className="secondary-cta text-base">{secondaryCtaLabel}</Link>
+                </div>
+                <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 hero-animate hero-animate-4">
+                  <div className="flex items-center gap-1.5">
+                    {[...Array(5)].map((_, i) => <Star key={i} size={12} className="fill-primary text-primary" />)}
+                    <span className="text-white/45 text-xs ml-1 font-medium">4.9 {ui.heroRating}</span>
+                  </div>
+                  <span className="h-3 w-px bg-white/15 hidden sm:block" />
+                  <span className="text-white/45 text-xs font-medium">{stats.happyClients > 0 ? `${stats.happyClients}+` : '100+'} {ui.heroHappyClients}</span>
+                  <span className="h-3 w-px bg-white/15 hidden sm:block" />
+                  <span className="flex items-center gap-1 text-white/45 text-xs font-medium"><MapPin size={10} />{ui.heroMobileService}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="hidden sm:flex absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex-col items-center gap-2 hero-animate hero-animate-4">
+            <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ border: '1px solid rgba(255,255,255,0.18)' }}>
+              <ChevronDown size={14} className="text-white/40 animate-bounce" />
+            </div>
+            <span className="text-white/30 text-[0.55rem] tracking-[0.22em] uppercase font-semibold">{ui.heroScroll}</span>
+          </div>
+        </section>
+      )}
 
       {/* ══ MARQUEE ══ */}
       <div className="py-[14px] border-y border-[var(--border-color)]"
