@@ -94,12 +94,23 @@ export default function SiteAccessGate({ children }) {
 
   if (!isLoaded) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[radial-gradient(circle_at_top,rgba(200,169,107,0.08),transparent_36%),linear-gradient(160deg,var(--surface-bg)_0%,var(--surface-bg-alt)_52%,var(--surface-bg)_100%)] text-white">
-        <div className="flex flex-col items-center gap-4 rounded-3xl border border-white/10 bg-black/20 px-8 py-10 shadow-2xl backdrop-blur-xl">
-          <div className="h-12 w-12 rounded-full border-2 border-white/20 border-t-primary animate-spin" />
-          <p className="text-sm text-white/60 font-medium">Loading...</p>
+      <>
+        <div
+          className="fixed top-0 left-0 right-0 z-[9999] h-0.5 bg-primary/30 overflow-hidden"
+          aria-hidden="true"
+        >
+          <div
+            className="h-full bg-primary"
+            style={{ width: '60%', animation: 'settings-bar 1.4s ease-in-out infinite alternate' }}
+          />
         </div>
-      </div>
+        <style>{`
+          @keyframes settings-bar {
+            from { transform: translateX(-100%); }
+            to   { transform: translateX(200%); }
+          }
+        `}</style>
+      </>
     );
   }
 

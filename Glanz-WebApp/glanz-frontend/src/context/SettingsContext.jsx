@@ -20,11 +20,56 @@ export const DEFAULT_SETTINGS = {
   siteLaunchDate: new Date('2026-06-01T00:00:00Z').toISOString(),
 };
 
+const CACHE_KEY = 'glanz.settings.v1';
+
+function readCache() {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+function writeCache(s) {
+  try { localStorage.setItem(CACHE_KEY, JSON.stringify(s)); } catch {}
+}
+
+function mergeData(data, prev) {
+  return {
+    vehicleMultipliers: (
+      data.pricing?.vehicleMultipliers &&
+      typeof data.pricing.vehicleMultipliers === 'object'
+    )
+      ? { ...DEFAULT_SETTINGS.vehicleMultipliers, ...data.pricing.vehicleMultipliers }
+      : prev.vehicleMultipliers,
+
+    defaultBufferMinutes: Number.isFinite(data.booking?.defaultBufferMinutes)
+      ? data.booking.defaultBufferMinutes
+      : prev.defaultBufferMinutes,
+
+    workerTravelBufferMinutes: Number.isFinite(data.booking?.workerTravelBufferMinutes)
+      ? data.booking.workerTravelBufferMinutes
+      : prev.workerTravelBufferMinutes,
+
+    sitePublished: typeof data.site?.published === 'boolean'
+      ? data.site.published
+      : prev.sitePublished,
+
+    siteLaunchDate: typeof data.site?.launchDate === 'string' && data.site.launchDate
+      ? data.site.launchDate
+      : prev.siteLaunchDate,
+  };
+}
+
 const SettingsContext = createContext(DEFAULT_SETTINGS);
 
 export function SettingsProvider({ children }) {
-  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const cached = readCache();
+  const [settings, setSettings] = useState(cached ?? DEFAULT_SETTINGS);
+  // If we have a cached value, treat as already loaded — no blocking spinner.
+  const [isLoaded, setIsLoaded] = useState(!!cached);
 
   useEffect(() => {
     let cancelled = false;
@@ -33,47 +78,23 @@ export function SettingsProvider({ children }) {
       settingsAPI.getSystemSettings()
         .then((data) => {
           if (cancelled || !data || typeof data !== 'object') return;
-          setSettings((prev) => ({
-            vehicleMultipliers: (
-              data.pricing?.vehicleMultipliers &&
-              typeof data.pricing.vehicleMultipliers === 'object'
-            )
-              ? { ...DEFAULT_SETTINGS.vehicleMultipliers, ...data.pricing.vehicleMultipliers }
-              : prev.vehicleMultipliers,
-
-            defaultBufferMinutes: Number.isFinite(data.booking?.defaultBufferMinutes)
-              ? data.booking.defaultBufferMinutes
-              : prev.defaultBufferMinutes,
-
-            workerTravelBufferMinutes: Number.isFinite(data.booking?.workerTravelBufferMinutes)
-              ? data.booking.workerTravelBufferMinutes
-              : prev.workerTravelBufferMinutes,
-
-            sitePublished: typeof data.site?.published === 'boolean'
-              ? data.site.published
-              : prev.sitePublished,
-
-            siteLaunchDate: typeof data.site?.launchDate === 'string' && data.site.launchDate
-              ? data.site.launchDate
-              : prev.siteLaunchDate,
-          }));
+          setSettings((prev) => {
+            const next = mergeData(data, prev);
+            writeCache(next);
+            return next;
+          });
         })
-        .catch(() => {
-        })
+        .catch(() => {})
         .finally(() => {
           if (!cancelled) setIsLoaded(true);
         });
     };
 
-    const handleSettingsChanged = () => {
-      loadSettings();
-    };
-
     loadSettings();
-    window.addEventListener('system-settings-changed', handleSettingsChanged);
+    window.addEventListener('system-settings-changed', loadSettings);
     return () => {
       cancelled = true;
-      window.removeEventListener('system-settings-changed', handleSettingsChanged);
+      window.removeEventListener('system-settings-changed', loadSettings);
     };
   }, []);
 
