@@ -101,17 +101,14 @@ export function CustomerNavbar({ theme, onToggleTheme }) {
   };
 
   const loginButtonElement = (
-    <Link to="/login" className="px-4 py-2 text-xs sm:text-sm border border-[#333] bg-[rgba(31,31,31,0.62)] text-gray-300 rounded-full hover:border-white/50 hover:text-white transition-colors duration-200 w-full sm:w-auto text-center">
+    <Link to="/login" className="btn-ghost-chrome px-4 py-2 text-xs sm:text-sm w-full sm:w-auto text-center" style={{ color: '#ffffff' }}>
       {t('login')}
     </Link>
   );
 
   const signupButtonElement = (
-    <Link to="/register" className="relative group w-full sm:w-auto">
-      <div className="absolute inset-0 -m-2 rounded-full hidden sm:block bg-gray-100 opacity-40 filter blur-lg pointer-events-none transition-all duration-300 ease-out group-hover:opacity-60 group-hover:blur-xl group-hover:-m-3"></div>
-      <span className="relative z-10 block px-4 py-2 text-xs sm:text-sm font-semibold text-black bg-gradient-to-br from-gray-100 to-gray-300 rounded-full hover:from-gray-200 hover:to-gray-400 transition-all duration-200 w-full sm:w-auto text-center">
-        {t('signUp')}
-      </span>
+    <Link to="/register" className="btn-chrome px-4 py-2 text-xs sm:text-sm w-full sm:w-auto text-center">
+      {t('signUp')}
     </Link>
   );
 

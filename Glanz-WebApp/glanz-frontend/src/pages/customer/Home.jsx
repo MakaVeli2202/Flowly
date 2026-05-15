@@ -551,33 +551,74 @@ const PRISM_CSS = `
 .hero-sub { font-size: 17px; line-height: 1.6; color: var(--text-color); max-width: 580px; margin: 0 auto 40px; }
 .hero-ctas { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 56px; }
 
+/* ── btn-chrome: silver liquid chrome pill (light mode) ── */
 .btn-chrome {
   display: inline-flex; align-items: center; gap: 10px;
-  padding: 16px 28px; font-weight: 600; font-size: 15px; color: #0a0d20;
-  background: var(--chrome-horizontal); background-size: 200% 100%;
-  border: 1px solid rgba(255,255,255,0.5); border-radius: 999px;
+  padding: 14px 28px; font-weight: 700; font-size: 15px; color: #0a0d20;
+  background: linear-gradient(90deg,#b9bdcc 0%,#f6f7fa 22%,#e0e2ea 50%,#f6f7fa 78%,#b9bdcc 100%);
+  background-size: 200% 100%;
+  border: 1px solid rgba(255,255,255,0.85); border-radius: 999px;
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.9), inset 0 -2px 4px rgba(0,0,0,0.18),
-    0 8px 24px -6px rgba(168,136,255,0.55), 0 0 32px -8px rgba(92,199,245,0.5);
-  transition: transform 0.25s ease, box-shadow 0.25s ease, background-position 0.5s ease; cursor: pointer;
+    inset 0 1.5px 0 rgba(255,255,255,0.95),
+    inset 0 -2px 4px rgba(0,0,0,0.14),
+    0 8px 28px -6px rgba(0,0,0,0.38),
+    0 0 28px -8px rgba(168,136,255,0.45),
+    0 0 20px -6px rgba(92,199,245,0.38);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, background-position 0.5s ease;
+  cursor: pointer; text-decoration: none;
 }
 .btn-chrome:hover {
   transform: translateY(-2px); background-position: 100% 0%;
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,1), inset 0 -2px 4px rgba(0,0,0,0.18),
-    0 14px 36px -6px rgba(255,126,200,0.65), 0 0 48px -8px rgba(92,199,245,0.65);
+    inset 0 1.5px 0 rgba(255,255,255,1),
+    inset 0 -2px 4px rgba(0,0,0,0.18),
+    0 14px 38px -6px rgba(0,0,0,0.45),
+    0 0 40px -8px rgba(255,126,200,0.55),
+    0 0 32px -6px rgba(92,199,245,0.55);
+}
+.btn-chrome:active { transform: translateY(0px) scale(0.985); transition-duration: 0.08s; }
+
+/* ── dark mode: gold chrome override ── */
+[data-theme='dark'] .btn-chrome {
+  background: linear-gradient(135deg,#e8c97a 0%,#c8a96b 28%,#a07840 52%,#c8a96b 76%,#e8c97a 100%);
+  background-size: 200% 100%;
+  color: #0d0f14;
+  border: 1px solid rgba(232,201,122,0.65);
+  box-shadow:
+    inset 0 1.5px 0 rgba(255,255,255,0.5),
+    inset 0 -2px 4px rgba(0,0,0,0.25),
+    0 8px 28px -6px rgba(200,169,107,0.45),
+    0 0 32px -8px rgba(212,144,58,0.38);
+}
+[data-theme='dark'] .btn-chrome:hover {
+  transform: translateY(-2px); background-position: 100% 0%;
+  box-shadow:
+    inset 0 1.5px 0 rgba(255,255,255,0.6),
+    inset 0 -2px 4px rgba(0,0,0,0.28),
+    0 14px 40px -6px rgba(200,169,107,0.60),
+    0 0 50px -8px rgba(212,144,58,0.55);
 }
 
 .btn-ghost-chrome {
   display: inline-flex; align-items: center; gap: 8px;
-  padding: 15px 24px; font-weight: 500; font-size: 14px;
+  padding: 13px 24px; font-weight: 600; font-size: 14px;
   color: var(--heading-color); background: transparent;
-  border: 1px solid var(--border-color-strong); border-radius: 999px;
-  transition: all 0.25s ease; cursor: pointer;
+  border: 1.5px solid rgba(150,155,175,0.55); border-radius: 999px;
+  transition: all 0.25s ease; cursor: pointer; text-decoration: none;
 }
 .btn-ghost-chrome:hover {
-  background: color-mix(in srgb, var(--heading-color) 4%, transparent);
-  border-color: var(--heading-color);
+  background: rgba(150,155,175,0.10);
+  border-color: rgba(150,155,175,0.90);
+  box-shadow: 0 0 18px -4px rgba(168,136,255,0.30);
+}
+[data-theme='dark'] .btn-ghost-chrome {
+  border-color: rgba(200,169,107,0.45);
+  color: var(--heading-color);
+}
+[data-theme='dark'] .btn-ghost-chrome:hover {
+  background: rgba(200,169,107,0.08);
+  border-color: rgba(200,169,107,0.80);
+  box-shadow: 0 0 18px -4px rgba(200,169,107,0.35);
 }
 
 .hero-trust { display: flex; align-items: center; justify-content: center; gap: 24px; flex-wrap: wrap; font-size: 13px; color: var(--muted-color); }
@@ -630,18 +671,6 @@ const PRISM_CSS = `
   .hero-eyebrow-rule { width: 32px; }
 }
 
-[data-theme='light'] .premium-btn {
-  background: var(--chrome-horizontal); background-size: 200% 100%;
-  color: #0a0d20;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.9), inset 0 -2px 4px rgba(0,0,0,0.18),
-    0 8px 24px -6px rgba(168,136,255,0.45);
-}
-[data-theme='light'] .premium-btn:hover {
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,1), inset 0 -2px 4px rgba(0,0,0,0.18),
-    0 14px 36px -6px rgba(255,126,200,0.55);
-}
 
 /* ── Chrome composition over video (light mode) ── */
 .hero-aurora--video {
@@ -1567,10 +1596,15 @@ function Home() {
         </div>
         {/* Cinematic overlay */}
         <div className="absolute inset-0" style={{
-          background: [
-            'radial-gradient(ellipse 90% 80% at 50% 55%, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.60) 100%)',
-            'linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.10) 38%, rgba(0,0,0,0.70) 100%)',
-          ].join(', '),
+          background: theme === 'light'
+            ? [
+                'radial-gradient(ellipse 90% 80% at 50% 55%, rgba(0,0,0,0.50) 0%, rgba(0,0,0,0.92) 100%)',
+                'linear-gradient(to bottom, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.55) 38%, rgba(0,0,0,0.95) 100%)',
+              ].join(', ')
+            : [
+                'radial-gradient(ellipse 90% 80% at 50% 55%, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.60) 100%)',
+                'linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.10) 38%, rgba(0,0,0,0.70) 100%)',
+              ].join(', '),
         }} />
         {/* Ambient orbs — holo in light, gold in dark */}
         <div className="absolute -top-28 -right-28 w-[560px] h-[560px] rounded-full pointer-events-none" style={{
@@ -1629,18 +1663,10 @@ function Home() {
               </p>
               {/* Buttons */}
               <div className="flex flex-wrap justify-center gap-4 mb-8 hero-animate hero-animate-4">
-                <Link to={primaryCtaTarget} className="btn-chrome text-base px-8 py-4" style={
-                  theme === 'light'
-                    ? { background: 'linear-gradient(90deg,#f5f5f5 0%,#ffffff 28%,#ececec 50%,#ffffff 72%,#d8d8d8 100%)', backgroundSize: '200% 100%', color: '#0a0d24', border: '1px solid rgba(255,255,255,0.85)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,1),inset 0 -2px 4px rgba(0,0,0,0.10),0 8px 28px -6px rgba(0,0,0,0.40)' }
-                    : { background: 'linear-gradient(135deg,#c8a96b 0%,#a88442 100%)', color: '#101823', border: '1px solid rgba(200,169,107,0.6)', boxShadow: '0 12px 35px rgba(200,169,107,0.38)' }
-                }>
+                <Link to={primaryCtaTarget} className="btn-chrome text-base px-8 py-4">
                   {primaryCtaLabel}<ArrowRight size={18} />
                 </Link>
-                <Link to={secondaryCtaTarget} className="btn-ghost-chrome text-base" style={
-                  theme === 'light'
-                    ? { color: 'rgba(255,255,255,0.92)', borderColor: 'rgba(255,255,255,0.45)' }
-                    : { color: 'rgba(255,255,255,0.85)', borderColor: 'rgba(200,169,107,0.45)' }
-                }>
+                <Link to={secondaryCtaTarget} className="btn-ghost-chrome text-base">
                   {secondaryCtaLabel}
                 </Link>
               </div>
@@ -1831,7 +1857,7 @@ function Home() {
                   <div className="flex items-center gap-3 mt-auto">
                     <button
                       onClick={() => navigate(service.link, service.pkg ? { state: { selectedPackage: service.pkg } } : {})}
-                      className="premium-btn inline-flex items-center gap-2 text-sm"
+                      className="btn-chrome inline-flex items-center gap-2 text-sm px-5 py-2.5"
                     >
                       {service.cta}<ArrowRight size={15} />
                     </button>
@@ -1873,7 +1899,7 @@ function Home() {
                 <p className="text-base text-[var(--muted-color)] leading-relaxed mb-8">{service.description}</p>
                 <button
                   onClick={() => navigate(service.link, service.pkg ? { state: { selectedPackage: service.pkg } } : {})}
-                  className="premium-btn inline-flex items-center gap-2"
+                  className="btn-chrome inline-flex items-center gap-2"
                 >{service.cta}<ArrowRight size={18} /></button>
               </div>
                <div className="service-liquid-card-mobile glass-card p-7 relative overflow-hidden">
@@ -2051,7 +2077,7 @@ function Home() {
                 <Sparkles className="text-primary" size={22} />
               </div>
               <p className="text-[var(--muted-color)] mb-10 text-base md:text-lg max-w-2xl mx-auto">{homePageContent.curatedDescription}</p>
-              <Link to="/packages" className="premium-btn">{homePageContent.curatedCta}<ArrowRight size={20} /></Link>
+              <Link to="/packages" className="btn-chrome">{homePageContent.curatedCta}<ArrowRight size={20} /></Link>
             </div>
           </div>
         </div>
@@ -2075,7 +2101,7 @@ function Home() {
                 </div>
                 <h2 className="premium-heading text-4xl md:text-5xl font-bold mb-4 text-[var(--heading-color)]">{homePageContent.finalTitle}</h2>
                 <p className="text-base md:text-lg text-[var(--muted-color)] mb-9 max-w-xl mx-auto">{homePageContent.finalDescription}</p>
-                <Link to={finalCtaTarget} className="premium-btn">{finalCtaLabel}<ArrowRight size={20} /></Link>
+                <Link to={finalCtaTarget} className="btn-chrome">{finalCtaLabel}<ArrowRight size={20} /></Link>
               </div>
             </div>
           </div>
@@ -2131,7 +2157,7 @@ function Home() {
               <Link
                 to={expandedService.link}
                 onClick={() => setExpandedService(null)}
-                className="premium-btn inline-flex items-center justify-center gap-2 text-sm w-full"
+                className="btn-chrome inline-flex items-center justify-center gap-2 text-sm w-full"
               >
                 {expandedService.cta}<ArrowRight size={15} />
               </Link>
@@ -2143,7 +2169,7 @@ function Home() {
       {/* ══ FLOATING CTA ══ */}
       {!isAdmin && (
         <Link to="/booking" aria-label="Book your detailing service"
-          className={`floating-cta-btn premium-btn${showFloatingCta ? ' visible' : ''}`}>
+          className={`floating-cta-btn btn-chrome${showFloatingCta ? ' visible' : ''}`}>
           <Sparkles size={15} />Book Now
         </Link>
       )}
