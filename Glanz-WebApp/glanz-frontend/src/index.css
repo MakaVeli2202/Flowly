@@ -102,13 +102,14 @@
   --primary:   #a888ff;
   --secondary: #5cc7f5;
 
-  /* Glass card surface — light */
-  --glass-card-bg: linear-gradient(180deg, rgba(255,255,255,0.82), rgba(255,255,255,0.66));
+  /* Glass card surface — light (pearl with lavender tint, distinct border) */
+  --glass-card-bg: linear-gradient(145deg, rgba(255,255,255,0.78) 0%, rgba(232,228,255,0.62) 100%);
   --glass-card-shadow:
-    0 1px 0 rgba(255,255,255,0.95) inset,
-    0 -1px 0 rgba(10,13,36,0.04) inset,
-    0 14px 40px -12px rgba(10,13,36,0.16),
-    0 0 0 0.5px rgba(168,136,255,0.18);
+    0 1.5px 0 rgba(255,255,255,0.95) inset,
+    0 -1px 0 rgba(168,136,255,0.08) inset,
+    0 0 0 1px rgba(168,136,255,0.20),
+    0 18px 48px -10px rgba(10,13,36,0.22),
+    0 0 40px -12px rgba(168,136,255,0.28);
 
   /* Hero page background — light pearl + holo aurora */
   --hero-bg:
