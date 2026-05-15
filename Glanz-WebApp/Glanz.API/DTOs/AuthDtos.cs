@@ -211,12 +211,18 @@ namespace Glanz.API.DTOs
     {
         public int WorkerId { get; set; }
         public string WorkerName { get; set; } = string.Empty;
+        public string? CompensationType { get; set; }
         public decimal? MonthlySalary { get; set; }
+        public decimal? PercentageRate { get; set; }
         public int Month { get; set; }
         public int Year { get; set; }
         public int JobsCompleted { get; set; }
         public decimal TotalRevenue { get; set; }
         public decimal EstimatedSalary { get; set; }
+        /// <summary>Total minutes worked in the period (from attendance logs).</summary>
+        public int? TotalMinutesWorked { get; set; }
+        /// <summary>Number of days the worker clocked in during the period.</summary>
+        public int? DaysPresent { get; set; }
         public bool IsPaid { get; set; }
         public DateTime? PaidAt { get; set; }
     }
@@ -356,5 +362,10 @@ namespace Glanz.API.DTOs
         public string FirstName { get; set; } = string.Empty;
         [Required]
         public string LastName  { get; set; } = string.Empty;
+    }
+
+    public class ClockOutDto
+    {
+        public string? Note { get; set; }
     }
 }

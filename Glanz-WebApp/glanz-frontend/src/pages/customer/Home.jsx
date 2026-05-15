@@ -74,7 +74,7 @@ const reviewsAPI = {
   },
 };
 
-/* ── PRISM CSS — Liquid Glass Edition ─────────────────────── */
+/* ── PRISM CSS — Dual-Theme Liquid Glass ─────────────────── */
 const PRISM_CSS = `
 /* ── Keyframes ── */
 @keyframes holo-sweep {
@@ -93,12 +93,16 @@ const PRISM_CSS = `
   66%      { transform: translate(-12px,12px) rotate(240deg); opacity: 0.38; }
 }
 @keyframes cta-rainbow-glow {
-  0%,100% { box-shadow: 0 0 0 1.5px rgba(200,169,107,.45), 0 0 32px rgba(200,169,107,.18); }
-  50%     { box-shadow: 0 0 0 1.5px rgba(14,165,160,.45),  0 0 32px rgba(14,165,160,.18); }
+  0%,100% { box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--primary) 45%, transparent),
+                        0 0 32px color-mix(in srgb, var(--primary) 18%, transparent); }
+  50%     { box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--secondary) 45%, transparent),
+                        0 0 32px color-mix(in srgb, var(--secondary) 18%, transparent); }
 }
 @keyframes prism-card-glow {
-  0%,100% { box-shadow: 0 0 0 1px rgba(200,169,107,.35), 0 0 24px rgba(200,169,107,.14); }
-  50%     { box-shadow: 0 0 0 1px rgba(14,165,160,.35),  0 0 24px rgba(14,165,160,.14); }
+  0%,100% { box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 35%, transparent),
+                        0 0 24px color-mix(in srgb, var(--primary) 14%, transparent); }
+  50%     { box-shadow: 0 0 0 1px color-mix(in srgb, var(--secondary) 35%, transparent),
+                        0 0 24px color-mix(in srgb, var(--secondary) 14%, transparent); }
 }
 
 /* ── NEW: Liquid glass animations ── */
@@ -209,20 +213,13 @@ const PRISM_CSS = `
   will-change: transform, background;
 }
 
-/* ══ LIQUID GLASS — .glass-card override ══ */
+/* ══ GLASS CARD — theme-aware via CSS variables ══ */
 .glass-card {
-  background: rgba(4, 7, 14, 0.44) !important;
+  background: var(--glass-card-bg) !important;
   backdrop-filter: blur(36px) saturate(210%) brightness(1.08) !important;
   -webkit-backdrop-filter: blur(36px) saturate(210%) brightness(1.08) !important;
-  border: 1px solid rgba(255,255,255,0.09) !important;
-  box-shadow:
-    inset 0 1.5px 0 rgba(255,255,255,0.14),
-    inset 0 -1px 0 rgba(0,0,0,0.14),
-    inset -1px 0 0 rgba(255,255,255,0.04),
-    0 0 0 0.5px rgba(200,169,107,0.22),
-    0 28px 70px rgba(0,0,0,0.55),
-    0 0 90px rgba(200,169,107,0.07),
-    0 0 60px rgba(14,165,160,0.05) !important;
+  border: 1px solid var(--border-color) !important;
+  box-shadow: var(--glass-card-shadow) !important;
   position: relative;
 }
 
@@ -238,8 +235,8 @@ const PRISM_CSS = `
 .lq-bar {
   position: absolute; top: 0; left: 0; right: 0; height: 1.5px; pointer-events: none; z-index: 1;
   background: linear-gradient(90deg,
-    transparent 0%, rgba(200,169,107,0.9) 18%, rgba(255,255,255,1) 38%,
-    rgba(14,165,160,0.9) 58%, rgba(200,169,107,0.7) 80%, transparent 100%);
+    transparent 0%, var(--primary) 18%, rgba(255,255,255,1) 38%,
+    var(--secondary) 58%, color-mix(in srgb, var(--primary) 70%, transparent) 80%, transparent 100%);
   background-size: 200% 100%;
   animation: liquid-shimmer 5s ease-in-out infinite;
 }
@@ -249,42 +246,12 @@ const PRISM_CSS = `
   position: absolute; pointer-events: none; z-index: 0;
   width: 1px; border-radius: 999px;
   background: linear-gradient(180deg,
-    transparent 0%, rgba(255,255,255,0.50) 35%, rgba(200,169,107,0.28) 70%, transparent 100%);
+    transparent 0%, rgba(255,255,255,0.50) 35%, color-mix(in srgb, var(--primary) 28%, transparent) 70%, transparent 100%);
 }
 .lq-r1 { animation: rain-drop 3.0s ease-in infinite 0.3s;  height: 65px; top: -65px; left: 12%; }
 .lq-r2 { animation: rain-drop 3.8s ease-in infinite 1.5s;  height: 85px; top: -85px; left: 38%; }
 .lq-r3 { animation: rain-drop 2.7s ease-in infinite 0.9s;  height: 55px; top: -55px; left: 64%; }
 .lq-r4 { animation: rain-drop 4.1s ease-in infinite 2.2s;  height: 75px; top: -75px; left: 82%; }
-
-/* ── Hero glass card ── */
-.hero-glass {
-  background: rgba(4, 6, 12, 0.48);
-  backdrop-filter: blur(36px) saturate(200%) brightness(1.06);
-  -webkit-backdrop-filter: blur(36px) saturate(200%) brightness(1.06);
-  border: 1px solid rgba(255,255,255,0.09);
-  border-radius: 20px;
-  overflow: hidden;
-  position: relative;
-  box-shadow:
-    inset 0 2px 0 rgba(255,255,255,0.12),
-    inset -1px 0 0 rgba(255,255,255,0.035),
-    0 0 0 0.5px rgba(200,169,107,0.20),
-    0 36px 90px -16px rgba(0,0,0,0.80),
-    0 0 130px -28px rgba(200,169,107,0.22),
-    0 0 90px  -16px rgba(14,165,160,0.14);
-}
-.hero-glass::before {
-  content: '';
-  position: absolute; inset: 0;
-  border-radius: inherit; pointer-events: none; z-index: 0;
-  background: linear-gradient(
-    135deg,
-    rgba(255,255,255,0.08) 0%,
-    rgba(255,255,255,0.02) 28%,
-    transparent 55%,
-    rgba(200,169,107,0.05) 100%
-  );
-}
 
 /* ── Service cards: premium liquid glass ── */
 .service-liquid-card,
@@ -296,10 +263,10 @@ const PRISM_CSS = `
   box-shadow:
     inset 0 1.5px 0 rgba(255,255,255,0.20),
     inset 0 -1px 0 rgba(0,0,0,0.20),
-    0 0 0 0.5px rgba(200,169,107,0.24),
+    0 0 0 0.5px color-mix(in srgb, var(--primary) 24%, transparent),
     0 32px 72px rgba(0,0,0,0.52),
-    0 0 84px rgba(200,169,107,0.10),
-    0 0 66px rgba(14,165,160,0.08) !important;
+    0 0 84px color-mix(in srgb, var(--primary) 10%, transparent),
+    0 0 66px color-mix(in srgb, var(--secondary) 8%, transparent) !important;
 }
 
 .service-liquid-card::before,
@@ -315,7 +282,7 @@ const PRISM_CSS = `
     rgba(255,255,255,0.14) 0%,
     rgba(255,255,255,0.045) 24%,
     transparent 56%,
-    rgba(14,165,160,0.05) 100%
+    color-mix(in srgb, var(--secondary) 5%, transparent) 100%
   );
 }
 
@@ -325,10 +292,19 @@ const PRISM_CSS = `
   box-shadow:
     inset 0 1.5px 0 rgba(255,255,255,0.22),
     inset 0 -1px 0 rgba(0,0,0,0.22),
-    0 0 0 0.5px rgba(200,169,107,0.32),
+    0 0 0 0.5px color-mix(in srgb, var(--primary) 32%, transparent),
     0 36px 88px rgba(0,0,0,0.56),
-    0 0 104px rgba(200,169,107,0.14),
-    0 0 78px rgba(14,165,160,0.10) !important;
+    0 0 104px color-mix(in srgb, var(--primary) 14%, transparent),
+    0 0 78px color-mix(in srgb, var(--secondary) 10%, transparent) !important;
+}
+[data-theme='light'] .service-liquid-card,
+[data-theme='light'] .service-liquid-card-mobile {
+  background: rgba(255, 255, 255, 0.76) !important;
+  border: 1px solid color-mix(in srgb, var(--primary) 18%, transparent) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.95),
+    0 0 0 0.5px color-mix(in srgb, var(--primary) 18%, transparent),
+    0 16px 48px rgba(10,13,36,0.14) !important;
 }
 
 /* ── Prism ray ── */
@@ -347,7 +323,9 @@ const PRISM_CSS = `
   content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
   background: radial-gradient(
     circle at var(--px,50%) var(--py,50%),
-    rgba(200,169,107,.22) 0%, rgba(14,165,160,.16) 50%, transparent 80%
+    color-mix(in srgb, var(--primary) 22%, transparent) 0%,
+    color-mix(in srgb, var(--secondary) 16%, transparent) 50%,
+    transparent 80%
   );
   opacity: 0; transition: opacity 0.3s; mix-blend-mode: screen;
 }
@@ -396,8 +374,9 @@ const PRISM_CSS = `
 .spectrum-line {
   height: 1.5px;
   background: linear-gradient(90deg,
-    transparent 0%, rgba(200,169,107,.55) 20%,
-    rgba(14,165,160,.55) 50%, rgba(200,169,107,.55) 80%, transparent 100%);
+    transparent 0%, color-mix(in srgb, var(--primary) 55%, transparent) 20%,
+    color-mix(in srgb, var(--secondary) 55%, transparent) 50%,
+    color-mix(in srgb, var(--primary) 55%, transparent) 80%, transparent 100%);
   background-size: 200% 100%;
   animation: holo-sweep 5s linear infinite;
   opacity: 0.55;
@@ -406,16 +385,200 @@ const PRISM_CSS = `
 
 /* ── Review card liquid glass ── */
 .review-liquid {
-  background: rgba(4,7,14,0.50) !important;
+  background: var(--glass-card-bg) !important;
   backdrop-filter: blur(36px) saturate(200%) brightness(1.06) !important;
   -webkit-backdrop-filter: blur(36px) saturate(200%) brightness(1.06) !important;
-  border: 1px solid rgba(255,255,255,0.08) !important;
+  border: 1px solid var(--border-color) !important;
   box-shadow:
     inset 0 1.5px 0 rgba(255,255,255,0.12),
-    0 0 0 0.5px rgba(200,169,107,0.18),
+    0 0 0 0.5px color-mix(in srgb, var(--primary) 18%, transparent),
     0 16px 44px rgba(0,0,0,0.50),
-    0 0 60px rgba(200,169,107,0.055) !important;
+    0 0 60px color-mix(in srgb, var(--primary) 5%, transparent) !important;
   position: relative; overflow: hidden;
+}
+
+/* ═══════════════════════════════════════
+   HERO — Chrome / Holographic
+═══════════════════════════════════════ */
+.hero-chrome {
+  position: relative; min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  padding: 120px 0 80px; overflow: hidden;
+  background: var(--hero-bg);
+}
+
+.hero-aurora {
+  position: absolute; inset: -200px; pointer-events: none; filter: blur(80px);
+  background:
+    radial-gradient(circle at 22% 30%, rgba(255,126,200,0.48), transparent 35%),
+    radial-gradient(circle at 78% 22%, rgba(168,136,255,0.46), transparent 35%),
+    radial-gradient(circle at 50% 78%, rgba(92,199,245,0.40), transparent 38%),
+    radial-gradient(circle at 12% 88%, rgba(142,235,202,0.32), transparent 40%);
+  animation: orb-drift 20s ease-in-out infinite;
+}
+[data-theme='light'] .hero-aurora { opacity: 0.75; mix-blend-mode: multiply; }
+[data-theme='dark']  .hero-aurora { opacity: 0.65; mix-blend-mode: screen; }
+
+.hero-grid {
+  position: absolute; inset: 0; pointer-events: none;
+  background-image:
+    linear-gradient(var(--border-color) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border-color) 1px, transparent 1px);
+  background-size: 80px 80px;
+  mask-image: radial-gradient(circle at 50% 40%, black 0%, transparent 75%);
+  -webkit-mask-image: radial-gradient(circle at 50% 40%, black 0%, transparent 75%);
+}
+
+.hero-chrome__inner {
+  position: relative; z-index: 5;
+  display: flex; flex-direction: column; align-items: center;
+  text-align: center; max-width: 900px; margin: 0 auto;
+}
+
+.hero-logo-wrap { position: relative; display: flex; justify-content: center; margin-bottom: 36px; }
+.hero-logo-img {
+  height: 200px; width: auto;
+  filter: drop-shadow(0 0 60px rgba(168,136,255,0.5)) drop-shadow(0 0 30px rgba(92,199,245,0.4));
+  position: relative; z-index: 2;
+}
+[data-theme='dark'] .hero-logo-img {
+  filter:
+    drop-shadow(0 0 60px color-mix(in srgb, var(--primary) 50%, transparent))
+    drop-shadow(0 0 30px color-mix(in srgb, var(--secondary) 40%, transparent));
+}
+.hero-logo-rings {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 420px; height: 420px; pointer-events: none;
+}
+.hero-logo-rings::before, .hero-logo-rings::after {
+  content: ''; position: absolute; inset: 0; border-radius: 50%; border: 1px solid;
+  border-color: rgba(255,126,200,0.22) rgba(168,136,255,0.22) rgba(92,199,245,0.22) rgba(142,235,202,0.22);
+  animation: rim-rotate 30s linear infinite;
+}
+.hero-logo-rings::after { inset: 40px; animation-duration: 22s; animation-direction: reverse; opacity: 0.6; }
+
+.hero-eyebrow-row { display: flex; align-items: center; gap: 16px; margin-bottom: 28px; }
+.hero-eyebrow {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.30em; text-transform: uppercase;
+  background: var(--holo-gradient); background-size: 200% 100%;
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  filter: brightness(1.1) saturate(1.2);
+  animation: holo-flow 8s ease-in-out infinite;
+}
+.hero-eyebrow-rule { width: 48px; height: 1px; }
+.hero-eyebrow-rule--l { background: linear-gradient(90deg, transparent, rgba(168,136,255,0.7)); }
+.hero-eyebrow-rule--r { background: linear-gradient(90deg, rgba(92,199,245,0.7), transparent); }
+
+.hero-headline {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-weight: 700; font-size: clamp(64px, 11vw, 168px);
+  line-height: 0.92; letter-spacing: -0.025em; margin-bottom: 28px;
+  color: var(--heading-color);
+}
+.chrome-text {
+  background: var(--chrome-vertical);
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 1px 0 rgba(255,255,255,0.25)) drop-shadow(0 -1px 0 rgba(0,0,0,0.35));
+}
+[data-theme='light'] .chrome-text {
+  filter: drop-shadow(0 1px 0 rgba(255,255,255,0.6)) drop-shadow(0 -1px 0 rgba(10,13,36,0.25));
+}
+
+.hero-rule { width: 80px; height: 1px; margin: 0 auto 28px; background: linear-gradient(90deg, transparent, var(--primary), transparent); }
+.hero-sub { font-size: 17px; line-height: 1.6; color: var(--text-color); max-width: 580px; margin: 0 auto 40px; }
+.hero-ctas { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 56px; }
+
+.btn-chrome {
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 16px 28px; font-weight: 600; font-size: 15px; color: #0a0d20;
+  background: var(--chrome-horizontal); background-size: 200% 100%;
+  border: 1px solid rgba(255,255,255,0.5); border-radius: 999px;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.9), inset 0 -2px 4px rgba(0,0,0,0.18),
+    0 8px 24px -6px rgba(168,136,255,0.55), 0 0 32px -8px rgba(92,199,245,0.5);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, background-position 0.5s ease; cursor: pointer;
+}
+.btn-chrome:hover {
+  transform: translateY(-2px); background-position: 100% 0%;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,1), inset 0 -2px 4px rgba(0,0,0,0.18),
+    0 14px 36px -6px rgba(255,126,200,0.65), 0 0 48px -8px rgba(92,199,245,0.65);
+}
+
+.btn-ghost-chrome {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 15px 24px; font-weight: 500; font-size: 14px;
+  color: var(--heading-color); background: transparent;
+  border: 1px solid var(--border-color-strong); border-radius: 999px;
+  transition: all 0.25s ease; cursor: pointer;
+}
+.btn-ghost-chrome:hover {
+  background: color-mix(in srgb, var(--heading-color) 4%, transparent);
+  border-color: var(--heading-color);
+}
+
+.hero-trust { display: flex; align-items: center; justify-content: center; gap: 24px; flex-wrap: wrap; font-size: 13px; color: var(--muted-color); }
+.hero-trust strong { color: var(--heading-color); font-weight: 600; }
+.hero-trust__stars { display: inline-flex; gap: 2px; align-items: center; }
+.hero-trust__stars > span { margin-left: 8px; }
+.hero-trust__star { color: var(--holo-cyan); fill: var(--holo-cyan); }
+.hero-trust__dot { width: 4px; height: 4px; border-radius: 50%; background: var(--border-color-strong); }
+.hero-trust__loc { display: inline-flex; align-items: center; gap: 6px; }
+
+.droplet {
+  position: absolute; width: 8px; height: 12px;
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9) 0%, rgba(168,136,255,0.55) 40%, rgba(92,199,245,0.35) 70%, transparent 100%);
+  box-shadow: inset -1px -1px 2px rgba(0,0,0,0.2), 0 0 8px rgba(168,136,255,0.5);
+  pointer-events: none; animation: water-bead 6s ease-in infinite;
+}
+.droplet--sm { width: 6px; height: 9px; animation-duration: 7s; }
+.droplet--lg { width: 10px; height: 14px; animation-duration: 8s; }
+
+.hero-scroll-indicator {
+  position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: 5;
+}
+.hero-scroll-indicator__icon {
+  width: 28px; height: 28px; border-radius: 50%;
+  border: 1px solid var(--border-color-strong);
+  display: flex; align-items: center; justify-content: center; color: var(--muted-color);
+}
+.hero-scroll-indicator > span { font-size: 10px; letter-spacing: 0.22em; color: var(--muted-color); text-transform: uppercase; }
+
+@keyframes water-bead {
+  0%   { transform: translateY(0) scale(1); opacity: 0; }
+  10%  { opacity: 0.8; }
+  100% { transform: translateY(-160px) scale(0.4); opacity: 0; }
+}
+@keyframes rim-rotate { to { transform: translate(-50%, -50%) rotate(360deg); } }
+@keyframes orb-drift {
+  0%, 100% { transform: translate(0,0) rotate(0deg); }
+  50%      { transform: translate(40px,-30px) rotate(180deg); }
+}
+@keyframes holo-flow {
+  0%, 100% { background-position: 0% 50%; }
+  50%      { background-position: 100% 50%; }
+}
+
+@media (max-width: 640px) {
+  .hero-logo-img { height: 140px; }
+  .hero-logo-rings { width: 300px; height: 300px; }
+  .hero-eyebrow-rule { width: 32px; }
+}
+
+[data-theme='light'] .premium-btn {
+  background: var(--chrome-horizontal); background-size: 200% 100%;
+  color: #0a0d20;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.9), inset 0 -2px 4px rgba(0,0,0,0.18),
+    0 8px 24px -6px rgba(168,136,255,0.45);
+}
+[data-theme='light'] .premium-btn:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,1), inset 0 -2px 4px rgba(0,0,0,0.18),
+    0 14px 36px -6px rgba(255,126,200,0.55);
 }
 `;
 
@@ -430,11 +593,11 @@ function PrismaticCursorOrb() {
     const tick = () => {
       curX += (mouseX - curX) * 0.09;
       curY += (mouseY - curY) * 0.09;
-      // Shift gently between brand gold (#c8a96b) and brand teal (#0ea5a0)
+      // Ride lavender (#a888ff) ↔ cyan (#5cc7f5) — works on both light and dark backgrounds
       const t = mouseX / window.innerWidth;
-      const r = Math.round(200 - 186 * t);
-      const g = Math.round(169 -   4 * t);
-      const b = Math.round(107 +  53 * t);
+      const r = Math.round(168 -  76 * t);
+      const g = Math.round(136 +  63 * t);
+      const b = Math.round(255 -  10 * t);
       el.style.transform  = `translate3d(${curX}px, ${curY}px, 0)`;
       el.style.background = `radial-gradient(circle, rgba(${r},${g},${b},.13) 0%, rgba(${r},${g},${b},.05) 55%, transparent 72%)`;
       rafId = requestAnimationFrame(tick);
@@ -595,7 +758,7 @@ const SERVICE_AREA_LABELS = {
   Dukhan: { ar: 'دخان', de: 'Dukhan' },
   'Al Shahaniya': { ar: 'الشحانية', de: 'Asch-Schahaniyya' },
 };
-const CARD_ACCENTS  = ['#c8a96b','#0ea5a0'];
+const CARD_ACCENTS  = ['var(--primary)', 'var(--secondary)'];
 const SERVICE_HIGHLIGHTS_FALLBACK_BY_LANG = {
   en: [
     { title: 'Exterior Detailing', description: 'Deep exterior wash, decontamination, and high-gloss finish.', features: ['Foam wash', 'Wheel and tire clean', 'Paint-safe drying', 'Gloss protection'] },
@@ -699,20 +862,20 @@ const HOW_IT_WORKS_BY_LANG = {
   ],
 };
 const DOTS = [
-  { top: '12%', left: '8%',   size: 3, color: 'rgba(200,169,107,0.5)',  anim: 'floatA', delay: '0s'   },
-  { top: '70%', left: '5%',   size: 2, color: 'rgba(14,165,160,0.4)',   anim: 'floatB', delay: '1s'   },
-  { top: '30%', right: '6%',  size: 4, color: 'rgba(200,169,107,0.3)',  anim: 'floatB', delay: '0.5s' },
-  { top: '80%', right: '10%', size: 2, color: 'rgba(14,165,160,0.5)',   anim: 'floatA', delay: '2s'   },
-  { top: '50%', left: '15%',  size: 2, color: 'rgba(255,255,255,0.2)',  anim: 'floatA', delay: '1.5s' },
-  { top: '20%', right: '20%', size: 3, color: 'rgba(200,169,107,0.4)',  anim: 'floatB', delay: '3s'   },
-  { top: '60%', left: '25%',  size: 2, color: 'rgba(14,165,160,0.3)',   anim: 'floatA', delay: '0.8s' },
-  { top: '85%', right: '25%', size: 3, color: 'rgba(200,169,107,0.25)', anim: 'floatB', delay: '2.5s' },
+  { top: '12%', left: '8%',   size: 3, color: 'color-mix(in srgb, var(--primary) 50%, transparent)',   anim: 'floatA', delay: '0s'   },
+  { top: '70%', left: '5%',   size: 2, color: 'color-mix(in srgb, var(--secondary) 40%, transparent)', anim: 'floatB', delay: '1s'   },
+  { top: '30%', right: '6%',  size: 4, color: 'color-mix(in srgb, var(--primary) 30%, transparent)',   anim: 'floatB', delay: '0.5s' },
+  { top: '80%', right: '10%', size: 2, color: 'color-mix(in srgb, var(--secondary) 50%, transparent)', anim: 'floatA', delay: '2s'   },
+  { top: '50%', left: '15%',  size: 2, color: 'rgba(255,255,255,0.2)',                                  anim: 'floatA', delay: '1.5s' },
+  { top: '20%', right: '20%', size: 3, color: 'color-mix(in srgb, var(--primary) 40%, transparent)',   anim: 'floatB', delay: '3s'   },
+  { top: '60%', left: '25%',  size: 2, color: 'color-mix(in srgb, var(--secondary) 30%, transparent)', anim: 'floatA', delay: '0.8s' },
+  { top: '85%', right: '25%', size: 3, color: 'color-mix(in srgb, var(--primary) 25%, transparent)',   anim: 'floatB', delay: '2.5s' },
 ];
-const PAGE_BG = `
-  radial-gradient(circle at 10% 15%, rgba(200,169,107,0.18), transparent 34%),
-  radial-gradient(circle at 85% 8%,  rgba(14,165,160,0.14),  transparent 30%),
-  linear-gradient(160deg, var(--surface-bg) 0%, var(--surface-bg-alt) 52%, var(--surface-bg) 100%)
-`.trim();
+const PAGE_BG = [
+  'radial-gradient(circle at 10% 15%, color-mix(in srgb, var(--primary) 18%, transparent), transparent 34%)',
+  'radial-gradient(circle at 85% 8%, color-mix(in srgb, var(--secondary) 14%, transparent), transparent 30%)',
+  'linear-gradient(160deg, var(--surface-bg) 0%, var(--surface-bg-alt) 52%, var(--surface-bg) 100%)',
+].join(', ');
 
 const HOME_UI_BY_LANG = {
   en: {
@@ -854,7 +1017,8 @@ function Home() {
   const normalizedLang = normalizeLangCode(lang);
   const ui = HOME_UI_BY_LANG[normalizedLang] || HOME_UI_BY_LANG.en;
 
-  const howItWorks = HOW_IT_WORKS_BY_LANG[normalizedLang] || HOW_IT_WORKS_BY_LANG.en;
+  const howItWorks = (HOW_IT_WORKS_BY_LANG[normalizedLang] || HOW_IT_WORKS_BY_LANG.en)
+    .map((item, i) => ({ ...item, accent: i % 2 === 0 ? 'var(--primary)' : 'var(--secondary)' }));
   const brandValue = BRAND_VALUE_BY_LANG[normalizedLang] || BRAND_VALUE_BY_LANG.en;
   const { homePageContent } = getSiteContent(lang);
   const { isAdmin } = useAuth();
@@ -1272,104 +1436,66 @@ function Home() {
       <style>{PRISM_CSS}</style>
       <PrismaticCursorOrb />
 
-      {/* ══ HERO ══ */}
-      <section ref={heroSectionRef} className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        {/* YouTube background video */}
-        <div className="absolute inset-0 bg-black overflow-hidden" style={{ pointerEvents: 'none' }}>
-          <iframe
-            className="absolute"
-            style={{
-              top: '50%',
-              left: '50%',
-              width: '100vw',
-              height: '56.25vw',
-              minHeight: '100vh',
-              minWidth: '177.77777778vh',
-              transform: 'translate(-50%, -50%)',
-              border: 0,
-            }}
-            src="https://www.youtube-nocookie.com/embed/ZeES31xz7CE?autoplay=1&mute=1&loop=1&playlist=ZeES31xz7CE&controls=0&rel=0&playsinline=1&modestbranding=1&enablejsapi=0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            title="Hero background"
-          />
-        </div>
+      {/* ══ HERO — Chrome / Holographic ══ */}
+      <section ref={heroSectionRef} className="hero-chrome">
+        <div className="hero-aurora" />
+        <div className="hero-grid" />
+        {/* Water droplets */}
+        <div className="droplet" style={{ top: '18%', left: '12%' }} />
+        <div className="droplet droplet--sm" style={{ top: '64%', left: '8%', animationDelay: '1.4s' }} />
+        <div className="droplet droplet--lg" style={{ top: '24%', right: '14%', animationDelay: '0.6s' }} />
+        <div className="droplet" style={{ top: '72%', right: '10%', animationDelay: '2.1s' }} />
 
-        {/* Cinematic layered overlay — dark vignette + subtle centre window */}
-        <div className="absolute inset-0" style={{
-          background: [
-            'radial-gradient(ellipse 90% 80% at 50% 55%, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.60) 100%)',
-            'linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.10) 38%, rgba(0,0,0,0.70) 100%)',
-          ].join(', '),
-        }} />
+        <div className="container mx-auto px-4 relative z-10">
+          <div ref={heroCardRef} className="hero-chrome__inner" style={{ willChange: 'transform' }}>
+            {/* Logo with rings */}
+            <div className="hero-logo-wrap">
+              <div className="hero-logo-rings" aria-hidden="true" />
+              <img src={getBusiness().logo || '/GlanzLogo.png'} alt="Glanz" className="hero-logo-img" />
+            </div>
 
-        {/* Ambient spectral orbs */}
-        <div className="absolute -top-28 -right-28 w-[560px] h-[560px] rounded-full pointer-events-none"
-          style={{ background: 'conic-gradient(from 0deg,rgba(200,169,107,.14),rgba(14,165,160,.10),rgba(200,169,107,.08),rgba(14,165,160,.14))', filter: 'blur(88px)', animation: 'spectrum-float 16s ease-in-out infinite' }} />
-        <div className="absolute -bottom-36 -left-24 w-[460px] h-[460px] rounded-full pointer-events-none"
-          style={{ background: 'conic-gradient(from 180deg,rgba(14,165,160,.12),rgba(200,169,107,.10),rgba(14,165,160,.10),rgba(200,169,107,.12))', filter: 'blur(88px)', animation: 'spectrum-float 19s ease-in-out 5s infinite' }} />
+            {/* Eyebrow badge */}
+            <div className="hero-eyebrow-row">
+              <span className="hero-eyebrow-rule hero-eyebrow-rule--l" />
+              <p className="hero-eyebrow">{homePageContent.badge}</p>
+              <span className="hero-eyebrow-rule hero-eyebrow-rule--r" />
+            </div>
 
-        <div className="container mx-auto px-4 relative z-10 py-16 md:py-20 flex flex-col items-center">
-          <div ref={heroCardRef} className="hero-glass max-w-5xl w-full mx-auto" style={{ willChange: 'transform' }}>
-            <AdvBubbles dense />
+            {/* Headline */}
+            <h1 className="hero-headline">
+              <span className="chrome-text"><WordReveal text={homePageContent.title} baseDelay={0.12} /></span>
+            </h1>
 
-            {/* Top edge accent line */}
-            <div className="absolute top-0 left-[10%] right-[10%] h-[1.5px] hero-animate hero-animate-1"
-              style={{ background: 'linear-gradient(90deg,transparent,#c8a96b 30%,#0ea5a0 70%,transparent)' }} />
+            {/* Rule */}
+            <div className="hero-rule" />
 
-            <div className="relative z-10 px-8 md:px-16 py-10 md:py-12 text-center flex flex-col items-center">
-              {/* Logo */}
-              <div className="mb-6 hero-animate hero-animate-1">
-                <img src={getBusiness().logo || '/GlanzLogo.png'} alt="Glanz" className="h-24 sm:h-28 md:h-36 w-auto object-contain mx-auto drop-shadow-xl" />
-              </div>
+            {/* Description */}
+            <p className="hero-sub">{homePageContent.description}</p>
 
-              {/* Badge */}
-              <div className="flex items-center gap-3 mb-6 hero-animate hero-animate-1">
-                <span className="flex-shrink-0 h-px w-12" style={{ background: 'linear-gradient(90deg,transparent,#c8a96b)' }} />
-                <p className="uppercase tracking-[0.30em] text-primary text-[0.68rem] font-bold whitespace-nowrap">{homePageContent.badge}</p>
-                <span className="flex-shrink-0 h-px w-12" style={{ background: 'linear-gradient(90deg,#c8a96b,transparent)' }} />
-              </div>
+            {/* CTAs */}
+            <div className="hero-ctas">
+              <Link to={primaryCtaTarget} className="btn-chrome">{primaryCtaLabel}<ArrowRight size={18} /></Link>
+              <Link to={secondaryCtaTarget} className="btn-ghost-chrome">{secondaryCtaLabel}</Link>
+            </div>
 
-              {/* Headline — larger, more cinematic */}
-              <h1 className="premium-heading text-6xl sm:text-7xl md:text-8xl font-bold mb-7 leading-[0.90] text-white tracking-tight">
-                <WordReveal text={homePageContent.title} baseDelay={0.12} />
-              </h1>
-
-              {/* Horizontal gold rule under headline */}
-              <div className="w-20 h-px mb-7 hero-animate hero-animate-2"
-                style={{ background: 'linear-gradient(90deg,transparent,#c8a96b,transparent)' }} />
-
-              {/* Description */}
-              <p className="text-base md:text-lg text-white/75 mb-10 max-w-2xl leading-relaxed hero-animate hero-animate-3">
-                {homePageContent.description}
-              </p>
-
-              {/* CTAs — centred */}
-              <div className="flex flex-wrap justify-center gap-4 mb-8 hero-animate hero-animate-4">
-                <Link to={primaryCtaTarget} className="premium-btn text-base px-8 py-4">{primaryCtaLabel}<ArrowRight size={18} /></Link>
-                <Link to={secondaryCtaTarget} className="secondary-cta text-base">{secondaryCtaLabel}</Link>
-              </div>
-
-              {/* Trust strip — centred */}
-              <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 hero-animate hero-animate-4">
-                <div className="flex items-center gap-1.5">
-                  {[...Array(5)].map((_, i) => <Star key={i} size={12} className="fill-primary text-primary" />)}
-                  <span className="text-white/45 text-xs ml-1 font-medium">4.9 {ui.heroRating}</span>
-                </div>
-                <span className="h-3 w-px bg-white/15 hidden sm:block" />
-                <span className="text-white/45 text-xs font-medium">{stats.happyClients > 0 ? `${stats.happyClients}+` : '100+'} {ui.heroHappyClients}</span>
-                <span className="h-3 w-px bg-white/15 hidden sm:block" />
-                <span className="flex items-center gap-1 text-white/45 text-xs font-medium"><MapPin size={10} />{ui.heroMobileService}</span>
-              </div>
+            {/* Trust strip */}
+            <div className="hero-trust">
+              <span className="hero-trust__stars">
+                {[...Array(5)].map((_, i) => <Star key={i} size={12} className="hero-trust__star" />)}
+                <span><strong>4.9</strong> {ui.heroRating}</span>
+              </span>
+              <span className="hero-trust__dot" />
+              <span><strong>{stats.happyClients > 0 ? `${stats.happyClients}+` : '100+'}</strong> {ui.heroHappyClients}</span>
+              <span className="hero-trust__dot" />
+              <span className="hero-trust__loc"><MapPin size={11} />{ui.heroMobileService}</span>
             </div>
           </div>
         </div>
 
         {/* Scroll indicator */}
-        <div className="hidden sm:flex absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex-col items-center gap-2 hero-animate hero-animate-4">
-          <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ border: '1px solid rgba(255,255,255,0.18)' }}>
-            <ChevronDown size={14} className="text-white/40 animate-bounce" />
-          </div>
-          <span className="text-white/30 text-[0.55rem] tracking-[0.22em] uppercase font-semibold">{ui.heroScroll}</span>
+        <div className="hero-scroll-indicator">
+          <div className="hero-scroll-indicator__icon"><ChevronDown size={14} /></div>
+          <span>{ui.heroScroll}</span>
         </div>
       </section>
 
@@ -1383,7 +1509,7 @@ function Home() {
             <div className="marquee-inner" style={{ animationDuration: `${marqueeDuration}s` }}>
               {marqueeItems.map((item, i) => (
                 <span key={i} className="inline-flex items-center gap-2.5 px-5 text-[0.72rem] font-semibold tracking-[0.18em] uppercase whitespace-nowrap" style={{ color: 'var(--muted-color)' }}>
-                  <span style={{ color: '#c8a96b', fontSize: '0.9rem', lineHeight: 1 }}>✦</span>{item}
+                  <span style={{ color: 'var(--primary)', fontSize: '0.9rem', lineHeight: 1 }}>✦</span>{item}
                 </span>
               ))}
             </div>
@@ -1436,7 +1562,7 @@ function Home() {
           </div>
           <div className="grid md:grid-cols-3 gap-6 md:gap-8 relative">
             <div className="hidden md:block absolute top-[3.5rem] left-[calc(33.33%_+_2rem)] right-[calc(33.33%_+_2rem)] h-px"
-              style={{ background: 'linear-gradient(90deg, rgba(200,169,107,0.5), rgba(14,165,160,0.5))' }} />
+              style={{ background: 'linear-gradient(90deg, color-mix(in srgb, var(--primary) 50%, transparent), color-mix(in srgb, var(--secondary) 50%, transparent))' }} />
             {howItWorks.map((item) => {
               const StepIcon = item.Icon;
               return (
@@ -1454,7 +1580,7 @@ function Home() {
                       {item.step}
                     </span>
                     <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-5"
-                      style={{ background: `${item.accent}18`, border: `1px solid ${item.accent}28` }}>
+                      style={{ background: `color-mix(in srgb, ${item.accent} 18%, transparent)`, border: `1px solid color-mix(in srgb, ${item.accent} 28%, transparent)` }}>
                       <StepIcon size={22} style={{ color: item.accent }} />
                     </div>
                     <h3 className="premium-heading text-xl font-bold text-[var(--heading-color)] mb-3">{item.title}</h3>
@@ -1486,7 +1612,7 @@ function Home() {
         {/* Sticky inner: browser positions this before any paint */}
         <div className="sticky top-0 h-screen flex items-center overflow-hidden" style={{ background: PAGE_BG }}>
           <div className="absolute top-10 left-12 z-30 flex items-center gap-3">
-            <span className="h-px w-8" style={{ background: 'linear-gradient(90deg, transparent, #c8a96b)' }} />
+            <span className="h-px w-8" style={{ background: 'linear-gradient(90deg, transparent, var(--primary))' }} />
             <p className="uppercase tracking-[0.28em] text-primary text-[0.65rem] font-semibold">{ui.ourServices}</p>
           </div>
           <div className="absolute top-10 right-12 z-30">
@@ -1531,14 +1657,14 @@ function Home() {
               >
                 <AdvBubbles dense />
                 <div className="absolute top-0 left-0 right-0 h-[2px]"
-                  style={{ background: `linear-gradient(90deg, transparent, ${accent}, ${accent === '#c8a96b' ? '#fff' : '#c8a96b'}, ${accent}, transparent)`, animation: 'liquid-shimmer 5s ease-in-out infinite', backgroundSize: '200% 100%' }} />
+                  style={{ background: `linear-gradient(90deg, transparent, ${accent}, rgba(255,255,255,0.6), ${accent}, transparent)`, animation: 'liquid-shimmer 5s ease-in-out infinite', backgroundSize: '200% 100%' }} />
                 <span className="absolute bottom-4 right-6 font-black pointer-events-none select-none"
                   style={{ fontSize: '9rem', lineHeight: 1, color: accent, opacity: 0.045 }}>
                   {String(index + 1).padStart(2, '0')}
                 </span>
                 <div className="relative z-10">
                   <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-6 text-[0.6rem] font-bold tracking-[0.2em] uppercase"
-                    style={{ border: `1px solid ${accent}45`, color: accent, background: `${accent}12` }}>
+                    style={{ border: `1px solid color-mix(in srgb, ${accent} 45%, transparent)`, color: accent, background: `color-mix(in srgb, ${accent} 12%, transparent)` }}>
                     {String(index + 1).padStart(2, '0')}
                   </div>
                   <h3 className="premium-heading text-2xl font-bold text-[var(--heading-color)] mb-4 leading-tight">{service.title}</h3>
@@ -1686,8 +1812,8 @@ function Home() {
                     {/* Top accent line per card */}
                     <div className="absolute top-0 left-[20%] right-[20%] h-[1.5px]"
                       style={{ background: index % 2 === 0
-                        ? 'linear-gradient(90deg,transparent,rgba(200,169,107,0.6),transparent)'
-                        : 'linear-gradient(90deg,transparent,rgba(14,165,160,0.6),transparent)' }} />
+                        ? 'linear-gradient(90deg,transparent,color-mix(in srgb,var(--primary) 60%,transparent),transparent)'
+                        : 'linear-gradient(90deg,transparent,color-mix(in srgb,var(--secondary) 60%,transparent),transparent)' }} />
                     <span className="absolute top-4 right-4 text-[0.55rem] font-bold tracking-[0.18em]"
                       style={{ color: 'var(--muted-color)', opacity: 0.35 }}>
                       {String(index + 1).padStart(2, '0')}

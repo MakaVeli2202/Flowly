@@ -473,8 +473,16 @@
     "retakePhoto": "اعادة التقاط الصورة",
     "openCamera": "فتح الكاميرا",
     "uploading": "جارٍ الرفع...",
-    "saveContinue": "حفظ ومتابعة",
-    "skipPhoto": "تخطي الصورة",
+    "saveContinue": "حفظ وانهاء",
+    "skipPhoto": "تخطي وانهاء",
+    "nextAngle": "الزاوية التالية",
+    "skipAngle": "تخطي الزاوية",
+    "photoAngleFront": "المنظر الامامي",
+    "photoAngleSide": "المنظر الجانبي",
+    "photoAngleRear": "المنظر الخلفي",
+    "photoAngleFrontHint": "قف امام المركبة والتقط صورة كاملة للجهة الامامية.",
+    "photoAngleSideHint": "قف بجانب المركبة والتقط صورة كاملة للجانب.",
+    "photoAngleRearHint": "قف خلف المركبة والتقط صورة كاملة للجهة الخلفية.",
     "confirmAction": "تأكيد الاجراء",
     "finishJobQuestion": "انهاء المهمة؟",
     "finishJobExplain": "سيتم وضع المهمة كمكتملة مع اشعار العميل والادارة.",
@@ -823,6 +831,27 @@
       "changeStatus":        "تغيير الحالة",
       "callCustomer":        "الاتصال بالعميل",
       "maps":                "الخرائط"
+    },
+    "payroll": {
+      "title":             "كشف الرواتب",
+      "tab":               "الرواتب",
+      "pending":           "معلق",
+      "paidOut":           "مدفوع",
+      "workers":           "الموظفون",
+      "noWorkers":         "لا يوجد موظفون نشطون.",
+      "fixedSalary":       "راتب ثابت",
+      "paid":              "مدفوع",
+      "jobs":              "وظائف",
+      "revenue":           "الإيرادات",
+      "hoursWorked":       "ساعات",
+      "daysPresent":       "أيام",
+      "baseSalary":        "الأساس",
+      "estimated":         "الراتب المقدر",
+      "noAttendanceNote":  "لم يتم تسجيل حضور - يظهر الراتب الكامل.",
+      "viewAttendance":    "الحضور",
+      "markPaid":          "تحديد كمدفوع",
+      "noAttendance":      "لا توجد سجلات حضور لهذه الفترة.",
+      "incomplete":        "غير مكتمل"
     }
   },
   "navigation": {
@@ -982,5 +1011,22 @@
       "emailRequired": "يرجى إدخال عنوان بريدك الإلكتروني.",
       "failed": "حدث خطأ ما. يرجى المحاولة مرة أخرى."
     }
+  },
+  "attendance": {
+    "shiftToday": "وردية اليوم",
+    "clockedIn": "وقت الحضور",
+    "clockedOut": "وقت الانصراف",
+    "duration": "المدة",
+    "minutes": "دقيقة",
+    "clockIn": "تسجيل الحضور",
+    "clockOut": "تسجيل الانصراف",
+    "confirmClockOut": "تأكيد الانصراف",
+    "clockOutTitle": "إنهاء وردية اليوم؟",
+    "noteOptional": "ملاحظة (اختياري)",
+    "notePlaceholder": "مثل: انتهيت من جميع المهام",
+    "shiftComplete": "اكتملت الوردية",
+    "errorTitle": "خطأ في الحضور",
+    "clockInError": "فشل تسجيل الحضور. حاول مرة أخرى.",
+    "clockOutError": "فشل تسجيل الانصراف. حاول مرة أخرى."
   }
 }

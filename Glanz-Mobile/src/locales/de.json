@@ -473,8 +473,16 @@
     "retakePhoto": "Foto erneut aufnehmen",
     "openCamera": "Kamera offnen",
     "uploading": "Wird hochgeladen...",
-    "saveContinue": "Speichern und weiter",
-    "skipPhoto": "Foto uberspringen",
+    "saveContinue": "Speichern & Fertig",
+    "skipPhoto": "Uberspringen & Fertig",
+    "nextAngle": "Nachster Winkel",
+    "skipAngle": "Winkel uberspringen",
+    "photoAngleFront": "Vorderansicht",
+    "photoAngleSide": "Seitenansicht",
+    "photoAngleRear": "Ruckansicht",
+    "photoAngleFrontHint": "Stehen Sie vor dem Fahrzeug und erfassen Sie die gesamte Front.",
+    "photoAngleSideHint": "Stellen Sie sich neben das Fahrzeug und erfassen Sie das vollstandige Seitenprofil.",
+    "photoAngleRearHint": "Stehen Sie hinter dem Fahrzeug und erfassen Sie das vollstandige Heck.",
     "confirmAction": "Aktion bestatigen",
     "finishJobQuestion": "Auftrag abschliessen?",
     "finishJobExplain": "Dadurch wird der Auftrag als abgeschlossen markiert und Kunde sowie Admin werden benachrichtigt.",
@@ -823,6 +831,27 @@
       "changeStatus":        "Status ändern",
       "callCustomer":        "Kunde anrufen",
       "maps":                "Karte"
+    },
+    "payroll": {
+      "title":             "Gehaltsabrechnung",
+      "tab":               "Gehaltsabrechnung",
+      "pending":           "Ausstehend",
+      "paidOut":           "Ausgezahlt",
+      "workers":           "Mitarbeiter",
+      "noWorkers":         "Keine aktiven Mitarbeiter.",
+      "fixedSalary":       "Festgehalt",
+      "paid":              "Bezahlt",
+      "jobs":              "Jobs",
+      "revenue":           "Umsatz",
+      "hoursWorked":       "Stunden",
+      "daysPresent":       "Tage",
+      "baseSalary":        "Basis",
+      "estimated":         "Gesch. Gehalt",
+      "noAttendanceNote":  "Keine Anwesenheit erfasst - volles Gehalt angezeigt.",
+      "viewAttendance":    "Anwesenheit",
+      "markPaid":          "Als bezahlt markieren",
+      "noAttendance":      "Keine Anwesenheitseinträge für diesen Zeitraum.",
+      "incomplete":        "Unvollständig"
     }
   },
   "navigation": {
@@ -982,5 +1011,22 @@
       "emailRequired": "Bitte gib deine E-Mail-Adresse ein.",
       "failed": "Etwas ist schiefgelaufen. Bitte versuche es erneut."
     }
+  },
+  "attendance": {
+    "shiftToday": "Heutige Schicht",
+    "clockedIn": "Eingestempelt",
+    "clockedOut": "Ausgestempelt",
+    "duration": "Dauer",
+    "minutes": "Min.",
+    "clockIn": "Einstempeln",
+    "clockOut": "Ausstempeln",
+    "confirmClockOut": "Ausstempeln bestätigen",
+    "clockOutTitle": "Schicht für heute beenden?",
+    "noteOptional": "Notiz (optional)",
+    "notePlaceholder": "z.B. alle Jobs erledigt",
+    "shiftComplete": "Schicht abgeschlossen",
+    "errorTitle": "Anwesenheitsfehler",
+    "clockInError": "Einstempeln fehlgeschlagen. Bitte erneut versuchen.",
+    "clockOutError": "Ausstempeln fehlgeschlagen. Bitte erneut versuchen."
   }
 }

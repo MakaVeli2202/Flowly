@@ -27,4 +27,7 @@ export const authAPI = {
   verifyEmail: async (data) => (await apiClient.post('/Auth/verify-email', data)).data,
   forgotPassword: async (data) => (await apiClient.post('/Auth/forgot-password', data)).data,
   resetPassword: async (data) => (await apiClient.post('/Auth/reset-password', data)).data,
+  clockIn: async () => (await apiClient.post('/Auth/attendance/clock-in')).data,
+  clockOut: async (note) => (await apiClient.post('/Auth/attendance/clock-out', { note })).data,
+  getTodayAttendance: async () => (await apiClient.get('/Auth/attendance/today')).data,
 };

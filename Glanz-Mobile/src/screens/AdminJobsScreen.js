@@ -212,9 +212,10 @@ export default function AdminJobsScreen({ route, navigation }) {
   const [pauseModalVisible,         setPauseModalVisible]         = useState(false);
   const [pauseReason,               setPauseReason]               = useState('');
   const [pauseBookingId,            setPauseBookingId]            = useState(null);
-  // Photo capture flow
+  // Photo capture flow — multi-angle (Front / Side / Rear)
   const [photoModal,                setPhotoModal]                = useState({ visible: false, bookingId: null, photoType: 'Before', onDone: null });
-  const [capturedPhoto,             setCapturedPhoto]             = useState(null);
+  const [photoStep,                 setPhotoStep]                 = useState(0);
+  const [capturedPhotos,            setCapturedPhotos]            = useState({});  // { Front: asset, Side: asset, Rear: asset }
   const [photoUploading,            setPhotoUploading]            = useState(false);
   const [updatingChecklistId,       setUpdatingChecklistId]       = useState(null);
   const [completionSummary,         setCompletionSummary]         = useState(null);
@@ -240,6 +241,11 @@ export default function AdminJobsScreen({ route, navigation }) {
   const [assigningWorkerId,         setAssigningWorkerId]         = useState(null);
   const [requestActionLoading,      setRequestActionLoading]      = useState(null); // 'approve-cancel' | 'reject-cancel' | 'approve-reschedule' | 'reject-reschedule'
   const [reminderDismissed,      setReminderDismissed]      = useState({}); // dismissed booking IDs
+  // Attendance (clock-in / clock-out) — worker view only
+  const [attendanceLog,          setAttendanceLog]          = useState(null);
+  const [clockLoading,           setClockLoading]           = useState(false);
+  const [clockOutNote,           setClockOutNote]           = useState('');
+  const [clockOutModalVisible,   setClockOutModalVisible]   = useState(false);
 
   // Check if worker is currently on a job OR has already left (notified "On My Way")
   const hasActiveJob = useMemo(() => {
@@ -348,11 +354,25 @@ export default function AdminJobsScreen({ route, navigation }) {
   }, [isWorkerView]);
 
   useEffect(() => {
-    const run = async () => { setLoading(true); await loadBookings(); setLoading(false); };
+    const run = async () => { setLoading(true); await Promise.all([loadBookings(), loadTodayAttendance()]); setLoading(false); };
     run();
-  }, [loadBookings]);
+  }, [loadBookings, loadTodayAttendance]);
 
-  const onRefresh = async () => { setRefreshing(true); await loadBookings(); setRefreshing(false); };
+  const loadTodayAttendance = useCallback(async () => {
+    if (!isWorkerView) return;
+    try {
+      const data = await authAPI.getTodayAttendance();
+      setAttendanceLog(data);
+    } catch {
+      // not critical — silently ignore
+    }
+  }, [isWorkerView]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await Promise.all([loadBookings(), loadTodayAttendance()]);
+    setRefreshing(false);
+  };
 
   useEffect(() => {
     return subscribeToNotifications(() => { loadBookings(); });
@@ -710,9 +730,18 @@ export default function AdminJobsScreen({ route, navigation }) {
     return status === 'granted';
   };
 
+  const PHOTO_ANGLES = ['Front', 'Side', 'Rear'];
+
   const openPhotoCapture = (bookingId, photoType, onDone) => {
-    setCapturedPhoto(null);
+    setCapturedPhotos({});
+    setPhotoStep(0);
     setPhotoModal({ visible: true, bookingId, photoType, onDone });
+  };
+
+  const closePhotoModal = () => {
+    setPhotoModal({ visible: false, bookingId: null, photoType: 'Before', onDone: null });
+    setCapturedPhotos({});
+    setPhotoStep(0);
   };
 
   const handlePickPhoto = async () => {
@@ -728,25 +757,32 @@ export default function AdminJobsScreen({ route, navigation }) {
       quality: 0.75,
     });
     if (!result.canceled && result.assets?.[0]) {
-      setCapturedPhoto(result.assets[0]);
+      const angle = PHOTO_ANGLES[photoStep];
+      setCapturedPhotos((prev) => ({ ...prev, [angle]: result.assets[0] }));
     }
   };
 
   const handleUploadAndProceed = async () => {
     const { bookingId, photoType, onDone } = photoModal;
-    if (capturedPhoto) {
+    const angle = PHOTO_ANGLES[photoStep];
+    const asset = capturedPhotos[angle];
+    if (asset) {
       try {
         setPhotoUploading(true);
-        await bookingsAPI.uploadBookingPhoto(bookingId, { uri: capturedPhoto.uri, photoType });
+        await bookingsAPI.uploadBookingPhoto(bookingId, { uri: asset.uri, photoType: `${photoType}_${angle}` });
       } catch {
         // Non-blocking — photo upload failure doesn't block the job action
       } finally {
         setPhotoUploading(false);
       }
     }
-    setPhotoModal({ visible: false, bookingId: null, photoType: 'Before', onDone: null });
-    setCapturedPhoto(null);
-    if (onDone) onDone();
+    const isLast = photoStep >= PHOTO_ANGLES.length - 1;
+    if (isLast) {
+      closePhotoModal();
+      if (onDone) onDone();
+    } else {
+      setPhotoStep((s) => s + 1);
+    }
   };
 
   const startJob = async (bookingId) => {
@@ -822,6 +858,32 @@ export default function AdminJobsScreen({ route, navigation }) {
       setLateModalVisible(false); setLateBookingId(null);
     } catch (err) { setError(err?.response?.data?.message || t('errors.markLate')); }
     finally { setUpdatingId(null); endAction(key); }
+  };
+
+  const handleClockIn = async () => {
+    setClockLoading(true);
+    try {
+      const data = await authAPI.clockIn();
+      setAttendanceLog(data);
+    } catch (err) {
+      Alert.alert(t('attendance.errorTitle'), err?.response?.data?.message || t('attendance.clockInError'));
+    } finally {
+      setClockLoading(false);
+    }
+  };
+
+  const handleClockOut = async () => {
+    setClockLoading(true);
+    try {
+      const data = await authAPI.clockOut(clockOutNote.trim() || undefined);
+      setAttendanceLog(data);
+      setClockOutModalVisible(false);
+      setClockOutNote('');
+    } catch (err) {
+      Alert.alert(t('attendance.errorTitle'), err?.response?.data?.message || t('attendance.clockOutError'));
+    } finally {
+      setClockLoading(false);
+    }
   };
 
   const finishJob = (bookingId) => {
@@ -1094,58 +1156,110 @@ export default function AdminJobsScreen({ route, navigation }) {
       </Modal>
     ) : null;
 
-    const PhotoCaptureModal = photoModal.visible ? (
-      <Modal transparent animationType="slide" visible onRequestClose={() => {
-        setPhotoModal({ visible: false, bookingId: null, photoType: 'Before', onDone: null });
-        setCapturedPhoto(null);
-      }}>
-        <View style={m.backdrop}>
-          <View style={[m.card, { maxHeight: '90%' }]}>
-            <Text style={m.eyebrow}>{photoModal.photoType === 'Before' ? t('adminJobs.beforeJobPhoto') : t('adminJobs.afterJobPhoto')}</Text>
-            <Text style={m.title}>{photoModal.photoType === 'Before' ? t('adminJobs.captureBeforeState') : t('adminJobs.captureAfterState')}</Text>
-            <Text style={[m.body, { marginBottom: 12 }]}>
-              {photoModal.photoType === 'Before'
-                ? t('adminJobs.takePhotoBeforeWork')
-                : t('adminJobs.takePhotoAfterWork')}
-            </Text>
+    const ANGLE_META = {
+      Front: { icon: 'arrow-forward-circle-outline', label: t('adminJobs.photoAngleFront'), hint: t('adminJobs.photoAngleFrontHint') },
+      Side:  { icon: 'git-commit-outline',           label: t('adminJobs.photoAngleSide'),  hint: t('adminJobs.photoAngleSideHint')  },
+      Rear:  { icon: 'arrow-back-circle-outline',    label: t('adminJobs.photoAngleRear'),  hint: t('adminJobs.photoAngleRearHint')  },
+    };
+    const currentAngle = PHOTO_ANGLES[photoStep];
+    const currentMeta  = ANGLE_META[currentAngle];
+    const currentAsset = capturedPhotos[currentAngle];
+    const isLastStep   = photoStep >= PHOTO_ANGLES.length - 1;
 
-            {/* Alignment overlay placeholder */}
+    const PhotoCaptureModal = photoModal.visible ? (
+      <Modal transparent animationType="slide" visible onRequestClose={closePhotoModal}>
+        <View style={m.backdrop}>
+          <View style={[m.card, { maxHeight: '92%' }]}>
+
+            {/* Header */}
+            <Text style={m.eyebrow}>
+              {photoModal.photoType === 'Before' ? t('adminJobs.beforeJobPhoto') : t('adminJobs.afterJobPhoto')}
+            </Text>
+            <Text style={m.title}>{currentMeta.label}</Text>
+
+            {/* Step progress dots */}
+            <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+              {PHOTO_ANGLES.map((a, i) => (
+                <View key={a} style={{ alignItems: 'center', gap: 4 }}>
+                  <View style={{
+                    width: i === photoStep ? 28 : 20,
+                    height: 6, borderRadius: 3,
+                    backgroundColor: capturedPhotos[a]
+                      ? '#22c55e'
+                      : i === photoStep
+                        ? '#c8a96b'
+                        : 'rgba(255,255,255,0.18)',
+                  }} />
+                  <Text style={{ fontSize: 9, color: i === photoStep ? '#c8a96b' : 'rgba(255,255,255,0.4)', fontWeight: i === photoStep ? '700' : '400' }}>
+                    {ANGLE_META[a].label}
+                  </Text>
+                </View>
+              ))}
+            </View>
+
+            {/* Hint */}
+            <Text style={[m.body, { marginBottom: 10, textAlign: 'center' }]}>{currentMeta.hint}</Text>
+
+            {/* Preview / guide frame */}
             <View style={{
-              width: '100%', height: 180, borderRadius: 12, marginBottom: 12,
-              backgroundColor: '#0f172a', borderWidth: 1, borderColor: 'rgba(200,169,107,0.3)',
+              width: '100%', height: 190, borderRadius: 12, marginBottom: 12,
+              backgroundColor: '#0f172a', borderWidth: 1,
+              borderColor: currentAsset ? 'rgba(34,197,94,0.5)' : 'rgba(200,169,107,0.3)',
               alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
             }}>
-              {capturedPhoto ? (
-                <Image source={{ uri: capturedPhoto.uri }} style={{ width: '100%', height: '100%', borderRadius: 12 }} resizeMode="cover" />
+              {currentAsset ? (
+                <Image source={{ uri: currentAsset.uri }} style={{ width: '100%', height: '100%', borderRadius: 12 }} resizeMode="cover" />
               ) : (
-                <View style={{ alignItems: 'center', gap: 8 }}>
-                  {/* Car silhouette guide */}
-                  <View style={{
-                    width: 120, height: 55, borderRadius: 8,
-                    borderWidth: 2, borderColor: 'rgba(200,169,107,0.5)',
-                    borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    <Ionicons name="car-outline" size={32} color="rgba(200,169,107,0.6)" />
+                <View style={{ alignItems: 'center', gap: 10 }}>
+                  {/* Angle guide graphic */}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    {currentAngle === 'Front' && (
+                      <>
+                        <View style={{ width: 56, height: 36, borderRadius: 6, borderWidth: 2, borderColor: 'rgba(200,169,107,0.55)', borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center' }}>
+                          <Ionicons name="car-outline" size={22} color="rgba(200,169,107,0.7)" />
+                        </View>
+                        <Ionicons name="arrow-back-outline" size={18} color="rgba(200,169,107,0.5)" />
+                        <Ionicons name="eye-outline" size={20} color="rgba(200,169,107,0.7)" />
+                      </>
+                    )}
+                    {currentAngle === 'Side' && (
+                      <>
+                        <Ionicons name="eye-outline" size={20} color="rgba(200,169,107,0.7)" />
+                        <Ionicons name="arrow-forward-outline" size={18} color="rgba(200,169,107,0.5)" />
+                        <View style={{ width: 80, height: 36, borderRadius: 6, borderWidth: 2, borderColor: 'rgba(200,169,107,0.55)', borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center' }}>
+                          <Ionicons name="car-sport-outline" size={26} color="rgba(200,169,107,0.7)" />
+                        </View>
+                      </>
+                    )}
+                    {currentAngle === 'Rear' && (
+                      <>
+                        <Ionicons name="eye-outline" size={20} color="rgba(200,169,107,0.7)" />
+                        <Ionicons name="arrow-forward-outline" size={18} color="rgba(200,169,107,0.5)" />
+                        <View style={{ width: 56, height: 36, borderRadius: 6, borderWidth: 2, borderColor: 'rgba(200,169,107,0.55)', borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center' }}>
+                          <Ionicons name="car-outline" size={22} color="rgba(200,169,107,0.7)" style={{ transform: [{ scaleX: -1 }] }} />
+                        </View>
+                      </>
+                    )}
                   </View>
-                  <Text style={{ color: 'rgba(200,169,107,0.7)', fontSize: 11, textAlign: 'center' }}>
+                  <Text style={{ color: 'rgba(200,169,107,0.6)', fontSize: 11, textAlign: 'center' }}>
                     {t('adminJobs.alignVehicleWithinFrame')}
                   </Text>
                 </View>
               )}
             </View>
 
+            {/* Camera button */}
             <TouchableOpacity
               onPress={handlePickPhoto}
               style={[m.primaryBtn, { backgroundColor: '#1e293b', borderWidth: 1, borderColor: 'rgba(200,169,107,0.4)', marginBottom: 8 }]}>
               <Ionicons name="camera-outline" size={18} color="#c8a96b" style={{ marginRight: 6 }} />
-              <Text style={[m.primaryBtnText, { color: '#c8a96b' }]}>{capturedPhoto ? t('adminJobs.retakePhoto') : t('adminJobs.openCamera')}</Text>
+              <Text style={[m.primaryBtnText, { color: '#c8a96b' }]}>
+                {currentAsset ? t('adminJobs.retakePhoto') : t('adminJobs.openCamera')}
+              </Text>
             </TouchableOpacity>
 
             <View style={m.btnRow}>
-              <TouchableOpacity style={m.cancelBtn} onPress={() => {
-                setPhotoModal({ visible: false, bookingId: null, photoType: 'Before', onDone: null });
-                setCapturedPhoto(null);
-              }}>
+              <TouchableOpacity style={m.cancelBtn} onPress={closePhotoModal}>
                 <Text style={m.cancelBtnText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -1153,10 +1267,15 @@ export default function AdminJobsScreen({ route, navigation }) {
                 onPress={handleUploadAndProceed}
                 disabled={photoUploading}>
                 <Text style={m.primaryBtnText}>
-                  {photoUploading ? t('adminJobs.uploading') : capturedPhoto ? t('adminJobs.saveContinue') : t('adminJobs.skipPhoto')}
+                  {photoUploading
+                    ? t('adminJobs.uploading')
+                    : isLastStep
+                      ? (currentAsset ? t('adminJobs.saveContinue') : t('adminJobs.skipPhoto'))
+                      : (currentAsset ? t('adminJobs.nextAngle') : t('adminJobs.skipAngle'))}
                 </Text>
               </TouchableOpacity>
             </View>
+
           </View>
         </View>
       </Modal>
@@ -1704,6 +1823,96 @@ const DetailView = () => {
             </TouchableOpacity>
           </View>
         </View>
+        {/* ── Attendance card ──────────────────────────────────────────────── */}
+        {!selectedWorkerBooking && (
+          <View style={w.attendanceCard}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+              <Ionicons name="time-outline" size={16} color={theme.colors.primary} />
+              <Text style={w.attendanceTitle}>{t('attendance.shiftToday')}</Text>
+            </View>
+            {attendanceLog ? (
+              <View style={{ gap: 6 }}>
+                <View style={w.attendanceRow}>
+                  <Text style={w.attendanceLabel}>{t('attendance.clockedIn')}</Text>
+                  <Text style={w.attendanceValue}>
+                    {attendanceLog.clockIn ? new Date(attendanceLog.clockIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--'}
+                  </Text>
+                </View>
+                <View style={w.attendanceRow}>
+                  <Text style={w.attendanceLabel}>{t('attendance.clockedOut')}</Text>
+                  <Text style={w.attendanceValue}>
+                    {attendanceLog.clockOut ? new Date(attendanceLog.clockOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--'}
+                  </Text>
+                </View>
+                {attendanceLog.clockIn && attendanceLog.clockOut && (
+                  <View style={w.attendanceRow}>
+                    <Text style={w.attendanceLabel}>{t('attendance.duration')}</Text>
+                    <Text style={[w.attendanceValue, { color: '#84CC16' }]}>
+                      {Math.round((new Date(attendanceLog.clockOut) - new Date(attendanceLog.clockIn)) / 60000)} {t('attendance.minutes')}
+                    </Text>
+                  </View>
+                )}
+                {!attendanceLog.clockOut && (
+                  <TouchableOpacity
+                    style={[w.attendanceBtn, { backgroundColor: '#EF4444' }]}
+                    onPress={() => setClockOutModalVisible(true)}
+                    disabled={clockLoading}
+                  >
+                    <Ionicons name="log-out-outline" size={14} color="#fff" />
+                    <Text style={w.attendanceBtnText}>{clockLoading ? t('common.loading') : t('attendance.clockOut')}</Text>
+                  </TouchableOpacity>
+                )}
+                {attendanceLog.clockOut && (
+                  <View style={[w.attendanceBtn, { backgroundColor: '#1E293B', opacity: 0.7 }]}>
+                    <Ionicons name="checkmark-circle-outline" size={14} color="#84CC16" />
+                    <Text style={[w.attendanceBtnText, { color: '#84CC16' }]}>{t('attendance.shiftComplete')}</Text>
+                  </View>
+                )}
+              </View>
+            ) : (
+              <TouchableOpacity
+                style={[w.attendanceBtn, { backgroundColor: theme.colors.primary }]}
+                onPress={handleClockIn}
+                disabled={clockLoading}
+              >
+                <Ionicons name="log-in-outline" size={14} color="#000" />
+                <Text style={[w.attendanceBtnText, { color: '#000' }]}>{clockLoading ? t('common.loading') : t('attendance.clockIn')}</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
+
+        {/* ── Clock-out note modal ─────────────────────────────────────────── */}
+        <Modal transparent animationType="fade" visible={clockOutModalVisible} onRequestClose={() => setClockOutModalVisible(false)}>
+          <View style={m.backdrop}>
+            <View style={m.card}>
+              <Text style={m.eyebrow}>{t('attendance.clockOut')}</Text>
+              <Text style={m.title}>{t('attendance.clockOutTitle')}</Text>
+              <View style={m.fieldWrap}>
+                <Text style={m.fieldLabel}>{t('attendance.noteOptional')}</Text>
+                <TextInput
+                  value={clockOutNote}
+                  onChangeText={setClockOutNote}
+                  placeholder={t('attendance.notePlaceholder')}
+                  placeholderTextColor="#64748B"
+                  style={[m.input, m.inputMulti]}
+                  multiline
+                  numberOfLines={3}
+                  maxLength={250}
+                />
+              </View>
+              <View style={m.btnRow}>
+                <TouchableOpacity style={m.cancelBtn} onPress={() => { setClockOutModalVisible(false); setClockOutNote(''); }}>
+                  <Text style={m.cancelBtnText}>{t('common.cancel')}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[m.primaryBtn, { flex: 1, marginTop: 0, backgroundColor: '#EF4444' }]} onPress={handleClockOut} disabled={clockLoading}>
+                  <Text style={m.primaryBtnText}>{clockLoading ? t('common.loading') : t('attendance.confirmClockOut')}</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
         {!!error && (
           <View style={s.errorBanner}>
             <Ionicons name="alert-circle" size={14} color="#FCA5A5" />
@@ -2309,6 +2518,13 @@ const w = StyleSheet.create({
   profileRole:   { color: theme.colors.textMuted, fontSize: 11, marginTop: 1 },
   profileBtn:    { borderWidth: 1, borderColor: 'rgba(200,169,107,0.3)', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 5, backgroundColor: 'rgba(200,169,107,0.08)' },
   profileBtnText:{ color: theme.colors.primary, fontWeight: '700', fontSize: 12 },
+  attendanceCard:    { borderWidth: 1, borderColor: 'rgba(200,169,107,0.2)', borderRadius: 14, backgroundColor: 'rgba(19,27,37,0.8)', padding: 14, marginBottom: 14 },
+  attendanceTitle:   { color: theme.colors.text, fontWeight: '700', fontSize: 13 },
+  attendanceRow:     { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  attendanceLabel:   { color: theme.colors.textMuted, fontSize: 12 },
+  attendanceValue:   { color: theme.colors.text, fontWeight: '700', fontSize: 12 },
+  attendanceBtn:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 10, paddingVertical: 9, marginTop: 6 },
+  attendanceBtnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
   statsStrip:    { flexDirection: 'row', alignItems: 'center', borderWidth: 1.5, borderColor: theme.colors.border, borderRadius: 16, backgroundColor: 'rgba(19,27,37,0.8)', paddingVertical: 12, paddingHorizontal: 18, marginBottom: 18 },
   statItem:      { flex: 1, alignItems: 'center' },
   statValue:     { color: theme.colors.primary, fontSize: 20, fontWeight: '900' },

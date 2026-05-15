@@ -473,8 +473,16 @@
     "retakePhoto": "Retake Photo",
     "openCamera": "Open Camera",
     "uploading": "Uploading...",
-    "saveContinue": "Save & Continue",
-    "skipPhoto": "Skip Photo",
+    "saveContinue": "Save & Done",
+    "skipPhoto": "Skip & Done",
+    "nextAngle": "Next Angle",
+    "skipAngle": "Skip Angle",
+    "photoAngleFront": "Front View",
+    "photoAngleSide": "Side View",
+    "photoAngleRear": "Rear View",
+    "photoAngleFrontHint": "Stand in front of the vehicle and capture the full front.",
+    "photoAngleSideHint": "Stand beside the vehicle and capture the full side profile.",
+    "photoAngleRearHint": "Stand behind the vehicle and capture the full rear.",
     "confirmAction": "Confirm Action",
     "finishJobQuestion": "Finish Job?",
     "finishJobExplain": "This will mark the job as completed and notify the customer and admin.",
@@ -823,6 +831,27 @@
       "changeStatus":        "Change Status",
       "callCustomer":        "Call Customer",
       "maps":                "Maps"
+    },
+    "payroll": {
+      "title":             "Payroll",
+      "tab":               "Payroll",
+      "pending":           "Pending",
+      "paidOut":           "Paid Out",
+      "workers":           "Workers",
+      "noWorkers":         "No active workers.",
+      "fixedSalary":       "Fixed Salary",
+      "paid":              "Paid",
+      "jobs":              "Jobs",
+      "revenue":           "Revenue",
+      "hoursWorked":       "Hours",
+      "daysPresent":       "Days",
+      "baseSalary":        "Base",
+      "estimated":         "Est. Pay",
+      "noAttendanceNote":  "No attendance logged - showing full salary.",
+      "viewAttendance":    "Attendance",
+      "markPaid":          "Mark Paid",
+      "noAttendance":      "No attendance records for this period.",
+      "incomplete":        "Incomplete"
     }
   },
   "navigation": {
@@ -982,5 +1011,22 @@
       "emailRequired": "Please enter your email address.",
       "failed": "Something went wrong. Please try again."
     }
+  },
+  "attendance": {
+    "shiftToday": "Today's Shift",
+    "clockedIn": "Clocked In",
+    "clockedOut": "Clocked Out",
+    "duration": "Duration",
+    "minutes": "min",
+    "clockIn": "Clock In",
+    "clockOut": "Clock Out",
+    "confirmClockOut": "Confirm Clock Out",
+    "clockOutTitle": "End your shift for today?",
+    "noteOptional": "Note (optional)",
+    "notePlaceholder": "e.g. finished all jobs",
+    "shiftComplete": "Shift Complete",
+    "errorTitle": "Attendance Error",
+    "clockInError": "Failed to clock in. Please try again.",
+    "clockOutError": "Failed to clock out. Please try again."
   }
 }

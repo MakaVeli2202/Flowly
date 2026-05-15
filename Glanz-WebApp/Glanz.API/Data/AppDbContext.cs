@@ -48,6 +48,7 @@ namespace Glanz.API.Data
         public DbSet<Lead> Leads { get; set; }
         public DbSet<Referral> Referrals { get; set; }
         public DbSet<PageView> PageViews { get; set; }
+        public DbSet<AttendanceLog> AttendanceLogs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

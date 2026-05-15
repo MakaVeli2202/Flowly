@@ -662,6 +662,114 @@ namespace Glanz.API.Controllers
             }
         }
 
+        // ── Attendance (clock-in / clock-out) ────────────────────────────────────
+
+        [Authorize(Roles = "Employee")]
+        [HttpPost("attendance/clock-in")]
+        public async Task<IActionResult> ClockIn()
+        {
+            var staffId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var today   = DateTime.UtcNow.Date;
+
+            var existing = await _context.AttendanceLogs
+                .FirstOrDefaultAsync(a => a.StaffId == staffId && a.ShiftDate == today);
+
+            if (existing != null)
+            {
+                if (existing.ClockIn != null)
+                    return BadRequest(new { message = "Already clocked in for today.", clockIn = existing.ClockIn });
+                existing.ClockIn  = DateTime.UtcNow;
+                existing.UpdatedAt = DateTime.UtcNow;
+            }
+            else
+            {
+                _context.AttendanceLogs.Add(new Models.AttendanceLog
+                {
+                    StaffId   = staffId,
+                    ShiftDate = today,
+                    ClockIn   = DateTime.UtcNow,
+                });
+            }
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Clocked in.", clockIn = DateTime.UtcNow });
+        }
+
+        [Authorize(Roles = "Employee")]
+        [HttpPost("attendance/clock-out")]
+        public async Task<IActionResult> ClockOut([FromBody] ClockOutDto dto)
+        {
+            var staffId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var today   = DateTime.UtcNow.Date;
+
+            var log = await _context.AttendanceLogs
+                .FirstOrDefaultAsync(a => a.StaffId == staffId && a.ShiftDate == today);
+
+            if (log == null || log.ClockIn == null)
+                return BadRequest(new { message = "No active clock-in found for today." });
+
+            if (log.ClockOut != null)
+                return BadRequest(new { message = "Already clocked out today.", clockOut = log.ClockOut });
+
+            log.ClockOut  = DateTime.UtcNow;
+            log.Note      = dto.Note?.Trim();
+            log.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            var duration = log.ClockOut.Value - log.ClockIn.Value;
+            return Ok(new
+            {
+                message          = "Clocked out.",
+                clockIn          = log.ClockIn,
+                clockOut         = log.ClockOut,
+                durationMinutes  = (int)duration.TotalMinutes,
+            });
+        }
+
+        [Authorize(Roles = "Employee")]
+        [HttpGet("attendance/today")]
+        public async Task<IActionResult> GetTodayAttendance()
+        {
+            var staffId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var today   = DateTime.UtcNow.Date;
+
+            var log = await _context.AttendanceLogs
+                .FirstOrDefaultAsync(a => a.StaffId == staffId && a.ShiftDate == today);
+
+            return Ok(new
+            {
+                clockIn         = log?.ClockIn,
+                clockOut        = log?.ClockOut,
+                durationMinutes = (log?.ClockIn != null && log?.ClockOut != null)
+                    ? (int)(log.ClockOut.Value - log.ClockIn.Value).TotalMinutes
+                    : (int?)null,
+            });
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpGet("attendance")]
+        public async Task<IActionResult> GetAttendance([FromQuery] int? staffId, [FromQuery] DateTime? from, [FromQuery] DateTime? to)
+        {
+            var query = _context.AttendanceLogs.Include(a => a.Staff).AsQueryable();
+            if (staffId.HasValue) query = query.Where(a => a.StaffId == staffId);
+            if (from.HasValue)    query = query.Where(a => a.ShiftDate >= from.Value.Date);
+            if (to.HasValue)      query = query.Where(a => a.ShiftDate <= to.Value.Date);
+
+            var logs = await query.OrderByDescending(a => a.ShiftDate).ToListAsync();
+            return Ok(logs.Select(a => new
+            {
+                id              = a.Id,
+                staffId         = a.StaffId,
+                staffName       = $"{a.Staff?.FirstName} {a.Staff?.LastName}".Trim(),
+                shiftDate       = a.ShiftDate,
+                clockIn         = a.ClockIn,
+                clockOut        = a.ClockOut,
+                durationMinutes = (a.ClockIn != null && a.ClockOut != null)
+                    ? (int)(a.ClockOut.Value - a.ClockIn.Value).TotalMinutes
+                    : (int?)null,
+                note            = a.Note,
+            }));
+        }
+
         [HttpPost("login")]
         public async Task<ActionResult<AuthResponseDto>> Login(LoginDto dto)
         {
@@ -1204,25 +1312,76 @@ namespace Glanz.API.Controllers
                     .Select(b => new { b.AssignedWorkerId, b.TotalAmount })
                     .ToListAsync();
 
+                var attendanceLogs = await _context.AttendanceLogs
+                    .Where(a => a.ShiftDate >= periodStart && a.ShiftDate < periodEnd
+                             && a.ClockIn != null && a.ClockOut != null)
+                    .Select(a => new { a.StaffId, a.ShiftDate, a.ClockIn, a.ClockOut })
+                    .ToListAsync();
+
+                // Count working days in the period (Mon-Fri by default; we use calendar days here as a simple baseline)
+                var daysInMonth = (int)(periodEnd - periodStart).TotalDays;
+
                 var summaries = workers.Select(w =>
                 {
                     var jobs     = completedBookings.Where(b => b.AssignedWorkerId == w.Id).ToList();
                     var revenue  = jobs.Sum(b => b.TotalAmount);
-                    var salary   = w.MonthlySalary ?? 0m;
-                    var isPaid  = w.LastPaidMonth == targetMonth && w.LastPaidYear == targetYear;
+                    var isPaid   = w.LastPaidMonth == targetMonth && w.LastPaidYear == targetYear;
+
+                    var workerLogs       = attendanceLogs.Where(a => a.StaffId == w.Id).ToList();
+                    var daysPresent      = workerLogs.Select(a => a.ShiftDate.Date).Distinct().Count();
+                    var totalMinutes     = workerLogs.Sum(a => a.ClockIn.HasValue && a.ClockOut.HasValue
+                                             ? (int)(a.ClockOut.Value - a.ClockIn.Value).TotalMinutes
+                                             : 0);
+
+                    decimal estimatedSalary;
+                    if (w.CompensationType == "Percentage")
+                    {
+                        estimatedSalary = w.PercentageRate.HasValue ? Math.Round(revenue * w.PercentageRate.Value / 100m, 2) : 0m;
+                    }
+                    else
+                    {
+                        // Fixed salary — prorate by hours worked vs expected monthly hours
+                        var fullSalary = w.MonthlySalary ?? 0m;
+                        if (totalMinutes > 0 && fullSalary > 0)
+                        {
+                            // Expected = shiftDuration * workingDaysInMonth
+                            // Parse shift from "HH:mm"-"HH:mm" or use 8h fallback
+                            double shiftHours = 8.0;
+                            if (!string.IsNullOrWhiteSpace(w.ShiftStart) && !string.IsNullOrWhiteSpace(w.ShiftEnd)
+                                && TimeSpan.TryParse(w.ShiftStart, out var shiftStartTs)
+                                && TimeSpan.TryParse(w.ShiftEnd, out var shiftEndTs)
+                                && shiftEndTs > shiftStartTs)
+                            {
+                                shiftHours = (shiftEndTs - shiftStartTs).TotalHours;
+                            }
+                            var workingDaysInMonth = CountWorkingDays(w.WorkingDays, periodStart, periodEnd);
+                            var expectedMinutes = workingDaysInMonth * shiftHours * 60.0;
+                            estimatedSalary = expectedMinutes > 0
+                                ? Math.Round(fullSalary * ((decimal)totalMinutes / (decimal)expectedMinutes), 2)
+                                : fullSalary;
+                        }
+                        else
+                        {
+                            estimatedSalary = fullSalary;
+                        }
+                    }
 
                     return new WorkerPayrollSummaryDto
                     {
-                        WorkerId        = w.Id,
-                        WorkerName      = $"{w.FirstName} {w.LastName}",
-                        MonthlySalary   = w.MonthlySalary,
-                        Month           = targetMonth,
-                        Year            = targetYear,
-                        JobsCompleted   = jobs.Count,
-                        TotalRevenue    = revenue,
-                        EstimatedSalary = salary,
-                        IsPaid         = isPaid,
-                        PaidAt         = isPaid ? w.LastPaidAt : null,
+                        WorkerId            = w.Id,
+                        WorkerName          = $"{w.FirstName} {w.LastName}",
+                        CompensationType    = w.CompensationType,
+                        MonthlySalary       = w.MonthlySalary,
+                        PercentageRate      = w.PercentageRate,
+                        Month               = targetMonth,
+                        Year                = targetYear,
+                        JobsCompleted       = jobs.Count,
+                        TotalRevenue        = revenue,
+                        EstimatedSalary     = estimatedSalary,
+                        TotalMinutesWorked  = totalMinutes > 0 ? totalMinutes : null,
+                        DaysPresent         = daysPresent > 0 ? daysPresent : null,
+                        IsPaid              = isPaid,
+                        PaidAt              = isPaid ? w.LastPaidAt : null,
                     };
                 }).ToList();
 
@@ -1562,6 +1721,23 @@ namespace Glanz.API.Controllers
             var resetUrl    = $"{frontendUrl}/reset-password?token={Uri.EscapeDataString(token)}";
 
             return Ok(new { token, resetUrl });
+        }
+
+        private static int CountWorkingDays(string? workingDaysStr, DateTime periodStart, DateTime periodEnd)
+        {
+            var dayNames = string.IsNullOrWhiteSpace(workingDaysStr)
+                ? new HashSet<string> { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday" }
+                : workingDaysStr.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                                .Select(d => d.Trim())
+                                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            int count = 0;
+            for (var d = periodStart.Date; d < periodEnd.Date; d = d.AddDays(1))
+            {
+                if (dayNames.Contains(d.DayOfWeek.ToString()))
+                    count++;
+            }
+            return count;
         }
     }
 }
