@@ -21,7 +21,10 @@ public static class DevelopmentDataSeeder
         if (resetDatabase)
             await db.Database.EnsureDeletedAsync();
 
-        await db.Database.MigrateAsync();
+        if (db.Database.ProviderName?.Contains("Npgsql") == true)
+            await db.Database.MigrateAsync();
+        else
+            await db.Database.EnsureCreatedAsync();
 
         if (!seedDemoData)
             return;

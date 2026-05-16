@@ -61,7 +61,7 @@ namespace Glanz.API.Tests.Unit
             var lower = ComputeSignature(secret, payload);
             var upper = lower.ToUpperInvariant();
 
-            Assert.True(lower.Equals(upper, StringComparison.OrdinalIgnoreCase));
+            Assert.Equal(lower.ToUpperInvariant(), upper);
         }
 
         [Fact]

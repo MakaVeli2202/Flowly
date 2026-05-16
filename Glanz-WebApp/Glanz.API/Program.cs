@@ -13,8 +13,21 @@ using Glanz.API.Validators;
 using Glanz.API.DTOs;
 using AspNetCoreRateLimit;
 using FluentValidation;
+using Sentry;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var sentryDsn = builder.Configuration["Observability:SentryDsn"];
+if (!string.IsNullOrWhiteSpace(sentryDsn) && !sentryDsn.StartsWith("TODO"))
+{
+    builder.WebHost.UseSentry(o =>
+    {
+        o.Dsn = sentryDsn;
+        o.TracesSampleRate = builder.Environment.IsDevelopment() ? 0.0 : 0.2;
+        o.SendDefaultPii = false;
+        o.AttachStacktrace = true;
+    });
+}
 
 var jwtSecretFromConfig = builder.Configuration["JwtSettings:SecretKey"];
 
@@ -310,8 +323,20 @@ if (app.Environment.IsProduction() && string.IsNullOrWhiteSpace(tapWebhookSecret
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await dbContext.Database.MigrateAsync();
-    await EnsurePostgresSchemaCompatibilityAsync(dbContext);
+    // Migrations contain PostgreSQL-specific SQL; skip them for SQLite (integration tests)
+    // and InMemory (unit tests). Use EnsureCreated to build schema from the EF model instead.
+    var isPostgres = dbContext.Database.ProviderName?.Contains("Npgsql") == true
+                  || dbContext.Database.ProviderName?.Contains("Sqlite") == false
+                     && dbContext.Database.IsRelational();
+    if (dbContext.Database.ProviderName?.Contains("Npgsql") == true)
+    {
+        await dbContext.Database.MigrateAsync();
+        await EnsurePostgresSchemaCompatibilityAsync(dbContext);
+    }
+    else
+    {
+        await dbContext.Database.EnsureCreatedAsync();
+    }
 }
 
 await AdminAccountBootstrapper.SyncFromConfigurationAsync(app.Services, builder.Configuration);
@@ -999,3 +1024,6 @@ CREATE INDEX IF NOT EXISTS ""IX_AttendanceLogs_ShiftDate"" ON ""AttendanceLogs""
 ";
     await cmd.ExecuteNonQueryAsync();
 }
+
+// Expose entry point for WebApplicationFactory in integration tests
+public partial class Program { }
