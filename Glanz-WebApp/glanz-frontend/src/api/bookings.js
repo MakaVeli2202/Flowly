@@ -30,7 +30,16 @@ export const bookingsAPI = {
 
   getMyBookings: async () => cacheManager.fetch(`${CACHE_KEY}:mine`, () => apiClient.get('/Bookings').then((r) => r.data), CACHE_TTL),
 
-  getAll: async () => cacheManager.fetch(`${CACHE_KEY}:all`, () => apiClient.get('/Bookings/all').then((r) => r.data), CACHE_TTL),
+  getAll: async (params = {}) => {
+    const { page = 1, pageSize = 100, search, status, dateFrom, dateTo } = params;
+    const query = new URLSearchParams({ page, pageSize });
+    if (search)   query.set('search',   search);
+    if (status && status !== 'All') query.set('status', status);
+    if (dateFrom) query.set('dateFrom', dateFrom);
+    if (dateTo)   query.set('dateTo',   dateTo);
+    const response = await apiClient.get(`/Bookings/all?${query}`);
+    return response.data; // { items, totalCount, page, pageSize, totalPages }
+  },
 
   getWorkerBookings: async () => cacheManager.fetch(`${CACHE_KEY}:worker`, () => apiClient.get('/Bookings/worker').then((r) => r.data), CACHE_TTL),
 

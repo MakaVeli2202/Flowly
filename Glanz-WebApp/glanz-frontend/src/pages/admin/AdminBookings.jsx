@@ -282,6 +282,10 @@ function AdminBookings() {
   const ui = UI_BY_LANG[localeKey] || UI_BY_LANG.en;
   const navigate = useNavigate();
   const [bookings,       setBookings]       = useState([]);
+  const [totalCount,     setTotalCount]     = useState(0);
+  const [totalPages,     setTotalPages]     = useState(1);
+  const [page,           setPage]           = useState(1);
+  const PAGE_SIZE = 100;
   const [workers,        setWorkers]        = useState([]);
   const [availableWorkersByBooking,        setAvailableWorkersByBooking]        = useState({});
   const [loadingAvailableWorkersByBooking, setLoadingAvailableWorkersByBooking] = useState({});
@@ -294,11 +298,13 @@ function AdminBookings() {
   });
   const [filterStatus,    setFilterStatus]    = useState('All');
   const [searchQuery,     setSearchQuery]     = useState('');
+  const [searchInput,     setSearchInput]     = useState('');
   const [highlightedBookingId, setHighlightedBookingId] = useState(null);
   const [isHighlightFading,    setIsHighlightFading]    = useState(false);
   const [autoAssignEnabled,    setAutoAssignEnabled]    = useState(true);
   const [assignmentModeLoading, setAssignmentModeLoading] = useState(true);
   const [assignmentModeSaving,  setAssignmentModeSaving]  = useState(false);
+  const searchDebounceRef = useRef(null);
 
   /* ── Highlight row ─────────────────────────────────────── */
   const triggerRowHighlight = (bookingId) => {
@@ -334,12 +340,33 @@ function AdminBookings() {
     e.setHours(23,59,59,999); return e;
   };
 
+  const getPeriodRange = (period, specificDate) => {
+    const now = new Date();
+    if (period === 'All')       return {};
+    if (period === 'Today')     return { dateFrom: new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString(), dateTo: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999).toISOString() };
+    if (period === 'SpecificDay' && specificDate) { const sd = new Date(specificDate); return { dateFrom: new Date(sd.getFullYear(), sd.getMonth(), sd.getDate()).toISOString(), dateTo: new Date(sd.getFullYear(), sd.getMonth(), sd.getDate(), 23, 59, 59, 999).toISOString() }; }
+    if (period === 'ThisWeek')  return { dateFrom: getWeekStart(now).toISOString(),  dateTo: getWeekEnd(now).toISOString() };
+    if (period === 'ThisMonth') return { dateFrom: getMonthStart(now).toISOString(), dateTo: getMonthEnd(now).toISOString() };
+    if (period === 'NextWeek')  { const nws = new Date(getWeekStart(now)); nws.setDate(nws.getDate() + 7); return { dateFrom: nws.toISOString(), dateTo: getWeekEnd(nws).toISOString() }; }
+    return {};
+  };
+
   /* ── API helpers ───────────────────────────────────────── */
-  const fetchBookings = async ({ showLoader = true } = {}) => {
+  const fetchBookings = async ({ showLoader = true, targetPage = page } = {}) => {
     try {
       if (showLoader) setLoading(true);
-      const data = await bookingsAPI.getAll();
-      setBookings(data);
+      const { dateFrom, dateTo } = getPeriodRange(periodFilter, specificDateFilter);
+      const result = await bookingsAPI.getAll({
+        page: targetPage,
+        pageSize: PAGE_SIZE,
+        search: searchQuery || undefined,
+        status: filterStatus !== 'All' ? filterStatus : undefined,
+        dateFrom,
+        dateTo,
+      });
+      setBookings(result.items ?? []);
+      setTotalCount(result.totalCount ?? 0);
+      setTotalPages(result.totalPages ?? 1);
     } catch { setError(ui.failedLoadBookings); }
     finally { if (showLoader) setLoading(false); }
   };
@@ -368,7 +395,7 @@ function AdminBookings() {
 
   /* ── Effects ───────────────────────────────────────────── */
   useEffect(() => {
-    fetchBookings(); fetchWorkers(); fetchAssignmentMode();
+    fetchWorkers(); fetchAssignmentMode();
     const hlId = sessionStorage.getItem('highlightBookingId');
     if (hlId) {
       const bid = parseInt(hlId, 10);
@@ -384,7 +411,12 @@ function AdminBookings() {
     return () => window.removeEventListener('highlight-booking', onHL);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Refresh booking list on any incoming WebSocket notification (job changes trigger notifications)
+  // Re-fetch whenever filters or page changes
+  useEffect(() => {
+    fetchBookings({ showLoader: true, targetPage: page });
+  }, [page, filterStatus, searchQuery, periodFilter, specificDateFilter]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Refresh booking list on any incoming WebSocket notification
   const silentRefresh = useCallback(() => fetchBookings({ showLoader: false }), []); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => subscribeToNotifications(silentRefresh), [silentRefresh]);
 
@@ -442,39 +474,8 @@ function AdminBookings() {
     }));
   };
 
-  /* ── Filtering ─────────────────────────────────────────── */
-  const periodFilteredBookings = bookings.filter(b => {
-    if (periodFilter === 'All') return true;
-    const d = new Date(b.scheduledDate);
-    if (isNaN(d.getTime())) return false;
-    const now = new Date();
-    if (periodFilter === 'Today')       return d.toDateString() === now.toDateString();
-    if (periodFilter === 'SpecificDay') {
-      if (!specificDateFilter) return true;
-      const sd = new Date(specificDateFilter);
-      return !isNaN(sd.getTime()) && d.toDateString() === sd.toDateString();
-    }
-    if (periodFilter === 'ThisMonth')   return d >= getMonthStart(now) && d <= getMonthEnd(now);
-    if (periodFilter === 'NextWeek') {
-      const nws = new Date(getWeekStart(now)); nws.setDate(nws.getDate() + 7);
-      return d >= nws && d <= getWeekEnd(nws);
-    }
-    return d >= getWeekStart(now) && d <= getWeekEnd(now);
-  });
-  const statusFilteredBookings = filterStatus === 'All'
-    ? periodFilteredBookings
-    : periodFilteredBookings.filter(b => b.status === filterStatus);
-  const filteredBookings = searchQuery.trim()
-    ? bookings.filter(b => {
-        const q = searchQuery.trim().toLowerCase();
-        return (
-          String(b.id) === q.replace('#', '') ||
-          b.bookingNumber?.toLowerCase().includes(q) ||
-          b.customerName?.toLowerCase().includes(q) ||
-          b.customerEmail?.toLowerCase().includes(q)
-        );
-      })
-    : statusFilteredBookings;
+  /* ── Filtering handled server-side; bookings = current page ── */
+  const filteredBookings = bookings;
   const periodSummary = filteredBookings.reduce(
     (acc, b) => ({
       revenue: acc.revenue + (Number(b.totalAmount) || 0),
@@ -554,13 +555,18 @@ function AdminBookings() {
                 <Search size={15} className="text-primary" />
               </div>
               <input
-                type="text" value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                type="text" value={searchInput}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setSearchInput(v);
+                  clearTimeout(searchDebounceRef.current);
+                  searchDebounceRef.current = setTimeout(() => { setSearchQuery(v); setPage(1); }, 350);
+                }}
                 placeholder={ui.searchPlaceholder}
                 className="flex-1 px-3 py-2 rounded-xl border border-[var(--border-color)] bg-[var(--surface-bg)] text-[var(--text-color)] text-sm placeholder:text-[var(--muted-color)] focus:outline-none focus:ring-2 focus:ring-primary/50 transition"
               />
-              {searchQuery && (
-                <button type="button" onClick={() => setSearchQuery('')}
+              {searchInput && (
+                <button type="button" onClick={() => { setSearchInput(''); setSearchQuery(''); setPage(1); }}
                   className="w-8 h-8 rounded-xl border border-[var(--border-color)] flex items-center justify-center text-[var(--muted-color)] hover:text-[var(--text-color)] hover:bg-white/5 transition">
                   <X size={14} />
                 </button>
@@ -569,8 +575,8 @@ function AdminBookings() {
             {searchQuery && (
               <p className="mt-2.5 text-xs text-[var(--muted-color)] pl-12">
                 {ui.filtersBypassed} ·{' '}
-                {filteredBookings.length > 0
-                  ? `${filteredBookings.length} ${filteredBookings.length !== 1 ? ui.results : ui.result}`
+                {totalCount > 0
+                  ? `${totalCount} ${totalCount !== 1 ? ui.results : ui.result}`
                   : ui.noResults}
               </p>
             )}
@@ -584,7 +590,7 @@ function AdminBookings() {
             <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-[var(--border-color)]">
               <StatCard
                 label={ui.bookings} colorClass="text-[var(--heading-color)]"
-                value={filteredBookings.length} sub={ui.ofTotal(bookings.length)}
+                value={totalCount} sub={`p.${page}/${totalPages}`}
               />
               <StatCard label={ui.revenue} value={formatQAR(periodSummary.revenue)} />
               <StatCard label={ui.cost}    value={formatQAR(periodSummary.cost)}    colorClass="text-rose-400" />
@@ -645,8 +651,8 @@ function AdminBookings() {
               </div>
               <div className="flex flex-wrap gap-2">
                 {statuses.map(status => (
-                  <FilterPill key={status} active={filterStatus === status} onClick={() => setFilterStatus(status)}>
-                    {statusLabel(status)} ({status === 'All' ? bookings.length : bookings.filter(b => b.status === status).length})
+                  <FilterPill key={status} active={filterStatus === status} onClick={() => { setFilterStatus(status); setPage(1); }}>
+                    {statusLabel(status)}{status === filterStatus ? ` (${totalCount})` : ''}
                   </FilterPill>
                 ))}
               </div>
@@ -664,7 +670,7 @@ function AdminBookings() {
             </div>
             <div className="flex flex-wrap gap-2">
               {periods.map(p => (
-                <FilterPill key={p} active={periodFilter === p} onClick={() => setPeriodFilter(p)}>
+                <FilterPill key={p} active={periodFilter === p} onClick={() => { setPeriodFilter(p); setPage(1); }}>
                   {periodLabel(p)}
                 </FilterPill>
               ))}
@@ -840,6 +846,29 @@ function AdminBookings() {
               <p className="text-[var(--muted-color)]">
                 {filterStatus === 'All' ? ui.noBookingsForFilters : ui.noStatusBookings(filterStatus)}
               </p>
+            </div>
+          )}
+
+          {/* ── Pagination ────────────────────────────────── */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between gap-3 mt-4 px-1">
+              <button
+                disabled={page <= 1}
+                onClick={() => setPage(p => p - 1)}
+                className="px-4 py-2 rounded-xl border border-[var(--border-color)] text-sm font-medium text-[var(--muted-color)] hover:text-[var(--heading-color)] disabled:opacity-30 transition-all"
+              >
+                &larr; Prev
+              </button>
+              <span className="text-xs text-[var(--muted-color)]">
+                Page {page} of {totalPages} &middot; {totalCount} total
+              </span>
+              <button
+                disabled={page >= totalPages}
+                onClick={() => setPage(p => p + 1)}
+                className="px-4 py-2 rounded-xl border border-[var(--border-color)] text-sm font-medium text-[var(--muted-color)] hover:text-[var(--heading-color)] disabled:opacity-30 transition-all"
+              >
+                Next &rarr;
+              </button>
             </div>
           )}
 

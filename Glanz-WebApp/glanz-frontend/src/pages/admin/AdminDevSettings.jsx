@@ -65,20 +65,42 @@ const FEATURE_FLAG_META = {
 
 /* ─── Deployment readiness checklist ─────────────────────────────────────── */
 const DEPLOY_CHECKS = [
-  { id: 'tap_live',        label: 'Tap live keys configured',                    category: 'Payments' },
-  { id: 'tap_webhooks',    label: 'Tap webhooks pointed at production URL',       category: 'Payments' },
-  { id: 'sms_live',        label: 'SMS provider using live credentials',          category: 'Notifications' },
-  { id: 'google_review',   label: 'Google review URL verified and working',       category: 'Reviews' },
-  { id: 'dev_flags_off',   label: 'All dev flags (DEV_*) cleared',                category: 'Dev Flags' },
-  { id: 'features_on',     label: 'Backend feature flags enabled as intended',    category: 'Feature Flags' },
-  { id: 'env_vars',        label: 'Frontend env vars pointing to production API', category: 'Infra' },
-  { id: 'cors',            label: 'CORS restricted to production domain only',    category: 'Infra' },
-  { id: 'cors_render',     label: 'Render: Cors__AllowedOrigins__0=https://www.glanz.qa', category: 'Infra' },
-  { id: 'vercel_api_url',  label: 'Vercel: VITE_API_BASE_URL set to Render URL', category: 'Infra' },
-  { id: 'https',           label: 'HTTPS enforced (HTTP redirects to HTTPS)',     category: 'Infra' },
-  { id: 'error_pages',     label: '404 and 500 error pages tested',               category: 'UX' },
-  { id: 'mobile_test',     label: 'Tested on real mobile device (iOS + Android)', category: 'UX' },
-  { id: 'booking_e2e',     label: 'End-to-end booking flow tested (live payment)', category: 'E2E' },
+  // Payments
+  { id: 'tap_live',          label: 'Tap live keys configured (backend appsettings)',               category: 'Payments' },
+  { id: 'tap_webhooks',      label: 'Tap webhooks pointed at production URL',                       category: 'Payments' },
+  { id: 'tap_webhook_secret',label: 'TapPayments:WebhookSecret set in Render env vars',            category: 'Payments' },
+  // Email (requires paid provider — SendGrid / Postmark / SES)
+  { id: 'email_provider',    label: '[Paid] Email provider configured (SendGrid/Postmark/SES)',     category: 'Email' },
+  { id: 'email_booking',     label: '[Paid] Booking confirmation email tested end-to-end',         category: 'Email' },
+  { id: 'email_reset',       label: '[Paid] Password reset email tested end-to-end',               category: 'Email' },
+  // Notifications
+  { id: 'sms_live',          label: 'SMS provider using live credentials',                         category: 'Notifications' },
+  // Monitoring (requires Sentry account — free tier available)
+  { id: 'sentry_web',        label: '[Free tier] Sentry DSN configured in web app',                category: 'Monitoring' },
+  { id: 'sentry_api',        label: '[Free tier] Sentry SDK added to .NET API',                    category: 'Monitoring' },
+  { id: 'uptime_monitor',    label: '[Free] UptimeRobot or BetterUptime configured',               category: 'Monitoring' },
+  // Analytics
+  { id: 'analytics',         label: '[Free] GA4 tag added to index.html',                         category: 'Analytics' },
+  // Legal
+  { id: 'cookie_consent',    label: 'Cookie consent banner present (PDPL / GDPR)',                 category: 'Legal' },
+  { id: 'privacy_policy',    label: 'Privacy policy page live and linked',                         category: 'Legal' },
+  // Infra
+  { id: 'jwt_secret',        label: 'JwtSettings:SecretKey set in Render env vars (32+ chars)',    category: 'Infra' },
+  { id: 'env_vars',          label: 'Frontend env vars pointing to production API',                category: 'Infra' },
+  { id: 'cors',              label: 'CORS restricted to production domain only',                   category: 'Infra' },
+  { id: 'cors_render',       label: 'Render: Cors__AllowedOrigins__0=https://www.glanz.qa',       category: 'Infra' },
+  { id: 'vercel_api_url',    label: 'Vercel: VITE_API_BASE_URL set to Render URL',                category: 'Infra' },
+  { id: 'https',             label: 'HTTPS enforced (HTTP redirects to HTTPS)',                    category: 'Infra' },
+  // SEO
+  { id: 'sitemap_live',      label: 'sitemap.xml accessible at /sitemap.xml',                     category: 'SEO' },
+  { id: 'google_search',     label: 'Google Search Console property verified',                     category: 'SEO' },
+  // Quality
+  { id: 'google_review',     label: 'Google review URL verified and working',                     category: 'Reviews' },
+  { id: 'dev_flags_off',     label: 'All dev flags (DEV_*) cleared',                              category: 'Dev Flags' },
+  { id: 'features_on',       label: 'Backend feature flags enabled as intended',                  category: 'Feature Flags' },
+  { id: 'error_pages',       label: '404 and 500 error pages tested',                             category: 'UX' },
+  { id: 'mobile_test',       label: 'Tested on real mobile device (iOS + Android)',               category: 'UX' },
+  { id: 'booking_e2e',       label: 'End-to-end booking flow tested with live payment',           category: 'E2E' },
 ];
 
 const CHECKLIST_KEY = 'glanz_deploy_checklist';

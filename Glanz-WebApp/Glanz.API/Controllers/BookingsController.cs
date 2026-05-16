@@ -2967,10 +2967,19 @@ namespace Glanz.API.Controllers
 
         [Authorize(Roles = "Admin,Employee")]
         [HttpGet("all")]
-        public async Task<ActionResult<IEnumerable<BookingDto>>> GetAllBookings()
+        public async Task<ActionResult<PagedBookingsResult>> GetAllBookings(
+            [FromQuery] int    page     = 1,
+            [FromQuery] int    pageSize = 100,
+            [FromQuery] string? search  = null,
+            [FromQuery] string? status  = null,
+            [FromQuery] DateTime? dateFrom = null,
+            [FromQuery] DateTime? dateTo   = null)
         {
             try
             {
+                page     = Math.Max(1, page);
+                pageSize = Math.Clamp(pageSize, 1, 500);
+
                 var lang = ResolveRequestedLanguage();
                 var packageTextMap = await _localizationTextResolver.GetPackageTextsAsync(lang, HttpContext.RequestAborted);
                 var serviceTextMap = await _localizationTextResolver.GetServiceTextsAsync(lang, HttpContext.RequestAborted);
@@ -2982,20 +2991,45 @@ namespace Glanz.API.Controllers
                                 .ThenInclude(ps => ps.Service)
                     .Include(b => b.ChecklistItems)
                     .Include(b => b.AssignedWorker)
-                    .OrderByDescending(b => b.CreatedAt);
+                    .AsQueryable();
 
                 if (User.IsInRole("Employee"))
                 {
                     var userId = GetUserId();
-                    if (!userId.HasValue)
-                    {
-                        return Unauthorized();
-                    }
-
+                    if (!userId.HasValue) return Unauthorized();
                     query = query.Where(b => b.AssignedWorkerId == userId.Value);
                 }
 
-                var bookings = await query.ToListAsync();
+                if (!string.IsNullOrWhiteSpace(search))
+                {
+                    var q = search.Trim().ToLower();
+                    query = query.Where(b =>
+                        b.BookingNumber.ToLower().Contains(q) ||
+                        (b.CustomerName  != null && b.CustomerName.ToLower().Contains(q)) ||
+                        (b.CustomerEmail != null && b.CustomerEmail.ToLower().Contains(q)) ||
+                        (b.CustomerPhone != null && b.CustomerPhone.ToLower().Contains(q)));
+                }
+
+                if (!string.IsNullOrWhiteSpace(status) && status != "All" &&
+                    Enum.TryParse<BookingStatus>(status, true, out var parsedStatus))
+                {
+                    query = query.Where(b => b.Status == parsedStatus);
+                }
+
+                if (dateFrom.HasValue)
+                    query = query.Where(b => b.ScheduledDate >= dateFrom.Value.ToUniversalTime());
+
+                if (dateTo.HasValue)
+                    query = query.Where(b => b.ScheduledDate <= dateTo.Value.ToUniversalTime());
+
+                var totalCount = await query.CountAsync(HttpContext.RequestAborted);
+                var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+
+                var bookings = await query
+                    .OrderByDescending(b => b.CreatedAt)
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToListAsync(HttpContext.RequestAborted);
 
                 var bookingDtos = bookings.Select(b => new BookingDto
                 {
@@ -3061,7 +3095,14 @@ namespace Glanz.API.Controllers
                     }).ToList()
                 }).ToList();
 
-                return Ok(bookingDtos);
+                return Ok(new PagedBookingsResult
+                {
+                    Items      = bookingDtos,
+                    TotalCount = totalCount,
+                    Page       = page,
+                    PageSize   = pageSize,
+                    TotalPages = totalPages,
+                });
             }
             catch (Exception ex)
             {

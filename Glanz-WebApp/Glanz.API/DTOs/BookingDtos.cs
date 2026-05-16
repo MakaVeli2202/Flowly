@@ -637,4 +637,13 @@ namespace Glanz.API.DTOs
         [StringLength(30)]
         public string Mode { get; set; } = "keep_catalog";
     }
+
+    public class PagedBookingsResult
+    {
+        public List<BookingDto> Items      { get; set; } = new();
+        public int              TotalCount { get; set; }
+        public int              Page       { get; set; }
+        public int              PageSize   { get; set; }
+        public int              TotalPages { get; set; }
+    }
 }

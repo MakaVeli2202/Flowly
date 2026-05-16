@@ -121,12 +121,35 @@ Use the interactive checklist at `/admin/dev-settings`. Items:
 
 | Area | Status | Notes |
 |------|--------|-------|
-| Email notifications | Needs wiring | Backend has SMS; email (order confirmation, receipts) not confirmed |
-| Apple Pay / Google Pay | Not implemented | Stripe supports it — needs frontend Stripe Elements upgrade |
+| Email notifications | BLOCKED - all SMTP fields TODO | No booking confirmations, receipts, or password reset emails go out |
+| Stripe webhook signature | MISSING - critical | No `StripeClient.ConstructEvent()` - attacker can forge payment webhooks |
+| JWT secret | HARDCODED in Program.cs | Must move to env var before prod |
+| API pagination | MISSING on /Bookings/all | Will freeze browser + timeout at scale |
+| Apple Pay / Google Pay | Not implemented | Stripe Payment Element supports both natively |
+| Error monitoring | Not configured | Sentry SDK not initialised on web, mobile, or API |
 | Analytics | Not implemented | No GA4 / Hotjar / Clarity tag in the app |
 | Cookie consent banner | Missing | Required by GDPR/PDPL if serving EU or Qatar residents |
-| Rate limiting | Backend concern | Confirm API is rate-limited before going live |
-| Sitemap + robots.txt | Not confirmed | Needed for SEO — check if it exists in /public |
+| Rate limiting | Not confirmed | Add UseRateLimiter on /Auth/login and payment endpoints |
+| Sitemap + robots.txt | Not confirmed | Needed for SEO - check if it exists in /public |
 | CSP headers | Not confirmed | Content-Security-Policy header on the server |
 | Image optimisation | Not confirmed | Hero/package images should be WebP with lazy loading |
 | Uptime monitoring | Not configured | Add UptimeRobot or similar for the API and frontend |
+| Refresh token rotation | Not implemented | JWT issued at login never rotates |
+| Test coverage | <10% | No tests on BookingsController, AuthController, or any React page |
+
+## May 2026 Audit - Production Readiness: ~35%
+
+Core booking flow and admin panel are production-quality. Blockers are infrastructure gaps, not feature logic.
+
+### Launch Blockers (must fix before go-live)
+1. Wire Stripe webhook signature validation (`WebhookSecret` env var + `ConstructEvent`)
+2. Move JWT secret to env var, fail fast at startup if missing
+3. Implement email provider (SendGrid or Postmark) - password reset and booking confirmations are broken
+4. Add `?page=&pageSize=` pagination to `/Bookings/all`
+
+### First Month After Launch
+- Sentry error monitoring (free tier) on web + mobile + API
+- Apple Pay / Google Pay via Stripe Payment Element
+- GA4 analytics tag
+- Fix N+1 query in BookingsController.GetAll() - add `.Include()` for worker + packages
+- Rate limiting on auth and payment endpoints

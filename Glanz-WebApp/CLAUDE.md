@@ -10,17 +10,17 @@ Be direct, minimal tokens, no fluff. Read files before editing.
 ## Repos & Ports
 | Repo | Path | Port | Notes |
 |------|------|------|-------|
-| API | `GetItCleaned-WebApp/GetItCleaned.API/` | 5289 | SQLite dev / PostgreSQL prod |
-| Web | `GetItCleaned-WebApp/getitcleaned-frontend/` | ~5173 | React + Vite + Tailwind |
-| Mobile | `GetItCleaned-Mobile/` | 8083 | Expo 54, React Native 0.81.5 |
+| API | `Glanz-WebApp/Glanz.API/` | 5289 | SQLite dev / PostgreSQL prod |
+| Web | `Glanz-WebApp/glanz-frontend/` | ~5173 | React + Vite + Tailwind |
+| Mobile | `Glanz-Mobile/` | 8083 | Expo 54, React Native 0.81.5 |
 
 ```bash
 # Backend
-cd GetItCleaned-WebApp && dotnet run
+cd Glanz-WebApp && dotnet run
 # Web
-cd GetItCleaned-WebApp/getitcleaned-frontend && npm run dev
+cd Glanz-WebApp/glanz-frontend && npm run dev
 # Mobile
-cd GetItCleaned-Mobile && npm start
+cd Glanz-Mobile && npm start
 ```
 
 ---
@@ -129,8 +129,10 @@ cd GetItCleaned-Mobile && npm start
 - `src/pages/admin/` — Admin pages (AdminBookings.jsx, AdminPackages.jsx, etc.)
 - `src/pages/customer/` — Customer pages (MyBookings.jsx, Booking.jsx, etc.)
 - `src/pages/worker/` — Worker pages
-- `src/components/layout/` — Navbar, Footer, etc.
+- `src/components/layout/` — CustomerNavbar.jsx, AdminHeader.jsx, Footer, etc.
+- `src/styles/` — glanz.css (component styles), index.css (CSS vars + theming)
 - `src/utils/` — statusConfig.js, currency.js, etc.
+- `src/context/` — AuthContext, SettingsContext, LanguageContext
 
 ### API Clients (`src/api/`)
 - `bookings.js` — `bookingsAPI` object (all booking endpoints)
@@ -165,16 +167,19 @@ cd GetItCleaned-Mobile && npm start
 - Slot-blocked warning shows alternative slots from `data.availableSlots`
 - Two-step confirmation
 
-### Navbar (`components/layout/Navbar.jsx`)
-- Admin dropdown uses `bg-[var(--surface-bg)]` (NOT `--card-bg`) — prevents transparent dropdown behind photos
+### Navbar (`components/layout/CustomerNavbar.jsx` + `AdminHeader.jsx`)
+- All nav dropdowns use `bg-[var(--surface-bg)]` (NOT `--card-bg`) — prevents transparent dropdown behind photos
+- CustomerNavbar: pill-shaped floating nav, theming via CSS vars
+- AdminHeader: sidebar + top bar, all colors via CSS vars (dark/light safe)
 
 ---
 
-## Mobile Architecture (`GetItCleaned-Mobile`)
+## Mobile Architecture (`Glanz-Mobile`)
 - Expo 54, React Navigation, Async Storage
 - `src/api/` — Axios instance (same endpoints as web)
-- Auth: stores JWT in AsyncStorage
+- Auth: stores JWT in SecureStore (not AsyncStorage - more secure)
 - Main entry: App.js → navigation stack
+- Uses `theme.colors.*` CSS vars consistently
 
 ---
 
@@ -206,6 +211,9 @@ cd GetItCleaned-Mobile && npm start
 - Never use hardcoded `bg-white`, `bg-gray-50`, `bg-gray-100` in components — use CSS vars
 - `--card-bg` in dark = glass / transparent; `--surface-bg` = solid dark
 - Navbar dropdowns must use `--surface-bg` or they become invisible behind background images
+- `--surface-bg` must NEVER be set to transparent — 30+ components use it for solid surfaces (modals, dropdowns, toasts)
+- For page-level transparency, set `body { background: transparent; }` directly, not via `--surface-bg`
+- glanz.css has dual light-mode selectors: single-quote `[data-theme='light']` (earlier) and double-quote `[data-theme="light"]` (later). Double-quote rules WIN due to cascade — always update the double-quote block
 
 ### Admin Profile
 - `UpdateProfileDto.Phone` is `string?` (optional) — admin accounts don't need phone
@@ -269,5 +277,5 @@ See `DEPLOYMENT_READINESS.md` for full checklist.
 ---
 
 ## Git
-- `GetItCleaned-WebApp`: `git pull origin main`
-- `GetItCleaned-Mobile`: `git pull origin master`
+- `Glanz-WebApp`: `git pull origin main`
+- `Glanz-Mobile`: `git pull origin master`
