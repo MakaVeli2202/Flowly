@@ -77,7 +77,7 @@ export function AuthProvider({ children }) {
         }
 
         // Fast path: restore from stored access token if still valid
-        const storedToken = localStorage.getItem(TOKEN_KEY);
+        const storedToken = sessionStorage.getItem(TOKEN_KEY);
         if (storedToken && !isTokenExpired(storedToken)) {
           setAuthToken(storedToken);
           setToken(storedToken);
@@ -96,7 +96,7 @@ export function AuthProvider({ children }) {
             const refreshed = await authAPI.refresh();
             setAuthToken(refreshed.token);
             setToken(refreshed.token);
-            localStorage.setItem(TOKEN_KEY, refreshed.token);
+            sessionStorage.setItem(TOKEN_KEY, refreshed.token);
           } catch {
             // stay logged in with current valid token; refresh will be reattempted later
           }
@@ -109,7 +109,7 @@ export function AuthProvider({ children }) {
         // Slow path: stored token expired — try cookie-based refresh
         const refreshed = await authAPI.refresh();
         setAuthToken(refreshed.token);
-        localStorage.setItem(TOKEN_KEY, refreshed.token);
+        sessionStorage.setItem(TOKEN_KEY, refreshed.token);
 
         let currentUser = refreshed.user || null;
         if (!currentUser) {
@@ -128,7 +128,7 @@ export function AuthProvider({ children }) {
         startNotificationConnection();
       } catch {
         localStorage.removeItem('glanz_session_active');
-        localStorage.removeItem(TOKEN_KEY);
+        sessionStorage.removeItem(TOKEN_KEY);
         setAuthToken(null);
         setToken(null);
         setUser(null);
@@ -150,7 +150,7 @@ export function AuthProvider({ children }) {
       throw new Error('This action is not allowed with a company account. Please use the mobile app to log in as a detailer.');
     }
     localStorage.setItem('glanz_session_active', 'true');
-    localStorage.setItem(TOKEN_KEY, response.token);
+    sessionStorage.setItem(TOKEN_KEY, response.token);
     persistSession(response.token, response.user);
     await realtimeService.connect(response.token);
     startNotificationConnection();
@@ -161,7 +161,7 @@ export function AuthProvider({ children }) {
     const response = await authAPI.register(userData);
     if (response.requiresEmailVerification) return response;
     localStorage.setItem('glanz_session_active', 'true');
-    localStorage.setItem(TOKEN_KEY, response.token);
+    sessionStorage.setItem(TOKEN_KEY, response.token);
     persistSession(response.token, response.user);
     await realtimeService.connect(response.token);
     startNotificationConnection();
@@ -195,7 +195,7 @@ export function AuthProvider({ children }) {
     realtimeService.disconnect();
     authAPI.logout();
     localStorage.removeItem('glanz_session_active');
-    localStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(TOKEN_KEY);
     setAuthToken(null);
     setToken(null);
     setUser(null);

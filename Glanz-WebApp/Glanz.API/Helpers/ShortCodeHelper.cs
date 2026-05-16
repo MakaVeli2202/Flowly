@@ -53,8 +53,12 @@ namespace Glanz.API.Helpers
                 ? (fn[..2] + ln[..2])[..3]
                 : (fn + ln).PadRight(3)[..3];
 
-            for (int i = 2; i <= 99; i++)
+            // i 2-9 = 1-digit suffix → 3+1 = 4 chars; i 10-99 = 2-digit suffix → use base2 to keep total at 4
+            var base2 = (fn + ln).PadRight(2)[..2];
+            for (int i = 2; i <= 9; i++)
                 yield return base3 + i.ToString();
+            for (int i = 10; i <= 99; i++)
+                yield return base2 + i.ToString();
         }
     }
 }

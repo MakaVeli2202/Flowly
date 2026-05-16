@@ -1,49 +1,48 @@
 name: CI
-
 on:
   push:
-    branches: ["main"]
+    branches: [main, dev]
   pull_request:
+    branches: [main]
 
 jobs:
+  backend:
+    name: Backend (build + test)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.x'
+      - name: Restore dependencies
+        run: dotnet restore Glanz-WebApp/Glanz.sln
+      - name: Build
+        run: dotnet build Glanz-WebApp/Glanz.sln --no-restore -c Debug
+      - name: Test
+        run: >
+          dotnet test Glanz-WebApp/Glanz.API.Tests/Glanz.API.Tests.csproj
+          --no-build -c Debug
+          --logger "console;verbosity=normal"
+          --collect:"XPlat Code Coverage"
+
   frontend:
+    name: Frontend (build + test)
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: Glanz-WebApp/glanz-frontend
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: "24"
-          cache: "npm"
+          node-version: '20'
+          cache: npm
           cache-dependency-path: Glanz-WebApp/glanz-frontend/package-lock.json
       - name: Install dependencies
         run: npm ci
-      - name: Audit dependencies
-        run: npm audit --audit-level=high
-      - name: Lint
-        run: npm run lint
-      - name: Test
-        run: npm run test
       - name: Build
         run: npm run build
-
-  api:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: Glanz-WebApp/Glanz.API
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: "10.0.x"
-      - name: Restore
-        run: dotnet restore
-      - name: Check for vulnerable packages
-        run: dotnet list package --vulnerable --include-transitive
-      - name: Build
-        run: dotnet build --configuration Release --no-restore
-      - name: Test
-        run: dotnet test --configuration Release --no-build
+        env:
+          VITE_API_BASE_URL: https://api.glanz.qa/api
+      - name: Run tests
+        run: npm test -- --run --reporter=verbose

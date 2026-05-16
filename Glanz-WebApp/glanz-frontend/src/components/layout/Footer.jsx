@@ -125,7 +125,7 @@ function Footer() {
           
 <div>
               <div className="mb-0">
-                <img src={business.logo || '/GlanzLogo.png'} alt={business.name} className="h-56 w-auto object-contain" />
+                <img src={business.logo || '/GlanzLogo.png'} alt={business.name} className="h-56 w-auto object-contain" loading="lazy" />
               </div>
               {business.tagline && (
                 <p className="text-[var(--muted-color)]">

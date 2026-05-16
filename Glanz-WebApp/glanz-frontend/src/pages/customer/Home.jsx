@@ -163,7 +163,7 @@ function ReviewCard({ review }) {
             </div>
           )}
           {review.avatar && (
-            <img src={review.avatar} alt={review.author}
+            <img src={review.avatar} alt={review.author} loading="lazy"
               className={`w-11 h-11 rounded-full object-cover ${imageLoaded ? 'block' : 'hidden'}`}
               onLoad={() => setImageLoaded(true)} onError={() => setImageLoaded(false)} />
           )}
@@ -633,6 +633,7 @@ function Home() {
 
   /* ── GSAP — Hero scrub ── */
   useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     if (!heroSectionRef.current || !heroCardRef.current) return;
     const ctx = gsap.context(() => {
       gsap.to(heroCardRef.current, {
@@ -648,6 +649,7 @@ function Home() {
 
   /* ── GSAP — Service areas ── */
   useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     if (!areasSectionRef.current) return;
     const ctx = gsap.context(() => {
       gsap.from('.areas-heading', {
@@ -665,6 +667,7 @@ function Home() {
 
   /* ── GSAP — Stats ── */
   useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { setStatsStarted(true); return; }
     if (!statsRef.current || !stats || stats.length === 0) return;
     const elements = statsRef.current.querySelectorAll('.stat-card');
     if (elements.length === 0) return;
@@ -694,6 +697,7 @@ function Home() {
      there is no single-frame gap/jump when the pin activates.
   ───────────────────────────────────────────────────────── */
   useLayoutEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const section = serviceSectionRef.current;
     const track   = serviceTrackRef.current;
     if (!section || !track) return;
@@ -756,6 +760,7 @@ function Home() {
 
   /* ── GSAP — Features fly-in ── */
   useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     if (!featuresRef.current) return;
     const ctx = gsap.context(() => {
       gsap.from('.feature-card', {
@@ -770,6 +775,7 @@ function Home() {
 
   /* ── GSAP — Brand reveal ── */
   useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     if (!brandRef.current) return;
     const ctx = gsap.context(() => {
       gsap.from(brandRef.current, {
@@ -782,6 +788,7 @@ function Home() {
 
   /* ── GSAP — How It Works ── */
   useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     if (!processRef.current) return;
     const ctx = gsap.context(() => {
       gsap.from('.process-heading', {
@@ -1304,7 +1311,7 @@ function Home() {
               Based on <span className="font-semibold text-primary">{reviews.length}+ reviews</span>
             </p>
             <div className="flex flex-col items-center gap-3">
-              <img src="https://cdn.trustindex.io/assets/platform/Google/logo-dark.svg" alt="Google Reviews" className="h-8"
+              <img src="https://cdn.trustindex.io/assets/platform/Google/logo-dark.svg" alt="Google Reviews" className="h-8" loading="lazy"
                 onError={e => { e.target.style.display = 'none'; }} />
               <a href="https://g.page/r/CbY8wgSE0iXGEAE/review" target="_blank" rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold border border-primary/40 text-primary hover:bg-primary/10 transition-all duration-200">

@@ -123,5 +123,11 @@
     "fallbackMessage": "Etwas Unerwartetes ist passiert",
     "tryAgain": "Erneut versuchen",
     "goHome": "Zur Startseite"
+  },
+  "cookieConsent": {
+    "message": "Wir verwenden Cookies, um Ihre Erfahrung zu verbessern und die Nutzung der Website zu analysieren. Durch die weitere Nutzung stimmen Sie unserer",
+    "privacyLink": "Datenschutzrichtlinie",
+    "acceptAll": "Alle akzeptieren",
+    "decline": "Ablehnen"
   }
 }

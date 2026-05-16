@@ -16,6 +16,7 @@ import Navbar               from './components/layout/Navbar';
 import Footer               from './components/layout/Footer';
 import ProtectedRoute       from './components/shared/ProtectedRoute';
 import WhatsAppWidget      from './components/shared/WhatsAppWidget';
+import CookieConsent       from './components/shared/CookieConsent';
 import RainBackground       from './components/shared/RainBackground';
 import LoadingCircle        from './components/shared/LoadingCircle';
 import { usePageTracking } from './hooks/usePageTracking';
@@ -324,6 +325,7 @@ function App() {
                  <AppRoutes />
                  <Footer />
                  <WhatsAppWidget />
+                 <CookieConsent />
                </SiteAccessGate>
               </div>
             </ToastProvider>

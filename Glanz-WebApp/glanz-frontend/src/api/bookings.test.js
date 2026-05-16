@@ -103,6 +103,52 @@ describe('bookingsAPI', () => {
     });
   });
 
+  describe('getAll', () => {
+    it('calls /Bookings/all with default params', async () => {
+      apiClient.get.mockResolvedValueOnce({ data: { items: [], totalCount: 0, page: 1, pageSize: 100, totalPages: 0 } });
+
+      await bookingsAPI.getAll();
+
+      const call = apiClient.get.mock.calls[0][0];
+      expect(call).toContain('/Bookings/all');
+      expect(call).toContain('page=1');
+      expect(call).toContain('pageSize=100');
+    });
+
+    it('includes search param when provided', async () => {
+      apiClient.get.mockResolvedValueOnce({ data: { items: [], totalCount: 0, page: 1, pageSize: 100, totalPages: 0 } });
+
+      await bookingsAPI.getAll({ search: 'BK-123' });
+
+      expect(apiClient.get.mock.calls[0][0]).toContain('search=BK-123');
+    });
+
+    it('includes status param when not All', async () => {
+      apiClient.get.mockResolvedValueOnce({ data: { items: [], totalCount: 0, page: 1, pageSize: 100, totalPages: 0 } });
+
+      await bookingsAPI.getAll({ status: 'Pending' });
+
+      expect(apiClient.get.mock.calls[0][0]).toContain('status=Pending');
+    });
+
+    it('omits status param when All', async () => {
+      apiClient.get.mockResolvedValueOnce({ data: { items: [], totalCount: 0, page: 1, pageSize: 100, totalPages: 0 } });
+
+      await bookingsAPI.getAll({ status: 'All' });
+
+      expect(apiClient.get.mock.calls[0][0]).not.toContain('status=');
+    });
+
+    it('returns paged result shape', async () => {
+      const expected = { items: [{ id: 1 }], totalCount: 1, page: 1, pageSize: 100, totalPages: 1 };
+      apiClient.get.mockResolvedValueOnce({ data: expected });
+
+      const result = await bookingsAPI.getAll();
+
+      expect(result).toEqual(expected);
+    });
+  });
+
   describe('create', () => {
     it('posts booking data to /Bookings', async () => {
       const bookingData = {
