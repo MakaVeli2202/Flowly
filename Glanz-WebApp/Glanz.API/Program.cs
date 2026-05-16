@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -43,7 +43,7 @@ builder.WebHost.ConfigureKestrel(options =>
 {
     var port = int.Parse(Environment.GetEnvironmentVariable("PORT") ?? "5289");
     options.ListenAnyIP(port);
-    options.Limits.MaxRequestBodySize = 10 * 1024 * 1024; // 10 MB global cap — prevents DoS via oversized payloads
+    options.Limits.MaxRequestBodySize = 10 * 1024 * 1024; // 10 MB global cap â€” prevents DoS via oversized payloads
 });
 
 builder.Services.AddControllers(options =>
@@ -295,12 +295,51 @@ builder.Services.AddScoped<ILocalizationTextResolver, LocalizationTextResolver>(
 builder.Services.AddScoped<IAutoTranslationService, AutoTranslationService>();
 builder.Services.AddScoped<IReferralService, ReferralService>();
 builder.Services.AddScoped<IEmailService, SmtpEmailService>();
-// Phase 3: background maintenance — cleans expired slot reservations + flags late bookings
+// Platform: per-request tenant context
+builder.Services.AddScoped<Glanz.API.Platform.Tenancy.TenantContext>();
+// Platform: MediatR + domain event service
+builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
+builder.Services.AddScoped<Glanz.API.Platform.AuditEvents.IDomainEventService, Glanz.API.Platform.AuditEvents.DomainEventService>();
+builder.Services.AddScoped<Glanz.API.Modules.Booking.IBookingService, Glanz.API.Modules.Booking.BookingService>();
+builder.Services.AddScoped<Glanz.API.Modules.Organization.IOrganizationService, Glanz.API.Modules.Organization.OrganizationService>();
+builder.Services.AddScoped<Glanz.API.Modules.Billing.IBillingService, Glanz.API.Modules.Billing.BillingService>();
+builder.Services.AddScoped<Glanz.API.Modules.FeatureFlags.IFeatureFlagService, Glanz.API.Modules.FeatureFlags.FeatureFlagService>();
+builder.Services.AddScoped<Glanz.API.Modules.Permissions.IPermissionsService, Glanz.API.Modules.Permissions.PermissionsService>();
+builder.Services.AddScoped<Glanz.API.Modules.Resources.IResourceService, Glanz.API.Modules.Resources.ResourceService>();
+builder.Services.AddScoped<Glanz.API.Modules.IndustryTemplates.IIndustryTemplateService, Glanz.API.Modules.IndustryTemplates.IndustryTemplateService>();
+builder.Services.AddScoped<Glanz.API.Modules.CustomFields.ICustomFieldService, Glanz.API.Modules.CustomFields.CustomFieldService>();
+builder.Services.AddScoped<Glanz.API.Modules.ClientAssets.IClientAssetService, Glanz.API.Modules.ClientAssets.ClientAssetService>();
+builder.Services.AddScoped<Glanz.API.Modules.Automation.IAutomationRuleService, Glanz.API.Modules.Automation.AutomationRuleService>();
+builder.Services.AddScoped<Glanz.API.Modules.Auth.IAuthService, Glanz.API.Modules.Auth.AuthService>();
+builder.Services.AddScoped<Glanz.API.Modules.Staff.IStaffService, Glanz.API.Modules.Staff.StaffService>();
+builder.Services.AddScoped<Glanz.API.Modules.Offers.IOfferService, Glanz.API.Modules.Offers.OfferService>();
+builder.Services.AddScoped<Glanz.API.Modules.CRM.ICrmService, Glanz.API.Modules.CRM.CrmService>();
+builder.Services.AddScoped<Glanz.API.Modules.Packages.IPackageService, Glanz.API.Modules.Packages.PackageService>();
+builder.Services.AddScoped<Glanz.API.Modules.Settings.ISettingsService, Glanz.API.Modules.Settings.SettingsService>();
+builder.Services.AddScoped<Glanz.API.Modules.SubscriptionBookings.ISubscriptionBookingService, Glanz.API.Modules.SubscriptionBookings.SubscriptionBookingService>();
+builder.Services.AddScoped<Glanz.API.Modules.Reports.IReportsService, Glanz.API.Modules.Reports.ReportsService>();
+builder.Services.AddScoped<Glanz.API.Modules.Plans.IPlansService, Glanz.API.Modules.Plans.PlansService>();
+builder.Services.AddScoped<Glanz.API.Modules.Services.IServicesService, Glanz.API.Modules.Services.ServicesService>();
+builder.Services.AddScoped<Glanz.API.Modules.RecurringBookings.IRecurringBookingService, Glanz.API.Modules.RecurringBookings.RecurringBookingService>();
+builder.Services.AddScoped<Glanz.API.Modules.Waitlist.IWaitlistService, Glanz.API.Modules.Waitlist.WaitlistService>();
+
+// SMS/WhatsApp reminders + payment gateways
+builder.Services.AddHttpClient("Infobip");
+builder.Services.AddHttpClient("QPay");
+builder.Services.AddHttpClient("Dibsy");
+var smsEnabled = builder.Configuration.GetValue<bool>("Messaging:SmsRemindersEnabled");
+if (smsEnabled && !string.IsNullOrWhiteSpace(builder.Configuration["Infobip:ApiKey"]))
+    builder.Services.AddScoped<Glanz.API.Platform.Messaging.ISmsService, Glanz.API.Platform.Messaging.InfobipSmsService>();
+else
+    builder.Services.AddScoped<Glanz.API.Platform.Messaging.ISmsService, Glanz.API.Platform.Messaging.NullSmsService>();
+builder.Services.AddScoped<Glanz.API.Platform.Messaging.BookingReminderJob>();
+
+// Phase 3: background maintenance â€” cleans expired slot reservations + flags late bookings
 builder.Services.AddHostedService<BookingMaintenanceService>();
-// Customer reminder service — sends notifications to inactive customers
+// Customer reminder service â€” sends notifications to inactive customers
 builder.Services.AddHostedService<CustomerReminderService>();
 
-// SignalR — real-time WebSocket layer
+// SignalR â€” real-time WebSocket layer
 builder.Services.AddSignalR(options =>
 {
     options.EnableDetailedErrors = builder.Environment.IsDevelopment();
@@ -309,14 +348,14 @@ builder.Services.AddSignalR(options =>
 
 var app = builder.Build();
 
-// ── Security startup checks ───────────────────────────────────────────────
+// â”€â”€ Security startup checks â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 var startupLogger = app.Services.GetRequiredService<ILogger<Program>>();
 var tapWebhookSecret = app.Configuration["TapPayments:WebhookSecret"];
 if (app.Environment.IsProduction() && string.IsNullOrWhiteSpace(tapWebhookSecret))
 {
     startupLogger.LogCritical(
         "SECURITY WARNING: TapPayments:WebhookSecret is not configured. " +
-        "Incoming Tap webhooks cannot be verified — a forged webhook could mark unpaid bookings as paid. " +
+        "Incoming Tap webhooks cannot be verified â€” a forged webhook could mark unpaid bookings as paid. " +
         "Set TapPayments:WebhookSecret to the signing key from the Tap dashboard immediately.");
 }
 
@@ -361,7 +400,7 @@ using (var scope = app.Services.CreateScope())
                 AppJsonOptions.CaseInsensitive);
             if (hours != null)
             {
-                Glanz.API.Controllers.BookingsController.SetBusinessHoursFromSettings(hours);
+                Glanz.API.Modules.Booking.BookingService.SetBusinessHoursFromSettings(hours);
                 BookingSlotHelper.SetBusinessHoursFromSettings(hours);
             }
         }
@@ -384,7 +423,7 @@ using (var scope = app.Services.CreateScope())
 
 // Apply configured business timezone to slot helpers
 var configuredTz = builder.Configuration["BusinessSettings:TimeZone"];
-Glanz.API.Controllers.BookingsController.ApplyConfiguredTimeZone(configuredTz);
+Glanz.API.Modules.Booking.BookingService.ApplyConfiguredTimeZone(configuredTz);
 BookingSlotHelper.ApplyConfiguredTimeZone(configuredTz);
 
 if (app.Environment.IsDevelopment())
@@ -400,7 +439,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
-// ── Security response headers ─────────────────────────────────────────────
+// â”€â”€ Security response headers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Applied before any controller response so every endpoint benefits.
 // CSP allows Tap checkout assets, fonts, and same-origin assets. Tighten per environment as needed.
 app.Use(async (context, next) =>
@@ -420,7 +459,7 @@ app.Use(async (context, next) =>
             "connect-src 'self' https://api.tap.company; " +
             "font-src 'self' https://fonts.gstatic.com; " +
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
-            // TODO: Remove 'unsafe-inline' from style-src — it allows CSS injection attacks.
+            // TODO: Remove 'unsafe-inline' from style-src â€” it allows CSS injection attacks.
             // Tailwind and some component inline styles currently require it.
             // Fix path: generate a per-request nonce, inject into style tags, include nonce
             // in the CSP header (requires SSR or middleware that patches the served index.html).
@@ -435,9 +474,12 @@ app.UseIpRateLimiting();
 app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
+// Platform: resolve tenant context after auth so JWT claims are available
+app.UseMiddleware<Glanz.API.Platform.Tenancy.TenantMiddleware>();
+app.UseMiddleware<Glanz.API.Platform.Tenancy.PlanGuardMiddleware>();
 app.MapControllers();
 app.MapHealthChecks("/healthz");
-app.MapHub<GlanzHub>("/hubs/glanz");
+app.MapHub<FlowlyHub>("/hubs/flowly");
 
 app.Run();
 
@@ -471,7 +513,7 @@ static async Task EnsurePostgresSchemaCompatibilityAsync(AppDbContext dbContext)
         await EnsureColumnAsync(connection, "BookingItems", "SnapshotDurationMinutes", "integer NOT NULL DEFAULT 0");
 
         // Back-fill SnapshotDurationMinutes for legacy rows that still have the default 0.
-        // Uses the CURRENT Package.EstimatedDurationMinutes — the best available approximation.
+        // Uses the CURRENT Package.EstimatedDurationMinutes â€” the best available approximation.
         await using (var backfillCmd = connection.CreateCommand())
         {
             backfillCmd.CommandText = @"

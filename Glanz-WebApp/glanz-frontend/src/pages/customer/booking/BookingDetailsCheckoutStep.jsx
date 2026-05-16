@@ -277,7 +277,7 @@ function BookingDetailsCheckoutStep({
               You received a discount from {referredByName}'s referral!
             </p>
             <p className="text-xs text-[var(--muted-color)] mt-1">
-              Your booking includes the referral discount. Thank you for using Glanz!
+              Your booking includes the referral discount. Thank you for using Flowly!
             </p>
           </div>
         </div>

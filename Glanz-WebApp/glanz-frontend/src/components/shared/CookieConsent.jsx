@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
 
-const STORAGE_KEY = 'glanz_cookie_consent';
+const STORAGE_KEY = 'flowly_cookie_consent';
 
 export default function CookieConsent() {
   const { t } = useLanguage();

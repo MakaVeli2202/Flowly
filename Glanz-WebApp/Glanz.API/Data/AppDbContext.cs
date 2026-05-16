@@ -1,19 +1,26 @@
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using Glanz.API.Models;
+using Glanz.API.Platform.Tenancy;
 
 namespace Glanz.API.Data
 {
     public class AppDbContext : DbContext
     {
-        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
+        private readonly TenantContext? _tenantContext;
+
+        public AppDbContext(DbContextOptions<AppDbContext> options, TenantContext? tenantContext = null) : base(options)
         {
+            _tenantContext = tenantContext;
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             base.OnConfiguring(optionsBuilder);
         }
+
+        private int CurrentOrgId => _tenantContext?.OrgId ?? 1;
+        private bool IsPlatformAdmin => _tenantContext?.IsPlatformAdmin ?? false;
 
         public DbSet<User> Users { get; set; }
         public DbSet<Staff> Staff { get; set; }
@@ -49,10 +56,106 @@ namespace Glanz.API.Data
         public DbSet<Referral> Referrals { get; set; }
         public DbSet<PageView> PageViews { get; set; }
         public DbSet<AttendanceLog> AttendanceLogs { get; set; }
+        public DbSet<RecurringBookingRule> RecurringBookingRules { get; set; }
+        public DbSet<WaitlistEntry> WaitlistEntries { get; set; }
+        public DbSet<Supplier> Suppliers { get; set; }
+        public DbSet<PurchaseOrder> PurchaseOrders { get; set; }
+        public DbSet<PurchaseOrderItem> PurchaseOrderItems { get; set; }
+
+        // Platform: multi-tenancy
+        public DbSet<Organization> Organizations { get; set; }
+        public DbSet<OrganizationLocation> OrganizationLocations { get; set; }
+        public DbSet<OrganizationBranding> OrganizationBrandings { get; set; }
+
+        // Platform: billing
+        public DbSet<PlatformPlan> PlatformPlans { get; set; }
+        public DbSet<OrganizationSubscription> OrganizationSubscriptions { get; set; }
+        public DbSet<UsageRecord> UsageRecords { get; set; }
+
+        // Platform: domain abstraction
+        public DbSet<AssetCategory> AssetCategories { get; set; }
+        public DbSet<ClientAsset> ClientAssets { get; set; }
+
+        // Platform: RBAC
+        public DbSet<Permission> Permissions { get; set; }
+        public DbSet<RolePermission> RolePermissions { get; set; }
+
+        // Platform: resources
+        public DbSet<Resource> Resources { get; set; }
+        public DbSet<ResourceBooking> ResourceBookings { get; set; }
+
+        // Platform: custom fields
+        public DbSet<CustomFieldDefinition> CustomFieldDefinitions { get; set; }
+        public DbSet<CustomFieldValue> CustomFieldValues { get; set; }
+
+        // Platform: event store
+        public DbSet<DomainEvent> DomainEvents { get; set; }
+
+        // Platform: tenant config
+        public DbSet<TenantConfigurationSnapshot> TenantConfigurationSnapshots { get; set; }
+        public DbSet<TenantFeatureFlag> TenantFeatureFlags { get; set; }
+
+        // Platform: automation
+        public DbSet<BookingRule> BookingRules { get; set; }
+        public DbSet<AutomationRule> AutomationRules { get; set; }
+
+        // Platform: industry templates
+        public DbSet<IndustryTemplate> IndustryTemplates { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            // Global query filters: enforce tenant isolation on all OrgId-scoped tables.
+            // OR OrgId IS NULL handles the migration period before backfill enforces NOT NULL.
+            // Platform admin bypass: when IsPlatformAdmin the filter is a no-op (returns all rows).
+            modelBuilder.Entity<User>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == null || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<Staff>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == null || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<Booking>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == null || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<BookingItem>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == null || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<BookingChecklistItem>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == null || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<BookingPhoto>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == null || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<Package>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == null || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<PackageService>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == null || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<Service>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == null || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<ServiceProduct>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == null || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<Product>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == null || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<Offer>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == null || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<UserOffer>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == null || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<Notification>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == null || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<ServiceSubscription>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == null || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<SubscriptionPlan>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == null || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<UserSubscription>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == null || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<SubscriptionBooking>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == null || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<SubscriptionPlanPackage>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == null || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<Vehicle>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == null || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<SlotReservation>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == null || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<WorkerLocation>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == null || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<JobApplication>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == null || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<JobPosition>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == null || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<AuditLog>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == null || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<CustomerFeedback>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == null || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<Lead>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == null || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<Referral>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == null || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<PageView>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == null || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<AttendanceLog>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == null || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<Availability>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == null || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<RecurringBookingRule>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == null || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<WaitlistEntry>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == null || e.OrgId == CurrentOrgId);
+
+            // Platform: tenant-scoped tables
+            modelBuilder.Entity<AssetCategory>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<ClientAsset>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<Resource>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<CustomFieldDefinition>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<CustomFieldValue>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<DomainEvent>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<TenantConfigurationSnapshot>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<TenantFeatureFlag>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<BookingRule>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<AutomationRule>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<OrganizationSubscription>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<UsageRecord>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == CurrentOrgId);
 
             // Configure decimal precision
             foreach (var entity in modelBuilder.Model.GetEntityTypes())
@@ -372,6 +475,189 @@ namespace Glanz.API.Data
                 .WithMany()
                 .HasForeignKey(cf => cf.WorkerId)
                 .OnDelete(DeleteBehavior.SetNull);
+
+            // Platform: RBAC
+            modelBuilder.Entity<Permission>()
+                .HasIndex(p => p.Key)
+                .IsUnique();
+
+            modelBuilder.Entity<RolePermission>()
+                .HasOne(rp => rp.Permission)
+                .WithMany(p => p.RolePermissions)
+                .HasForeignKey(rp => rp.PermissionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<RolePermission>()
+                .HasIndex(rp => new { rp.Role, rp.PermissionId })
+                .IsUnique();
+
+            // Platform: resources
+            modelBuilder.Entity<Resource>()
+                .HasOne(r => r.Organization)
+                .WithMany()
+                .HasForeignKey(r => r.OrgId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ResourceBooking>()
+                .HasOne(rb => rb.Resource)
+                .WithMany(r => r.ResourceBookings)
+                .HasForeignKey(rb => rb.ResourceId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ResourceBooking>()
+                .HasOne(rb => rb.Booking)
+                .WithMany()
+                .HasForeignKey(rb => rb.BookingId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Platform: custom fields
+            modelBuilder.Entity<CustomFieldDefinition>()
+                .HasOne(cf => cf.Organization)
+                .WithMany()
+                .HasForeignKey(cf => cf.OrgId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<CustomFieldDefinition>()
+                .HasIndex(cf => new { cf.OrgId, cf.EntityType, cf.FieldKey })
+                .IsUnique();
+
+            modelBuilder.Entity<CustomFieldValue>()
+                .HasOne(v => v.Organization)
+                .WithMany()
+                .HasForeignKey(v => v.OrgId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<CustomFieldValue>()
+                .HasOne(v => v.FieldDefinition)
+                .WithMany(d => d.Values)
+                .HasForeignKey(v => v.FieldDefinitionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<CustomFieldValue>()
+                .HasIndex(v => new { v.OrgId, v.EntityType, v.EntityId, v.FieldDefinitionId })
+                .IsUnique();
+
+            // Platform: event store
+            modelBuilder.Entity<DomainEvent>()
+                .HasOne(e => e.Organization)
+                .WithMany()
+                .HasForeignKey(e => e.OrgId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<DomainEvent>()
+                .HasIndex(e => new { e.OrgId, e.EventType, e.OccurredAt });
+
+            modelBuilder.Entity<DomainEvent>()
+                .HasIndex(e => e.ProcessedAt);
+
+            // Platform: tenant config
+            modelBuilder.Entity<TenantConfigurationSnapshot>()
+                .HasOne(s => s.Organization)
+                .WithMany()
+                .HasForeignKey(s => s.OrgId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<TenantConfigurationSnapshot>()
+                .HasIndex(s => new { s.OrgId, s.Version })
+                .IsUnique();
+
+            modelBuilder.Entity<TenantFeatureFlag>()
+                .HasOne(f => f.Organization)
+                .WithMany()
+                .HasForeignKey(f => f.OrgId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<TenantFeatureFlag>()
+                .HasIndex(f => new { f.OrgId, f.FeatureKey })
+                .IsUnique();
+
+            // Platform: automation
+            modelBuilder.Entity<BookingRule>()
+                .HasOne(r => r.Organization)
+                .WithMany()
+                .HasForeignKey(r => r.OrgId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<AutomationRule>()
+                .HasOne(r => r.Organization)
+                .WithMany()
+                .HasForeignKey(r => r.OrgId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Platform: industry templates
+            modelBuilder.Entity<IndustryTemplate>()
+                .HasIndex(t => t.Key)
+                .IsUnique();
+
+            // Platform: domain abstraction
+            modelBuilder.Entity<AssetCategory>()
+                .HasOne(ac => ac.Organization)
+                .WithMany()
+                .HasForeignKey(ac => ac.OrgId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ClientAsset>()
+                .HasOne(ca => ca.Organization)
+                .WithMany()
+                .HasForeignKey(ca => ca.OrgId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ClientAsset>()
+                .HasOne(ca => ca.AssetCategory)
+                .WithMany(ac => ac.ClientAssets)
+                .HasForeignKey(ca => ca.AssetCategoryId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<ClientAsset>()
+                .HasIndex(ca => new { ca.OrgId, ca.CustomerId });
+
+            // Platform: billing
+            modelBuilder.Entity<OrganizationSubscription>()
+                .HasOne(s => s.Organization)
+                .WithMany()
+                .HasForeignKey(s => s.OrgId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<OrganizationSubscription>()
+                .HasOne(s => s.Plan)
+                .WithMany(p => p.OrganizationSubscriptions)
+                .HasForeignKey(s => s.PlanId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<OrganizationSubscription>()
+                .HasIndex(s => new { s.OrgId, s.Status });
+
+            modelBuilder.Entity<UsageRecord>()
+                .HasOne(u => u.Organization)
+                .WithMany()
+                .HasForeignKey(u => u.OrgId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<UsageRecord>()
+                .HasIndex(u => new { u.OrgId, u.Year, u.Month })
+                .IsUnique();
+
+            // Platform: Organizations
+            modelBuilder.Entity<Organization>()
+                .HasIndex(o => o.Slug)
+                .IsUnique();
+
+            modelBuilder.Entity<OrganizationLocation>()
+                .HasOne(l => l.Organization)
+                .WithMany(o => o.Locations)
+                .HasForeignKey(l => l.OrgId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<OrganizationBranding>()
+                .HasOne(b => b.Organization)
+                .WithOne(o => o.Branding)
+                .HasForeignKey<OrganizationBranding>(b => b.OrgId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<OrganizationBranding>()
+                .HasIndex(b => b.CustomDomain)
+                .IsUnique()
+                .HasFilter("\"CustomDomain\" IS NOT NULL");
 
         }
     }

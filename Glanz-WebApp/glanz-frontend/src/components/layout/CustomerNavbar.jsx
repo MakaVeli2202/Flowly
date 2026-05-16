@@ -145,6 +145,11 @@ export function CustomerNavbar({ theme, onToggleTheme }) {
                 {t('myBookings')}
               </Link>
             )}
+            {isAuthenticated && (
+              <Link to="/recurring-bookings" className="text-[var(--heading-color)] hover:text-primary transition-colors font-medium">
+                {t('recurringBookings')}
+              </Link>
+            )}
           </nav>
 
           <div className="hidden sm:flex items-center gap-2 sm:gap-3">
@@ -290,6 +295,11 @@ export function CustomerNavbar({ theme, onToggleTheme }) {
             {isAuthenticated && (
               <Link to="/my-bookings" className="text-[var(--heading-color)] hover:text-primary transition-colors w-full text-center" onClick={() => setIsOpen(false)}>
                 {t('myBookings')}
+              </Link>
+            )}
+            {isAuthenticated && (
+              <Link to="/recurring-bookings" className="text-[var(--heading-color)] hover:text-primary transition-colors w-full text-center" onClick={() => setIsOpen(false)}>
+                {t('recurringBookings')}
               </Link>
             )}
           </nav>

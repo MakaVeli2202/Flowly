@@ -8,7 +8,7 @@ import {
   ChevronRight, Search, Tag, User, Phone, Mail,
   Filter, RefreshCw, MessageCircle, HelpCircle, ArrowRight,
   Crown, Car, Clock, TrendingDown, UserPlus, AlertCircle, Building,
-  Target, Plus, Edit, Trash2
+  Target, Plus, Edit, Trash2, Download
 } from 'lucide-react';
 
 const formatCurrency = (amount) => {
@@ -360,6 +360,9 @@ export default function AdminCrm() {
   const [selectedCustomers, setSelectedCustomers] = useState([]);
   const [editingCustomer, setEditingCustomer] = useState(null);
   const [customerForm, setCustomerForm] = useState({ tags: '', notes: '' });
+  const [showBulkMessage, setShowBulkMessage] = useState(false);
+  const [bulkMsgForm, setBulkMsgForm] = useState({ message: '', channel: 'Push' });
+  const [bulkMsgSending, setBulkMsgSending] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [leads, setLeads] = useState([]);
   const [leadStats, setLeadStats] = useState(null);
@@ -425,10 +428,25 @@ export default function AdminCrm() {
     }
   };
 
+  const handleSendBulkMessage = async () => {
+    if (!bulkMsgForm.message.trim()) return;
+    setBulkMsgSending(true);
+    try {
+      await crmAPI.bulkMessage(selectedCustomers, bulkMsgForm.message, bulkMsgForm.channel);
+      setShowBulkMessage(false);
+      setBulkMsgForm({ message: '', channel: 'Push' });
+      setSelectedCustomers([]);
+    } catch (err) {
+      console.error('Bulk message error:', err);
+    } finally {
+      setBulkMsgSending(false);
+    }
+  };
+
   const openCustomerEdit = (customer) => {
     setEditingCustomer(customer);
-    setCustomerForm({ 
-      tags: customer.tags || '', 
+    setCustomerForm({
+      tags: customer.tags || '',
       notes: customer.notes || '' 
     });
   };
@@ -817,6 +835,15 @@ export default function AdminCrm() {
                 />
               </div>
 
+              <button
+                onClick={() => crmAPI.exportCustomersCsv(selectedSegment)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border border-[var(--border-color)] text-[var(--text-color)] hover:bg-[var(--surface-bg)] transition"
+                title="Export CSV"
+              >
+                <Download size={15} />
+                CSV
+              </button>
+
               {selectedCustomers.length > 0 && (
                 <div className="flex items-center gap-2 p-2 rounded-lg" style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)' }}>
                   <span className="text-sm" style={{ color: 'var(--muted-color)' }}>
@@ -834,6 +861,14 @@ export default function AdminCrm() {
                         {tag.label}
                       </button>
                     ))}
+                    <button
+                      onClick={() => setShowBulkMessage(true)}
+                      className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium"
+                      style={{ background: 'var(--cta-soft-bg)', color: 'var(--cta-color)' }}
+                    >
+                      <MessageSquare size={12} />
+                      Message
+                    </button>
                   </div>
                 </div>
               )}
@@ -1397,6 +1432,55 @@ export default function AdminCrm() {
               >
                 {ui.save}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showBulkMessage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.5)' }}>
+          <div className="w-full max-w-md rounded-xl p-6" style={{ background: 'var(--surface-bg)', border: '1px solid var(--border-color)' }}>
+            <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--heading-color)' }}>
+              Send Message to {selectedCustomers.length} customer{selectedCustomers.length !== 1 ? 's' : ''}
+            </h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1" style={{ color: 'var(--muted-color)' }}>Channel</label>
+                <select
+                  value={bulkMsgForm.channel}
+                  onChange={e => setBulkMsgForm(f => ({ ...f, channel: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-lg border text-sm"
+                  style={{ background: 'var(--card-bg)', borderColor: 'var(--border-color)', color: 'var(--text-color)' }}
+                >
+                  <option value="Push">Push Notification</option>
+                  <option value="SMS">SMS</option>
+                  <option value="WhatsApp">WhatsApp</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1" style={{ color: 'var(--muted-color)' }}>Message</label>
+                <textarea
+                  value={bulkMsgForm.message}
+                  onChange={e => setBulkMsgForm(f => ({ ...f, message: e.target.value }))}
+                  rows={4}
+                  className="w-full px-3 py-2 rounded-lg border text-sm resize-none"
+                  style={{ background: 'var(--card-bg)', borderColor: 'var(--border-color)', color: 'var(--text-color)' }}
+                  placeholder="Type your message..."
+                />
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setShowBulkMessage(false)}
+                className="flex-1 px-4 py-2 rounded-lg text-sm font-medium border"
+                style={{ borderColor: 'var(--border-color)', color: 'var(--text-color)' }}
+              >Cancel</button>
+              <button
+                onClick={handleSendBulkMessage}
+                disabled={bulkMsgSending || !bulkMsgForm.message.trim()}
+                className="flex-1 px-4 py-2 rounded-lg text-sm font-medium text-white disabled:opacity-50"
+                style={{ background: 'var(--cta-color)' }}
+              >{bulkMsgSending ? 'Sending...' : 'Send'}</button>
             </div>
           </div>
         </div>

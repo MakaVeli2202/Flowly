@@ -35,15 +35,15 @@ namespace Glanz.API.Services
 
         public string GenerateToken(User user)
         {
-            return BuildToken(user.Id, user.Email, user.FirstName, user.LastName, user.Role);
+            return BuildToken(user.Id, user.Email, user.FirstName, user.LastName, user.Role, user.OrgId ?? 1);
         }
 
         public string GenerateToken(Staff staff)
         {
-            return BuildToken(staff.Id, staff.Email, staff.FirstName, staff.LastName, staff.Role);
+            return BuildToken(staff.Id, staff.Email, staff.FirstName, staff.LastName, staff.Role, staff.OrgId ?? 1);
         }
 
-        private string BuildToken(int id, string email, string firstName, string lastName, string role)
+        private string BuildToken(int id, string email, string firstName, string lastName, string role, int orgId = 1)
         {
             var jwtSettings = _configuration.GetSection("JwtSettings");
             var secretKey = jwtSettings["SecretKey"];
@@ -55,7 +55,8 @@ namespace Glanz.API.Services
                 new Claim(ClaimTypes.Email, email),
                 new Claim(ClaimTypes.GivenName, firstName),
                 new Claim(ClaimTypes.Surname, lastName),
-                new Claim(ClaimTypes.Role, role)
+                new Claim(ClaimTypes.Role, role),
+                new Claim("org_id", orgId.ToString())
             };
 
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);

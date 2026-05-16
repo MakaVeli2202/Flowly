@@ -27,7 +27,7 @@ function ForgotPassword() {
 
   return (
     <>
-      <SEO title="Forgot Password" description="Reset your Glanz account password." noindex />
+      <SEO title="Forgot Password" description="Reset your Flowly account password." noindex />
 
 
       <div

@@ -8,6 +8,8 @@ namespace Glanz.API.Models
         [Key]
         public int Id { get; set; }
 
+        public int? OrgId { get; set; }
+
         [Required]
         [StringLength(100)]
         public string FirstName { get; set; } = string.Empty;
@@ -97,6 +99,9 @@ namespace Glanz.API.Models
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+        /// <summary>Set when customer requests account deletion (GDPR right to erasure). Hard delete after 30 days.</summary>
+        public DateTime? DeletionRequestedAt { get; set; }
 
         // Referral Program
         [StringLength(20)]

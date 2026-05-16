@@ -53,11 +53,11 @@ export default function Referrals() {
     const code = referralData?.referralCode;
     if (!code) return;
     
-    const text = `Use my referral code ${code} for exclusive discounts on Glanz car detailing services!`;
-    
+    const text = `Use my referral code ${code} for exclusive discounts on Flowly car detailing services!`;
+
     if (navigator.share) {
       navigator.share({
-        title: 'Glanz Referral',
+        title: 'Flowly Referral',
         text: text,
         url: window.location.origin + '/book'
       });

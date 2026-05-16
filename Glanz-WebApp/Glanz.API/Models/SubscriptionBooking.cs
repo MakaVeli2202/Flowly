@@ -17,6 +17,8 @@ namespace Glanz.API.Models
         [Key]
         public int Id { get; set; }
 
+        public int? OrgId { get; set; }
+
         [Required]
         [StringLength(50)]
         public string BookingNumber { get; set; } = string.Empty;

@@ -1,4 +1,4 @@
-// ManageStaff.jsx
+﻿// ManageStaff.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authAPI } from '../../api/auth';
@@ -9,7 +9,7 @@ import { Users, Plus, Trash2, AlertCircle, Mail, Phone, Eye, EyeOff,
 import { getBusiness } from '../../config/business';
 import { useLanguage } from '../../context/LanguageContext';
 
-/* ── Constants — identical to original ── */
+/* â”€â”€ Constants â€” identical to original â”€â”€ */
 const ALL_DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 const SHIFT_HOURS = ['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00','21:00'];
 
@@ -47,36 +47,36 @@ const UI_BY_LANG = {
     noPayrollData: 'No payroll data for this period.',
   },
   ar: {
-    loading: 'جارٍ تحميل الفريق...',
-    subtitle: 'إضافة وإزالة وإدارة فريق العناية الخاص بك',
-    closeForm: 'إغلاق النموذج',
-    addDetailer: 'إضافة عامل',
-    addFirstDetailer: 'إضافة أول عامل',
-    addNewDetailer: 'إضافة عامل جديد',
-    firstName: 'الاسم الأول',
-    lastName: 'اسم العائلة',
-    email: 'البريد الإلكتروني',
-    phone: 'رقم الهاتف',
-    password: 'كلمة المرور',
-    adding: 'جارٍ الإضافة...',
-    cancel: 'إلغاء',
-    active: 'نشط',
-    inactive: 'غير نشط',
-    schedule: 'الجدول',
-    deactivate: 'تعطيل',
-    activate: 'تفعيل',
-    removing: 'جارٍ الإزالة...',
-    remove: 'إزالة',
-    salaryTitle: 'الراتب الشهري (ر.ق)',
-    saveSalary: 'حفظ الراتب',
-    saved: 'تم الحفظ',
-    salaryError: 'أدخل قيمة راتب صحيحة.',
-    workingSchedule: 'جدول العمل',
-    saveSchedule: 'حفظ الجدول',
-    staffStats: 'إحصاءات الفريق',
-    totalDetailers: 'إجمالي العاملين',
-    lastAdded: 'آخر إضافة',
-    noPayrollData: 'لا توجد بيانات رواتب لهذه الفترة.',
+    loading: 'Ø¬Ø§Ø±Ù ØªØ­Ù…ÙŠÙ„ Ø§Ù„ÙØ±ÙŠÙ‚...',
+    subtitle: 'Ø¥Ø¶Ø§ÙØ© ÙˆØ¥Ø²Ø§Ù„Ø© ÙˆØ¥Ø¯Ø§Ø±Ø© ÙØ±ÙŠÙ‚ Ø§Ù„Ø¹Ù†Ø§ÙŠØ© Ø§Ù„Ø®Ø§Øµ Ø¨Ùƒ',
+    closeForm: 'Ø¥ØºÙ„Ø§Ù‚ Ø§Ù„Ù†Ù…ÙˆØ°Ø¬',
+    addDetailer: 'Ø¥Ø¶Ø§ÙØ© Ø¹Ø§Ù…Ù„',
+    addFirstDetailer: 'Ø¥Ø¶Ø§ÙØ© Ø£ÙˆÙ„ Ø¹Ø§Ù…Ù„',
+    addNewDetailer: 'Ø¥Ø¶Ø§ÙØ© Ø¹Ø§Ù…Ù„ Ø¬Ø¯ÙŠØ¯',
+    firstName: 'Ø§Ù„Ø§Ø³Ù… Ø§Ù„Ø£ÙˆÙ„',
+    lastName: 'Ø§Ø³Ù… Ø§Ù„Ø¹Ø§Ø¦Ù„Ø©',
+    email: 'Ø§Ù„Ø¨Ø±ÙŠØ¯ Ø§Ù„Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠ',
+    phone: 'Ø±Ù‚Ù… Ø§Ù„Ù‡Ø§ØªÙ',
+    password: 'ÙƒÙ„Ù…Ø© Ø§Ù„Ù…Ø±ÙˆØ±',
+    adding: 'Ø¬Ø§Ø±Ù Ø§Ù„Ø¥Ø¶Ø§ÙØ©...',
+    cancel: 'Ø¥Ù„ØºØ§Ø¡',
+    active: 'Ù†Ø´Ø·',
+    inactive: 'ØºÙŠØ± Ù†Ø´Ø·',
+    schedule: 'Ø§Ù„Ø¬Ø¯ÙˆÙ„',
+    deactivate: 'ØªØ¹Ø·ÙŠÙ„',
+    activate: 'ØªÙØ¹ÙŠÙ„',
+    removing: 'Ø¬Ø§Ø±Ù Ø§Ù„Ø¥Ø²Ø§Ù„Ø©...',
+    remove: 'Ø¥Ø²Ø§Ù„Ø©',
+    salaryTitle: 'Ø§Ù„Ø±Ø§ØªØ¨ Ø§Ù„Ø´Ù‡Ø±ÙŠ (Ø±.Ù‚)',
+    saveSalary: 'Ø­ÙØ¸ Ø§Ù„Ø±Ø§ØªØ¨',
+    saved: 'ØªÙ… Ø§Ù„Ø­ÙØ¸',
+    salaryError: 'Ø£Ø¯Ø®Ù„ Ù‚ÙŠÙ…Ø© Ø±Ø§ØªØ¨ ØµØ­ÙŠØ­Ø©.',
+    workingSchedule: 'Ø¬Ø¯ÙˆÙ„ Ø§Ù„Ø¹Ù…Ù„',
+    saveSchedule: 'Ø­ÙØ¸ Ø§Ù„Ø¬Ø¯ÙˆÙ„',
+    staffStats: 'Ø¥Ø­ØµØ§Ø¡Ø§Øª Ø§Ù„ÙØ±ÙŠÙ‚',
+    totalDetailers: 'Ø¥Ø¬Ù…Ø§Ù„ÙŠ Ø§Ù„Ø¹Ø§Ù…Ù„ÙŠÙ†',
+    lastAdded: 'Ø¢Ø®Ø± Ø¥Ø¶Ø§ÙØ©',
+    noPayrollData: 'Ù„Ø§ ØªÙˆØ¬Ø¯ Ø¨ÙŠØ§Ù†Ø§Øª Ø±ÙˆØ§ØªØ¨ Ù„Ù‡Ø°Ù‡ Ø§Ù„ÙØªØ±Ø©.',
   },
   de: {
     loading: 'Team wird geladen...',
@@ -112,7 +112,7 @@ const UI_BY_LANG = {
   },
 };
 
-/* ── parseSchedule — identical to original ── */
+/* â”€â”€ parseSchedule â€” identical to original â”€â”€ */
 function parseSchedule(worker) {
   const workingDays = worker.workingDays
     ? worker.workingDays.split(',').map(d => d.trim()).filter(Boolean)
@@ -126,7 +126,7 @@ function parseSchedule(worker) {
   return { workingDays, shiftStart: worker.shiftStart || '09:00', shiftEnd: worker.shiftEnd || '18:00', dayOverrides };
 }
 
-/* PRISM_CSS — identical */
+/* PRISM_CSS â€” identical */
 
 function PrismaticCursorOrb() {
   const ref = useRef(null);
@@ -165,6 +165,9 @@ function ManageStaff() {
   const [payrollYear]      = useState(new Date().getFullYear());
   const [payModal, setPayModal] = useState({ open: false, worker: null, onConfirm: null });
   const [detailsModal, setDetailsModal] = useState({ open: false, worker: null });
+  const [editingVanRoleId, setEditingVanRoleId] = useState(null);
+  const [vanRoleForm, setVanRoleForm] = useState({ vanRole: '', driverId: '' });
+  const [vanRoleSavingId, setVanRoleSavingId] = useState(null);
   const business = getBusiness();
   const closePayModal = () => setPayModal(m => ({ ...m, open: false, onConfirm: null }));
   const closeDetailsModal = () => setDetailsModal(m => ({ ...m, open: false, worker: null }));
@@ -184,7 +187,7 @@ function ManageStaff() {
       if (result.hasUnpaid && result.unpaidCount > 0) {
         const today = new Date().getDate();
         if (today >= 25) {
-          toast.error(`⚠️ Payroll due: ${result.unpaidCount} worker(s) unpaid (QAR ${result.totalAmount?.toLocaleString()}). Please pay before end of month.`, { duration: 8000 });
+          toast.error(`âš ï¸ Payroll due: ${result.unpaidCount} worker(s) unpaid (QAR ${result.totalAmount?.toLocaleString()}). Please pay before end of month.`, { duration: 8000 });
         }
       }
     } catch { /* empty */ }
@@ -230,6 +233,21 @@ function ManageStaff() {
   };
 
   const openScheduleEdit = worker => { setEditingScheduleId(worker.id); setScheduleData(parseSchedule(worker)); };
+
+  const openVanRoleEdit = worker => {
+    setEditingVanRoleId(worker.id);
+    setVanRoleForm({ vanRole: worker.vanRole || '', driverId: worker.driverId || '' });
+  };
+
+  const handleSaveVanRole = async workerId => {
+    try {
+      setVanRoleSavingId(workerId);
+      await authAPI.updateWorkerVanRole(workerId, vanRoleForm.vanRole || null, vanRoleForm.vanRole === 'Helper' ? Number(vanRoleForm.driverId) : null);
+      setEditingVanRoleId(null);
+      await fetchWorkers();
+    } catch (err) { setError(err.response?.data?.message || 'Failed to save van role'); }
+    finally { setVanRoleSavingId(null); }
+  };
 
   const toggleDay = day =>
     setScheduleData(prev => ({
@@ -291,7 +309,7 @@ function ManageStaff() {
 
         <div className="container mx-auto px-4 relative z-10 space-y-6">
 
-          {/* ── Header ── */}
+          {/* â”€â”€ Header â”€â”€ */}
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <div className="flex items-center gap-3 mb-2">
@@ -316,7 +334,7 @@ function ManageStaff() {
             </div>
           </div>
 
-          {/* ── Error ── */}
+          {/* â”€â”€ Error â”€â”€ */}
           {error && (
             <div className="flex items-start gap-3 rounded-xl border border-rose-500/25 bg-rose-500/8 px-5 py-4">
               <AlertCircle size={16} className="text-rose-400 flex-shrink-0 mt-0.5" />
@@ -326,7 +344,7 @@ function ManageStaff() {
           )}
 
 
-          {/* ── Empty state ── */}
+          {/* â”€â”€ Empty state â”€â”€ */}
           {workers.length === 0 ? (
             <div className="glass-card relative overflow-hidden py-20 flex flex-col items-center justify-center text-center">
               <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background:'linear-gradient(90deg,transparent,#c8a96b 38%,#0ea5a0 62%,transparent)' }} />
@@ -393,6 +411,18 @@ function ManageStaff() {
                                 <Hash size={9} className="inline mr-0.5" />{worker.shortCode}
                               </span>
                             )}
+                            {worker.vanRole === 'Driver' && (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                                style={{ background:'rgba(59,130,246,.10)', border:'1px solid rgba(59,130,246,.28)', color:'#3b82f6' }}>
+                                Driver
+                              </span>
+                            )}
+                            {worker.vanRole === 'Helper' && (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                                style={{ background:'rgba(168,85,247,.10)', border:'1px solid rgba(168,85,247,.28)', color:'#a855f7' }}>
+                                Helper{worker.driverName ? ` of ${worker.driverName}` : ''}
+                              </span>
+                            )}
                             {worker.compensationType === 'Percentage' ? (
                               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
                                 style={{ background:'rgba(168,85,247,.10)', border:'1px solid rgba(168,85,247,.25)', color:'#a855f7' }}>
@@ -424,13 +454,13 @@ function ManageStaff() {
                           </p>
                           <div className="flex flex-wrap items-center gap-1.5 mt-2">
                             <CalendarDays size={12} className="text-[var(--muted-color)]" />
-                            <span className="text-[11px] text-[var(--muted-color)]">{worker.shiftStart||'09:00'} – {worker.shiftEnd||'18:00'}</span>
+                            <span className="text-[11px] text-[var(--muted-color)]">{worker.shiftStart||'09:00'} â€“ {worker.shiftEnd||'18:00'}</span>
                             {Array.isArray(worker.daySchedules) && worker.daySchedules.length > 0 && (
                               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary">
                                 {worker.daySchedules.length} custom day{worker.daySchedules.length > 1 ? 's' : ''}
                               </span>
                             )}
-                            <span className="text-[11px] text-[var(--muted-color)]">·</span>
+                            <span className="text-[11px] text-[var(--muted-color)]">Â·</span>
                             <span className="text-[11px] text-[var(--muted-color)]">
                               {(worker.workingDays||'Mon-Fri').split(',').map(d=>d.trim().slice(0,3)).join(', ')}
                             </span>
@@ -444,6 +474,12 @@ function ManageStaff() {
                             className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-primary/30 text-primary text-xs font-bold hover:bg-primary/10 transition">
                             <CalendarDays size={13} /> {ui.schedule}
                             {editingScheduleId === worker.id ? <ChevronUp size={12}/> : <ChevronDown size={12}/>}
+                          </button>
+                          <button
+                            onClick={() => editingVanRoleId === worker.id ? setEditingVanRoleId(null) : openVanRoleEdit(worker)}
+                            className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-blue-500/30 text-blue-400 text-xs font-bold hover:bg-blue-500/8 transition">
+                            <Users size={13}/> Van Role
+                            {editingVanRoleId === worker.id ? <ChevronUp size={12}/> : <ChevronDown size={12}/>}
                           </button>
                           <button
                             onClick={() => handleToggleWorkerStatus(worker)}
@@ -460,7 +496,7 @@ function ManageStaff() {
                         </div>
                       </div>
 
-                      {/* ── Schedule Editor ── */}
+                      {/* â”€â”€ Schedule Editor â”€â”€ */}
                       {editingScheduleId === worker.id && (
                         <div className="mt-5 relative overflow-hidden rounded-xl border border-[var(--border-color)] p-5"
                           style={{ background:'rgba(200,169,107,.03)' }}>
@@ -543,6 +579,50 @@ function ManageStaff() {
                           </div>
                         </div>
                       )}
+
+                      {/* â”€â”€ Van Role Editor â”€â”€ */}
+                      {editingVanRoleId === worker.id && (
+                        <div className="mt-4 relative overflow-hidden rounded-xl border border-blue-500/20 p-5"
+                          style={{ background:'rgba(59,130,246,.04)' }}>
+                          <div className="absolute top-0 left-0 right-0 h-[2px]"
+                            style={{ background:'linear-gradient(90deg,transparent,rgba(59,130,246,.55) 50%,transparent)' }} />
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-blue-400 mb-4">Van Role</p>
+                          <div className="flex flex-wrap gap-4 items-end">
+                            <div>
+                              <label className="field-label">Role</label>
+                              <select className="field-input" value={vanRoleForm.vanRole}
+                                onChange={e => setVanRoleForm(f => ({ ...f, vanRole: e.target.value, driverId: e.target.value !== 'Helper' ? '' : f.driverId }))}>
+                                <option value="">None</option>
+                                <option value="Driver">Driver</option>
+                                <option value="Helper">Helper</option>
+                              </select>
+                            </div>
+                            {vanRoleForm.vanRole === 'Helper' && (
+                              <div className="flex-1 min-w-[200px]">
+                                <label className="field-label">Linked Driver</label>
+                                <select className="field-input" value={vanRoleForm.driverId}
+                                  onChange={e => setVanRoleForm(f => ({ ...f, driverId: e.target.value }))}>
+                                  <option value="">-- Select driver --</option>
+                                  {workers.filter(w => w.id !== worker.id && (w.vanRole === 'Driver' || !w.vanRole)).map(d => (
+                                    <option key={d.id} value={d.id}>{d.firstName} {d.lastName}{d.shortCode ? ` (${d.shortCode})` : ''}</option>
+                                  ))}
+                                </select>
+                              </div>
+                            )}
+                            <div className="flex gap-2">
+                              <button onClick={() => handleSaveVanRole(worker.id)}
+                                disabled={vanRoleSavingId === worker.id || (vanRoleForm.vanRole === 'Helper' && !vanRoleForm.driverId)}
+                                className="px-4 py-2 bg-blue-500 text-white rounded-xl text-sm font-bold hover:opacity-90 transition disabled:opacity-50">
+                                <Save size={13} className="inline mr-1.5" />{vanRoleSavingId === worker.id ? 'Saving...' : 'Save'}
+                              </button>
+                              <button onClick={() => setEditingVanRoleId(null)}
+                                className="px-4 py-2 rounded-xl border border-[var(--border-color)] text-sm font-bold text-[var(--text-color)] hover:bg-white/5 transition">
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
@@ -550,7 +630,7 @@ function ManageStaff() {
             </div>
           )}
 
-          {/* ── Stats ── */}
+          {/* â”€â”€ Stats â”€â”€ */}
           {workers.length > 0 && (
             <div className="glass-card relative overflow-hidden card-stagger mt-4">
               <div className="absolute top-0 left-0 right-0 h-[2px]"
@@ -561,7 +641,7 @@ function ManageStaff() {
                   {[
                     { label:ui.totalDetailers, value: workers.length,                                                                color:'var(--heading-color)' },
                     { label:'Active',           value: workers.filter(w => w.isActive !== false).length,                              color:'#22c55e' },
-                    { label:ui.lastAdded,       value: workers.length > 0 ? new Date(Math.max(...workers.map(w => new Date(w.createdAt)))).toLocaleDateString() : '—', color:'var(--text-color)', small:true },
+                    { label:ui.lastAdded,       value: workers.length > 0 ? new Date(Math.max(...workers.map(w => new Date(w.createdAt)))).toLocaleDateString() : 'â€”', color:'var(--text-color)', small:true },
                   ].map(({ label, value, color, small }) => (
                     <div key={label} className="rounded-xl border border-[var(--border-color)] p-4" style={{ background:'rgba(200,169,107,.04)' }}>
                       <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)] mb-2">{label}</p>
@@ -583,7 +663,7 @@ function ManageStaff() {
       <AppModal isOpen={detailsModal.open} title="Pay Slip" message="" variant="info" onClose={closeDetailsModal}>
 {detailsModal.worker && (() => {
           const worker = detailsModal.worker;
-          const companyName = business.name || 'Glanz';
+          const companyName = business.name || 'Flowly';
           const companyAddress = business.location || '';
           const companyPhone = business.phone || '';
           const companyEmail = business.email || '';
@@ -630,7 +710,7 @@ function ManageStaff() {
     <div class="company-info">
       <p><strong>Address:</strong> ${companyAddress || 'Qatar'}</p>
       <p><strong>Phone:</strong> ${companyPhone || '+974XXXXXXXX'}</p>
-      <p><strong>Email:</strong> ${companyEmail || 'info@glanz.qa'}</p>
+      <p><strong>Email:</strong> ${companyEmail || 'info@flowly.qa'}</p>
     </div>
     <table>
       <thead><tr><th colspan="2">Employee Information</th></tr></thead>
@@ -748,7 +828,7 @@ Generated: ${new Date().toLocaleString()}
                 <p className="text-xs text-white/90">PAYSLIP</p>
               </div>
               <div className="px-4 py-2 text-xs" style={{ background:'rgba(200,169,107,.08)', borderBottom:'1px solid rgba(200,169,107,.2)' }}>
-                <p className="text-[var(--muted-color)]">${companyAddress || 'Qatar'} · ${companyPhone || '+974XXXXXXXX'} · ${companyEmail || 'info@glanz.qa'}</p>
+                <p className="text-[var(--muted-color)]">${companyAddress || 'Qatar'} Â· ${companyPhone || '+974XXXXXXXX'} Â· ${companyEmail || 'info@flowly.qa'}</p>
               </div>
               <table className="w-full text-xs">
                 <thead>

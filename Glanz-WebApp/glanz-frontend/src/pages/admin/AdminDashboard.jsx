@@ -13,6 +13,8 @@ import { reportsAPI } from '../../api/reports';
 import { subscribeToNotifications } from '../../api/notificationBus';
 import { formatQAR, formatCompactQAR as formatCompactCurrency } from '../../utils/currency';
 import { useLanguage } from '../../context/LanguageContext';
+import { useTenant } from '../../context/TenantContext';
+import { Rocket } from 'lucide-react';
 
 const CHART_COLORS = ['#c8a96b', '#0ea5a0', '#3b82f6', '#f59e0b', '#8b5cf6', '#ef4444'];
 
@@ -375,6 +377,7 @@ function SkeletonCard() {
 ════════════════════════════════════════════════════════════ */
 function AdminDashboard() {
   const { lang } = useLanguage();
+  const { onboarding } = useTenant();
   const localeKey = String(lang || '').startsWith('ar') ? 'ar' : String(lang || '').startsWith('de') ? 'de' : 'en';
   const ui = UI_BY_LANG[localeKey] || UI_BY_LANG.en;
   const [summary,           setSummary]           = useState(null);
@@ -557,6 +560,21 @@ function AdminDashboard() {
             <h1 className="premium-heading text-4xl md:text-5xl font-bold text-[var(--heading-color)] mb-2">{ui.adminDashboard}</h1>
             <p className="text-[var(--muted-color)]">{ui.liveData}</p>
           </div>
+
+          {/* ── Onboarding banner ───────────────────────── */}
+          {onboarding && !onboarding.isComplete && (
+            <Link
+              to="/admin/onboarding"
+              className="mb-8 flex items-center gap-3 p-4 rounded-xl border border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/15 transition-colors"
+            >
+              <Rocket className="w-5 h-5 text-amber-400 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-amber-400 text-sm">Complete your setup</p>
+                <p className="text-xs text-muted">{onboarding.completedSteps} of {onboarding.totalSteps} steps done - click to continue</p>
+              </div>
+              <div className="text-xs text-amber-400 shrink-0">{Math.round((onboarding.completedSteps / onboarding.totalSteps) * 100)}%</div>
+            </Link>
+          )}
 
           {/* ── Period selector ──────────────────────────── */}
           <div className="mb-8 flex items-center gap-4 flex-wrap">

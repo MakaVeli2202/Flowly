@@ -111,10 +111,10 @@
     }
   },
   "chat": {
-    "welcome": "Hi! I'm the Glanz assistant. Ask me about services, pricing, booking, or cancellations.",
-    "errorReply": "Sorry, I could not process your request right now. Please try again or contact support@glanz.qa.",
+    "welcome": "Hi! I'm the Flowly assistant. Ask me about services, pricing, booking, or cancellations.",
+    "errorReply": "Sorry, I could not process your request right now. Please try again or contact support@flowly.qa.",
     "openAria": "Open chat assistant",
-    "title": "Glanz Assistant",
+    "title": "Flowly Assistant",
     "subtitle": "Usually replies instantly",
     "placeholder": "Ask a question..."
   },

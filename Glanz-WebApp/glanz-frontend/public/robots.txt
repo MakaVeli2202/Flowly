@@ -1,4 +1,4 @@
-User-agent: *
+﻿User-agent: *
 Allow: /
 
 # Keep auth, account, and admin pages out of the index
@@ -10,4 +10,4 @@ Disallow: /my-bookings
 Disallow: /profile
 Disallow: /admin/
 
-Sitemap: https://glanz.qa/sitemap.xml
+Sitemap: https://flowly.qa/sitemap.xml

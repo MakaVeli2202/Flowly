@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+﻿import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   bookingsAPI
@@ -44,7 +44,7 @@ const UI_BY_LANG = {
     serviceAddress: 'Service Address',
     houseBuilding: 'House / Building',
     specialInstructions: 'Special Instructions',
-    specialInstructionsPh: 'Any notes for the detailer…',
+    specialInstructionsPh: 'Any notes for the detailerâ€¦',
     packages: 'Packages',
     mustSelectPackage: 'At least one package must be selected.',
     slotNotAvailable: 'Time slot not available',
@@ -61,39 +61,39 @@ const UI_BY_LANG = {
     gotIt: 'Got it',
   },
   ar: {
-    loadFail: 'فشل تحميل الحجوزات.',
-    retry: 'حاول مرة أخرى',
-    loadFailTitle: 'فشل تحميل الحجوزات',
-    emptyTitle: 'لا توجد حجوزات بعد',
-    emptyBody: 'احجز أول خدمة لك للبدء.',
-    dashboard: 'لوحة التحكم',
-    myBookings: 'حجوزاتي',
-    subtitle: 'اعرض وأدر مواعيدك',
-    date: 'التاريخ',
-    timeSlot: 'الفترة الزمنية',
-    selectSlot: 'اختر الفترة',
-    make: 'الماركة',
-    model: 'الموديل',
-    year: 'السنة',
-    vehicleType: 'نوع المركبة',
-    serviceAddress: 'عنوان الخدمة',
-    houseBuilding: 'المنزل / المبنى',
-    specialInstructions: 'تعليمات خاصة',
-    specialInstructionsPh: 'أي ملاحظات للفني…',
-    packages: 'الباقات',
-    mustSelectPackage: 'يجب اختيار باقة واحدة على الأقل.',
-    slotNotAvailable: 'الفترة الزمنية غير متاحة',
-    availableSlots: 'الفترات المتاحة في هذا التاريخ:',
-    noSlots: 'لا توجد فترات متاحة - يرجى اختيار تاريخ مختلف.',
-    confirmChanges: 'تأكيد هذه التغييرات؟',
-    reviewSave: 'مراجعة وحفظ',
-    yesSave: 'نعم، حفظ',
-    goBack: 'العودة',
-    cancel: 'إلغاء',
-    cancelReqTitle: 'طلب إلغاء',
-    keepBooking: 'الاحتفاظ بالحجز',
-    submitRequest: 'إرسال الطلب',
-    gotIt: 'حسنا',
+    loadFail: 'ÙØ´Ù„ ØªØ­Ù…ÙŠÙ„ Ø§Ù„Ø­Ø¬ÙˆØ²Ø§Øª.',
+    retry: 'Ø­Ø§ÙˆÙ„ Ù…Ø±Ø© Ø£Ø®Ø±Ù‰',
+    loadFailTitle: 'ÙØ´Ù„ ØªØ­Ù…ÙŠÙ„ Ø§Ù„Ø­Ø¬ÙˆØ²Ø§Øª',
+    emptyTitle: 'Ù„Ø§ ØªÙˆØ¬Ø¯ Ø­Ø¬ÙˆØ²Ø§Øª Ø¨Ø¹Ø¯',
+    emptyBody: 'Ø§Ø­Ø¬Ø² Ø£ÙˆÙ„ Ø®Ø¯Ù…Ø© Ù„Ùƒ Ù„Ù„Ø¨Ø¯Ø¡.',
+    dashboard: 'Ù„ÙˆØ­Ø© Ø§Ù„ØªØ­ÙƒÙ…',
+    myBookings: 'Ø­Ø¬ÙˆØ²Ø§ØªÙŠ',
+    subtitle: 'Ø§Ø¹Ø±Ø¶ ÙˆØ£Ø¯Ø± Ù…ÙˆØ§Ø¹ÙŠØ¯Ùƒ',
+    date: 'Ø§Ù„ØªØ§Ø±ÙŠØ®',
+    timeSlot: 'Ø§Ù„ÙØªØ±Ø© Ø§Ù„Ø²Ù…Ù†ÙŠØ©',
+    selectSlot: 'Ø§Ø®ØªØ± Ø§Ù„ÙØªØ±Ø©',
+    make: 'Ø§Ù„Ù…Ø§Ø±ÙƒØ©',
+    model: 'Ø§Ù„Ù…ÙˆØ¯ÙŠÙ„',
+    year: 'Ø§Ù„Ø³Ù†Ø©',
+    vehicleType: 'Ù†ÙˆØ¹ Ø§Ù„Ù…Ø±ÙƒØ¨Ø©',
+    serviceAddress: 'Ø¹Ù†ÙˆØ§Ù† Ø§Ù„Ø®Ø¯Ù…Ø©',
+    houseBuilding: 'Ø§Ù„Ù…Ù†Ø²Ù„ / Ø§Ù„Ù…Ø¨Ù†Ù‰',
+    specialInstructions: 'ØªØ¹Ù„ÙŠÙ…Ø§Øª Ø®Ø§ØµØ©',
+    specialInstructionsPh: 'Ø£ÙŠ Ù…Ù„Ø§Ø­Ø¸Ø§Øª Ù„Ù„ÙÙ†ÙŠâ€¦',
+    packages: 'Ø§Ù„Ø¨Ø§Ù‚Ø§Øª',
+    mustSelectPackage: 'ÙŠØ¬Ø¨ Ø§Ø®ØªÙŠØ§Ø± Ø¨Ø§Ù‚Ø© ÙˆØ§Ø­Ø¯Ø© Ø¹Ù„Ù‰ Ø§Ù„Ø£Ù‚Ù„.',
+    slotNotAvailable: 'Ø§Ù„ÙØªØ±Ø© Ø§Ù„Ø²Ù…Ù†ÙŠØ© ØºÙŠØ± Ù…ØªØ§Ø­Ø©',
+    availableSlots: 'Ø§Ù„ÙØªØ±Ø§Øª Ø§Ù„Ù…ØªØ§Ø­Ø© ÙÙŠ Ù‡Ø°Ø§ Ø§Ù„ØªØ§Ø±ÙŠØ®:',
+    noSlots: 'Ù„Ø§ ØªÙˆØ¬Ø¯ ÙØªØ±Ø§Øª Ù…ØªØ§Ø­Ø© - ÙŠØ±Ø¬Ù‰ Ø§Ø®ØªÙŠØ§Ø± ØªØ§Ø±ÙŠØ® Ù…Ø®ØªÙ„Ù.',
+    confirmChanges: 'ØªØ£ÙƒÙŠØ¯ Ù‡Ø°Ù‡ Ø§Ù„ØªØºÙŠÙŠØ±Ø§ØªØŸ',
+    reviewSave: 'Ù…Ø±Ø§Ø¬Ø¹Ø© ÙˆØ­ÙØ¸',
+    yesSave: 'Ù†Ø¹Ù…ØŒ Ø­ÙØ¸',
+    goBack: 'Ø§Ù„Ø¹ÙˆØ¯Ø©',
+    cancel: 'Ø¥Ù„ØºØ§Ø¡',
+    cancelReqTitle: 'Ø·Ù„Ø¨ Ø¥Ù„ØºØ§Ø¡',
+    keepBooking: 'Ø§Ù„Ø§Ø­ØªÙØ§Ø¸ Ø¨Ø§Ù„Ø­Ø¬Ø²',
+    submitRequest: 'Ø¥Ø±Ø³Ø§Ù„ Ø§Ù„Ø·Ù„Ø¨',
+    gotIt: 'Ø­Ø³Ù†Ø§',
   },
   de: {
     loadFail: 'Buchungen konnten nicht geladen werden.',
@@ -114,7 +114,7 @@ const UI_BY_LANG = {
     serviceAddress: 'Serviceadresse',
     houseBuilding: 'Haus / Gebaude',
     specialInstructions: 'Besondere Hinweise',
-    specialInstructionsPh: 'Hinweise fur den Detailer…',
+    specialInstructionsPh: 'Hinweise fur den Detailerâ€¦',
     packages: 'Pakete',
     mustSelectPackage: 'Mindestens ein Paket muss ausgewahlt werden.',
     slotNotAvailable: 'Zeitfenster nicht verfugbar',
@@ -132,7 +132,7 @@ const UI_BY_LANG = {
   },
 };
 
-// Status → top-accent color map
+// Status â†’ top-accent color map
 const STATUS_ACCENT = {
   Pending:    '#FBBF24',
   Confirmed:  '#60A5FA',
@@ -141,7 +141,7 @@ const STATUS_ACCENT = {
   Cancelled:  '#F87171',
 };
 
-// ─── Shared atoms ─────────────────────────────────────────────────────────────
+// â”€â”€â”€ Shared atoms â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function FieldLabel({ children }) {
   return (
@@ -160,7 +160,7 @@ function DarkInput({ className = '', ...props }) {
   );
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function MyBookings() {
   const navigate = useNavigate();
@@ -242,8 +242,8 @@ function MyBookings() {
   }, []);
 
   useEffect(() => {
-    if (loyalty?.isGoogleReviewActivated && !localStorage.getItem('glanz_review_balloon_shown')) {
-      localStorage.setItem('glanz_review_balloon_shown', '1');
+    if (loyalty?.isGoogleReviewActivated && !localStorage.getItem('flowly_review_balloon_shown')) {
+      localStorage.setItem('flowly_review_balloon_shown', '1');
       const timer = setTimeout(() => balloonsRef.current?.launchAnimation(), 600);
       return () => clearTimeout(timer);
     }
@@ -275,7 +275,7 @@ function MyBookings() {
   const GOOGLE_REVIEW_URL = 'https://g.page/r/CbY8wgSE0iXGEAE/review';
 
   const openGoogleReview = () => {
-    localStorage.setItem('glanz_review_clicked', '1');
+    localStorage.setItem('flowly_review_clicked', '1');
     window.open(GOOGLE_REVIEW_URL, '_blank', 'noopener,noreferrer');
     setReviewStep(2);
   };
@@ -485,7 +485,7 @@ function MyBookings() {
     card.style.setProperty('--mouse-y', `${y}%`);
   };
 
-  // ── Loading ───────────────────────────────────────────────────────────────
+  // â”€â”€ Loading â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (loading) {
     return (
       <div className="min-h-screen py-10 md:py-16" style={{ background: 'var(--surface-bg)' }}>
@@ -504,7 +504,7 @@ function MyBookings() {
     );
   }
 
-  // ── Error ───────────────────────────────────────────────────────────────
+  // â”€â”€ Error â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (error) {
     return (
       <div className="min-h-screen" style={{ background: 'var(--surface-bg)' }}>
@@ -513,7 +513,7 @@ function MyBookings() {
     );
   }
 
-  // ── Empty ───────────────────────────────────────────────────────────────
+  // â”€â”€ Empty â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (!bookings || bookings.length === 0) {
     return (
       <div className="min-h-screen" style={{ background: 'var(--surface-bg)' }}>
@@ -522,7 +522,7 @@ function MyBookings() {
     );
   }
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  // â”€â”€ Render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   return (
     <div
       className="min-h-screen py-10 md:py-16 text-[var(--text-color)]"
@@ -531,7 +531,7 @@ function MyBookings() {
       }}
     >
 
-      {/* ══════════════ EDIT MODAL ══════════════════════════════════════════ */}
+      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â• EDIT MODAL â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       {editBooking && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="glass-card rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
@@ -673,7 +673,7 @@ function MyBookings() {
                           <div>
                             <span className={`text-xs font-medium ${vehicleMultiplier !== 1.0 ? 'text-amber-400' : 'text-[var(--muted-color)]'}`}>
                               {formatQAR(adjPrice)}
-                              {vehicleMultiplier !== 1.0 && <span className="ml-1">×{vehicleMultiplier}</span>}
+                              {vehicleMultiplier !== 1.0 && <span className="ml-1">Ã—{vehicleMultiplier}</span>}
                             </span>
                           </div>
                         </div>
@@ -716,13 +716,13 @@ function MyBookings() {
                 <div className="rounded-xl border border-primary/25 bg-primary/6 p-4">
                   <p className="text-sm font-bold text-[var(--heading-color)] mb-3">{ui.confirmChanges}</p>
                   <ul className="text-xs text-[var(--muted-color)] space-y-1 mb-4">
-                    {editForm.scheduledDate !== new Date(editBooking.scheduledDate).toISOString().split('T')[0] && <li>· Date → {editForm.scheduledDate}</li>}
-                    {editForm.timeSlot && editForm.timeSlot !== editBooking.timeSlot && <li>· Time → {editForm.timeSlot}</li>}
-                    {editForm.vehicleMake !== (editBooking.vehicleMake || '') && <li>· Vehicle → {editForm.vehicleYear} {editForm.vehicleMake} {editForm.vehicleModel}</li>}
-                    {editForm.customerAddress !== (editBooking.customerAddress || '') && <li>· Address → {editForm.customerAddress}</li>}
-                    {editForm.specialInstructions !== (editBooking.specialInstructions || '') && <li>· Special instructions updated</li>}
+                    {editForm.scheduledDate !== new Date(editBooking.scheduledDate).toISOString().split('T')[0] && <li>Â· Date â†’ {editForm.scheduledDate}</li>}
+                    {editForm.timeSlot && editForm.timeSlot !== editBooking.timeSlot && <li>Â· Time â†’ {editForm.timeSlot}</li>}
+                    {editForm.vehicleMake !== (editBooking.vehicleMake || '') && <li>Â· Vehicle â†’ {editForm.vehicleYear} {editForm.vehicleMake} {editForm.vehicleModel}</li>}
+                    {editForm.customerAddress !== (editBooking.customerAddress || '') && <li>Â· Address â†’ {editForm.customerAddress}</li>}
+                    {editForm.specialInstructions !== (editBooking.specialInstructions || '') && <li>Â· Special instructions updated</li>}
                     {editForm.packages?.length > 0 && (
-                      <li>· Packages → {editForm.packages.map(p => { const pkg = allPackages.find(x => x.id === p.packageId); return `${pkg?.name || `#${p.packageId}`}${p.quantity > 1 ? ` ×${p.quantity}` : ''}`; }).join(', ')}</li>
+                      <li>Â· Packages â†’ {editForm.packages.map(p => { const pkg = allPackages.find(x => x.id === p.packageId); return `${pkg?.name || `#${p.packageId}`}${p.quantity > 1 ? ` Ã—${p.quantity}` : ''}`; }).join(', ')}</li>
                     )}
                   </ul>
                   <div className="flex gap-2">
@@ -755,7 +755,7 @@ function MyBookings() {
         </div>
       )}
 
-      {/* ══════════════ CANCEL MODAL ════════════════════════════════════════ */}
+      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â• CANCEL MODAL â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       {pendingCancelBooking && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="glass-card rounded-2xl shadow-2xl p-6 max-w-md w-full">
@@ -774,7 +774,7 @@ function MyBookings() {
             {feeLoading && (
               <div className="flex items-center gap-2 text-sm text-[var(--muted-color)] mb-4">
                 <div className="animate-spin h-3.5 w-3.5 border-2 border-[var(--muted-color)] border-t-transparent rounded-full" />
-                Checking cancellation policy…
+                Checking cancellation policyâ€¦
               </div>
             )}
 
@@ -792,7 +792,7 @@ function MyBookings() {
             {cancellationFeeInfo?.feeEnabled && cancellationFeeInfo.withinFreeWindow && (
               <div className="rounded-xl border border-green-500/25 bg-green-500/8 p-4 mb-4">
                 <p className="text-sm text-green-400 font-semibold flex items-center gap-2">
-                  <CheckCircle size={15} /> Free cancellation — no charge will be applied.
+                  <CheckCircle size={15} /> Free cancellation â€” no charge will be applied.
                 </p>
               </div>
             )}
@@ -804,7 +804,7 @@ function MyBookings() {
               <textarea
                 value={cancelReason}
                 onChange={(e) => setCancelReason(e.target.value)}
-                placeholder="Please tell us why you want to cancel…"
+                placeholder="Please tell us why you want to cancelâ€¦"
                 rows={3}
                 className="w-full px-3 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--surface-bg)] text-[var(--text-color)] text-sm placeholder:text-[var(--muted-color)] focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition resize-none"
               />
@@ -824,7 +824,7 @@ function MyBookings() {
         </div>
       )}
 
-      {/* ══════════════ SUCCESS MODAL ══════════════════════════════════════════ */}
+      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â• SUCCESS MODAL â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       {successModal && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="glass-card rounded-2xl shadow-2xl p-6 max-w-sm w-full text-center">
@@ -848,7 +848,7 @@ function MyBookings() {
 
       <div className="container mx-auto px-4 max-w-4xl">
 
-        {/* ── Page heading ───────────────────────────────────────────────── */}
+        {/* â”€â”€ Page heading â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         <div className="mb-12 text-center">
           {/* Eyebrow badge */}
           <div className="inline-flex items-center gap-3 mb-5">
@@ -868,7 +868,7 @@ function MyBookings() {
           <div className="spectrum-line mx-auto mt-6" />
         </div>
 
-        {/* ── Loyalty panel ──────────────────────────────────────────────── */}
+        {/* â”€â”€ Loyalty panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         {loyalty && (
           <div className="glass-card mb-8 p-6 overflow-hidden relative">
             <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(200,169,107,0.12), transparent 70%)' }} />
@@ -887,7 +887,7 @@ function MyBookings() {
                 </div>
               </div>
 
-               {/* Step 1 — unlock with Google review */}
+               {/* Step 1 â€” unlock with Google review */}
                {!(loyalty.isGoogleReviewActivated || !!localStorage.getItem('DEV_BYPASS_REVIEW')) && (
                  <div className="mb-6 rounded-xl border p-5" style={{ borderColor: 'rgba(200,169,107,0.28)', background: 'rgba(200,169,107,0.05)' }}>
                    <div className="flex items-center gap-2 mb-4">
@@ -900,7 +900,7 @@ function MyBookings() {
                      <div className="flex items-start gap-3 mt-3 p-3 rounded-lg" style={{ background: 'rgba(200,169,107,0.08)', border: '1px solid rgba(200,169,107,0.22)' }}>
                        <RefreshCw size={14} className="mt-0.5 shrink-0" style={{ color: 'rgba(200,169,107,0.8)' }} />
                        <div>
-                         <p className="text-xs font-semibold" style={{ color: 'rgba(200,169,107,0.95)' }}>Review submitted — pending verification</p>
+                         <p className="text-xs font-semibold" style={{ color: 'rgba(200,169,107,0.95)' }}>Review submitted â€” pending verification</p>
                          <p className="text-xs text-[var(--muted-color)] mt-0.5">Our team will verify your Google review and activate your loyalty card within 24 hours.</p>
                        </div>
                      </div>
@@ -974,7 +974,7 @@ function MyBookings() {
                               disabled={uploadingScreenshot}
                               className="ml-7 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition disabled:opacity-60"
                               style={{ background: 'rgba(200,169,107,0.9)', color: '#0a0a0a' }}>
-                              {uploadingScreenshot ? <><RefreshCw size={12} className="animate-spin" /> Submitting…</> : 'Submit for Verification'}
+                              {uploadingScreenshot ? <><RefreshCw size={12} className="animate-spin" /> Submittingâ€¦</> : 'Submit for Verification'}
                             </button>
                           </div>
                         )}
@@ -983,7 +983,7 @@ function MyBookings() {
                  </div>
                )}
 
-               {/* Step 2 — stamp cards */}
+               {/* Step 2 â€” stamp cards */}
               {(loyalty.isGoogleReviewActivated || !!localStorage.getItem('DEV_BYPASS_REVIEW')) && (
                 loyalty.programs?.length > 0 ? (
                   <div className="space-y-4 mb-4">
@@ -993,7 +993,7 @@ function MyBookings() {
                         c.offerId === prog.offerId
                       ) ?? (loyalty.availableCoupons?.[idx] ?? null);
                       // Coupon was already redeemed (booking made) but booking not yet
-                      // completed — show a "fresh cycle" (0 stamps) state instead of
+                      // completed â€” show a "fresh cycle" (0 stamps) state instead of
                       // keeping all stamps highlighted.
                       const rewardPendingReset = rewardReady && !coupon;
                       const displayCompleted   = rewardPendingReset ? 0 : prog.completedBookings;
@@ -1110,7 +1110,7 @@ function MyBookings() {
           </div>
         )}
 
-        {/* ── Error ──────────────────────────────────────────────────────── */}
+        {/* â”€â”€ Error â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         {error && (
           <div className="glass-card mb-6 flex items-start gap-3 rounded-xl border border-red-500/25 p-4">
             <AlertCircle size={17} className="text-red-400 mt-0.5 flex-shrink-0" />
@@ -1118,7 +1118,7 @@ function MyBookings() {
           </div>
         )}
 
-        {/* ── Filter chips ────────────────────────────────────────────────── */}
+        {/* â”€â”€ Filter chips â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         <div className="glass-card p-3 mb-6 flex flex-wrap gap-2">
           {statuses.map((status) => (
             <button key={status} onClick={() => setFilterStatus(status)}
@@ -1132,7 +1132,7 @@ function MyBookings() {
           ))}
         </div>
 
-        {/* ── Booking cards ───────────────────────────────────────────────── */}
+        {/* â”€â”€ Booking cards â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         {filteredBookings.length > 0 ? (
           <div className="space-y-5">
             {filteredBookings.map((booking) => {
@@ -1174,7 +1174,7 @@ function MyBookings() {
                       {[
                         { icon: Calendar, label: 'Date',   value: new Date(booking.scheduledDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) },
                         { icon: Clock,    label: 'Time',   value: booking.timeSlot },
-                        { icon: Car,      label: 'Vehicle',value: [booking.vehicleYear, booking.vehicleMake, booking.vehicleModel].filter(Boolean).join(' ') || booking.vehicleType || '—' },
+                        { icon: Car,      label: 'Vehicle',value: [booking.vehicleYear, booking.vehicleMake, booking.vehicleModel].filter(Boolean).join(' ') || booking.vehicleType || 'â€”' },
                         { icon: Package,  label: 'Total',  value: formatQAR(booking.totalAmount), highlight: true },
                       ].map(({ icon: Icon, label, value, highlight }) => (
                         <div key={label} className="flex items-start gap-2.5">
@@ -1196,7 +1196,7 @@ function MyBookings() {
                           <span className="text-[var(--muted-color)]">
                             {item.packageName}
                             <span className="ml-1.5 text-xs opacity-60">({item.packageTier})</span>
-                            {item.quantity > 1 && <span className="ml-1 opacity-60">×{item.quantity}</span>}
+                            {item.quantity > 1 && <span className="ml-1 opacity-60">Ã—{item.quantity}</span>}
                           </span>
                           <span className="font-bold text-primary">{formatQAR(item.subtotal)}</span>
                         </div>
@@ -1221,7 +1221,7 @@ function MyBookings() {
                         <button onClick={() => handleCancelBooking(booking.id, booking.bookingNumber)}
                           disabled={cancellingId === booking.id}
                           className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold border border-red-500/25 text-red-400 bg-red-500/8 hover:bg-red-500/15 transition disabled:opacity-50">
-                          <XCircle size={13} /> {cancellingId === booking.id ? 'Submitting…' : 'Request Cancellation'}
+                          <XCircle size={13} /> {cancellingId === booking.id ? 'Submittingâ€¦' : 'Request Cancellation'}
                         </button>
                       )}
 
@@ -1244,7 +1244,7 @@ function MyBookings() {
             })}
           </div>
         ) : (
-          /* ── Empty state ─────────────────────────────────────────────── */
+          /* â”€â”€ Empty state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
           <div className="glass-card p-14 text-center">
             <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: 'rgba(200,169,107,0.08)', border: '1px solid rgba(200,169,107,0.20)' }}>
               <Package size={24} style={{ color: 'rgba(200,169,107,0.7)' }} />
@@ -1273,7 +1273,7 @@ function MyBookings() {
                   <button key={type} onClick={() => setFeedbackData({ ...feedbackData, type, rating: type === 'Complaint' ? 0 : 5 })}
                     className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${feedbackData.type === type ? 'bg-[var(--cta-color)] text-white' : 'bg-[var(--surface-bg)]'}`}
                     style={{ color: feedbackData.type === type ? 'white' : 'var(--text-color)', border: '1px solid var(--border-color)' }}>
-                    {type === 'Review' ? '👍 Review' : type === 'Complaint' ? '😞 Complaint' : '⭐ Compliment'}
+                    {type === 'Review' ? 'ðŸ‘ Review' : type === 'Complaint' ? 'ðŸ˜ž Complaint' : 'â­ Compliment'}
                   </button>
                 ))}
               </div>

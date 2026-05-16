@@ -1,10 +1,7 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.EntityFrameworkCore;
-using Glanz.API.Data;
-using Glanz.API.Models;
 using Glanz.API.DTOs;
-using Glanz.API.Services;
+using Glanz.API.Modules.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Glanz.API.Controllers
 {
@@ -13,25 +10,17 @@ namespace Glanz.API.Controllers
     [Authorize(Roles = "Admin")]
     public class ServicesController : ControllerBase
     {
-        private readonly AppDbContext _context;
-        private readonly ILocalizationTextResolver _localizationTextResolver;
-        private readonly IAutoTranslationService _autoTranslationService;
+        private readonly IServicesService _servicesService;
 
-        public ServicesController(
-            AppDbContext context,
-            ILocalizationTextResolver localizationTextResolver,
-            IAutoTranslationService autoTranslationService)
+        public ServicesController(IServicesService servicesService)
         {
-            _context = context;
-            _localizationTextResolver = localizationTextResolver;
-            _autoTranslationService = autoTranslationService;
+            _servicesService = servicesService;
         }
 
         private string ResolveRequestedLanguage()
         {
             var queryLang = Request.Query["lang"].FirstOrDefault();
-            if (!string.IsNullOrWhiteSpace(queryLang))
-                return queryLang;
+            if (!string.IsNullOrWhiteSpace(queryLang)) return queryLang;
 
             var header = Request.Headers["Accept-Language"].FirstOrDefault()
                          ?? Request.Headers["X-Language"].FirstOrDefault();
@@ -46,46 +35,10 @@ namespace Glanz.API.Controllers
         {
             try
             {
-                var lang = ResolveRequestedLanguage();
-                var services = await _context.Services
-                    .Where(s => s.IsActive)
-                    .OrderBy(s => s.SortOrder).ThenBy(s => s.Id)
-                    .Include(s => s.ServiceProducts)
-                    .ThenInclude(sp => sp.Product)
-                    .ToListAsync();
-
-                var serviceTextMap = await _localizationTextResolver.GetServiceTextsAsync(lang, HttpContext.RequestAborted);
-
-                var serviceDtos = services.Select(s => new ServiceDto
-                {
-                    Id = s.Id,
-                    Name = serviceTextMap.TryGetValue(s.Id, out var serviceText)
-                        ? (serviceText.Name ?? s.Name)
-                        : s.Name,
-                    Description = serviceTextMap.TryGetValue(s.Id, out serviceText)
-                        ? (serviceText.Description ?? s.Description)
-                        : s.Description,
-                    DefaultDurationMinutes = s.DefaultDurationMinutes,
-                    IsActive = s.IsActive,
-                    SortOrder = s.SortOrder,
-                    EstimatedCost = s.ServiceProducts.Sum(sp => sp.QuantityUsed * sp.Product.CostPerUnit),
-                    Products = s.ServiceProducts.Select(sp => new ServiceProductDto
-                    {
-                        ProductId = sp.ProductId,
-                        ProductName = sp.Product.Name,
-                        QuantityUsed = sp.QuantityUsed,
-                        Unit = sp.Product.Unit,
-                        CostPerUnit = sp.Product.CostPerUnit,
-                        TotalCost = sp.QuantityUsed * sp.Product.CostPerUnit
-                    }).ToList(),
-                    CreatedAt = s.CreatedAt
-                }).ToList();
-
-                return Ok(serviceDtos);
+                return Ok(await _servicesService.GetServicesAsync(ResolveRequestedLanguage(), HttpContext.RequestAborted));
             }
-            catch (Exception ex)
+            catch
             {
-                Console.WriteLine($"Error getting services: {ex.Message}");
                 return StatusCode(500, new { message = "Failed to retrieve services" });
             }
         }
@@ -96,48 +49,12 @@ namespace Glanz.API.Controllers
         {
             try
             {
-                var lang = ResolveRequestedLanguage();
-                var service = await _context.Services
-                    .Include(s => s.ServiceProducts)
-                    .ThenInclude(sp => sp.Product)
-                    .FirstOrDefaultAsync(s => s.Id == id);
-
-                if (service == null)
-                {
-                    return NotFound(new { message = "Service not found" });
-                }
-
-                var serviceTextMap = await _localizationTextResolver.GetServiceTextsAsync(lang, HttpContext.RequestAborted);
-
-                var serviceDto = new ServiceDto
-                {
-                    Id = service.Id,
-                    Name = serviceTextMap.TryGetValue(service.Id, out var serviceText)
-                        ? (serviceText.Name ?? service.Name)
-                        : service.Name,
-                    Description = serviceTextMap.TryGetValue(service.Id, out serviceText)
-                        ? (serviceText.Description ?? service.Description)
-                        : service.Description,
-                    DefaultDurationMinutes = service.DefaultDurationMinutes,
-                    IsActive = service.IsActive,
-                    EstimatedCost = service.ServiceProducts.Sum(sp => sp.QuantityUsed * sp.Product.CostPerUnit),
-                    Products = service.ServiceProducts.Select(sp => new ServiceProductDto
-                    {
-                        ProductId = sp.ProductId,
-                        ProductName = sp.Product.Name,
-                        QuantityUsed = sp.QuantityUsed,
-                        Unit = sp.Product.Unit,
-                        CostPerUnit = sp.Product.CostPerUnit,
-                        TotalCost = sp.QuantityUsed * sp.Product.CostPerUnit
-                    }).ToList(),
-                    CreatedAt = service.CreatedAt
-                };
-
-                return Ok(serviceDto);
+                var (result, error) = await _servicesService.GetServiceAsync(id, ResolveRequestedLanguage(), HttpContext.RequestAborted);
+                if (result == null) return NotFound(new { message = error });
+                return Ok(result);
             }
-            catch (Exception ex)
+            catch
             {
-                Console.WriteLine($"Error getting service: {ex.Message}");
                 return StatusCode(500, new { message = "Failed to retrieve service" });
             }
         }
@@ -147,87 +64,12 @@ namespace Glanz.API.Controllers
         {
             try
             {
-                // Validate products exist
-                var productIds = dto.Products.Select(p => p.ProductId).ToList();
-                var existingProducts = await _context.Products
-                    .Where(p => productIds.Contains(p.Id) && p.IsActive)
-                    .ToDictionaryAsync(p => p.Id);
-
-                if (existingProducts.Count != productIds.Count)
-                {
-                    return BadRequest(new { message = "One or more products not found" });
-                }
-
-                var service = new Service
-                {
-                    Name = dto.Name,
-                    Description = dto.Description,
-                    DefaultDurationMinutes = dto.DefaultDurationMinutes,
-                    IsActive = true,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
-                };
-
-                _context.Services.Add(service);
-                await _context.SaveChangesAsync();
-                try
-                {
-                    await _autoTranslationService.EnsureServiceTranslationsAsync(
-                        service.Id,
-                        service.Name,
-                        service.Description,
-                        HttpContext.RequestAborted);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Auto-translation failed for service {service.Id}: {ex.Message}");
-                }
-
-                // Add service products
-                foreach (var productDto in dto.Products)
-                {
-                    var serviceProduct = new ServiceProduct
-                    {
-                        ServiceId = service.Id,
-                        ProductId = productDto.ProductId,
-                        QuantityUsed = productDto.QuantityUsed
-                    };
-                    _context.ServiceProducts.Add(serviceProduct);
-                }
-
-                await _context.SaveChangesAsync();
-
-                // Reload service with products
-                var createdService = await _context.Services
-                    .Include(s => s.ServiceProducts)
-                    .ThenInclude(sp => sp.Product)
-                    .FirstAsync(s => s.Id == service.Id);
-
-                var serviceDto = new ServiceDto
-                {
-                    Id = createdService.Id,
-                    Name = createdService.Name,
-                    Description = createdService.Description,
-                    DefaultDurationMinutes = createdService.DefaultDurationMinutes,
-                    IsActive = createdService.IsActive,
-                    EstimatedCost = createdService.ServiceProducts.Sum(sp => sp.QuantityUsed * sp.Product.CostPerUnit),
-                    Products = createdService.ServiceProducts.Select(sp => new ServiceProductDto
-                    {
-                        ProductId = sp.ProductId,
-                        ProductName = sp.Product.Name,
-                        QuantityUsed = sp.QuantityUsed,
-                        Unit = sp.Product.Unit,
-                        CostPerUnit = sp.Product.CostPerUnit,
-                        TotalCost = sp.QuantityUsed * sp.Product.CostPerUnit
-                    }).ToList(),
-                    CreatedAt = createdService.CreatedAt
-                };
-
-                return CreatedAtAction(nameof(GetService), new { id = service.Id }, serviceDto);
+                var (result, error, statusCode) = await _servicesService.CreateServiceAsync(dto, HttpContext.RequestAborted);
+                if (result == null) return StatusCode(statusCode, new { message = error });
+                return CreatedAtAction(nameof(GetService), new { id = result.Id }, result);
             }
-            catch (Exception ex)
+            catch
             {
-                Console.WriteLine($"Error creating service: {ex.Message}");
                 return StatusCode(500, new { message = "Failed to create service" });
             }
         }
@@ -237,59 +79,12 @@ namespace Glanz.API.Controllers
         {
             try
             {
-                var service = await _context.Services
-                    .Include(s => s.ServiceProducts)
-                    .FirstOrDefaultAsync(s => s.Id == id);
-
-                if (service == null)
-                {
-                    return NotFound(new { message = "Service not found" });
-                }
-
-                if (dto.Name != null) service.Name = dto.Name;
-                if (dto.Description != null) service.Description = dto.Description;
-                if (dto.DefaultDurationMinutes.HasValue) service.DefaultDurationMinutes = dto.DefaultDurationMinutes.Value;
-                if (dto.IsActive.HasValue) service.IsActive = dto.IsActive.Value;
-
-                if (dto.Products != null)
-                {
-                    // Remove existing products
-                    _context.ServiceProducts.RemoveRange(service.ServiceProducts);
-
-                    // Add new products
-                    foreach (var productDto in dto.Products)
-                    {
-                        var serviceProduct = new ServiceProduct
-                        {
-                            ServiceId = service.Id,
-                            ProductId = productDto.ProductId,
-                            QuantityUsed = productDto.QuantityUsed
-                        };
-                        _context.ServiceProducts.Add(serviceProduct);
-                    }
-                }
-
-                service.UpdatedAt = DateTime.UtcNow;
-
-                await _context.SaveChangesAsync();
-                try
-                {
-                    await _autoTranslationService.EnsureServiceTranslationsAsync(
-                        service.Id,
-                        service.Name,
-                        service.Description,
-                        HttpContext.RequestAborted);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Auto-translation failed for service {service.Id}: {ex.Message}");
-                }
-
+                var (error, statusCode) = await _servicesService.UpdateServiceAsync(id, dto, HttpContext.RequestAborted);
+                if (error != null) return StatusCode(statusCode, new { message = error });
                 return Ok(new { message = "Service updated successfully" });
             }
-            catch (Exception ex)
+            catch
             {
-                Console.WriteLine($"Error updating service: {ex.Message}");
                 return StatusCode(500, new { message = "Failed to update service" });
             }
         }
@@ -299,19 +94,11 @@ namespace Glanz.API.Controllers
         {
             try
             {
-                var ids = items.Select(i => i.Id).ToList();
-                var services = await _context.Services.Where(s => ids.Contains(s.Id)).ToListAsync();
-                foreach (var svc in services)
-                {
-                    var item = items.FirstOrDefault(i => i.Id == svc.Id);
-                    if (item != null) svc.SortOrder = item.SortOrder;
-                }
-                await _context.SaveChangesAsync();
+                await _servicesService.ReorderServicesAsync(items);
                 return Ok(new { message = "Services reordered." });
             }
-            catch (Exception ex)
+            catch
             {
-                Console.WriteLine($"Error reordering services: {ex.Message}");
                 return StatusCode(500, new { message = "Failed to reorder services" });
             }
         }
@@ -321,23 +108,12 @@ namespace Glanz.API.Controllers
         {
             try
             {
-                var service = await _context.Services.FindAsync(id);
-
-                if (service == null)
-                {
-                    return NotFound(new { message = "Service not found" });
-                }
-
-                service.IsActive = false;
-                service.UpdatedAt = DateTime.UtcNow;
-
-                await _context.SaveChangesAsync();
-
+                var error = await _servicesService.DeleteServiceAsync(id);
+                if (error != null) return NotFound(new { message = error });
                 return Ok(new { message = "Service deactivated successfully" });
             }
-            catch (Exception ex)
+            catch
             {
-                Console.WriteLine($"Error deleting service: {ex.Message}");
                 return StatusCode(500, new { message = "Failed to delete service" });
             }
         }

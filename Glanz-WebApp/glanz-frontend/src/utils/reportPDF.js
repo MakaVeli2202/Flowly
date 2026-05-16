@@ -1,18 +1,18 @@
-import jsPDF from 'jspdf';
+﻿import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { format } from 'date-fns';
 import { formatQAR } from './currency';
 
-// ── Brand-aligned colour palette ──────────────────────────────────────────────
+// â”€â”€ Brand-aligned colour palette â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // PDFs render on white paper, so we use the brand's dark navy for header
 // backgrounds and gold for accents instead of the web's rgba transparency.
 const C = {
   // Brand
-  gold:       [200, 169, 107],   // #C8A96B — primary accent
-  navy:       [13,  17,  23],    // #0D1117 — header/dark backgrounds
-  navyMid:    [18,  26,  35],    // #121A23 — card/panel backgrounds
+  gold:       [200, 169, 107],   // #C8A96B â€” primary accent
+  navy:       [13,  17,  23],    // #0D1117 â€” header/dark backgrounds
+  navyMid:    [18,  26,  35],    // #121A23 â€” card/panel backgrounds
 
-  // Semantic — kept universal so coloured cells remain instantly readable
+  // Semantic â€” kept universal so coloured cells remain instantly readable
   green:      [22,  163, 74],
   red:        [220, 38,  38],
   amber:      [217, 119, 6],
@@ -29,13 +29,13 @@ const C = {
   borderDark: [42,  51,  64],
 };
 
-// ── Shared drawing helpers ────────────────────────────────────────────────────
+// â”€â”€ Shared drawing helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
  * Draw the branded page header and return the Y position to continue from.
  */
 function drawHeader(doc, title, subtitle, from, to) {
-  // ── Dark navy banner ─────────────────────────────────────────────────────
+  // â”€â”€ Dark navy banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   doc.setFillColor(...C.navy);
   doc.rect(0, 0, 210, 32, 'F');
 
@@ -43,7 +43,7 @@ function drawHeader(doc, title, subtitle, from, to) {
   doc.setTextColor(...C.gold);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(18);
-  doc.text('Glanz', 14, 14);
+  doc.text('Flowly', 14, 14);
 
   // Gold underline accent
   doc.setDrawColor(...C.gold);
@@ -62,7 +62,7 @@ function drawHeader(doc, title, subtitle, from, to) {
   doc.setTextColor(180, 190, 200);
   doc.text(subtitle, 196, 24, { align: 'right' });
 
-  // ── Meta strip (light) ───────────────────────────────────────────────────
+  // â”€â”€ Meta strip (light) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   doc.setFillColor(...C.bgLight);
   doc.rect(0, 32, 210, 10, 'F');
 
@@ -70,10 +70,10 @@ function drawHeader(doc, title, subtitle, from, to) {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7.5);
   const today = format(new Date(), 'dd MMM yyyy');
-  doc.text(`Period: ${from}  –  ${to}`, 14, 38.5);
+  doc.text(`Period: ${from}  â€“  ${to}`, 14, 38.5);
   doc.text(`Generated: ${today}`, 196, 38.5, { align: 'right' });
 
-  // ── Bottom border of strip ───────────────────────────────────────────────
+  // â”€â”€ Bottom border of strip â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   doc.setDrawColor(...C.border);
   doc.setLineWidth(0.2);
   doc.line(0, 42, 210, 42);
@@ -194,12 +194,12 @@ function pageFooters(doc, reportName) {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7);
     doc.setTextColor(...C.muted);
-    doc.text(`Glanz  ·  Confidential ${reportName}`, 14, 292);
+    doc.text(`Flowly  Â·  Confidential ${reportName}`, 14, 292);
     doc.text(`Page ${p} of ${total}`, 196, 292, { align: 'right' });
   }
 }
 
-// ── Table defaults (shared by all autoTable calls) ─────────────────────────────
+// â”€â”€ Table defaults (shared by all autoTable calls) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const TABLE_DEFAULTS = {
   styles: {
     fontSize:    8.5,
@@ -208,7 +208,7 @@ const TABLE_DEFAULTS = {
   },
   headStyles: {
     fillColor:  C.navy,       // dark navy header rows instead of blue
-    textColor:  C.gold,       // gold text on dark — matches brand
+    textColor:  C.gold,       // gold text on dark â€” matches brand
     fontStyle:  'bold',
     fontSize:   8,
   },
@@ -216,7 +216,7 @@ const TABLE_DEFAULTS = {
   margin: { left: 14, right: 14 },
 };
 
-// ── Insight generators (logic untouched) ──────────────────────────────────────
+// â”€â”€ Insight generators (logic untouched) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function financialInsights(report) {
   const insights = [];
@@ -228,9 +228,9 @@ function financialInsights(report) {
   if (profitMarginPercent < 15) {
     insights.push({ type: 'warning', text: `Profit margin is low at ${profitMarginPercent.toFixed(1)}%. Review product/supply costs or consider a pricing adjustment for premium tiers.` });
   } else if (profitMarginPercent >= 30) {
-    insights.push({ type: 'success', text: `Strong profit margin of ${profitMarginPercent.toFixed(1)}%. Business is healthy — consider reinvesting surplus into marketing or staff training.` });
+    insights.push({ type: 'success', text: `Strong profit margin of ${profitMarginPercent.toFixed(1)}%. Business is healthy â€” consider reinvesting surplus into marketing or staff training.` });
   } else {
-    insights.push({ type: 'info', text: `Profit margin is ${profitMarginPercent.toFixed(1)}%. Industry target for cleaning services is 15–35%; you are within the healthy range.` });
+    insights.push({ type: 'info', text: `Profit margin is ${profitMarginPercent.toFixed(1)}%. Industry target for cleaning services is 15â€“35%; you are within the healthy range.` });
   }
 
   if (totalBookings < 5) {
@@ -249,7 +249,7 @@ function financialInsights(report) {
     const best = dailyBreakdown.reduce((a, b) => a.revenue > b.revenue ? a : b, dailyBreakdown[0]);
     if (best?.revenue > 0) {
       const dayLabel = format(new Date(best.date), 'EEEE dd MMM yyyy');
-      insights.push({ type: 'info', text: `Peak revenue day was ${dayLabel} (${formatQAR(best.revenue)}). Analyse what drove this — staffing levels, promotions, or seasonal demand — to replicate it.` });
+      insights.push({ type: 'info', text: `Peak revenue day was ${dayLabel} (${formatQAR(best.revenue)}). Analyse what drove this â€” staffing levels, promotions, or seasonal demand â€” to replicate it.` });
     }
   }
 
@@ -278,7 +278,7 @@ function operationalInsights(report) {
   if (cancelRate > 20) {
     insights.push({ type: 'warning', text: `Cancellation rate is high at ${cancelRate.toFixed(1)}%. Common causes: scheduling conflicts, pricing concerns, or unclear expectations. Consider a flexible rescheduling policy.` });
   } else if (cancelRate < 5) {
-    insights.push({ type: 'success', text: `Very low cancellation rate of ${cancelRate.toFixed(1)}%. Customers are committed — great sign of pricing and expectation alignment.` });
+    insights.push({ type: 'success', text: `Very low cancellation rate of ${cancelRate.toFixed(1)}%. Customers are committed â€” great sign of pricing and expectation alignment.` });
   }
 
   if (completionRate >= 80) {
@@ -301,7 +301,7 @@ function operationalInsights(report) {
   return insights;
 }
 
-// ── Public exports ────────────────────────────────────────────────────────────
+// â”€â”€ Public exports â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function generateFinancialPDF(report, startDate, endDate) {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });

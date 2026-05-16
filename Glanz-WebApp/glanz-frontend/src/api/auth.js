@@ -69,6 +69,11 @@ export const authAPI = {
     return response.data;
   }),
 
+  updateWorkerVanRole: async (workerId, vanRole, driverId) => withRetry(async () => {
+    const response = await apiClient.put(`/Auth/workers/${workerId}/van-role`, { vanRole, driverId });
+    return response.data;
+  }),
+
   updateWorkerSalary: async (workerId, monthlySalary) => withRetry(async () => {
     const response = await apiClient.put(`/Auth/workers/${workerId}/salary`, { monthlySalary });
     return response.data;

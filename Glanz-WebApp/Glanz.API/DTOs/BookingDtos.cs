@@ -552,6 +552,10 @@ namespace Glanz.API.DTOs
         public string ShiftEnd { get; set; } = string.Empty;
         public bool WorksOnDay { get; set; }
         public List<DayBookingSlotDto> Bookings { get; set; } = new();
+        /// <summary>"Driver" | "Helper" | null</summary>
+        public string? VanRole { get; set; }
+        /// <summary>Name of the helper assigned to this driver (populated only for Drivers who have a helper).</summary>
+        public string? HelperName { get; set; }
     }
 
     // ── Chatbot ──────────────────────────────────────────────────────────────

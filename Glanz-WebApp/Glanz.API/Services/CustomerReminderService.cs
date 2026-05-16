@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
 
 namespace Glanz.API.Services
 {
@@ -12,14 +13,8 @@ namespace Glanz.API.Services
         private readonly ILogger<CustomerReminderService> _logger;
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly TimeSpan _checkInterval = TimeSpan.FromDays(1);
-        private const int ReminderDaysThreshold = 60;
-        private const int FirstReminderDays = 30;
-        private const int SecondReminderDays = 45;
-        private const int FinalReminderDays = 60;
 
-        public CustomerReminderService(
-            ILogger<CustomerReminderService> logger,
-            IServiceScopeFactory scopeFactory)
+        public CustomerReminderService(ILogger<CustomerReminderService> logger, IServiceScopeFactory scopeFactory)
         {
             _logger = logger;
             _scopeFactory = scopeFactory;
@@ -33,7 +28,7 @@ namespace Glanz.API.Services
             {
                 try
                 {
-                    await CheckAndSendRemindersAsync();
+                    await ProcessRemindersAsync();
                 }
                 catch (Exception ex)
                 {
@@ -44,108 +39,108 @@ namespace Glanz.API.Services
             }
         }
 
-        private async Task CheckAndSendRemindersAsync()
+        private async Task ProcessRemindersAsync()
         {
             using var scope = _scopeFactory.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             var notificationService = scope.ServiceProvider.GetRequiredService<IAdminNotificationService>();
 
-            var now = DateTime.UtcNow;
-            var threshold = now.AddDays(-ReminderDaysThreshold);
-            var firstReminderThreshold = now.AddDays(-FirstReminderDays);
-            var secondReminderThreshold = now.AddDays(-SecondReminderDays);
-            var finalReminderThreshold = now.AddDays(-FinalReminderDays);
+            var orgIds = await context.Organizations.Select(o => o.Id).ToListAsync();
 
-            var atRiskCustomers = await context.Users
-                .Where(u => u.Role == "Customer" && u.IsActive && u.TotalBookingsCount > 0)
-                .ToListAsync();
-
-            foreach (var customer in atRiskCustomers)
+            int processed = 0;
+            foreach (var orgId in orgIds)
             {
-                if (!customer.LastBookedDate.HasValue) continue;
+                // Rules drive reminder schedule: DelayMinutes stores inactivity threshold in minutes
+                var rules = await context.AutomationRules
+                    .AsNoTracking()
+                    .Where(r => r.OrgId == orgId && r.TriggerEvent == "CustomerInactive" && r.IsActive)
+                    .OrderBy(r => r.DelayMinutes)
+                    .ToListAsync();
 
-                var daysSinceLastBooking = (now - customer.LastBookedDate.Value).TotalDays;
+                if (!rules.Any()) continue;
 
-                if (daysSinceLastBooking >= FinalReminderDays && !customer.Tags?.Contains("At-Risk-Notified-60") == true)
+                var customers = await context.Users
+                    .Where(u => u.Role == "Customer" && u.IsActive && u.TotalBookingsCount > 0)
+                    .ToListAsync();
+
+                foreach (var customer in customers)
                 {
-                    await SendReminderAsync(context, notificationService, customer, 60);
-                    customer.Tags = AppendTag(customer.Tags, "At-Risk-Notified-60");
+                    if (!customer.LastBookedDate.HasValue) continue;
+
+                    var inactiveMinutes = (int)(DateTime.UtcNow - customer.LastBookedDate.Value).TotalMinutes;
+
+                    foreach (var rule in rules)
+                    {
+                        var tagKey = $"AutoReminder-{rule.Id}";
+
+                        if (inactiveMinutes >= rule.DelayMinutes && customer.Tags?.Contains(tagKey) != true)
+                        {
+                            await ExecuteRuleAsync(context, notificationService, customer, rule);
+                            customer.Tags = AppendTag(customer.Tags, tagKey);
+                            processed++;
+                            break; // one rule per run per customer
+                        }
+                    }
                 }
-                else if (daysSinceLastBooking >= SecondReminderDays && !customer.Tags?.Contains("At-Risk-Notified-45") == true)
-                {
-                    await SendReminderAsync(context, notificationService, customer, 45);
-                    customer.Tags = AppendTag(customer.Tags, "At-Risk-Notified-45");
-                }
-                else if (daysSinceLastBooking >= FirstReminderDays && !customer.Tags?.Contains("At-Risk-Notified-30") == true)
-                {
-                    await SendReminderAsync(context, notificationService, customer, 30);
-                    customer.Tags = AppendTag(customer.Tags, "At-Risk-Notified-30");
-                }
+
+                await context.SaveChangesAsync();
             }
 
-            await context.SaveChangesAsync();
-            _logger.LogInformation($"Checked {atRiskCustomers.Count} at-risk customers for reminders");
+            _logger.LogInformation("CustomerReminderService processed {Count} reminders", processed);
         }
 
-        private async Task SendReminderAsync(
-            AppDbContext context, 
-            IAdminNotificationService notificationService, 
-            User customer, 
-            int daysAgo)
+        private async Task ExecuteRuleAsync(
+            AppDbContext context,
+            IAdminNotificationService notificationService,
+            User customer,
+            AutomationRule rule)
         {
             try
             {
-                if (!string.IsNullOrEmpty(customer.ExpoPushToken))
+                string message = "We miss you! It's been a while.";
+                string title = "We miss you!";
+
+                if (rule.ConfigJson != null)
                 {
-                    var message = daysAgo switch
+                    try
                     {
-                        30 => $"It's been a month since your last detail! Book now and get 10% off your next service.",
-                        45 => $"We miss you! It's been 45 days. Come back and enjoy our best services.",
-                        60 => $"It's been 2 months! We really miss you. Special offer just for you - 20% off this week!",
-                        _ => $"It's been a while! We'd love to see you again."
-                    };
-
-                    await notificationService.SendPushNotificationAsync(
-                        customer.ExpoPushToken,
-                        "We miss you!",
-                        message);
-
-                    _logger.LogInformation($"Sent {daysAgo}-day reminder to customer {customer.Id}");
+                        var config = JsonSerializer.Deserialize<Dictionary<string, string>>(rule.ConfigJson);
+                        if (config != null)
+                        {
+                            config.TryGetValue("message", out message!);
+                            config.TryGetValue("title", out title!);
+                            message ??= "We miss you! It's been a while.";
+                            title ??= "We miss you!";
+                        }
+                    }
+                    catch { }
                 }
 
-                var notification = new Notification
+                if (rule.ActionType == "SendReminderPush" && !string.IsNullOrEmpty(customer.ExpoPushToken))
+                    await notificationService.SendPushNotificationAsync(customer.ExpoPushToken, title, message);
+
+                context.Notifications.Add(new Notification
                 {
                     UserId = customer.Id,
-                    Message = daysAgo switch
-                    {
-                        30 => "It's been a month since your last detail. Book now for 10% off!",
-                        45 => "It's been 45 days. Come back and enjoy 15% off!",
-                        60 => "It's been 2 months! Special offer - 20% off this week!",
-                        _ => "We'd love to see you again"
-                    },
+                    Message = message,
                     Type = NotificationType.SpecialOffer,
                     CreatedAt = DateTime.UtcNow,
                     IsRead = false
-                };
+                });
 
-                context.Notifications.Add(notification);
+                _logger.LogInformation("Executed rule {RuleId} ({Action}) for customer {CustomerId}", rule.Id, rule.ActionType, customer.Id);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Failed to send reminder to customer {customer.Id}");
+                _logger.LogError(ex, "Failed to execute rule {RuleId} for customer {CustomerId}", rule.Id, customer.Id);
             }
         }
 
-        private string AppendTag(string? existingTags, string newTag)
+        private static string AppendTag(string? existingTags, string newTag)
         {
-            if (string.IsNullOrWhiteSpace(existingTags))
-                return newTag;
-
+            if (string.IsNullOrWhiteSpace(existingTags)) return newTag;
             var tags = existingTags.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
-            if (!tags.Contains(newTag))
-            {
-                tags.Add(newTag);
-            }
+            if (!tags.Contains(newTag)) tags.Add(newTag);
             return string.Join(", ", tags);
         }
     }

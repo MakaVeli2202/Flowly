@@ -80,7 +80,7 @@ function getStatusContent(status) {
         badgeColor: '#14B8A6',
         badgeLine: 'linear-gradient(90deg, transparent, #14B8A6)',
         title: 'Your vehicle is clean!',
-        body: 'Thank you for choosing Glanz. We hope you love the results.',
+        body: 'Thank you for choosing Flowly. We hope you love the results.',
         ringGradient: 'linear-gradient(135deg, #0F766E 0%, #14B8A6 100%)',
         ringBorder: 'rgba(20,184,166,0.4)',
         ringShadow: '0 0 0 4px rgba(20,184,166,0.15), 0 12px 40px rgba(20,184,166,0.45)',
@@ -274,10 +274,10 @@ function BookingConfirmation() {
   };
 
   const shareCode = () => {
-    const text = `Use my referral code ${referralCode} for exclusive discounts on Glanz car detailing services!`;
+    const text = `Use my referral code ${referralCode} for exclusive discounts on Flowly car detailing services!`;
     if (navigator.share) {
       navigator.share({
-        title: 'Glanz Referral',
+        title: 'Flowly Referral',
         text: text,
         url: window.location.origin + '/book'
       });

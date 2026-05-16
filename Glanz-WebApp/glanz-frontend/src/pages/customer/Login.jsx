@@ -8,7 +8,7 @@ import { useLanguage } from '../../context/LanguageContext';
 const UI_BY_LANG = {
   en: {
     seoTitle: 'Sign In',
-    seoDesc: 'Sign in to your Glanz account to manage bookings and track your car detailing services.',
+    seoDesc: 'Sign in to your Flowly account to manage bookings and track your car detailing services.',
     loginFailed: 'Login failed. Please try again.',
     welcomeBack: 'Welcome Back',
     signIn: 'Sign In',
@@ -26,7 +26,7 @@ const UI_BY_LANG = {
   },
   ar: {
     seoTitle: 'تسجيل الدخول',
-    seoDesc: 'سجّل الدخول إلى حساب Glanz لإدارة الحجوزات ومتابعة خدمات العناية بالسيارة.',
+    seoDesc: 'سجّل الدخول إلى حساب Flowly لإدارة الحجوزات ومتابعة خدمات العناية بالسيارة.',
     loginFailed: 'فشل تسجيل الدخول. يرجى المحاولة مرة أخرى.',
     welcomeBack: 'أهلا بعودتك',
     signIn: 'تسجيل الدخول',
@@ -44,7 +44,7 @@ const UI_BY_LANG = {
   },
   de: {
     seoTitle: 'Anmelden',
-    seoDesc: 'Melden Sie sich bei Ihrem Glanz-Konto an, um Buchungen zu verwalten und Services zu verfolgen.',
+    seoDesc: 'Melden Sie sich bei Ihrem Flowly-Konto an, um Buchungen zu verwalten und Services zu verfolgen.',
     loginFailed: 'Anmeldung fehlgeschlagen. Bitte erneut versuchen.',
     welcomeBack: 'Willkommen zuruck',
     signIn: 'Anmelden',

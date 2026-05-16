@@ -15,6 +15,8 @@ namespace Glanz.API.Models
         [Key]
         public int Id { get; set; }
 
+        public int? OrgId { get; set; }
+
         [StringLength(80)]
         public string Code { get; set; } = string.Empty;
 

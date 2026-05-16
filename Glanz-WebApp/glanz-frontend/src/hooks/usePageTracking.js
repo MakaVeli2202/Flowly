@@ -1,9 +1,9 @@
-import { useEffect, useRef } from 'react';
+﻿import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { analyticsAPI } from '../api/analytics';
 
-const SESSION_KEY  = 'glanz.session';
-const VISITOR_KEY  = 'glanz.visitor';
+const SESSION_KEY  = 'flowly.session';
+const VISITOR_KEY  = 'flowly.visitor';
 const HEARTBEAT_MS = 30_000;
 
 function getOrCreateSessionId() {

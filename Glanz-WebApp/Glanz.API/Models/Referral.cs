@@ -16,6 +16,8 @@ namespace Glanz.API.Models
         [Key]
         public int Id { get; set; }
 
+        public int? OrgId { get; set; }
+
         public int ReferrerId { get; set; } // The user who referred
 
         [ForeignKey(nameof(ReferrerId))]

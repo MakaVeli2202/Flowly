@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 using Glanz.API.Data;
 using Glanz.API.DTOs;
 using Glanz.API.Models;
+using Glanz.API.Platform.Tenancy;
 using Glanz.API.Services;
 using System.Security.Claims;
 
@@ -16,11 +18,13 @@ namespace Glanz.API.Controllers
     {
         private readonly AppDbContext _context;
         private readonly IObjectStorageService _objectStorage;
+        private readonly TenantContext _tenantContext;
 
-        public VehiclesController(AppDbContext context, IObjectStorageService objectStorage)
+        public VehiclesController(AppDbContext context, IObjectStorageService objectStorage, TenantContext tenantContext)
         {
             _context = context;
             _objectStorage = objectStorage;
+            _tenantContext = tenantContext;
         }
 
         private int GetUserId() => User.GetCurrentUserId();
@@ -92,6 +96,28 @@ namespace Glanz.API.Controllers
             };
 
             _context.Vehicles.Add(vehicle);
+
+            // Dual-write: mirror to ClientAssets for SaaS transition
+            var attrsJson = JsonSerializer.Serialize(new
+            {
+                make = dto.Make?.Trim(),
+                model = dto.Model?.Trim(),
+                year = dto.Year?.Trim(),
+                color = dto.Color?.Trim(),
+                plateNumber = dto.PlateNumber?.Trim(),
+                vehicleType = dto.VehicleType.ToString()
+            });
+            _context.ClientAssets.Add(new ClientAsset
+            {
+                OrgId = _tenantContext.OrgId,
+                CustomerId = userId,
+                Label = dto.Nickname?.Trim() ?? $"{dto.Make} {dto.Model}".Trim(),
+                AttributesJson = attrsJson,
+                IsDefault = isDefault,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow,
+            });
+
             await _context.SaveChangesAsync();
             return CreatedAtAction(nameof(GetVehicle), new { id = vehicle.Id }, ToDto(vehicle));
         }

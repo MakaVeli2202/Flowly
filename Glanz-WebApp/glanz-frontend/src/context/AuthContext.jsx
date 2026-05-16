@@ -1,10 +1,10 @@
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+﻿import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { authAPI } from '../api/auth';
 import { setAuthToken } from '../api/axios';
 import { startNotificationConnection, stopNotificationConnection } from '../api/notificationBus';
 import { cacheManager } from '../core/cacheManager';
 
-// SignalR is only needed after login — defer the 151 kB module until then
+// SignalR is only needed after login â€” defer the 151 kB module until then
 let _realtimeService = null;
 async function getRT() {
   if (!_realtimeService) {
@@ -14,7 +14,7 @@ async function getRT() {
   return _realtimeService;
 }
 
-const TOKEN_KEY = 'glanz_access_token';
+const TOKEN_KEY = 'flowly_access_token';
 
 function isTokenExpired(token) {
   try {
@@ -63,7 +63,7 @@ export function AuthProvider({ children }) {
   // Prevents React Strict Mode's double effect invocation from sending two
   // concurrent /Auth/refresh requests.  If the server rotates refresh tokens
   // (single-use), the second request would arrive with an already-invalidated
-  // cookie and return 401 — logging the user out.  The ref survives the fake
+  // cookie and return 401 â€” logging the user out.  The ref survives the fake
   // unmount/remount cycle in Strict Mode, so only one request is ever sent.
   const initCalledRef = useRef(false);
 
@@ -79,7 +79,7 @@ export function AuthProvider({ children }) {
 
     const initAuth = async () => {
       try {
-        const hasSession = localStorage.getItem('glanz_session_active') === 'true';
+        const hasSession = localStorage.getItem('flowly_session_active') === 'true';
         if (!hasSession) {
           setLoading(false);
           return;
@@ -115,7 +115,7 @@ export function AuthProvider({ children }) {
           return;
         }
 
-        // Slow path: stored token expired — try cookie-based refresh
+        // Slow path: stored token expired â€” try cookie-based refresh
         const refreshed = await authAPI.refresh();
         setAuthToken(refreshed.token);
         sessionStorage.setItem(TOKEN_KEY, refreshed.token);
@@ -136,7 +136,7 @@ export function AuthProvider({ children }) {
         await (await getRT()).connect(refreshed.token);
         startNotificationConnection();
       } catch {
-        localStorage.removeItem('glanz_session_active');
+        localStorage.removeItem('flowly_session_active');
         sessionStorage.removeItem(TOKEN_KEY);
         setAuthToken(null);
         setToken(null);
@@ -158,7 +158,7 @@ export function AuthProvider({ children }) {
       setUser(null);
       throw new Error('This action is not allowed with a company account. Please use the mobile app to log in as a detailer.');
     }
-    localStorage.setItem('glanz_session_active', 'true');
+    localStorage.setItem('flowly_session_active', 'true');
     sessionStorage.setItem(TOKEN_KEY, response.token);
     persistSession(response.token, response.user);
     await (await getRT()).connect(response.token);
@@ -169,7 +169,7 @@ export function AuthProvider({ children }) {
   const register = async (userData) => {
     const response = await authAPI.register(userData);
     if (response.requiresEmailVerification) return response;
-    localStorage.setItem('glanz_session_active', 'true');
+    localStorage.setItem('flowly_session_active', 'true');
     sessionStorage.setItem(TOKEN_KEY, response.token);
     persistSession(response.token, response.user);
     await (await getRT()).connect(response.token);
@@ -203,7 +203,7 @@ export function AuthProvider({ children }) {
     stopNotificationConnection();
     _realtimeService?.disconnect();
     authAPI.logout();
-    localStorage.removeItem('glanz_session_active');
+    localStorage.removeItem('flowly_session_active');
     sessionStorage.removeItem(TOKEN_KEY);
     setAuthToken(null);
     setToken(null);

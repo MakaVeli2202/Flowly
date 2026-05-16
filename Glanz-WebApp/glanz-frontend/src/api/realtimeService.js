@@ -1,8 +1,8 @@
-/**
- * realtimeService — singleton SignalR WebSocket client (Web edition).
+﻿/**
+ * realtimeService â€” singleton SignalR WebSocket client (Web edition).
  *
  * Architecture:
- *   ONE connection per browser session → /hubs/glanz
+ *   ONE connection per browser session â†’ /hubs/flowly
  *   All real-time features (notifications, job status, location) share this connection.
  *
  * Usage:
@@ -29,14 +29,14 @@ import * as signalR from '@microsoft/signalr';
 const _apiBase = (typeof window !== 'undefined' && window.__CONFIG__?.API_URL)
   || import.meta.env.VITE_API_BASE_URL
   || '/api';
-const HUB_URL  = `${_apiBase.replace('/api', '')}/hubs/glanz`;
+const HUB_URL  = `${_apiBase.replace('/api', '')}/hubs/flowly`;
 
-// ── Internal state ────────────────────────────────────────────────────────────
+// â”€â”€ Internal state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 let _connection = null;
 let _token      = null;
 let _connecting = false;
 
-// Fan-out listener registry — key → Set<Function>
+// Fan-out listener registry â€” key â†’ Set<Function>
 const _listeners = {
   Notification:    new Set(),
   JobStatusUpdate: new Set(),
@@ -54,7 +54,7 @@ function _setState(state) {
   _listeners.StateChange.forEach((fn) => { try { fn(state); } catch { /* silent */ } });
 }
 
-// ── Build / rebuild connection ────────────────────────────────────────────────
+// â”€â”€ Build / rebuild connection â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function _buildConnection() {
   return new signalR.HubConnectionBuilder()
     .withUrl(HUB_URL, {
@@ -70,7 +70,7 @@ function _buildConnection() {
     .build();
 }
 
-// ── Wire server → client event handlers ──────────────────────────────────────
+// â”€â”€ Wire server â†’ client event handlers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function _wireEvents(conn) {
   conn.on('Notification', (payload) => {
     _listeners.Notification.forEach((fn) => { try { fn(payload); } catch { /* silent */ } });
@@ -92,10 +92,10 @@ function _wireEvents(conn) {
   conn.onclose(() => _setState('disconnected'));
 }
 
-// ── Public API ────────────────────────────────────────────────────────────────
+// â”€â”€ Public API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
- * Connect to the hub. Call on login. Idempotent — safe to call multiple times.
+ * Connect to the hub. Call on login. Idempotent â€” safe to call multiple times.
  * @param {string} jwt  The user's JWT access token.
  */
 export async function connect(jwt) {
@@ -135,7 +135,7 @@ export function isConnected() {
   return _connection?.state === signalR.HubConnectionState.Connected;
 }
 
-// ── Listener registration (returns unsub function) ────────────────────────────
+// â”€â”€ Listener registration (returns unsub function) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function onNotification(fn) {
   _listeners.Notification.add(fn);
@@ -181,7 +181,7 @@ export async function revokeTrackingSession(workerId) {
   try { await _connection.invoke('RevokeTrackingSession', workerId); } catch { /* silent */ }
 }
 
-// ── Group subscriptions (client calls hub methods to join groups) ─────────────
+// â”€â”€ Group subscriptions (client calls hub methods to join groups) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function subscribeToJobStatus(bookingId) {
   if (!isConnected()) return;
@@ -208,7 +208,7 @@ export async function subscribeToAllAdminLocations() {
   try { await _connection.invoke('SubscribeToAllAdminLocations'); } catch { /* silent */ }
 }
 
-// ── Worker → hub: location updates (used by mobile only, but exported for completeness) ──
+// â”€â”€ Worker â†’ hub: location updates (used by mobile only, but exported for completeness) â”€â”€
 
 export async function updateAdminLocation(latitude, longitude) {
   if (!isConnected()) return;
@@ -230,10 +230,10 @@ export async function stopCustomerStream(bookingId) {
   try { await _connection.invoke('StopCustomerStream', bookingId); } catch { /* silent */ }
 }
 
-// ── Required API surface (spec-compliant naming) ──────────────────────────────
+// â”€â”€ Required API surface (spec-compliant naming) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
- * startAdminTracking — signals that admin location stream should be active.
+ * startAdminTracking â€” signals that admin location stream should be active.
  * Hub derives workerId from JWT claims. Admin stream is ALWAYS-ON.
  * Actual position updates flow via updateAdminLocation() called by the GPS module.
  * NEVER stop admin tracking from worker job actions.
@@ -245,7 +245,7 @@ export async function startAdminTracking(workerId) {
 }
 
 /**
- * stopAdminTracking — no-op by design.
+ * stopAdminTracking â€” no-op by design.
  * Admin stream only stops on hub disconnect (logout).
  * Worker job actions (On My Way, Start Job, Job End) MUST NOT call this.
  */
@@ -253,10 +253,10 @@ export async function stopAdminTracking() {
   // No-op: admin tracking is session-scoped, not job-scoped.
 }
 
-/** startCustomerTracking(bookingId) — worker presses "On My Way". Starts customer stream. */
+/** startCustomerTracking(bookingId) â€” worker presses "On My Way". Starts customer stream. */
 export const startCustomerTracking = startCustomerStream;
 
-/** stopCustomerTracking(bookingId) — worker presses "Start Job". Stops customer stream. */
+/** stopCustomerTracking(bookingId) â€” worker presses "Start Job". Stops customer stream. */
 export const stopCustomerTracking = stopCustomerStream;
 
 // Single default export for convenience

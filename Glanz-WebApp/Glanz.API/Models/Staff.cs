@@ -8,6 +8,8 @@ namespace Glanz.API.Models
         [Key]
         public int Id { get; set; }
 
+        public int? OrgId { get; set; }
+
         [Required]
         [StringLength(100)]
         public string FirstName { get; set; } = string.Empty;
@@ -86,6 +88,13 @@ namespace Glanz.API.Models
         [StringLength(200)]
         public string? RefreshToken { get; set; }
         public DateTime? RefreshTokenExpiry { get; set; }
+
+        /// <summary>"Driver" | "Helper" | null (no van role assigned)</summary>
+        [StringLength(20)]
+        public string? VanRole { get; set; }
+
+        /// <summary>FK to Staff.Id of the Driver this helper is linked to. Only set when VanRole == "Helper".</summary>
+        public int? DriverId { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

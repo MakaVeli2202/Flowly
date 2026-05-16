@@ -44,6 +44,8 @@ export default function AdminAddStaff() {
     salaryAmount: '',
     percentageRate: '',
     skills: [],
+    vanRole: '',
+    driverId: '',
     workingDays: ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],
     shiftStart: '09:00',
     shiftEnd: '18:00',
@@ -163,6 +165,8 @@ export default function AdminAddStaff() {
         salaryAmount: form.compensationType === 'Salary' && form.salaryAmount !== '' ? Number(form.salaryAmount) : null,
         percentageRate: form.compensationType === 'Percentage' ? Number(form.percentageRate) : null,
         skills: form.skills,
+        vanRole: form.vanRole || null,
+        driverId: form.vanRole === 'Helper' && form.driverId ? Number(form.driverId) : null,
       });
       toast.success(`${form.firstName} ${form.lastName} added successfully!`);
       navigate('/admin/staff');
@@ -248,6 +252,15 @@ export default function AdminAddStaff() {
                   <label className="field-label">Staff Type</label>
                   <select className={inp} value={form.staffType} onChange={e => set('staffType', e.target.value)}>
                     {STAFF_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="field-label">Van Role</label>
+                  <select className={inp} value={form.vanRole}
+                    onChange={e => set('vanRole', e.target.value)}>
+                    <option value="">None</option>
+                    <option value="Driver">Driver</option>
+                    <option value="Helper">Helper</option>
                   </select>
                 </div>
               </div>

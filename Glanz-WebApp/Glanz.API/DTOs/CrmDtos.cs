@@ -170,4 +170,25 @@ namespace Glanz.API.DTOs
         public int Count { get; set; }
         public decimal Revenue { get; set; }
     }
+
+    public class BulkMessageDto
+    {
+        /// <summary>Target customer IDs. Empty = all customers.</summary>
+        public List<int> CustomerIds { get; set; } = new();
+        /// <summary>Optional segment filter ("VIP", "Inactive", etc.) applied if CustomerIds is empty.</summary>
+        public string? Segment { get; set; }
+        [Required]
+        [StringLength(500)]
+        public string Message { get; set; } = string.Empty;
+        /// <summary>"push" | "sms" | "both"</summary>
+        public string Channel { get; set; } = "push";
+    }
+
+    public class TimelineEventDto
+    {
+        public string Type { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public DateTime OccurredAt { get; set; }
+        public object? Metadata { get; set; }
+    }
 }

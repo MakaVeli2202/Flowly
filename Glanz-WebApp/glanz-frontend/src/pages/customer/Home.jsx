@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useRef, useState, Suspense } from 'react';
+﻿import React, { useEffect, useLayoutEffect, useRef, useState, Suspense } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Link, useNavigate } from 'react-router-dom';
@@ -31,8 +31,8 @@ function buildLocalBusinessLd() {
     description: biz.tagline,
     telephone: biz.phone,
     email: biz.email,
-    url: 'https://glanz.qa',
-    image: 'https://glanz.qa/Logo.png',
+    url: 'https://flowly.qa',
+    image: 'https://flowly.qa/Logo.png',
     address: {
       '@type': 'PostalAddress',
       addressLocality: 'Doha',
@@ -873,7 +873,7 @@ function Home() {
     <div className="text-[var(--text-color)]">
       <SEO
         title="Professional Car Detailing in Qatar"
-        description="Glanz offers premium mobile car detailing across Qatar — exterior, interior, ceramic coating and more. We come to you. Book online today."
+        description="Flowly offers premium mobile car detailing across Qatar — exterior, interior, ceramic coating and more. We come to you. Book online today."
         jsonLd={buildLocalBusinessLd()}
       />
       <PrismaticCursorOrb />
@@ -929,7 +929,7 @@ function Home() {
             }} />
             <div className="relative z-10 px-8 md:px-16 py-10 md:py-12 text-center flex flex-col items-center">
               <div className="mb-6 hero-animate hero-animate-1">
-                <img src={getBusiness().logo || '/GlanzLogo.png'} alt="Glanz" className="h-24 sm:h-28 md:h-36 w-auto object-contain mx-auto drop-shadow-xl" />
+                <img src={getBusiness().logo || '/GlanzLogo.png'} alt="Flowly" className="h-24 sm:h-28 md:h-36 w-auto object-contain mx-auto drop-shadow-xl" />
               </div>
               {/* Badge */}
               <div className="flex items-center gap-3 mb-6 hero-animate hero-animate-1">

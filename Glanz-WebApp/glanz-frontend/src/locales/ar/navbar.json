@@ -15,8 +15,14 @@
   "payroll": "الرواتب",
   "liveMap": "الخريطة المباشرة",
   "analytics": "التحليلات",
+  "orgSettings": "إعدادات المنظمة",
+  "billing": "الفواتير",
   "devSettings": "إعدادات المطور",
   "translations": "الترجمات",
   "operations": "العمليات",
-  "management": "الإدارة"
+  "management": "الإدارة",
+  "recurringBookings": "المتكررة",
+  "purchaseOrders": "أوامر الشراء",
+  "resources": "الموارد",
+  "pos": "نقطة البيع"
 }

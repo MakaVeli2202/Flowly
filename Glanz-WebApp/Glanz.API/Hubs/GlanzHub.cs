@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Glanz.API.Data;
@@ -12,28 +12,28 @@ namespace Glanz.API.Hubs
     /// Central SignalR hub for all real-time features.
     ///
     /// Channel / Group naming:
-    ///   location:admin:{workerId}       — admin live-map feed for a specific worker
-    ///   location:customer:{bookingId}   — customer tracking (En Route → Start Job)
-    ///   job:status:{bookingId}          — job lifecycle events (all parties)
-    ///   notifications:{userId}          — per-user notification feed
+    ///   location:admin:{workerId}       â€” admin live-map feed for a specific worker
+    ///   location:customer:{bookingId}   â€” customer tracking (En Route â†’ Start Job)
+    ///   job:status:{bookingId}          â€” job lifecycle events (all parties)
+    ///   notifications:{userId}          â€” per-user notification feed
     ///
     /// Workers INVOKE hub methods to push updates (GPS location).
     /// Admins / customers JOIN groups to RECEIVE updates.
     /// The server-side IRealtimeService broadcasts notifications and job status.
     /// </summary>
     [Authorize]
-    public class GlanzHub : Hub
+    public class FlowlyHub : Hub
     {
-        private readonly ILogger<GlanzHub> _logger;
+        private readonly ILogger<FlowlyHub> _logger;
         private readonly AppDbContext _context;
 
-        public GlanzHub(ILogger<GlanzHub> logger, AppDbContext context)
+        public FlowlyHub(ILogger<FlowlyHub> logger, AppDbContext context)
         {
             _logger = logger;
             _context = context;
         }
 
-        // ── Connection lifecycle ──────────────────────────────────────────────
+        // â”€â”€ Connection lifecycle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         public override async Task OnConnectedAsync()
         {
@@ -54,7 +54,7 @@ namespace Glanz.API.Hubs
             await base.OnDisconnectedAsync(exception);
         }
 
-        // ── Worker → Server: location updates ────────────────────────────────
+        // â”€â”€ Worker â†’ Server: location updates â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         /// <summary>
         /// Called by the worker app every 8 s (throttled to 20 m / 10 s before sending).
@@ -133,7 +133,7 @@ namespace Glanz.API.Hubs
         }
 
         /// <summary>
-        /// Called when worker presses "On My Way" — starts broadcasting to the customer.
+        /// Called when worker presses "On My Way" â€” starts broadcasting to the customer.
         /// </summary>
         public async Task StartCustomerStream(int bookingId)
         {
@@ -171,7 +171,7 @@ namespace Glanz.API.Hubs
         }
 
         /// <summary>
-        /// Called when worker presses "Start Job" — stops the customer tracking stream.
+        /// Called when worker presses "Start Job" â€” stops the customer tracking stream.
         /// Admin stream is unaffected and continues.
         /// </summary>
         public async Task StopCustomerStream(int bookingId)
@@ -188,7 +188,7 @@ namespace Glanz.API.Hubs
             });
         }
 
-        // ── Client → Server: group subscriptions ─────────────────────────────
+        // â”€â”€ Client â†’ Server: group subscriptions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         /// <summary>Admins call this to receive GPS updates for a specific worker.</summary>
         public async Task SubscribeToAdminLocation(int workerId)
@@ -215,14 +215,14 @@ namespace Glanz.API.Hubs
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"job:status:{bookingId}");
         }
 
-        /// <summary>Admins subscribe to the live worker map — all workers.</summary>
+        /// <summary>Admins subscribe to the live worker map â€” all workers.</summary>
         public async Task SubscribeToAllAdminLocations()
         {
             if (!IsAdmin()) return;
             await Groups.AddToGroupAsync(Context.ConnectionId, "location:admin:all");
         }
 
-        // ── Admin override: force-stop worker location stream ────────────────
+        // â”€â”€ Admin override: force-stop worker location stream â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         /// <summary>
         /// Admin sends a ForceStop event to a worker's notification channel.
@@ -259,7 +259,7 @@ namespace Glanz.API.Hubs
             _logger.LogInformation("SignalR: admin revoked tracking session for worker {WorkerId}", workerId);
         }
 
-        // ── Helpers ───────────────────────────────────────────────────────────
+        // â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         private int? GetUserId()
         {

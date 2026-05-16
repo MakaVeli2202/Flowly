@@ -6,16 +6,16 @@
  */
 export const BUSINESS = {
   /** Full brand name — used in copyright lines, page titles, etc. */
-  name: 'Glanz',
+  name: 'Flowly',
   /** Logo URL - used in navbar, footer, payslip, emails, etc. */
   logo: '',
   /** First part of the logo word-mark (unstyled) */
-  namePrefix: 'G',
+  namePrefix: 'Fl',
   /** Second part of the logo word-mark (receives gradient / accent colour) */
-  nameSuffix: 'lanz',
+  nameSuffix: 'owly',
   tagline: '',
   phone: '+974 4444 4444',
-  email: 'info@Glanz.qa',
+  email: 'info@flowly.qa',
   location: 'Doha, Qatar',
   serviceAreas: ['Doha', 'Al Rayyan', 'Al Wakrah', 'Lusail', 'Al Khor', 'Dukhan', 'Al Shahaniya'],
   socialLinks: {

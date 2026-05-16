@@ -48,6 +48,8 @@ namespace Glanz.API.Models
         [Key]
         public int Id { get; set; }
 
+        public int? OrgId { get; set; }
+
         [Required]
         [StringLength(50)]
         public string BookingNumber { get; set; } = string.Empty;
@@ -158,6 +160,9 @@ namespace Glanz.API.Models
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+        /// <summary>Set when an SMS/WhatsApp reminder has been dispatched for this booking.</summary>
+        public DateTime? ReminderSentAt { get; set; }
 
         // Customer's preferred detailer (optional, set at booking time when feature enabled)
         public int? PreferredWorkerId { get; set; }

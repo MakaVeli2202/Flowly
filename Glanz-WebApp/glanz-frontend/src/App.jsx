@@ -9,6 +9,7 @@ import { PackagesProvider } from './context/PackagesContext';
 import { LanguageProvider } from './context/LanguageContext';
 import { FeaturesProvider } from './context/FeaturesContext';
 import { SettingsProvider } from './context/SettingsContext';
+import { TenantProvider }   from './context/TenantContext';
 import SiteAccessGate from './components/shared/SiteAccessGate';
 import ErrorBoundary        from './components/shared/ErrorBoundary';
 import { ToastProvider }    from './components/shared/Toast';
@@ -43,6 +44,7 @@ const Profile             = lazy(() => import('./pages/customer/Profile'));
 const Referrals           = lazy(() => import('./pages/customer/Referrals'));
 const MySubscription             = lazy(() => import('./pages/customer/MySubscription'));
 const SubscriptionCheckout       = lazy(() => import('./pages/customer/SubscriptionCheckout'));
+const RecurringBookings          = lazy(() => import('./pages/customer/RecurringBookings'));
 const AdminSubscriptionBookings  = lazy(() => import('./pages/admin/AdminSubscriptionBookings'));
 
 // ─── Admin pages (lazy) ───────────────────────────────────────────────────────
@@ -71,6 +73,9 @@ const AdminDevSettings       = lazy(() => import('./pages/admin/AdminDevSettings
 const AdminCrm               = lazy(() => import('./pages/admin/AdminCrm'));
 const AdminTranslations      = lazy(() => import('./pages/admin/AdminTranslations'));
 const AdminAnalytics         = lazy(() => import('./pages/admin/AdminAnalytics'));
+const AdminPurchaseOrders    = lazy(() => import('./pages/admin/AdminPurchaseOrders'));
+const AdminResources         = lazy(() => import('./pages/admin/AdminResources'));
+const AdminPos               = lazy(() => import('./pages/admin/AdminPos'));
 const SubscriptionBooking    = lazy(() => import('./pages/customer/SubscriptionBooking'));
 
 // ─── Admin fallback ───────────────────────────────────────────────────────────
@@ -114,8 +119,13 @@ function adminRoute(path, _PageComponent) {
 
 // ─── 404 / misc lazy ──────────────────────────────────────────────────────────
 
-const NotFound           = lazy(() => import('./components/ui/not-found'));
+const NotFound            = lazy(() => import('./components/ui/not-found'));
 const ForceChangePassword = lazy(() => import('./pages/shared/ForceChangePassword'));
+const OrgRegister             = lazy(() => import('./pages/shared/OrgRegister'));
+const AdminOnboarding         = lazy(() => import('./pages/admin/AdminOnboarding'));
+const AdminBilling            = lazy(() => import('./pages/admin/AdminBilling'));
+const AdminOrgSettings        = lazy(() => import('./pages/admin/AdminOrgSettings'));
+const PublicBookingPortal     = lazy(() => import('./pages/customer/PublicBookingPortal'));
 
 // ─── Scroll to top on navigation ──────────────────────────────────────────────
 
@@ -205,6 +215,11 @@ function AppRoutes() {
             <Suspense fallback={<CustomerFallback />}><MySubscription /></Suspense>
           </ProtectedRoute>
         } />
+        <Route path="/recurring-bookings" element={
+          <ProtectedRoute requireCustomer>
+            <Suspense fallback={<CustomerFallback />}><RecurringBookings /></Suspense>
+          </ProtectedRoute>
+        } />
         <Route path="/subscribe" element={
           <ProtectedRoute requireCustomer>
             <Suspense fallback={<CustomerFallback />}><SubscriptionCheckout /></Suspense>
@@ -252,6 +267,24 @@ function AppRoutes() {
         <Route path="/subscription-booking" element={
           <ProtectedRoute><Suspense fallback={<AdminFallback />}><SubscriptionBooking /></Suspense></ProtectedRoute>
         } />
+
+        {/* ── Org registration (SaaS sign-up) ────────────────────────── */}
+        <Route path="/org/register" element={
+          <Suspense fallback={<CustomerFallback />}><OrgRegister /></Suspense>
+        } />
+
+        {/* ── Public booking portal ───────────────────────────────────── */}
+        <Route path="/book/:slug" element={
+          <Suspense fallback={<CustomerFallback />}><PublicBookingPortal /></Suspense>
+        } />
+
+        {/* ── Admin onboarding wizard ─────────────────────────────────── */}
+        {adminRoute('/admin/onboarding', AdminOnboarding)}
+        {adminRoute('/admin/billing',         AdminBilling)}
+        {adminRoute('/admin/org-settings',    AdminOrgSettings)}
+        {adminRoute('/admin/purchase-orders', AdminPurchaseOrders)}
+        {adminRoute('/admin/resources',       AdminResources)}
+        {adminRoute('/admin/pos',             AdminPos)}
 
         {/* ── Force password change (staff first login) ───────────────── */}
         <Route path="/force-change-password" element={
@@ -311,6 +344,7 @@ function App() {
       <FeaturesProvider>
       <SettingsProvider>
       <AuthProvider>
+        <TenantProvider>
         <PackagesProvider>
           <ErrorBoundary>
             <ToastProvider>
@@ -332,6 +366,7 @@ function App() {
             </ToastProvider>
           </ErrorBoundary>
         </PackagesProvider>
+        </TenantProvider>
       </AuthProvider>
       </SettingsProvider>
       </FeaturesProvider>

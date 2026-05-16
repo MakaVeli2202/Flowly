@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import {
   AlertCircle,
   ArrowRight,
@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
 
-const GATE_TOKEN_STORAGE_KEY = 'glanz.site-gate-token';
+const GATE_TOKEN_STORAGE_KEY = 'flowly.site-gate-token';
 const FORCE_PUBLISHED = import.meta.env.VITE_FORCE_PUBLISHED === 'true';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5289/api';
 
@@ -133,7 +133,7 @@ export default function SiteAccessGate({ children }) {
             Something great<br />is on its way.
           </h1>
           <p className="text-base md:text-lg text-white/60 leading-relaxed max-w-xl mb-10">
-            We're putting the finishing touches on Glanz — your premium vehicle cleaning service. Be the first to know when we launch.
+            We're putting the finishing touches on Flowly â€” your premium vehicle cleaning service. Be the first to know when we launch.
           </p>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full max-w-lg mb-10">
@@ -153,7 +153,7 @@ export default function SiteAccessGate({ children }) {
           </div>
         </div>
 
-        {/* Staff login — subtle corner button */}
+        {/* Staff login â€” subtle corner button */}
         <button
           onClick={() => { setShowLogin(true); setError(''); }}
           className="fixed bottom-5 right-5 z-20 h-10 w-10 rounded-full border border-white/15 bg-white/8 text-white/30 hover:text-white/70 hover:border-white/30 transition-all backdrop-blur-xl flex items-center justify-center"

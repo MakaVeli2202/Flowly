@@ -1,11 +1,11 @@
-/**
- * SettingsContext — system configuration loaded from the backend at startup.
+﻿/**
+ * SettingsContext â€” system configuration loaded from the backend at startup.
  *
  * Exposes business-rule constants that must never be hardcoded in pages:
  *   - vehicleMultipliers: price multipliers per vehicle type
  *   - defaultBufferMinutes: same-day booking minimum lead time
  *
- * Falls back to safe defaults if GET /Settings is unavailable — backward-
+ * Falls back to safe defaults if GET /Settings is unavailable â€” backward-
  * compatible during the backend migration period.
  */
 
@@ -20,7 +20,7 @@ export const DEFAULT_SETTINGS = {
   siteLaunchDate: new Date('2026-06-01T00:00:00Z').toISOString(),
 };
 
-const CACHE_KEY = 'glanz.settings.v1';
+const CACHE_KEY = 'flowly.settings.v1';
 
 function readCache() {
   try {
@@ -68,7 +68,7 @@ const SettingsContext = createContext(DEFAULT_SETTINGS);
 export function SettingsProvider({ children }) {
   const cached = readCache();
   const [settings, setSettings] = useState(cached ?? DEFAULT_SETTINGS);
-  // If we have a cached value, treat as already loaded — no blocking spinner.
+  // If we have a cached value, treat as already loaded â€” no blocking spinner.
   const [isLoaded, setIsLoaded] = useState(!!cached);
 
   useEffect(() => {

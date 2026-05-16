@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ToggleLeft, ToggleRight, AlertTriangle, CheckCircle2, Info,
@@ -13,7 +13,7 @@ import { settingsAPI } from '../../api/settings';
 import { authAPI } from '../../api/auth';
 import AppModal from '../../components/shared/AppModal';
 
-/* ─── Dev flags stored in localStorage ──────────────────────────────────────*/
+/* â”€â”€â”€ Dev flags stored in localStorage â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€*/
 const DEV_FLAGS = [
   {
     key: 'DEV_BYPASS_REVIEW',
@@ -53,7 +53,7 @@ const DEV_FLAGS = [
   },
 ];
 
-/* ─── Backend feature flags ──────────────────────────────────────────────── */
+/* â”€â”€â”€ Backend feature flags â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const FEATURE_FLAG_META = {
   payments:         { label: 'Payment Processing',         description: 'Tap live/test payment collection.' },
   subscriptions:    { label: 'Subscription Plans',         description: 'Customer-facing subscription tiers.' },
@@ -63,19 +63,19 @@ const FEATURE_FLAG_META = {
   favoriteDetailer: { label: 'Favourite Detailer',         description: 'Customer can request a preferred detailer.' },
 };
 
-/* ─── Deployment readiness checklist ─────────────────────────────────────── */
+/* â”€â”€â”€ Deployment readiness checklist â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const DEPLOY_CHECKS = [
   // Payments
   { id: 'tap_live',          label: 'Tap live keys configured (backend appsettings)',               category: 'Payments' },
   { id: 'tap_webhooks',      label: 'Tap webhooks pointed at production URL',                       category: 'Payments' },
   { id: 'tap_webhook_secret',label: 'TapPayments:WebhookSecret set in Render env vars',            category: 'Payments' },
-  // Email (requires paid provider — SendGrid / Postmark / SES)
+  // Email (requires paid provider â€” SendGrid / Postmark / SES)
   { id: 'email_provider',    label: '[Paid] Email provider configured (SendGrid/Postmark/SES)',     category: 'Email' },
   { id: 'email_booking',     label: '[Paid] Booking confirmation email tested end-to-end',         category: 'Email' },
   { id: 'email_reset',       label: '[Paid] Password reset email tested end-to-end',               category: 'Email' },
   // Notifications
   { id: 'sms_live',          label: 'SMS provider using live credentials',                         category: 'Notifications' },
-  // Monitoring (requires Sentry account — free tier available)
+  // Monitoring (requires Sentry account â€” free tier available)
   { id: 'sentry_web',        label: '[Free tier] Sentry DSN configured in web app',                category: 'Monitoring' },
   { id: 'sentry_api',        label: '[Free tier] Sentry SDK added to .NET API',                    category: 'Monitoring' },
   { id: 'uptime_monitor',    label: '[Free] UptimeRobot or BetterUptime configured',               category: 'Monitoring' },
@@ -88,7 +88,7 @@ const DEPLOY_CHECKS = [
   { id: 'jwt_secret',        label: 'JwtSettings:SecretKey set in Render env vars (32+ chars)',    category: 'Infra' },
   { id: 'env_vars',          label: 'Frontend env vars pointing to production API',                category: 'Infra' },
   { id: 'cors',              label: 'CORS restricted to production domain only',                   category: 'Infra' },
-  { id: 'cors_render',       label: 'Render: Cors__AllowedOrigins__0=https://www.glanz.qa',       category: 'Infra' },
+  { id: 'cors_render',       label: 'Render: Cors__AllowedOrigins__0=https://www.flowly.qa',       category: 'Infra' },
   { id: 'vercel_api_url',    label: 'Vercel: VITE_API_BASE_URL set to Render URL',                category: 'Infra' },
   { id: 'https',             label: 'HTTPS enforced (HTTP redirects to HTTPS)',                    category: 'Infra' },
   // SEO
@@ -103,18 +103,18 @@ const DEPLOY_CHECKS = [
   { id: 'booking_e2e',       label: 'End-to-end booking flow tested with live payment',           category: 'E2E' },
 ];
 
-const CHECKLIST_KEY = 'glanz_deploy_checklist';
+const CHECKLIST_KEY = 'flowly_deploy_checklist';
 
 function loadChecklist() {
   try { return JSON.parse(localStorage.getItem(CHECKLIST_KEY) || '{}'); } catch { return {}; }
 }
 
-/* ─── Reset modes ────────────────────────────────────────────────────────── */
+/* â”€â”€â”€ Reset modes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const RESET_MODES = [
   {
     value: 'transactional_only',
     label: 'Transactional Only',
-    description: 'Safest reset — wipes operational data only.',
+    description: 'Safest reset â€” wipes operational data only.',
     deletes: ['Bookings & items', 'Customers & vehicles', 'Workers (staff)', 'Notifications & audit logs', 'Leads, referrals, feedback'],
     keeps: ['Packages, Services, Products', 'Subscription Plans', 'Offers', 'Job Positions', 'System Settings'],
     color: '#f59e0b',
@@ -130,14 +130,14 @@ const RESET_MODES = [
   {
     value: 'full',
     label: 'Full Reset',
-    description: 'Nuclear option — deletes everything except your admin account.',
+    description: 'Nuclear option â€” deletes everything except your admin account.',
     deletes: ['Bookings & items', 'Customers & vehicles', 'Workers (staff)', 'Packages, Services, Products', 'Subscription Plans & Packages', 'Offers', 'Job Positions & Applications', 'Notifications, Audit Logs', 'Leads, Referrals, Feedback'],
     keeps: ['Your admin account', 'System Settings (business config)'],
     color: '#ef4444',
   },
 ];
 
-/* ─── Subcomponents ──────────────────────────────────────────────────────── */
+/* â”€â”€â”€ Subcomponents â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 function DevToggle({ flag, value, onChange }) {
   const Icon = flag.icon;
   return (
@@ -192,7 +192,7 @@ function StatCard({ label, value, loading }) {
         <div className="h-7 w-12 mx-auto rounded-md bg-white/10 animate-pulse mb-1" />
       ) : (
         <p className="text-2xl font-bold tabular-nums text-[var(--heading-color)]">
-          {value?.toLocaleString() ?? '—'}
+          {value?.toLocaleString() ?? 'â€”'}
         </p>
       )}
       <p className="text-xs text-[var(--muted-color)] mt-0.5">{label}</p>
@@ -200,7 +200,7 @@ function StatCard({ label, value, loading }) {
   );
 }
 
-/* ─── Main page ──────────────────────────────────────────────────────────── */
+/* â”€â”€â”€ Main page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 export default function AdminDevSettings() {
   const features = useFeatures();
 
@@ -214,7 +214,7 @@ export default function AdminDevSettings() {
   const { sitePublished } = useSettings();
   const [isSavingPublish, setIsSavingPublish] = useState(false);
   const [publishError, setPublishError] = useState('');
-  const [hasGateToken, setHasGateToken] = useState(() => !!localStorage.getItem('glanz.site-gate-token'));
+  const [hasGateToken, setHasGateToken] = useState(() => !!localStorage.getItem('flowly.site-gate-token'));
 
   // DB stats
   const [dbStats, setDbStats] = useState(null);
@@ -242,7 +242,7 @@ export default function AdminDevSettings() {
   const [resetTestError,   setResetTestError]   = useState('');
 
   // Dev Testing Panel state
-  const TEST_MODE_KEY = 'glanz.dev-test-mode';
+  const TEST_MODE_KEY = 'flowly.dev-test-mode';
   const [testModeActive, setTestModeActive] = useState(() => !!localStorage.getItem(TEST_MODE_KEY));
   const [devOps, setDevOps] = useState({
     sim7d:    { loading: false, result: null, error: '' },
@@ -307,7 +307,7 @@ export default function AdminDevSettings() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('glanz.site-gate-token');
+    localStorage.removeItem('flowly.site-gate-token');
     setHasGateToken(false);
   };
 
@@ -399,7 +399,7 @@ export default function AdminDevSettings() {
       }}>
       <div className="container mx-auto px-4 max-w-4xl">
 
-        {/* ── Header ── */}
+        {/* â”€â”€ Header â”€â”€ */}
         <div className="mb-10">
           <div className="flex items-center gap-2 text-xs text-[var(--muted-color)] mb-4">
             <Link to="/admin" className="hover:text-primary transition">Dashboard</Link>
@@ -426,7 +426,7 @@ export default function AdminDevSettings() {
             <div className="mt-5 flex items-center justify-between gap-3 rounded-xl border border-amber-500/30 bg-amber-500/8 px-4 py-3">
               <div className="flex items-center gap-2 text-amber-400 text-sm font-semibold">
                 <ShieldAlert size={16} />
-                Dev flags are active — do not deploy with these enabled.
+                Dev flags are active â€” do not deploy with these enabled.
               </div>
               <button
                 onClick={clearAllDevFlags}
@@ -438,7 +438,7 @@ export default function AdminDevSettings() {
           )}
         </div>
 
-        {/* ── Launch Configuration + Publish ── */}
+        {/* â”€â”€ Launch Configuration + Publish â”€â”€ */}
         <section className="mb-10">
           <div className="rounded-2xl border border-white/10 bg-[#0a1020]/90 p-5 shadow-2xl backdrop-blur-xl">
             {/* Header row */}
@@ -527,7 +527,7 @@ export default function AdminDevSettings() {
           </div>
         </section>
 
-        {/* ── Environment & API Info ── */}
+        {/* â”€â”€ Environment & API Info â”€â”€ */}
         <section className="mb-10">
           <div className="flex items-center gap-2 mb-4">
             <Globe size={15} className="text-primary" />
@@ -540,7 +540,7 @@ export default function AdminDevSettings() {
             {[
               { label: 'Build Mode', value: buildMode, highlight: buildMode === 'production' ? 'green' : 'amber' },
               { label: 'API Base URL', value: apiUrl, highlight: apiUrl.includes('onrender.com') ? 'green' : 'rose' },
-              { label: 'Frontend Origin', value: typeof window !== 'undefined' ? window.location.origin : '—', highlight: null },
+              { label: 'Frontend Origin', value: typeof window !== 'undefined' ? window.location.origin : 'â€”', highlight: null },
             ].map(({ label, value, highlight }) => (
               <div key={label} className="flex items-center justify-between gap-4 px-5 py-3.5">
                 <p className="text-sm text-[var(--muted-color)]">{label}</p>
@@ -557,13 +557,13 @@ export default function AdminDevSettings() {
           </div>
           {!import.meta.env.VITE_API_BASE_URL && (
             <p className="mt-2 text-xs text-rose-400 ml-1">
-              ⚠ VITE_API_BASE_URL is not set — API calls use relative /api path. Set it to{' '}
-              <code className="bg-white/5 px-1 rounded">https://glanz-api.onrender.com/api</code> in Vercel dashboard.
+              âš  VITE_API_BASE_URL is not set â€” API calls use relative /api path. Set it to{' '}
+              <code className="bg-white/5 px-1 rounded">https://flowly-api.onrender.com/api</code> in Vercel dashboard.
             </p>
           )}
         </section>
 
-        {/* ── Database Stats ── */}
+        {/* â”€â”€ Database Stats â”€â”€ */}
         <section className="mb-10">
           <div className="flex items-center justify-between gap-3 mb-4">
             <div className="flex items-center gap-2">
@@ -598,7 +598,7 @@ export default function AdminDevSettings() {
           </div>
         </section>
 
-        {/* ── Dev flag toggles ── */}
+        {/* â”€â”€ Dev flag toggles â”€â”€ */}
         <section className="mb-10">
           <div className="flex items-center gap-2 mb-4">
             <Terminal size={15} className="text-primary" />
@@ -614,14 +614,14 @@ export default function AdminDevSettings() {
           </div>
         </section>
 
-        {/* ── Backend feature flags (read-only) ── */}
+        {/* â”€â”€ Backend feature flags (read-only) â”€â”€ */}
         <section className="mb-10">
           <div className="flex items-center gap-2 mb-4">
             <Info size={15} className="text-primary" />
             <h2 className="text-sm font-bold uppercase tracking-widest text-[var(--heading-color)]">
               Backend Feature Flags
             </h2>
-            <span className="text-xs text-[var(--muted-color)] ml-1">(read-only — change via admin settings)</span>
+            <span className="text-xs text-[var(--muted-color)] ml-1">(read-only â€” change via admin settings)</span>
           </div>
           <div className="glass-card divide-y divide-[var(--border-color)]">
             {Object.entries(FEATURE_FLAG_META).map(([key, meta]) => {
@@ -644,11 +644,11 @@ export default function AdminDevSettings() {
             })}
           </div>
           <p className="text-xs text-[var(--muted-color)] mt-2 ml-1">
-            Edit at <Link to="/admin/settings" className="text-primary hover:underline">Admin → Settings</Link>
+            Edit at <Link to="/admin/settings" className="text-primary hover:underline">Admin â†’ Settings</Link>
           </p>
         </section>
 
-        {/* ── Dev Testing Panel ── */}
+        {/* â”€â”€ Dev Testing Panel â”€â”€ */}
         <section className="mb-10">
           <div className="flex items-center justify-between gap-3 mb-4">
             <div className="flex items-center gap-2">
@@ -750,7 +750,7 @@ export default function AdminDevSettings() {
                         style={{ background: `${accent}15`, border: `1px solid ${accent}35`, color: accent }}
                       >
                         {op.loading
-                          ? <><Loader2 size={13} className="animate-spin" /> Running…</>
+                          ? <><Loader2 size={13} className="animate-spin" /> Runningâ€¦</>
                           : <><Icon size={13} /> {label}</>}
                       </button>
                     </div>
@@ -761,7 +761,7 @@ export default function AdminDevSettings() {
           </div>
         </section>
 
-        {/* ── Dev Auth Tools ── */}
+        {/* â”€â”€ Dev Auth Tools â”€â”€ */}
         <section className="mb-10">
           <div className="flex items-center gap-2 mb-4">
             <KeyRound size={15} className="text-primary" />
@@ -835,7 +835,7 @@ export default function AdminDevSettings() {
           </div>
         </section>
 
-        {/* ── Deployment readiness checklist ── */}
+        {/* â”€â”€ Deployment readiness checklist â”€â”€ */}
         <section className="mb-10">
           <div className="flex items-center justify-between gap-3 mb-4">
             <div className="flex items-center gap-2">
@@ -889,12 +889,12 @@ export default function AdminDevSettings() {
           {checklistDone === DEPLOY_CHECKS.length && (
             <div className="mt-4 flex items-center gap-2 text-green-400 text-sm font-semibold">
               <CheckCircle2 size={16} />
-              All checks passed — ready to deploy.
+              All checks passed â€” ready to deploy.
             </div>
           )}
         </section>
 
-        {/* ── Danger Zone ── */}
+        {/* â”€â”€ Danger Zone â”€â”€ */}
         <section className="mb-10">
           <div className="flex items-center gap-2 mb-4">
             <AlertTriangle size={15} className="text-rose-400" />
@@ -944,7 +944,7 @@ export default function AdminDevSettings() {
           </div>
         </section>
 
-        {/* ── Quick nav ── */}
+        {/* â”€â”€ Quick nav â”€â”€ */}
         <section>
           <div className="flex items-center gap-2 mb-4">
             <h2 className="text-sm font-bold uppercase tracking-widest text-[var(--heading-color)]">
@@ -971,7 +971,7 @@ export default function AdminDevSettings() {
 
       </div>
 
-      {/* ── Reset Database Modal ── */}
+      {/* â”€â”€ Reset Database Modal â”€â”€ */}
       <AppModal
         isOpen={resetModal}
         onClose={() => { if (!resetLoading) setResetModal(false); }}
@@ -1026,7 +1026,7 @@ export default function AdminDevSettings() {
                 <ul className="space-y-1">
                   {selectedMode.deletes.map(d => (
                     <li key={d} className="text-[var(--muted-color)] flex items-start gap-1">
-                      <span className="text-rose-400 mt-0.5">•</span> {d}
+                      <span className="text-rose-400 mt-0.5">â€¢</span> {d}
                     </li>
                   ))}
                 </ul>
@@ -1038,7 +1038,7 @@ export default function AdminDevSettings() {
                 <ul className="space-y-1">
                   {selectedMode.keeps.map(k => (
                     <li key={k} className="text-[var(--muted-color)] flex items-start gap-1">
-                      <span className="text-green-400 mt-0.5">•</span> {k}
+                      <span className="text-green-400 mt-0.5">â€¢</span> {k}
                     </li>
                   ))}
                 </ul>

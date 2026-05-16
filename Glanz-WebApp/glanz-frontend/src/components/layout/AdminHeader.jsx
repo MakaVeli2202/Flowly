@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Bell, LogOut, Sun, Moon, Globe, ChevronDown, CheckCheck, Menu, X, BookOpen, Users, Calendar, Clock, DollarSign, MapPin, Settings, Wrench, BarChart2, Package, UserCheck, Play, Pause, Car, AlertTriangle, Gift, Tag, Star, TrendingUp } from 'lucide-react';
+import { LayoutDashboard, Bell, LogOut, Sun, Moon, Globe, ChevronDown, CheckCheck, Menu, X, BookOpen, Users, Calendar, Clock, DollarSign, MapPin, Settings, Wrench, BarChart2, Package, UserCheck, Play, Pause, Car, AlertTriangle, Gift, Tag, Star, TrendingUp, Building2, CreditCard, ShoppingCart, Layers, Truck } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { notificationsAPI } from '../../api/notifications';
 import { subscribeToNotifications } from '../../api/notificationBus';
@@ -67,18 +67,23 @@ export function AdminHeader({ theme, onToggleTheme }) {
     { to: '/admin/live-map',            labelKey: 'navbar.liveMap',     icon: MapPin },
     { to: '/admin/analytics',          labelKey: 'navbar.analytics',   icon: TrendingUp },
     { to: '/admin/settings',            labelKey: 'common.settings',    icon: Settings },
-    { to: '/admin/dev-settings',        labelKey: 'navbar.devSettings', icon: Wrench },
-    { to: '/admin/translations',        labelKey: 'navbar.translations', icon: Globe },
+    { to: '/admin/org-settings',        labelKey: 'navbar.orgSettings', icon: Building2 },
+    { to: '/admin/billing',             labelKey: 'navbar.billing',     icon: CreditCard },
+    { to: '/admin/dev-settings',        labelKey: 'navbar.devSettings',      icon: Wrench },
+    { to: '/admin/translations',        labelKey: 'navbar.translations',     icon: Globe },
+    { to: '/admin/purchase-orders',     labelKey: 'navbar.purchaseOrders',   icon: Truck },
+    { to: '/admin/resources',           labelKey: 'navbar.resources',        icon: Layers },
+    { to: '/admin/pos',                 labelKey: 'navbar.pos',              icon: ShoppingCart },
   ];
 
   const ADMIN_GROUPS = [
     {
       titleKey: 'navbar.operations',
-      links: ['/admin/bookings', '/admin/workers/schedule', '/admin/workers/management', '/admin/live-map', '/admin/analytics', '/admin/payroll'],
+      links: ['/admin/bookings', '/admin/workers/schedule', '/admin/workers/management', '/admin/live-map', '/admin/analytics', '/admin/payroll', '/admin/pos'],
     },
     {
       titleKey: 'navbar.management',
-      links: ['/admin', '/admin/staff', '/admin/settings', '/admin/dev-settings', '/admin/translations'],
+      links: ['/admin', '/admin/staff', '/admin/settings', '/admin/org-settings', '/admin/billing', '/admin/purchase-orders', '/admin/resources', '/admin/dev-settings', '/admin/translations'],
     },
   ];
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { authAPI } from '../../api/auth';
 import AppModal from '../../components/shared/AppModal';
 import { useToast } from '../../components/shared/Toast';
@@ -34,24 +34,24 @@ const UI_BY_LANG = {
     paidSuffix: 'paid',
   },
   ar: {
-    subtitle: 'نظرة عامة شهرية على الرواتب وتتبع المدفوعات لجميع العاملين النشطين.',
-    totalPayroll: 'إجمالي الرواتب',
-    jobsDone: 'المهام المنجزة',
-    revenue: 'الإيرادات',
-    paid: 'مدفوع',
-    periodDesc: (month, year) => `${month} ${year} - اضغط على كشف الراتب للعرض أو التحميل.`,
-    noData: 'لا توجد بيانات رواتب لهذه الفترة.',
-    noDataHint: 'سيظهر العاملون الذين لديهم حجوزات مكتملة خلال هذا الشهر هنا.',
-    worker: 'العامل',
-    salary: 'الراتب',
-    jobs: 'المهام',
-    status: 'الحالة',
-    paySlip: 'كشف الراتب',
-    notSet: 'غير محدد',
-    markPaid: 'تحديد كمدفوع',
-    salaryUnset: 'الراتب غير محدد',
-    total: 'الإجمالي',
-    paidSuffix: 'مدفوع',
+    subtitle: 'Ù†Ø¸Ø±Ø© Ø¹Ø§Ù…Ø© Ø´Ù‡Ø±ÙŠØ© Ø¹Ù„Ù‰ Ø§Ù„Ø±ÙˆØ§ØªØ¨ ÙˆØªØªØ¨Ø¹ Ø§Ù„Ù…Ø¯ÙÙˆØ¹Ø§Øª Ù„Ø¬Ù…ÙŠØ¹ Ø§Ù„Ø¹Ø§Ù…Ù„ÙŠÙ† Ø§Ù„Ù†Ø´Ø·ÙŠÙ†.',
+    totalPayroll: 'Ø¥Ø¬Ù…Ø§Ù„ÙŠ Ø§Ù„Ø±ÙˆØ§ØªØ¨',
+    jobsDone: 'Ø§Ù„Ù…Ù‡Ø§Ù… Ø§Ù„Ù…Ù†Ø¬Ø²Ø©',
+    revenue: 'Ø§Ù„Ø¥ÙŠØ±Ø§Ø¯Ø§Øª',
+    paid: 'Ù…Ø¯ÙÙˆØ¹',
+    periodDesc: (month, year) => `${month} ${year} - Ø§Ø¶ØºØ· Ø¹Ù„Ù‰ ÙƒØ´Ù Ø§Ù„Ø±Ø§ØªØ¨ Ù„Ù„Ø¹Ø±Ø¶ Ø£Ùˆ Ø§Ù„ØªØ­Ù…ÙŠÙ„.`,
+    noData: 'Ù„Ø§ ØªÙˆØ¬Ø¯ Ø¨ÙŠØ§Ù†Ø§Øª Ø±ÙˆØ§ØªØ¨ Ù„Ù‡Ø°Ù‡ Ø§Ù„ÙØªØ±Ø©.',
+    noDataHint: 'Ø³ÙŠØ¸Ù‡Ø± Ø§Ù„Ø¹Ø§Ù…Ù„ÙˆÙ† Ø§Ù„Ø°ÙŠÙ† Ù„Ø¯ÙŠÙ‡Ù… Ø­Ø¬ÙˆØ²Ø§Øª Ù…ÙƒØªÙ…Ù„Ø© Ø®Ù„Ø§Ù„ Ù‡Ø°Ø§ Ø§Ù„Ø´Ù‡Ø± Ù‡Ù†Ø§.',
+    worker: 'Ø§Ù„Ø¹Ø§Ù…Ù„',
+    salary: 'Ø§Ù„Ø±Ø§ØªØ¨',
+    jobs: 'Ø§Ù„Ù…Ù‡Ø§Ù…',
+    status: 'Ø§Ù„Ø­Ø§Ù„Ø©',
+    paySlip: 'ÙƒØ´Ù Ø§Ù„Ø±Ø§ØªØ¨',
+    notSet: 'ØºÙŠØ± Ù…Ø­Ø¯Ø¯',
+    markPaid: 'ØªØ­Ø¯ÙŠØ¯ ÙƒÙ…Ø¯ÙÙˆØ¹',
+    salaryUnset: 'Ø§Ù„Ø±Ø§ØªØ¨ ØºÙŠØ± Ù…Ø­Ø¯Ø¯',
+    total: 'Ø§Ù„Ø¥Ø¬Ù…Ø§Ù„ÙŠ',
+    paidSuffix: 'Ù…Ø¯ÙÙˆØ¹',
   },
   de: {
     subtitle: 'Monatliche Gehaltsubersicht und Zahlungsverfolgung fur alle aktiven Mitarbeiter.',
@@ -160,7 +160,7 @@ export default function AdminPayroll() {
 
         <div className="container mx-auto px-4 max-w-4xl relative z-10 space-y-6">
 
-          {/* ── Header ── */}
+          {/* â”€â”€ Header â”€â”€ */}
           <div>
             <div className="flex items-center gap-3 mb-2">
               <span className="h-px w-7" style={{ background:'linear-gradient(90deg,transparent,#c8a96b)' }} />
@@ -177,7 +177,7 @@ export default function AdminPayroll() {
             <p className="text-sm text-[var(--muted-color)] ml-12">{ui.subtitle}</p>
           </div>
 
-          {/* ── Stats row ── */}
+          {/* â”€â”€ Stats row â”€â”€ */}
           {payroll.length > 0 && (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {[
@@ -194,7 +194,7 @@ export default function AdminPayroll() {
             </div>
           )}
 
-          {/* ── Payroll Table card ── */}
+          {/* â”€â”€ Payroll Table card â”€â”€ */}
           <div className="glass-card relative overflow-hidden card-stagger">
             <div className="absolute top-0 left-0 right-0 h-[2px]"
               style={{ background:'linear-gradient(90deg,transparent,#c8a96b 38%,#10b981 62%,transparent)' }} />
@@ -269,7 +269,7 @@ export default function AdminPayroll() {
                                 onClick={() => handleMarkPaid(p)}
                                 className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold border transition hover:opacity-80 disabled:opacity-50"
                                 style={{ background:'rgba(245,158,11,.10)', borderColor:'rgba(245,158,11,.28)', color:'#fbbf24' }}>
-                                {payrollMarking === p.workerId ? '…' : <><Clock size={10} /> {ui.markPaid}</>}
+                                {payrollMarking === p.workerId ? 'â€¦' : <><Clock size={10} /> {ui.markPaid}</>}
                               </button>
                             ) : (
                               <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold"
@@ -312,11 +312,11 @@ export default function AdminPayroll() {
         </div>
       </div>
 
-      {/* ── Pay Slip Modal ── */}
+      {/* â”€â”€ Pay Slip Modal â”€â”€ */}
       <AppModal isOpen={detailsModal.open} title="Pay Slip" message="" variant="info" onClose={closeDetailsModal}>
         {detailsModal.worker && (() => {
           const worker = detailsModal.worker;
-          const companyName = business.name || 'Glanz';
+          const companyName = business.name || 'Flowly';
           const companyAddress = business.location || '';
           const companyPhone = business.phone || '';
           const companyEmail = business.email || '';
@@ -329,7 +329,7 @@ export default function AdminPayroll() {
           const htmlSlip = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Pay Slip - ${worker.workerName}</title>
 <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#333;padding:20px}.payslip{max-width:600px;margin:0 auto;border:2px solid #c8a96b}.header{background:#c8a96b;color:white;padding:20px;text-align:center}.header h1{font-size:24px;margin-bottom:5px}.header p{font-size:14px;opacity:.9}.company-info{background:#f9f9f9;padding:15px 20px;border-bottom:1px solid #ddd}.company-info p{margin:2px 0;font-size:11px;color:#666}table{width:100%;border-collapse:collapse}th,td{padding:10px 15px;text-align:left;border-bottom:1px solid #eee}th{background:#f5f5f5;font-weight:bold;font-size:10px;text-transform:uppercase;color:#666}.number{text-align:right}.label-col{width:70%}.value-col{width:30%}.summary{background:${statusBg};padding:20px;text-align:center}.summary .amount{font-size:24px;font-weight:bold;color:#c8a96b}.summary .status{font-size:14px;font-weight:bold;color:${statusColor}}.footer{background:#f9f9f9;padding:15px 20px;font-size:10px;color:#999;text-align:center;border-top:1px solid #ddd}.status-badge{display:inline-block;padding:4px 12px;border-radius:12px;font-weight:bold;font-size:11px;background:${statusBg};color:${statusColor}}</style>
 </head><body><div class="payslip"><div class="header"><h1>${companyName}</h1><p>PAYSLIP</p></div>
-<div class="company-info"><p><strong>Address:</strong> ${companyAddress||'Qatar'}</p><p><strong>Phone:</strong> ${companyPhone||'+974XXXXXXXX'}</p><p><strong>Email:</strong> ${companyEmail||'info@glanz.qa'}</p></div>
+<div class="company-info"><p><strong>Address:</strong> ${companyAddress||'Qatar'}</p><p><strong>Phone:</strong> ${companyPhone||'+974XXXXXXXX'}</p><p><strong>Email:</strong> ${companyEmail||'info@flowly.qa'}</p></div>
 <table><thead><tr><th colspan="2">Employee Information</th></tr></thead><tbody>
 <tr><td class="label-col"><strong>Employee Name</strong></td><td class="value-col">${worker.workerName}</td></tr>
 <tr><td class="label-col"><strong>Role</strong></td><td class="value-col">Detailer</td></tr>
@@ -366,7 +366,7 @@ export default function AdminPayroll() {
                   <p className="text-xs text-white/90">PAYSLIP</p>
                 </div>
                 <div className="px-4 py-2 text-xs" style={{ background:'rgba(200,169,107,.08)', borderBottom:'1px solid rgba(200,169,107,.2)' }}>
-                  <p className="text-[var(--muted-color)]">{companyAddress||'Qatar'} · {companyPhone||'+974XXXXXXXX'} · {companyEmail||'info@glanz.qa'}</p>
+                  <p className="text-[var(--muted-color)]">{companyAddress||'Qatar'} Â· {companyPhone||'+974XXXXXXXX'} Â· {companyEmail||'info@flowly.qa'}</p>
                 </div>
                 <table className="w-full text-xs">
                   <thead>

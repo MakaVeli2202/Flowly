@@ -76,6 +76,23 @@ namespace Glanz.API.DTOs
 
         [StringLength(100)]
         public string? IBAN { get; set; }
+
+        /// <summary>"Driver" | "Helper" | null</summary>
+        [StringLength(20)]
+        public string? VanRole { get; set; }
+
+        /// <summary>Staff ID of the driver. Only required when VanRole == "Helper".</summary>
+        public int? DriverId { get; set; }
+    }
+
+    public class UpdateWorkerVanRoleDto
+    {
+        /// <summary>"Driver" | "Helper" | null to clear.</summary>
+        [StringLength(20)]
+        public string? VanRole { get; set; }
+
+        /// <summary>Required when VanRole == "Helper".</summary>
+        public int? DriverId { get; set; }
     }
 
     public class LoginDto
@@ -141,6 +158,12 @@ namespace Glanz.API.DTOs
         public List<string>? Skills { get; set; }
         public bool MustChangePassword { get; set; }
         public bool AllowPreferredWorker { get; set; }
+        /// <summary>"Driver" | "Helper" | null</summary>
+        public string? VanRole { get; set; }
+        /// <summary>Staff ID of the driver this helper is linked to.</summary>
+        public int? DriverId { get; set; }
+        /// <summary>Display name of the linked driver (populated when VanRole == "Helper").</summary>
+        public string? DriverName { get; set; }
     }
 
     /// <summary>Per-day shift override for a single day of week.</summary>

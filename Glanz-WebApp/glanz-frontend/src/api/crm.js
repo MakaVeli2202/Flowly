@@ -18,6 +18,23 @@ export const crmAPI = {
     return response.data;
   }),
 
+  exportCustomersCsv: (segment) => {
+    const params = segment && segment !== 'All' ? `?segment=${segment}` : '';
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    const a = document.createElement('a');
+    a.href = `${apiClient.defaults.baseURL}/Crm/customers/export${params}`;
+    // Trigger via fetch so auth header is sent, then download blob
+    return fetch(a.href, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.blob())
+      .then(blob => {
+        const url = URL.createObjectURL(blob);
+        a.href = url;
+        a.download = `customers-${new Date().toISOString().slice(0,10)}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+  },
+
   getCustomer: async (id) => withRetry(async () => {
     const response = await apiClient.get(`/Crm/customer/${id}`);
     return response.data;
@@ -34,6 +51,16 @@ export const crmAPI = {
       tag,
       remove
     });
+    return response.data;
+  }),
+
+  bulkMessage: async (customerIds, message, channel = 'push') => withRetry(async () => {
+    const response = await apiClient.post('/Crm/customers/bulk-message', { customerIds, message, channel });
+    return response.data;
+  }),
+
+  getCustomerTimeline: async (id) => withRetry(async () => {
+    const response = await apiClient.get(`/Crm/customers/${id}/timeline`);
     return response.data;
   }),
 

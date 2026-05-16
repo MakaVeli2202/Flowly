@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Glanz.API.Data;
 using Glanz.API.Models;
+using Glanz.API.Modules.RecurringBookings;
+using Glanz.API.Platform.Messaging;
 
 namespace Glanz.API.Services
 {
@@ -100,6 +102,14 @@ namespace Glanz.API.Services
                     _logger.LogInformation("[Maintenance] Pruned {Count} old notifications.", cleaned);
                 _lastNotificationCleanup = DateTime.UtcNow;
             }
+
+            // Recurring bookings - process rules due today (runs every tick, service guards against duplicates via NextScheduledDate)
+            var recurringService = scope.ServiceProvider.GetRequiredService<IRecurringBookingService>();
+            await recurringService.ProcessDueRulesAsync(ct);
+
+            // SMS/WhatsApp booking reminders
+            var reminderJob = scope.ServiceProvider.GetRequiredService<BookingReminderJob>();
+            await reminderJob.RunAsync(ct);
         }
 
         // ── Task 1: Expired slot reservations ────────────────────────────────────────

@@ -22,6 +22,43 @@ namespace Glanz.API.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Glanz.API.Models.AssetCategory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Icon")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("OrgId")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("PricingMultiplier")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrgId");
+
+                    b.ToTable("AssetCategories");
+                });
+
             modelBuilder.Entity("Glanz.API.Models.AttendanceLog", b =>
                 {
                     b.Property<int>("Id")
@@ -42,6 +79,9 @@ namespace Glanz.API.Migrations
                     b.Property<string>("Note")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
+
+                    b.Property<int?>("OrgId")
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("ShiftDate")
                         .HasColumnType("timestamp with time zone");
@@ -87,6 +127,9 @@ namespace Glanz.API.Migrations
                     b.Property<string>("Metadata")
                         .HasColumnType("text");
 
+                    b.Property<int?>("OrgId")
+                        .HasColumnType("integer");
+
                     b.Property<bool>("Success")
                         .HasColumnType("boolean");
 
@@ -109,6 +152,51 @@ namespace Glanz.API.Migrations
                     b.ToTable("AuditLogs");
                 });
 
+            modelBuilder.Entity("Glanz.API.Models.AutomationRule", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ActionType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("ConfigJson")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("DelayMinutes")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("OrgId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("TriggerEvent")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrgId");
+
+                    b.ToTable("AutomationRules");
+                });
+
             modelBuilder.Entity("Glanz.API.Models.Availability", b =>
                 {
                     b.Property<int>("Id")
@@ -127,6 +215,9 @@ namespace Glanz.API.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<int>("MaxBookings")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("OrgId")
                         .HasColumnType("integer");
 
                     b.Property<string>("TimeSlot")
@@ -224,6 +315,9 @@ namespace Glanz.API.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<int?>("OrgId")
+                        .HasColumnType("integer");
+
                     b.Property<int>("PaymentStatus")
                         .HasColumnType("integer");
 
@@ -233,6 +327,9 @@ namespace Glanz.API.Migrations
                     b.Property<string>("ReferralCode")
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)");
+
+                    b.Property<DateTime?>("ReminderSentAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("ReschedulePreferredDate")
                         .HasColumnType("text");
@@ -353,6 +450,9 @@ namespace Glanz.API.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<int?>("OrgId")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("BookingId");
@@ -374,6 +474,9 @@ namespace Glanz.API.Migrations
                     b.Property<decimal>("ItemCost")
                         .HasPrecision(10, 2)
                         .HasColumnType("decimal(10,2)");
+
+                    b.Property<int?>("OrgId")
+                        .HasColumnType("integer");
 
                     b.Property<int>("PackageId")
                         .HasColumnType("integer");
@@ -420,6 +523,9 @@ namespace Glanz.API.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
+                    b.Property<int?>("OrgId")
+                        .HasColumnType("integer");
+
                     b.Property<int>("PhotoType")
                         .HasColumnType("integer");
 
@@ -433,6 +539,166 @@ namespace Glanz.API.Migrations
                     b.HasIndex("UploadedByWorkerId");
 
                     b.ToTable("BookingPhotos");
+                });
+
+            modelBuilder.Entity("Glanz.API.Models.BookingRule", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ConfigJson")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("OrgId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("RuleType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrgId");
+
+                    b.ToTable("BookingRules");
+                });
+
+            modelBuilder.Entity("Glanz.API.Models.ClientAsset", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("AssetCategoryId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("AttributesJson")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("CustomerId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("OrgId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssetCategoryId");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("OrgId", "CustomerId");
+
+                    b.ToTable("ClientAssets");
+                });
+
+            modelBuilder.Entity("Glanz.API.Models.CustomFieldDefinition", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("EntityType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("FieldKey")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("FieldType")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsRequired")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("OptionsJson")
+                        .HasColumnType("text");
+
+                    b.Property<int>("OrgId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrgId", "EntityType", "FieldKey")
+                        .IsUnique();
+
+                    b.ToTable("CustomFieldDefinitions");
+                });
+
+            modelBuilder.Entity("Glanz.API.Models.CustomFieldValue", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("EntityId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("EntityType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int>("FieldDefinitionId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("OrgId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Value")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FieldDefinitionId");
+
+                    b.HasIndex("OrgId", "EntityType", "EntityId", "FieldDefinitionId")
+                        .IsUnique();
+
+                    b.ToTable("CustomFieldValues");
                 });
 
             modelBuilder.Entity("Glanz.API.Models.CustomerFeedback", b =>
@@ -457,6 +723,9 @@ namespace Glanz.API.Migrations
 
                     b.Property<bool>("IsResolved")
                         .HasColumnType("boolean");
+
+                    b.Property<int?>("OrgId")
+                        .HasColumnType("integer");
 
                     b.Property<int>("Rating")
                         .HasColumnType("integer");
@@ -485,6 +754,101 @@ namespace Glanz.API.Migrations
                     b.HasIndex("UserId", "CreatedAt");
 
                     b.ToTable("CustomerFeedbacks");
+                });
+
+            modelBuilder.Entity("Glanz.API.Models.DomainEvent", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("CorrelationId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int?>("EntityId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("EntityType")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime>("OccurredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("OrgId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("PayloadJson")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("ProcessedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProcessedAt");
+
+                    b.HasIndex("OrgId", "EventType", "OccurredAt");
+
+                    b.ToTable("DomainEvents");
+                });
+
+            modelBuilder.Entity("Glanz.API.Models.IndustryTemplate", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("DefaultAssetCategoriesJson")
+                        .HasColumnType("text");
+
+                    b.Property<string>("DefaultAutomationRulesJson")
+                        .HasColumnType("text");
+
+                    b.Property<string>("DefaultChecklistTemplatesJson")
+                        .HasColumnType("text");
+
+                    b.Property<string>("DefaultCustomFieldsJson")
+                        .HasColumnType("text");
+
+                    b.Property<string>("DefaultServiceTemplatesJson")
+                        .HasColumnType("text");
+
+                    b.Property<string>("DefaultWorkflowRulesJson")
+                        .HasColumnType("text");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("TerminologyJson")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Key")
+                        .IsUnique();
+
+                    b.ToTable("IndustryTemplates");
                 });
 
             modelBuilder.Entity("Glanz.API.Models.JobApplication", b =>
@@ -548,6 +912,9 @@ namespace Glanz.API.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
+                    b.Property<int?>("OrgId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Phone")
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
@@ -603,6 +970,9 @@ namespace Glanz.API.Migrations
                     b.Property<string>("Location")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
+
+                    b.Property<int?>("OrgId")
+                        .HasColumnType("integer");
 
                     b.Property<int>("Rank")
                         .HasColumnType("integer");
@@ -668,6 +1038,9 @@ namespace Glanz.API.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<int?>("OrgId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Phone")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -729,6 +1102,9 @@ namespace Glanz.API.Migrations
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
+
+                    b.Property<int?>("OrgId")
+                        .HasColumnType("integer");
 
                     b.Property<int>("Type")
                         .HasColumnType("integer");
@@ -797,6 +1173,9 @@ namespace Glanz.API.Migrations
                         .HasMaxLength(120)
                         .HasColumnType("character varying(120)");
 
+                    b.Property<int?>("OrgId")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime?>("StartsAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -812,6 +1191,219 @@ namespace Glanz.API.Migrations
                         .IsUnique();
 
                     b.ToTable("Offers");
+                });
+
+            modelBuilder.Entity("Glanz.API.Models.Organization", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("BillingEmail")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DefaultCurrency")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("DefaultLocale")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("DefaultTimezone")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("IndustryType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Slug")
+                        .IsUnique();
+
+                    b.ToTable("Organizations");
+                });
+
+            modelBuilder.Entity("Glanz.API.Models.OrganizationBranding", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CustomDomain")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<bool>("CustomDomainVerified")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("FaviconUrl")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("LogoUrl")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<int>("OrgId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("PrimaryColor")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("SecondaryColor")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<bool>("WhiteLabelEnabled")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomDomain")
+                        .IsUnique()
+                        .HasFilter("\"CustomDomain\" IS NOT NULL");
+
+                    b.HasIndex("OrgId")
+                        .IsUnique();
+
+                    b.ToTable("OrganizationBrandings");
+                });
+
+            modelBuilder.Entity("Glanz.API.Models.OrganizationLocation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("OrgId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Timezone")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrgId");
+
+                    b.ToTable("OrganizationLocations");
+                });
+
+            modelBuilder.Entity("Glanz.API.Models.OrganizationSubscription", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("BillingCycle")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<DateTime?>("CancelledAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CurrentPeriodEnd")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CurrentPeriodStart")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("OrgId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("PlanId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("StripeCustomerId")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<string>("StripePriceId")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<string>("StripeSubscriptionId")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<DateTime?>("TrialEndsAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PlanId");
+
+                    b.HasIndex("OrgId", "Status");
+
+                    b.ToTable("OrganizationSubscriptions");
                 });
 
             modelBuilder.Entity("Glanz.API.Models.Package", b =>
@@ -843,6 +1435,9 @@ namespace Glanz.API.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<int?>("OrgId")
+                        .HasColumnType("integer");
+
                     b.Property<decimal>("Price")
                         .HasPrecision(10, 2)
                         .HasColumnType("decimal(10,2)");
@@ -873,6 +1468,9 @@ namespace Glanz.API.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("OrgId")
+                        .HasColumnType("integer");
 
                     b.Property<int>("PackageId")
                         .HasColumnType("integer");
@@ -915,6 +1513,9 @@ namespace Glanz.API.Migrations
                     b.Property<DateTime>("LastHeartbeat")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int?>("OrgId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Page")
                         .IsRequired()
                         .HasMaxLength(255)
@@ -937,6 +1538,86 @@ namespace Glanz.API.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("PageViews");
+                });
+
+            modelBuilder.Entity("Glanz.API.Models.Permission", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Module")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Key")
+                        .IsUnique();
+
+                    b.ToTable("Permissions");
+                });
+
+            modelBuilder.Entity("Glanz.API.Models.PlatformPlan", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AITokenMonthlyLimit")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("AnnualPrice")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("FeaturesJson")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("MaxBookingsPerMonth")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MaxLocations")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MaxStaff")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("MonthlyPrice")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("PlatformPlans");
                 });
 
             modelBuilder.Entity("Glanz.API.Models.Product", b =>
@@ -965,6 +1646,9 @@ namespace Glanz.API.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<int?>("OrgId")
+                        .HasColumnType("integer");
+
                     b.Property<int>("StockQuantity")
                         .HasColumnType("integer");
 
@@ -986,6 +1670,168 @@ namespace Glanz.API.Migrations
                     b.ToTable("Products");
                 });
 
+            modelBuilder.Entity("Glanz.API.Models.PurchaseOrder", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("ExpectedDelivery")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("OrderNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime?>("OrderedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("OrgId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("ReceivedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("SupplierId")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("TotalAmount")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SupplierId");
+
+                    b.ToTable("PurchaseOrders");
+                });
+
+            modelBuilder.Entity("Glanz.API.Models.PurchaseOrderItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int?>("ProductId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("PurchaseOrderId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("UnitCost")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("PurchaseOrderId");
+
+                    b.ToTable("PurchaseOrderItems");
+                });
+
+            modelBuilder.Entity("Glanz.API.Models.RecurringBookingRule", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CustomerAddress")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int?>("DayOfMonth")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("DayOfWeek")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Frequency")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("NextScheduledDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("OrgId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("PackageIdsJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("PreferredTimeSlot")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<int?>("PreferredWorkerId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("VehicleMake")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("VehicleModel")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("VehicleType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("VehicleYear")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("RecurringBookingRules");
+                });
+
             modelBuilder.Entity("Glanz.API.Models.Referral", b =>
                 {
                     b.Property<int>("Id")
@@ -1002,6 +1848,9 @@ namespace Glanz.API.Migrations
 
                     b.Property<DateTime?>("FirstBookingAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("OrgId")
+                        .HasColumnType("integer");
 
                     b.Property<int>("ReferredUserId")
                         .HasColumnType("integer");
@@ -1031,6 +1880,98 @@ namespace Glanz.API.Migrations
                     b.ToTable("Referrals");
                 });
 
+            modelBuilder.Entity("Glanz.API.Models.Resource", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Capacity")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<int?>("LocationId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("OrgId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrgId");
+
+                    b.ToTable("Resources");
+                });
+
+            modelBuilder.Entity("Glanz.API.Models.ResourceBooking", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BookingId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("EndAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("ResourceId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("StartAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BookingId");
+
+                    b.HasIndex("ResourceId");
+
+                    b.ToTable("ResourceBookings");
+                });
+
+            modelBuilder.Entity("Glanz.API.Models.RolePermission", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("PermissionId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PermissionId");
+
+                    b.HasIndex("Role", "PermissionId")
+                        .IsUnique();
+
+                    b.ToTable("RolePermissions");
+                });
+
             modelBuilder.Entity("Glanz.API.Models.Service", b =>
                 {
                     b.Property<int>("Id")
@@ -1056,6 +1997,9 @@ namespace Glanz.API.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<int?>("OrgId")
+                        .HasColumnType("integer");
+
                     b.Property<int>("SortOrder")
                         .HasColumnType("integer");
 
@@ -1074,6 +2018,9 @@ namespace Glanz.API.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("OrgId")
+                        .HasColumnType("integer");
 
                     b.Property<int>("ProductId")
                         .HasColumnType("integer");
@@ -1127,6 +2074,9 @@ namespace Glanz.API.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<int?>("OrgId")
+                        .HasColumnType("integer");
+
                     b.Property<int>("PackageId")
                         .HasColumnType("integer");
 
@@ -1176,6 +2126,9 @@ namespace Glanz.API.Migrations
                     b.Property<DateTime>("ExpiresAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int?>("OrgId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("PaymentIntentId")
                         .IsRequired()
                         .HasMaxLength(120)
@@ -1212,6 +2165,9 @@ namespace Glanz.API.Migrations
 
                     b.Property<string>("DaySchedulesJson")
                         .HasColumnType("text");
+
+                    b.Property<int?>("DriverId")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -1253,6 +2209,9 @@ namespace Glanz.API.Migrations
 
                     b.Property<bool>("MustChangePassword")
                         .HasColumnType("boolean");
+
+                    b.Property<int?>("OrgId")
+                        .HasColumnType("integer");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
@@ -1306,6 +2265,10 @@ namespace Glanz.API.Migrations
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("VanRole")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
                     b.Property<string>("WorkingDays")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -1346,6 +2309,9 @@ namespace Glanz.API.Migrations
                     b.Property<string>("Notes")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
+
+                    b.Property<int?>("OrgId")
+                        .HasColumnType("integer");
 
                     b.Property<decimal>("OriginalAmount")
                         .HasPrecision(10, 2)
@@ -1427,6 +2393,9 @@ namespace Glanz.API.Migrations
                         .HasMaxLength(120)
                         .HasColumnType("character varying(120)");
 
+                    b.Property<int?>("OrgId")
+                        .HasColumnType("integer");
+
                     b.Property<decimal>("Price")
                         .HasPrecision(10, 2)
                         .HasColumnType("decimal(10,2)");
@@ -1460,6 +2429,9 @@ namespace Glanz.API.Migrations
                     b.Property<int>("DisplayOrder")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("OrgId")
+                        .HasColumnType("integer");
+
                     b.Property<int>("PlanId")
                         .HasColumnType("integer");
 
@@ -1486,6 +2458,9 @@ namespace Glanz.API.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<int?>("OrgId")
+                        .HasColumnType("integer");
+
                     b.Property<int>("PlanId")
                         .HasColumnType("integer");
 
@@ -1507,6 +2482,9 @@ namespace Glanz.API.Migrations
                     b.Property<int>("DisplayOrder")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("OrgId")
+                        .HasColumnType("integer");
+
                     b.Property<int>("PackageId")
                         .HasColumnType("integer");
 
@@ -1520,6 +2498,52 @@ namespace Glanz.API.Migrations
                     b.HasIndex("PlanId", "DisplayOrder");
 
                     b.ToTable("SubscriptionPlanPackages");
+                });
+
+            modelBuilder.Entity("Glanz.API.Models.Supplier", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("ContactPerson")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int?>("OrgId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Suppliers");
                 });
 
             modelBuilder.Entity("Glanz.API.Models.SystemSetting", b =>
@@ -1541,6 +2565,131 @@ namespace Glanz.API.Migrations
                     b.ToTable("SystemSettings");
                 });
 
+            modelBuilder.Entity("Glanz.API.Models.TenantConfigurationSnapshot", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("BrandingJson")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("CustomFieldSchemaJson")
+                        .HasColumnType("text");
+
+                    b.Property<string>("FeatureFlagsJson")
+                        .HasColumnType("text");
+
+                    b.Property<string>("IndustryTemplateKey")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("OrgId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("TerminologyJson")
+                        .HasColumnType("text");
+
+                    b.Property<int>("Version")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("WorkflowTemplatesJson")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrgId", "Version")
+                        .IsUnique();
+
+                    b.ToTable("TenantConfigurationSnapshots");
+                });
+
+            modelBuilder.Entity("Glanz.API.Models.TenantFeatureFlag", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ConfigJson")
+                        .HasColumnType("text");
+
+                    b.Property<string>("FeatureKey")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("OrgId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrgId", "FeatureKey")
+                        .IsUnique();
+
+                    b.ToTable("TenantFeatureFlags");
+                });
+
+            modelBuilder.Entity("Glanz.API.Models.UsageRecord", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<long>("AITokensUsed")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("BookingCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Month")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("OrgId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("SMSSent")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("StaffCount")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("StorageGb")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,4)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrgId", "Year", "Month")
+                        .IsUnique();
+
+                    b.ToTable("UsageRecords");
+                });
+
             modelBuilder.Entity("Glanz.API.Models.User", b =>
                 {
                     b.Property<int>("Id")
@@ -1553,6 +2702,9 @@ namespace Glanz.API.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DeletionRequestedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Email")
@@ -1616,6 +2768,9 @@ namespace Glanz.API.Migrations
 
                     b.Property<string>("Notes")
                         .HasColumnType("text");
+
+                    b.Property<int?>("OrgId")
+                        .HasColumnType("integer");
 
                     b.Property<string>("OtherAddress")
                         .HasMaxLength(500)
@@ -1734,6 +2889,9 @@ namespace Glanz.API.Migrations
                     b.Property<int>("OfferId")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("OrgId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("PersonalCode")
                         .IsRequired()
                         .HasMaxLength(80)
@@ -1771,6 +2929,9 @@ namespace Glanz.API.Migrations
 
                     b.Property<DateTime>("NextBillingDate")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("OrgId")
+                        .HasColumnType("integer");
 
                     b.Property<int>("PlanId")
                         .HasColumnType("integer");
@@ -1830,6 +2991,9 @@ namespace Glanz.API.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<int?>("OrgId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("PlateNumber")
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
@@ -1849,6 +3013,47 @@ namespace Glanz.API.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Vehicles");
+                });
+
+            modelBuilder.Entity("Glanz.API.Models.WaitlistEntry", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("OrgId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("PackageId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("PreferredTimeSlot")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<DateTime>("RequestedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PackageId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("WaitlistEntries");
                 });
 
             modelBuilder.Entity("Glanz.API.Models.WorkerLocation", b =>
@@ -1871,6 +3076,9 @@ namespace Glanz.API.Migrations
                     b.Property<double>("Longitude")
                         .HasColumnType("double precision");
 
+                    b.Property<int?>("OrgId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Status")
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
@@ -1890,6 +3098,17 @@ namespace Glanz.API.Migrations
                     b.ToTable("WorkerLocations");
                 });
 
+            modelBuilder.Entity("Glanz.API.Models.AssetCategory", b =>
+                {
+                    b.HasOne("Glanz.API.Models.Organization", "Organization")
+                        .WithMany()
+                        .HasForeignKey("OrgId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Organization");
+                });
+
             modelBuilder.Entity("Glanz.API.Models.AttendanceLog", b =>
                 {
                     b.HasOne("Glanz.API.Models.Staff", "Staff")
@@ -1899,6 +3118,17 @@ namespace Glanz.API.Migrations
                         .IsRequired();
 
                     b.Navigation("Staff");
+                });
+
+            modelBuilder.Entity("Glanz.API.Models.AutomationRule", b =>
+                {
+                    b.HasOne("Glanz.API.Models.Organization", "Organization")
+                        .WithMany()
+                        .HasForeignKey("OrgId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Organization");
                 });
 
             modelBuilder.Entity("Glanz.API.Models.Booking", b =>
@@ -1970,6 +3200,71 @@ namespace Glanz.API.Migrations
                     b.Navigation("UploadedByWorker");
                 });
 
+            modelBuilder.Entity("Glanz.API.Models.BookingRule", b =>
+                {
+                    b.HasOne("Glanz.API.Models.Organization", "Organization")
+                        .WithMany()
+                        .HasForeignKey("OrgId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Organization");
+                });
+
+            modelBuilder.Entity("Glanz.API.Models.ClientAsset", b =>
+                {
+                    b.HasOne("Glanz.API.Models.AssetCategory", "AssetCategory")
+                        .WithMany("ClientAssets")
+                        .HasForeignKey("AssetCategoryId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Glanz.API.Models.User", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId");
+
+                    b.HasOne("Glanz.API.Models.Organization", "Organization")
+                        .WithMany()
+                        .HasForeignKey("OrgId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AssetCategory");
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("Organization");
+                });
+
+            modelBuilder.Entity("Glanz.API.Models.CustomFieldDefinition", b =>
+                {
+                    b.HasOne("Glanz.API.Models.Organization", "Organization")
+                        .WithMany()
+                        .HasForeignKey("OrgId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Organization");
+                });
+
+            modelBuilder.Entity("Glanz.API.Models.CustomFieldValue", b =>
+                {
+                    b.HasOne("Glanz.API.Models.CustomFieldDefinition", "FieldDefinition")
+                        .WithMany("Values")
+                        .HasForeignKey("FieldDefinitionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Glanz.API.Models.Organization", "Organization")
+                        .WithMany()
+                        .HasForeignKey("OrgId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("FieldDefinition");
+
+                    b.Navigation("Organization");
+                });
+
             modelBuilder.Entity("Glanz.API.Models.CustomerFeedback", b =>
                 {
                     b.HasOne("Glanz.API.Models.Booking", "Booking")
@@ -1992,6 +3287,17 @@ namespace Glanz.API.Migrations
                     b.Navigation("User");
 
                     b.Navigation("Worker");
+                });
+
+            modelBuilder.Entity("Glanz.API.Models.DomainEvent", b =>
+                {
+                    b.HasOne("Glanz.API.Models.Organization", "Organization")
+                        .WithMany()
+                        .HasForeignKey("OrgId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Organization");
                 });
 
             modelBuilder.Entity("Glanz.API.Models.JobApplication", b =>
@@ -2042,6 +3348,47 @@ namespace Glanz.API.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Glanz.API.Models.OrganizationBranding", b =>
+                {
+                    b.HasOne("Glanz.API.Models.Organization", "Organization")
+                        .WithOne("Branding")
+                        .HasForeignKey("Glanz.API.Models.OrganizationBranding", "OrgId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Organization");
+                });
+
+            modelBuilder.Entity("Glanz.API.Models.OrganizationLocation", b =>
+                {
+                    b.HasOne("Glanz.API.Models.Organization", "Organization")
+                        .WithMany("Locations")
+                        .HasForeignKey("OrgId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Organization");
+                });
+
+            modelBuilder.Entity("Glanz.API.Models.OrganizationSubscription", b =>
+                {
+                    b.HasOne("Glanz.API.Models.Organization", "Organization")
+                        .WithMany()
+                        .HasForeignKey("OrgId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Glanz.API.Models.PlatformPlan", "Plan")
+                        .WithMany("OrganizationSubscriptions")
+                        .HasForeignKey("PlanId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Organization");
+
+                    b.Navigation("Plan");
+                });
+
             modelBuilder.Entity("Glanz.API.Models.PackageService", b =>
                 {
                     b.HasOne("Glanz.API.Models.Package", "Package")
@@ -2061,6 +3408,45 @@ namespace Glanz.API.Migrations
                     b.Navigation("Service");
                 });
 
+            modelBuilder.Entity("Glanz.API.Models.PurchaseOrder", b =>
+                {
+                    b.HasOne("Glanz.API.Models.Supplier", "Supplier")
+                        .WithMany("PurchaseOrders")
+                        .HasForeignKey("SupplierId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Supplier");
+                });
+
+            modelBuilder.Entity("Glanz.API.Models.PurchaseOrderItem", b =>
+                {
+                    b.HasOne("Glanz.API.Models.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId");
+
+                    b.HasOne("Glanz.API.Models.PurchaseOrder", "PurchaseOrder")
+                        .WithMany("Items")
+                        .HasForeignKey("PurchaseOrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+
+                    b.Navigation("PurchaseOrder");
+                });
+
+            modelBuilder.Entity("Glanz.API.Models.RecurringBookingRule", b =>
+                {
+                    b.HasOne("Glanz.API.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Glanz.API.Models.Referral", b =>
                 {
                     b.HasOne("Glanz.API.Models.User", "ReferredUser")
@@ -2078,6 +3464,47 @@ namespace Glanz.API.Migrations
                     b.Navigation("ReferredUser");
 
                     b.Navigation("Referrer");
+                });
+
+            modelBuilder.Entity("Glanz.API.Models.Resource", b =>
+                {
+                    b.HasOne("Glanz.API.Models.Organization", "Organization")
+                        .WithMany()
+                        .HasForeignKey("OrgId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Organization");
+                });
+
+            modelBuilder.Entity("Glanz.API.Models.ResourceBooking", b =>
+                {
+                    b.HasOne("Glanz.API.Models.Booking", "Booking")
+                        .WithMany()
+                        .HasForeignKey("BookingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Glanz.API.Models.Resource", "Resource")
+                        .WithMany("ResourceBookings")
+                        .HasForeignKey("ResourceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Booking");
+
+                    b.Navigation("Resource");
+                });
+
+            modelBuilder.Entity("Glanz.API.Models.RolePermission", b =>
+                {
+                    b.HasOne("Glanz.API.Models.Permission", "Permission")
+                        .WithMany("RolePermissions")
+                        .HasForeignKey("PermissionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Permission");
                 });
 
             modelBuilder.Entity("Glanz.API.Models.ServiceProduct", b =>
@@ -2190,6 +3617,39 @@ namespace Glanz.API.Migrations
                     b.Navigation("Plan");
                 });
 
+            modelBuilder.Entity("Glanz.API.Models.TenantConfigurationSnapshot", b =>
+                {
+                    b.HasOne("Glanz.API.Models.Organization", "Organization")
+                        .WithMany()
+                        .HasForeignKey("OrgId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Organization");
+                });
+
+            modelBuilder.Entity("Glanz.API.Models.TenantFeatureFlag", b =>
+                {
+                    b.HasOne("Glanz.API.Models.Organization", "Organization")
+                        .WithMany()
+                        .HasForeignKey("OrgId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Organization");
+                });
+
+            modelBuilder.Entity("Glanz.API.Models.UsageRecord", b =>
+                {
+                    b.HasOne("Glanz.API.Models.Organization", "Organization")
+                        .WithMany()
+                        .HasForeignKey("OrgId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Organization");
+                });
+
             modelBuilder.Entity("Glanz.API.Models.User", b =>
                 {
                     b.HasOne("Glanz.API.Models.User", "ReferredByUser")
@@ -2248,6 +3708,23 @@ namespace Glanz.API.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Glanz.API.Models.WaitlistEntry", b =>
+                {
+                    b.HasOne("Glanz.API.Models.Package", "Package")
+                        .WithMany()
+                        .HasForeignKey("PackageId");
+
+                    b.HasOne("Glanz.API.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Package");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Glanz.API.Models.WorkerLocation", b =>
                 {
                     b.HasOne("Glanz.API.Models.Booking", "Booking")
@@ -2267,11 +3744,21 @@ namespace Glanz.API.Migrations
                     b.Navigation("Worker");
                 });
 
+            modelBuilder.Entity("Glanz.API.Models.AssetCategory", b =>
+                {
+                    b.Navigation("ClientAssets");
+                });
+
             modelBuilder.Entity("Glanz.API.Models.Booking", b =>
                 {
                     b.Navigation("BookingItems");
 
                     b.Navigation("ChecklistItems");
+                });
+
+            modelBuilder.Entity("Glanz.API.Models.CustomFieldDefinition", b =>
+                {
+                    b.Navigation("Values");
                 });
 
             modelBuilder.Entity("Glanz.API.Models.JobPosition", b =>
@@ -2284,6 +3771,13 @@ namespace Glanz.API.Migrations
                     b.Navigation("UserOffers");
                 });
 
+            modelBuilder.Entity("Glanz.API.Models.Organization", b =>
+                {
+                    b.Navigation("Branding");
+
+                    b.Navigation("Locations");
+                });
+
             modelBuilder.Entity("Glanz.API.Models.Package", b =>
                 {
                     b.Navigation("BookingItems");
@@ -2291,9 +3785,29 @@ namespace Glanz.API.Migrations
                     b.Navigation("PackageServices");
                 });
 
+            modelBuilder.Entity("Glanz.API.Models.Permission", b =>
+                {
+                    b.Navigation("RolePermissions");
+                });
+
+            modelBuilder.Entity("Glanz.API.Models.PlatformPlan", b =>
+                {
+                    b.Navigation("OrganizationSubscriptions");
+                });
+
             modelBuilder.Entity("Glanz.API.Models.Product", b =>
                 {
                     b.Navigation("ServiceProducts");
+                });
+
+            modelBuilder.Entity("Glanz.API.Models.PurchaseOrder", b =>
+                {
+                    b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("Glanz.API.Models.Resource", b =>
+                {
+                    b.Navigation("ResourceBookings");
                 });
 
             modelBuilder.Entity("Glanz.API.Models.Service", b =>
@@ -2312,6 +3826,11 @@ namespace Glanz.API.Migrations
                     b.Navigation("PlanPackages");
 
                     b.Navigation("UserSubscriptions");
+                });
+
+            modelBuilder.Entity("Glanz.API.Models.Supplier", b =>
+                {
+                    b.Navigation("PurchaseOrders");
                 });
 
             modelBuilder.Entity("Glanz.API.Models.User", b =>

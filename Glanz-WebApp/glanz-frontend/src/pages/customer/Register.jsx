@@ -81,7 +81,7 @@ function Register() {
 
   return (
     <>
-      <SEO title="Create Account" description="Create your free Glanz account and book professional mobile car detailing anywhere in Qatar." noindex />
+      <SEO title="Create Account" description="Create your free Flowly account and book professional mobile car detailing anywhere in Qatar." noindex />
       <PrismaticCursorOrb />
 
       <div
@@ -343,7 +343,7 @@ function Register() {
                     />
                   </div>
                   <p className="text-[11px] text-[var(--muted-color)] mt-1.5">
-                    Have a friend who uses Glanz? Enter their referral code to get a discount!
+                    Have a friend who uses Flowly? Enter their referral code to get a discount!
                   </p>
                 </div>
 

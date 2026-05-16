@@ -298,7 +298,7 @@ function Packages() {
     <div className="text-[var(--text-color)]" style={{ background: PAGE_BG }}>
       <SEO
         title="Detailing Packages & Pricing"
-        description="Browse Glanz's car detailing packages for every budget — from express washes to full ceramic coating. Transparent pricing, mobile service across Qatar."
+        description="Browse Flowly's car detailing packages for every budget — from express washes to full ceramic coating. Transparent pricing, mobile service across Qatar."
       />
 
       {/* ── Hero ── */}

@@ -1,11 +1,11 @@
 using Glanz.API.Data;
 using Glanz.API.DTOs;
 using Glanz.API.Models;
+using Glanz.API.Modules.Plans;
 using Glanz.API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 
 namespace Glanz.API.Controllers
 {
@@ -39,7 +39,7 @@ namespace Glanz.API.Controllers
             if (sub == null)
                 return NotFound(new { message = "No active subscription found." });
 
-            return Ok(PlansController.ToCustomerSubscriptionDto(sub));
+            return Ok(PlansService.ToCustomerSubscriptionDto(sub));
         }
 
         [HttpPost("subscribe")]
@@ -53,9 +53,7 @@ namespace Glanz.API.Controllers
                 .Include(p => p.Benefits)
                 .FirstOrDefaultAsync(p => p.Id == dto.PlanId && p.IsActive);
             if (plan == null)
-            {
                 return BadRequest(new { message = "Subscription plan not found or inactive." });
-            }
 
             var existingSubscriptions = await _context.UserSubscriptions
                 .Where(s => s.UserId == userId && s.Status == UserSubscriptionStatus.Active)
@@ -63,27 +61,27 @@ namespace Glanz.API.Controllers
 
             foreach (var existing in existingSubscriptions)
             {
-                existing.Status = UserSubscriptionStatus.Cancelled;
+                existing.Status    = UserSubscriptionStatus.Cancelled;
                 existing.UpdatedAt = DateTime.UtcNow;
             }
 
             var now = DateTime.UtcNow;
             var entity = new UserSubscription
             {
-                UserId = userId,
-                PlanId = plan.Id,
-                StartDate = now,
+                UserId          = userId,
+                PlanId          = plan.Id,
+                StartDate       = now,
                 NextBillingDate = plan.BillingCycle == SubscriptionBillingCycle.Quarterly ? now.AddMonths(3) : now.AddMonths(1),
-                Status = UserSubscriptionStatus.Active,
-                CreatedAt = now,
-                UpdatedAt = now,
+                Status          = UserSubscriptionStatus.Active,
+                CreatedAt       = now,
+                UpdatedAt       = now,
             };
 
             _context.UserSubscriptions.Add(entity);
             await _context.SaveChangesAsync();
 
             entity.Plan = plan;
-            return Ok(PlansController.ToCustomerSubscriptionDto(entity));
+            return Ok(PlansService.ToCustomerSubscriptionDto(entity));
         }
 
         [HttpPost("unsubscribe")]
@@ -98,11 +96,9 @@ namespace Glanz.API.Controllers
                 .FirstOrDefaultAsync();
 
             if (entity == null)
-            {
                 return NotFound(new { message = "No active subscription found." });
-            }
 
-            entity.Status = UserSubscriptionStatus.Cancelled;
+            entity.Status    = UserSubscriptionStatus.Cancelled;
             entity.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
             return Ok(new { message = "Subscription cancelled." });

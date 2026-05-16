@@ -440,7 +440,7 @@ export default function Plans() {
 
   return (
     <>
-      <SEO title="Subscription Plans — Glanz" description="Choose the car detailing subscription plan that fits your lifestyle. Plans for every vehicle type." />
+      <SEO title="Subscription Plans — Flowly" description="Choose the car detailing subscription plan that fits your lifestyle. Plans for every vehicle type." />
 
       <section className="relative overflow-hidden pb-24 pt-16 px-4">
 

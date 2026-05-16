@@ -111,10 +111,10 @@
     }
   },
   "chat": {
-    "welcome": "Hi! Ich bin der Glanz-Assistent. Frag mich nach Services, Preisen, Buchung oder Stornierungen.",
-    "errorReply": "Entschuldigung, ich konnte deine Anfrage gerade nicht verarbeiten. Bitte versuche es erneut oder kontaktiere support@glanz.qa.",
+    "welcome": "Hi! Ich bin der Flowly-Assistent. Frag mich nach Services, Preisen, Buchung oder Stornierungen.",
+    "errorReply": "Entschuldigung, ich konnte deine Anfrage gerade nicht verarbeiten. Bitte versuche es erneut oder kontaktiere support@flowly.qa.",
     "openAria": "Chat-Assistent offnen",
-    "title": "Glanz-Assistent",
+    "title": "Flowly-Assistent",
     "subtitle": "Antwortet normalerweise sofort",
     "placeholder": "Eine Frage stellen..."
   },

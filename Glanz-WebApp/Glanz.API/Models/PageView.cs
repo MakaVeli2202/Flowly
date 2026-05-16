@@ -7,6 +7,8 @@ namespace Glanz.API.Models
         [Key]
         public long Id { get; set; }
 
+        public int? OrgId { get; set; }
+
         [Required]
         [StringLength(64)]
         public string SessionId { get; set; } = string.Empty;

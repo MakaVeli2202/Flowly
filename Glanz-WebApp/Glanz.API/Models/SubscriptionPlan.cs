@@ -22,6 +22,8 @@ namespace Glanz.API.Models
         [Key]
         public int Id { get; set; }
 
+        public int? OrgId { get; set; }
+
         [Required]
         [StringLength(120)]
         public string Name { get; set; } = string.Empty;
@@ -61,6 +63,8 @@ namespace Glanz.API.Models
         [Key]
         public int Id { get; set; }
 
+        public int? OrgId { get; set; }
+
         public int PlanId { get; set; }
 
         [Required]
@@ -78,6 +82,8 @@ namespace Glanz.API.Models
         [Key]
         public int Id { get; set; }
 
+        public int? OrgId { get; set; }
+
         public int PlanId { get; set; }
 
         [Required]
@@ -94,6 +100,8 @@ namespace Glanz.API.Models
     {
         [Key]
         public int Id { get; set; }
+
+        public int? OrgId { get; set; }
 
         public int UserId { get; set; }
 

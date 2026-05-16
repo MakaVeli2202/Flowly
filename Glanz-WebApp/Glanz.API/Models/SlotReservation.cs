@@ -16,6 +16,8 @@ namespace Glanz.API.Models
     {
         public int Id { get; set; }
 
+        public int? OrgId { get; set; }
+
         [Required]
         [MaxLength(120)]
         public string PaymentIntentId { get; set; } = string.Empty;

@@ -15,8 +15,14 @@
   "payroll": "Payroll",
   "liveMap": "Live Map",
   "analytics": "Analytics",
+  "orgSettings": "Org Settings",
+  "billing": "Billing",
   "devSettings": "Dev Settings",
   "translations": "Translations",
   "operations": "Operations",
-  "management": "Management"
+  "management": "Management",
+  "recurringBookings": "Recurring",
+  "purchaseOrders": "Purchase Orders",
+  "resources": "Resources",
+  "pos": "POS / Walk-In"
 }

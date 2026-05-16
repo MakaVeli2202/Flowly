@@ -1,4 +1,4 @@
-using Glanz.API.Hubs;
+﻿using Glanz.API.Hubs;
 using Glanz.API.Models;
 using Microsoft.AspNetCore.SignalR;
 
@@ -21,9 +21,9 @@ namespace Glanz.API.Services
 
     public class RealtimeService : IRealtimeService
     {
-        private readonly IHubContext<GlanzHub> _hub;
+        private readonly IHubContext<FlowlyHub> _hub;
 
-        public RealtimeService(IHubContext<GlanzHub> hub)
+        public RealtimeService(IHubContext<FlowlyHub> hub)
         {
             _hub = hub;
         }
