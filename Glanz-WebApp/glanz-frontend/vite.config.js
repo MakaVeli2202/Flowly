@@ -9,7 +9,23 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 export default defineConfig({
   plugins: [react()],
   build: {
-    chunkSizeWarningLimit: 1200,
+    chunkSizeWarningLimit: 800,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          // Merge all lucide-react icons into one chunk instead of 50+ micro-files
+          if (id.includes('node_modules/lucide-react')) return 'icons';
+          // Isolate heavy animation libs (loaded eagerly via Home.jsx)
+          if (id.includes('node_modules/gsap')) return 'gsap';
+          if (id.includes('node_modules/framer-motion')) return 'framer-motion';
+          // Charts are admin-only (lazy), but recharts/d3 are large — own chunk
+          if (id.includes('node_modules/recharts') || id.includes('node_modules/d3-')) return 'charts';
+          // React core
+          if (id.includes('node_modules/react-dom')) return 'react-dom';
+          if (id.includes('node_modules/react/') || id.includes('node_modules/react-router')) return 'react-vendor';
+        },
+      },
+    },
   },
   resolve: {
     alias: {

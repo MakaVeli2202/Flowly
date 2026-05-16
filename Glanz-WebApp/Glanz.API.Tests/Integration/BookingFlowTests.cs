@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Glanz.API.Data;
@@ -46,10 +47,22 @@ namespace Glanz.API.Tests.Integration
 
                 builder.ConfigureServices(services =>
                 {
-                    // Replace real DB with SQLite in-memory (supports full EF query translation)
-                    var descriptor = services.SingleOrDefault(
-                        d => d.ServiceType == typeof(DbContextOptions<AppDbContext>));
-                    if (descriptor != null) services.Remove(descriptor);
+                    // EF Core 10 rejects both (a) multiple IDatabaseProvider registrations
+                    // in the DI container and (b) DbContextOptions containing two relational
+                    // extensions. Remove all EF registrations specific to AppDbContext —
+                    // the options descriptor AND any IDbContextOptionsConfiguration<T>
+                    // entries (used by EF 10 to build options lazily) — before adding SQLite.
+                    var toRemove = services
+                        .Where(d =>
+                            d.ServiceType == typeof(DbContextOptions<AppDbContext>)
+                            || d.ServiceType == typeof(AppDbContext)
+                            || (d.ServiceType.IsGenericType
+                                && d.ServiceType.GetGenericTypeDefinition().Name
+                                       .StartsWith("IDbContextOptionsConfiguration")
+                                && d.ServiceType.GenericTypeArguments.Length == 1
+                                && d.ServiceType.GenericTypeArguments[0] == typeof(AppDbContext)))
+                        .ToList();
+                    foreach (var d in toRemove) services.Remove(d);
 
                     services.AddDbContext<AppDbContext>(opts =>
                         opts.UseSqlite(_connection));

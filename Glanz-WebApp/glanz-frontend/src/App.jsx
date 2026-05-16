@@ -21,24 +21,26 @@ import RainBackground       from './components/shared/RainBackground';
 import LoadingCircle        from './components/shared/LoadingCircle';
 import { usePageTracking } from './hooks/usePageTracking';
 
-// ─── Customer pages (eager) ───────────────────────────────────────────────────
-import Home                from './pages/customer/Home';
-import Login               from './pages/customer/Login';
-import Register            from './pages/customer/Register';
-import EmailVerification   from './pages/customer/EmailVerification';
-import ForgotPassword      from './pages/customer/ForgotPassword';
-import ResetPassword       from './pages/customer/ResetPassword';
-import Packages            from './pages/customer/Packages';
-import Booking             from './pages/customer/Booking';
-import BookingConfirmation from './pages/customer/BookingConfirmation';
-import MyBookings          from './pages/customer/MyBookings';
-import Profile             from './pages/customer/Profile';
-import Referrals           from './pages/customer/Referrals';
-import Plans               from './pages/customer/Plans';
-import Careers             from './pages/customer/Careers';
-import PrivacyPolicy       from './pages/customer/PrivacyPolicy';
+// ─── Customer pages — critical path (eager) ──────────────────────────────────
+// Home and Login are the only guaranteed first-visit pages. Everything else
+// is lazy so framer-motion / heavy components don't parse on initial load.
+import Home  from './pages/customer/Home';
+import Login from './pages/customer/Login';
 
 // ─── Customer pages (lazy) ────────────────────────────────────────────────────
+const Register            = lazy(() => import('./pages/customer/Register'));
+const EmailVerification   = lazy(() => import('./pages/customer/EmailVerification'));
+const ForgotPassword      = lazy(() => import('./pages/customer/ForgotPassword'));
+const ResetPassword       = lazy(() => import('./pages/customer/ResetPassword'));
+const Packages            = lazy(() => import('./pages/customer/Packages'));
+const Plans               = lazy(() => import('./pages/customer/Plans'));
+const Careers             = lazy(() => import('./pages/customer/Careers'));
+const PrivacyPolicy       = lazy(() => import('./pages/customer/PrivacyPolicy'));
+const Booking             = lazy(() => import('./pages/customer/Booking'));
+const BookingConfirmation = lazy(() => import('./pages/customer/BookingConfirmation'));
+const MyBookings          = lazy(() => import('./pages/customer/MyBookings'));
+const Profile             = lazy(() => import('./pages/customer/Profile'));
+const Referrals           = lazy(() => import('./pages/customer/Referrals'));
 const MySubscription             = lazy(() => import('./pages/customer/MySubscription'));
 const SubscriptionCheckout       = lazy(() => import('./pages/customer/SubscriptionCheckout'));
 const AdminSubscriptionBookings  = lazy(() => import('./pages/admin/AdminSubscriptionBookings'));
@@ -110,41 +112,10 @@ function adminRoute(path, _PageComponent) {
   );
 }
 
-// ─── 404 ──────────────────────────────────────────────────────────────────────
+// ─── 404 / misc lazy ──────────────────────────────────────────────────────────
 
-import NotFound from './components/ui/not-found';
-import ForceChangePassword from './pages/shared/ForceChangePassword';
-
-// function NotFound() {
-//   return (
-//     <div className="min-h-[80vh] flex flex-col items-center justify-center text-center px-4 relative overflow-hidden">
-//       {/* Ambient orbs */}
-//       <div className="absolute top-10 left-1/4 w-72 h-72 rounded-full pointer-events-none"
-//         style={{ background: 'rgba(200,169,107,0.07)', filter: 'blur(80px)' }} />
-//       <div className="absolute bottom-10 right-1/4 w-56 h-56 rounded-full pointer-events-none"
-//         style={{ background: 'rgba(14,165,160,0.06)', filter: 'blur(70px)' }} />
-//       <div className="relative z-10 glass-card prism-glass p-12 md:p-16 max-w-md w-full mx-auto overflow-hidden"
-//         onMouseMove={(e) => {
-//           const r = e.currentTarget.getBoundingClientRect();
-//           e.currentTarget.style.setProperty('--px', `${((e.clientX - r.left) / r.width * 100).toFixed(1)}%`);
-//           e.currentTarget.style.setProperty('--py', `${((e.clientY - r.top) / r.height * 100).toFixed(1)}%`);
-//         }}>
-//         <div className="absolute top-0 left-[10%] right-[10%] h-[1.5px]"
-//           style={{ background: 'linear-gradient(90deg,transparent,#c8a96b 40%,#0ea5a0 60%,transparent)' }} />
-//         <div className="prism-ray" style={{ left: '20%', width: '25%', animation: 'prism-ray-sweep 14s ease-in-out 2s infinite' }} />
-//         <p className="premium-heading font-black text-primary mb-2 leading-none" style={{ fontSize: '7rem' }}>404</p>
-//         <div className="spectrum-line mb-6" />
-//         <h1 className="premium-heading text-2xl font-bold text-[var(--heading-color)] mb-3">Page not found</h1>
-//         <p className="text-[var(--muted-color)] mb-8 text-sm leading-relaxed">
-//           The page you're looking for doesn't exist or has been moved.
-//         </p>
-//         <Link to="/" className="premium-btn inline-flex">
-//           Go Home <ArrowRight size={16} />
-//         </Link>
-//       </div>
-//     </div>
-//   );
-// }
+const NotFound           = lazy(() => import('./components/ui/not-found'));
+const ForceChangePassword = lazy(() => import('./pages/shared/ForceChangePassword'));
 
 // ─── Scroll to top on navigation ──────────────────────────────────────────────
 
@@ -187,41 +158,67 @@ function AppRoutes() {
 
         {/* ── Public ─────────────────────────────────────────────────── */}
         <Route path="/"               element={<Home />}             />
-        <Route path="/login"          element={<Login />}            />
-        <Route path="/register"       element={<Register />}         />
-        <Route path="/verify-email"   element={<EmailVerification />}/>
-        <Route path="/forgot-password" element={<ForgotPassword />}  />
-        <Route path="/reset-password" element={<ResetPassword />}    />
-        <Route path="/packages"       element={<Packages />}         />
-        <Route path="/plans"          element={<Plans />}            />
-        <Route path="/careers"        element={<Careers />}          />
-        <Route path="/privacy"        element={<PrivacyPolicy />}    />
+        <Route path="/login"           element={<Login />}            />
+        <Route path="/register"        element={
+          <Suspense fallback={<CustomerFallback />}><Register /></Suspense>
+        } />
+        <Route path="/verify-email"    element={
+          <Suspense fallback={<CustomerFallback />}><EmailVerification /></Suspense>
+        } />
+        <Route path="/forgot-password" element={
+          <Suspense fallback={<CustomerFallback />}><ForgotPassword /></Suspense>
+        } />
+        <Route path="/reset-password"  element={
+          <Suspense fallback={<CustomerFallback />}><ResetPassword /></Suspense>
+        } />
+        <Route path="/packages" element={
+          <Suspense fallback={<CustomerFallback />}><Packages /></Suspense>
+        } />
+        <Route path="/plans" element={
+          <Suspense fallback={<CustomerFallback />}><Plans /></Suspense>
+        } />
+        <Route path="/careers" element={
+          <Suspense fallback={<CustomerFallback />}><Careers /></Suspense>
+        } />
+        <Route path="/privacy" element={
+          <Suspense fallback={<CustomerFallback />}><PrivacyPolicy /></Suspense>
+        } />
 
         {/* ── Protected customer ─────────────────────────────────────── */}
         <Route path="/booking" element={
-          <ProtectedRoute requireCustomer><Booking /></ProtectedRoute>
+          <ProtectedRoute requireCustomer>
+            <Suspense fallback={<CustomerFallback />}><Booking /></Suspense>
+          </ProtectedRoute>
         } />
         <Route path="/booking-confirmation/:bookingNumber" element={
-          <ProtectedRoute requireCustomer><BookingConfirmation /></ProtectedRoute>
+          <ProtectedRoute requireCustomer>
+            <Suspense fallback={<CustomerFallback />}><BookingConfirmation /></Suspense>
+          </ProtectedRoute>
         } />
         <Route path="/my-bookings" element={
-          <ProtectedRoute requireCustomer><MyBookings /></ProtectedRoute>
+          <ProtectedRoute requireCustomer>
+            <Suspense fallback={<CustomerFallback />}><MyBookings /></Suspense>
+          </ProtectedRoute>
         } />
         <Route path="/my-subscription" element={
           <ProtectedRoute requireCustomer>
-            <Suspense fallback={<AdminFallback />}><MySubscription /></Suspense>
+            <Suspense fallback={<CustomerFallback />}><MySubscription /></Suspense>
           </ProtectedRoute>
         } />
         <Route path="/subscribe" element={
           <ProtectedRoute requireCustomer>
-            <Suspense fallback={<AdminFallback />}><SubscriptionCheckout /></Suspense>
+            <Suspense fallback={<CustomerFallback />}><SubscriptionCheckout /></Suspense>
           </ProtectedRoute>
         } />
         <Route path="/profile" element={
-          <ProtectedRoute requireCustomer><Profile /></ProtectedRoute>
+          <ProtectedRoute requireCustomer>
+            <Suspense fallback={<CustomerFallback />}><Profile /></Suspense>
+          </ProtectedRoute>
         } />
         <Route path="/referrals" element={
-          <ProtectedRoute requireCustomer><Referrals /></ProtectedRoute>
+          <ProtectedRoute requireCustomer>
+            <Suspense fallback={<CustomerFallback />}><Referrals /></Suspense>
+          </ProtectedRoute>
         } />
 
         {/* ── Admin (lazy) — note: function calls, not JSX components ── */}
@@ -257,10 +254,14 @@ function AppRoutes() {
         } />
 
         {/* ── Force password change (staff first login) ───────────────── */}
-        <Route path="/force-change-password" element={<ForceChangePassword />} />
+        <Route path="/force-change-password" element={
+          <Suspense fallback={<CustomerFallback />}><ForceChangePassword /></Suspense>
+        } />
 
         {/* ── Catch-all 404 ──────────────────────────────────────────── */}
-        <Route path="*" element={<NotFound />} />
+        <Route path="*" element={
+          <Suspense fallback={<CustomerFallback />}><NotFound /></Suspense>
+        } />
       </Routes>
     </main>
   );

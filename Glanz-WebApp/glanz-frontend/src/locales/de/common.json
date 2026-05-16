@@ -122,7 +122,10 @@
     "title": "Ups! Etwas ist schiefgelaufen",
     "fallbackMessage": "Etwas Unerwartetes ist passiert",
     "tryAgain": "Erneut versuchen",
-    "goHome": "Zur Startseite"
+    "goHome": "Zur Startseite",
+    "updateAvailable": "App aktualisiert",
+    "chunkMessage": "Eine neue Version ist verfugbar. Bitte neu laden, um fortzufahren.",
+    "reload": "Neu laden"
   },
   "cookieConsent": {
     "message": "Wir verwenden Cookies, um Ihre Erfahrung zu verbessern und die Nutzung der Website zu analysieren. Durch die weitere Nutzung stimmen Sie unserer",

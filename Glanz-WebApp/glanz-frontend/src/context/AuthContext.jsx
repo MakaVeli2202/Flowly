@@ -2,8 +2,17 @@ import React, { createContext, useContext, useState, useEffect, useRef } from 'r
 import { authAPI } from '../api/auth';
 import { setAuthToken } from '../api/axios';
 import { startNotificationConnection, stopNotificationConnection } from '../api/notificationBus';
-import realtimeService from '../api/realtimeService';
 import { cacheManager } from '../core/cacheManager';
+
+// SignalR is only needed after login — defer the 151 kB module until then
+let _realtimeService = null;
+async function getRT() {
+  if (!_realtimeService) {
+    const mod = await import('../api/realtimeService');
+    _realtimeService = mod.default;
+  }
+  return _realtimeService;
+}
 
 const TOKEN_KEY = 'glanz_access_token';
 
@@ -101,7 +110,7 @@ export function AuthProvider({ children }) {
             // stay logged in with current valid token; refresh will be reattempted later
           }
 
-          await realtimeService.connect(storedToken);
+          await (await getRT()).connect(storedToken);
           startNotificationConnection();
           return;
         }
@@ -124,7 +133,7 @@ export function AuthProvider({ children }) {
         setToken(refreshed.token);
         setUser(currentUser);
 
-        await realtimeService.connect(refreshed.token);
+        await (await getRT()).connect(refreshed.token);
         startNotificationConnection();
       } catch {
         localStorage.removeItem('glanz_session_active');
@@ -152,7 +161,7 @@ export function AuthProvider({ children }) {
     localStorage.setItem('glanz_session_active', 'true');
     sessionStorage.setItem(TOKEN_KEY, response.token);
     persistSession(response.token, response.user);
-    await realtimeService.connect(response.token);
+    await (await getRT()).connect(response.token);
     startNotificationConnection();
     return response;
   };
@@ -163,7 +172,7 @@ export function AuthProvider({ children }) {
     localStorage.setItem('glanz_session_active', 'true');
     sessionStorage.setItem(TOKEN_KEY, response.token);
     persistSession(response.token, response.user);
-    await realtimeService.connect(response.token);
+    await (await getRT()).connect(response.token);
     startNotificationConnection();
     return response;
   };
@@ -192,7 +201,7 @@ export function AuthProvider({ children }) {
 
     const logout = () => {
     stopNotificationConnection();
-    realtimeService.disconnect();
+    _realtimeService?.disconnect();
     authAPI.logout();
     localStorage.removeItem('glanz_session_active');
     sessionStorage.removeItem(TOKEN_KEY);

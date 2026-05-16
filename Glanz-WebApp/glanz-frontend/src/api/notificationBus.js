@@ -14,8 +14,7 @@
  * already saw in a previous session (seeding phase on first connect).
  */
 
-import { onNotification } from './realtimeService';
-
+// realtimeService (+ SignalR) deferred — only loaded after login
 const _notifListeners = new Set();
 const _dispatchedIds  = new Set();
 let _seeded  = false;
@@ -34,18 +33,16 @@ export function subscribeToNotifications(fn) {
   return () => _notifListeners.delete(fn);
 }
 
-export function startNotificationConnection() {
+export async function startNotificationConnection() {
   if (_unsubWs) return; // already running
   _seeded = false;
 
+  const { onNotification } = await import('./realtimeService');
   _unsubWs = onNotification((notif) => {
     _dispatchNotification(notif);
-    // After the first real push from the server we consider ourselves seeded.
     if (!_seeded) _seeded = true;
   });
 
-  // Mark as seeded after a short delay even if no push arrives
-  // (handles case where user has zero unread notifications at login).
   setTimeout(() => { _seeded = true; }, 2000);
 }
 

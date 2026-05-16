@@ -1,5 +1,4 @@
 import { useEffect } from 'react';
-import rainOnGlassVideo from '../../assets/videos/RainOnGlass.mp4';
 import { useTheme } from '../../hooks/useTheme';
 
 export default function RainBackground() {
@@ -23,7 +22,7 @@ export default function RainBackground() {
       poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1920 1080'%3E%3Crect fill='%230d1117' width='1920' height='1080'/%3E%3C/svg%3E"
       aria-hidden="true"
     >
-      <source src={rainOnGlassVideo} type="video/mp4" />
+      <source src="/videos/RainOnGlass.mp4" type="video/mp4" />
     </video>
   );
 }
