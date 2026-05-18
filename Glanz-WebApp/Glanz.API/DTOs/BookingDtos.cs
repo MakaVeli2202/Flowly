@@ -74,6 +74,8 @@ namespace Glanz.API.DTOs
 
         [Required]
         public List<BookingPackageDto> Packages { get; set; } = new();
+
+        public List<int>? AddOnIds { get; set; }
     }
 
     public class BookingPackageDto
@@ -179,8 +181,57 @@ namespace Glanz.API.DTOs
         public string? ReferralCode { get; set; }
         public bool IsFirstCompletedWash { get; set; }
         public bool ReferralCodeUnlocked { get; set; }
+        public decimal? TipAmount { get; set; }
+        public string[] FlaggedKeywords { get; set; } = Array.Empty<string>();
         public List<BookingItemDetailDto> Items { get; set; } = new();
         public List<BookingChecklistItemDto> ChecklistItems { get; set; } = new();
+        public List<BookingAddOnDto> AddOns { get; set; } = new();
+    }
+
+    public class BookingAddOnDto
+    {
+        public int AddOnId { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public decimal Price { get; set; }
+    }
+
+    public class AddTipDto
+    {
+        [Required]
+        [Range(1, 500)]
+        public decimal Amount { get; set; }
+    }
+
+    public class ServiceAddOnDto
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public decimal Price { get; set; }
+        public int DurationIncreaseMinutes { get; set; }
+        public bool IsActive { get; set; }
+        public int SortOrder { get; set; }
+    }
+
+    public class UpsertServiceAddOnDto
+    {
+        [Required]
+        [StringLength(150)]
+        public string Name { get; set; } = string.Empty;
+
+        [StringLength(500)]
+        public string? Description { get; set; }
+
+        [Required]
+        [Range(0.01, 10000)]
+        public decimal Price { get; set; }
+
+        [Range(0, 480)]
+        public int DurationIncreaseMinutes { get; set; } = 0;
+
+        public bool IsActive { get; set; } = true;
+
+        public int SortOrder { get; set; } = 0;
     }
 
     public class BookingChecklistItemDto

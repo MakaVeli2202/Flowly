@@ -1,5 +1,6 @@
 import React, { lazy, Suspense, useEffect, useState } from 'react';
 import useLenis from './hooks/useLenis';
+import { useTenantBranding } from './hooks/useTenantBranding';
 import {
   BrowserRouter as Router, Routes, Route, Navigate,
   useLocation,
@@ -37,6 +38,8 @@ const Packages            = lazy(() => import('./pages/customer/Packages'));
 const Plans               = lazy(() => import('./pages/customer/Plans'));
 const Careers             = lazy(() => import('./pages/customer/Careers'));
 const PrivacyPolicy       = lazy(() => import('./pages/customer/PrivacyPolicy'));
+const Marketplace         = lazy(() => import('./pages/Marketplace'));
+const BusinessProfile     = lazy(() => import('./pages/BusinessProfile'));
 const Booking             = lazy(() => import('./pages/customer/Booking'));
 const BookingConfirmation = lazy(() => import('./pages/customer/BookingConfirmation'));
 const MyBookings          = lazy(() => import('./pages/customer/MyBookings'));
@@ -76,7 +79,22 @@ const AdminAnalytics         = lazy(() => import('./pages/admin/AdminAnalytics')
 const AdminPurchaseOrders    = lazy(() => import('./pages/admin/AdminPurchaseOrders'));
 const AdminResources         = lazy(() => import('./pages/admin/AdminResources'));
 const AdminPos               = lazy(() => import('./pages/admin/AdminPos'));
-const SubscriptionBooking    = lazy(() => import('./pages/customer/SubscriptionBooking'));
+const AdminWebhook           = lazy(() => import('./pages/admin/AdminWebhook'));
+const AdminBranding          = lazy(() => import('./pages/admin/AdminBranding'));
+const AdminCohort            = lazy(() => import('./pages/admin/AdminCohort'));
+const AdminGdpr              = lazy(() => import('./pages/admin/AdminGdpr'));
+const AdminSegmentation          = lazy(() => import('./pages/admin/AdminSegmentation'));
+const AdminNotificationSettings  = lazy(() => import('./pages/admin/AdminNotificationSettings'));
+const AdminAddOns                = lazy(() => import('./pages/admin/AdminAddOns'));
+const AdminCertifications        = lazy(() => import('./pages/admin/AdminCertifications'));
+const AdminAI                    = lazy(() => import('./pages/admin/AdminAI'));
+const PayPage                    = lazy(() => import('./pages/customer/PayPage'));
+const AdminSSO               = lazy(() => import('./pages/admin/AdminSSO'));
+const AdminReseller          = lazy(() => import('./pages/admin/AdminReseller'));
+const AdminWaitlist              = lazy(() => import('./pages/admin/AdminWaitlist'));
+const AdminAssetSearch           = lazy(() => import('./pages/admin/AdminAssetSearch'));
+const AdminCorporateAccounts     = lazy(() => import('./pages/admin/AdminCorporateAccounts'));
+const SubscriptionBooking        = lazy(() => import('./pages/customer/SubscriptionBooking'));
 
 // ─── Admin fallback ───────────────────────────────────────────────────────────
 
@@ -193,6 +211,12 @@ function AppRoutes() {
         <Route path="/privacy" element={
           <Suspense fallback={<CustomerFallback />}><PrivacyPolicy /></Suspense>
         } />
+        <Route path="/marketplace" element={
+          <Suspense fallback={<CustomerFallback />}><Marketplace /></Suspense>
+        } />
+        <Route path="/business/:slug" element={
+          <Suspense fallback={<CustomerFallback />}><BusinessProfile /></Suspense>
+        } />
 
         {/* ── Protected customer ─────────────────────────────────────── */}
         <Route path="/booking" element={
@@ -278,6 +302,11 @@ function AppRoutes() {
           <Suspense fallback={<CustomerFallback />}><PublicBookingPortal /></Suspense>
         } />
 
+        {/* ── Public payment page ─────────────────────────────────────── */}
+        <Route path="/pay/:token" element={
+          <Suspense fallback={<CustomerFallback />}><PayPage /></Suspense>
+        } />
+
         {/* ── Admin onboarding wizard ─────────────────────────────────── */}
         {adminRoute('/admin/onboarding', AdminOnboarding)}
         {adminRoute('/admin/billing',         AdminBilling)}
@@ -285,6 +314,20 @@ function AppRoutes() {
         {adminRoute('/admin/purchase-orders', AdminPurchaseOrders)}
         {adminRoute('/admin/resources',       AdminResources)}
         {adminRoute('/admin/pos',             AdminPos)}
+        {adminRoute('/admin/webhooks',         AdminWebhook)}
+        {adminRoute('/admin/branding',         AdminBranding)}
+        {adminRoute('/admin/cohort',           AdminCohort)}
+        {adminRoute('/admin/gdpr',             AdminGdpr)}
+        {adminRoute('/admin/segmentation',         AdminSegmentation)}
+        {adminRoute('/admin/notification-settings', AdminNotificationSettings)}
+        {adminRoute('/admin/add-ons',              AdminAddOns)}
+        {adminRoute('/admin/certifications',       AdminCertifications)}
+        {adminRoute('/admin/ai',                   AdminAI)}
+        {adminRoute('/admin/sso',             AdminSSO)}
+        {adminRoute('/admin/reseller',        AdminReseller)}
+        {adminRoute('/admin/waitlist',             AdminWaitlist)}
+        {adminRoute('/admin/asset-search',         AdminAssetSearch)}
+        {adminRoute('/admin/corporate-accounts',   AdminCorporateAccounts)}
 
         {/* ── Force password change (staff first login) ───────────────── */}
         <Route path="/force-change-password" element={
@@ -304,6 +347,7 @@ function AppRoutes() {
 
 function App() {
    useLenis();
+   useTenantBranding();
   const [theme, setTheme] = useState(() => {
     const saved = localStorage.getItem('theme');
     if (saved === 'dark' || saved === 'light') return saved;

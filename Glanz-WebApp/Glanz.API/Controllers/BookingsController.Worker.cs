@@ -117,13 +117,13 @@ namespace Glanz.API.Controllers
             return Ok(result);
         }
 
-        [Authorize(Roles = "Employee,Admin")]
+        [Authorize]
         [HttpGet("{id}/photos")]
         public async Task<IActionResult> GetBookingPhotos(int id)
         {
-            var workerId = GetUserId();
-            if (!workerId.HasValue) return Unauthorized();
-            var result = await _bookingService.GetBookingPhotosAsync(id, workerId.Value);
+            var userId = GetUserId();
+            if (!userId.HasValue) return Unauthorized();
+            var result = await _bookingService.GetBookingPhotosAsync(id, userId.Value);
             return Ok(result);
         }
     }

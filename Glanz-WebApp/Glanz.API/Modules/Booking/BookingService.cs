@@ -62,6 +62,8 @@ namespace Glanz.API.Modules.Booking
         private readonly IDomainEventService _domainEvents;
         private readonly TenantContext _tenantContext;
         private readonly ILogger<BookingService> _logger;
+        private readonly IInvoiceService _invoiceService;
+        private readonly IEmailService _emailService;
 
         public BookingService(
             AppDbContext context,
@@ -76,7 +78,9 @@ namespace Glanz.API.Modules.Booking
             ILocalizationTextResolver localizationTextResolver,
             IDomainEventService domainEvents,
             TenantContext tenantContext,
-            ILogger<BookingService> logger)
+            ILogger<BookingService> logger,
+            IInvoiceService invoiceService,
+            IEmailService emailService)
         {
             _context = context;
             _configuration = configuration;
@@ -91,6 +95,8 @@ namespace Glanz.API.Modules.Booking
             _domainEvents = domainEvents;
             _tenantContext = tenantContext;
             _logger = logger;
+            _invoiceService = invoiceService;
+            _emailService = emailService;
         }
 
         // ---- Static config helpers (called by Program.cs) ----------------------------
@@ -510,6 +516,8 @@ namespace Glanz.API.Modules.Booking
                 ReschedulePreferredDate = booking.ReschedulePreferredDate,
                 RescheduleRequestedAt = booking.RescheduleRequestedAt,
                 ChecklistItems = MapChecklistItems(booking.ChecklistItems ?? new List<BookingChecklistItem>()),
+                TipAmount = booking.TipAmount,
+                FlaggedKeywords = DetectFlaggedKeywords(booking.SpecialInstructions),
                 Items = (booking.BookingItems ?? new List<BookingItem>()).Select(bi => new BookingItemDetailDto
                 {
                     PackageId = bi.PackageId,
@@ -522,8 +530,27 @@ namespace Glanz.API.Modules.Booking
                     Subtotal = bi.Price * bi.Quantity,
                     ItemCost = bi.ItemCost,
                     ItemProfit = (bi.Price * bi.Quantity) - bi.ItemCost
+                }).ToList(),
+                AddOns = (booking.BookingAddOns ?? new List<BookingAddOn>()).Select(a => new BookingAddOnDto
+                {
+                    AddOnId = a.AddOnId,
+                    Name = a.Name,
+                    Price = a.Price
                 }).ToList()
             };
+        }
+
+        private static readonly string[] _flagKeywords =
+        {
+            "paint correction", "ceramic", "pet hair", "scratch", "dent",
+            "deep clean", "odor", "oxidation", "swirl", "clay bar", "polish"
+        };
+
+        private static string[] DetectFlaggedKeywords(string? instructions)
+        {
+            if (string.IsNullOrWhiteSpace(instructions)) return Array.Empty<string>();
+            var lower = instructions.ToLowerInvariant();
+            return _flagKeywords.Where(k => lower.Contains(k)).ToArray();
         }
 
         private static string NormalizeAddressType(string? addressType) =>
@@ -967,6 +994,21 @@ namespace Glanz.API.Modules.Booking
                     SnapshotDurationMinutes = packages[r.PackageId].EstimatedDurationMinutes,
                 }).ToList();
 
+                List<BookingAddOn> bookingAddOns = new();
+                if (dto.AddOnIds?.Count > 0)
+                {
+                    var addOns = await _context.ServiceAddOns
+                        .Where(a => dto.AddOnIds.Contains(a.Id) && a.IsActive)
+                        .ToListAsync(ct);
+                    bookingAddOns = addOns.Select(a => new BookingAddOn
+                    {
+                        AddOnId = a.Id,
+                        Name = a.Name,
+                        Price = a.Price
+                    }).ToList();
+                    finalAmount += bookingAddOns.Sum(a => a.Price);
+                }
+
                 var addressType = NormalizeAddressType(dto.AddressType);
                 var customerAddress = string.IsNullOrWhiteSpace(dto.CustomerAddress) ? null : dto.CustomerAddress.Trim();
                 if (bookingUser != null)
@@ -1008,7 +1050,8 @@ namespace Glanz.API.Modules.Booking
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow,
                     BookingItems = bookingItems,
-                    ChecklistItems = checklistItems
+                    ChecklistItems = checklistItems,
+                    BookingAddOns = bookingAddOns
                 };
                 if (booking.AssignedWorkerId.HasValue) booking.Status = BookingStatus.Confirmed;
 
@@ -1095,6 +1138,7 @@ namespace Glanz.API.Modules.Booking
             var booking = await _context.Bookings
                 .Include(b => b.BookingItems).ThenInclude(bi => bi.Package)
                 .Include(b => b.ChecklistItems)
+                .Include(b => b.BookingAddOns)
                 .FirstOrDefaultAsync(b => b.BookingNumber == bookingNumber);
             if (booking == null) return (null, "Booking not found", 404);
             if (isCustomer && (!userId.HasValue || booking.UserId != userId.Value)) return (null, "Forbidden", 403);
@@ -1375,6 +1419,8 @@ namespace Glanz.API.Modules.Booking
             if (booking.UserId.HasValue && prev != BookingStatus.Completed && newStatus == BookingStatus.Completed)
             {
                 await IssueLoyaltyCouponsAsync(booking.UserId.Value);
+                if (booking.OrgId.HasValue)
+                    await AwardLoyaltyPointsAsync(booking.OrgId.Value, booking.UserId.Value, booking.Id, booking.TotalAmount);
                 var user = await _context.Users.FindAsync(booking.UserId.Value);
                 if (user != null && !user.FirstWashCompletedAt.HasValue) { user.FirstWashCompletedAt = now; await _context.SaveChangesAsync(); }
                 await _referralService.CheckAndRewardReferralAsync(booking.Id, booking.UserId.Value);
@@ -1459,6 +1505,7 @@ namespace Glanz.API.Modules.Booking
                 .ToListAsync();
             foreach (var av in slots) { av.CurrentBookings = Math.Max(0, av.CurrentBookings - 1); av.IsAvailable = true; }
             await _context.SaveChangesAsync();
+            await _domainEvents.PublishAsync(new BookingCancelledEvent(_tenantContext.OrgId, booking.Id, booking.BookingNumber, null));
             return (null, 204);
         }
 
@@ -1717,8 +1764,30 @@ namespace Glanz.API.Modules.Booking
             }
 
             await _context.SaveChangesAsync();
-            if (booking.UserId.HasValue) await IssueLoyaltyCouponsAsync(booking.UserId.Value);
+            if (booking.UserId.HasValue)
+            {
+                await IssueLoyaltyCouponsAsync(booking.UserId.Value);
+                await AwardLoyaltyPointsAsync(_tenantContext.OrgId, booking.UserId.Value, booking.Id, booking.TotalAmount);
+            }
             await _domainEvents.PublishAsync(new BookingCompletedEvent(_tenantContext.OrgId, booking.Id, booking.BookingNumber, booking.TotalAmount));
+
+            // Auto-generate and email invoice (fire-and-forget - don't block worker response)
+            if (!string.IsNullOrEmpty(booking.CustomerEmail))
+            {
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        var invoiceUrl = await _invoiceService.GenerateAndStoreAsync(booking.Id, lang);
+                        await _emailService.SendInvoiceAsync(booking.CustomerEmail, booking.CustomerName, booking.BookingNumber, invoiceUrl);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "[Invoice] Auto-send failed for booking {BookingId}", booking.Id);
+                    }
+                });
+            }
+
             return (MapBookingToDto(booking, ResolveBookingDurationMinutes(booking), packageTextMap), null, 200);
         }
 
@@ -1758,12 +1827,59 @@ namespace Glanz.API.Modules.Booking
             return (MapBookingToDto(booking, ResolveBookingDurationMinutes(booking), new Dictionary<int, (string?, string?)>()), null, 200);
         }
 
-        public async Task<IEnumerable<object>> GetBookingPhotosAsync(int bookingId, int workerId)
+        public async Task<IEnumerable<object>> GetBookingPhotosAsync(int bookingId, int userId)
         {
-            var booking = await _context.Bookings.AsNoTracking().FirstOrDefaultAsync(b => b.Id == bookingId && b.AssignedWorkerId == workerId);
+            var booking = await _context.Bookings.AsNoTracking()
+                .FirstOrDefaultAsync(b => b.Id == bookingId && (b.AssignedWorkerId == userId || b.UserId == userId));
             if (booking == null) return Enumerable.Empty<object>();
             var photos = await _context.Set<BookingPhoto>().AsNoTracking().Where(p => p.BookingId == bookingId).ToListAsync();
             return photos.Select(p => new { p.Id, p.PhotoType, Url = p.ImageUrl, UploadedAt = p.CreatedAt });
+        }
+
+        private async Task AwardLoyaltyPointsAsync(int orgId, int userId, int bookingId, decimal bookingTotal)
+        {
+            if (bookingTotal <= 0) return;
+            var config = await _context.OrgLoyaltyConfigs.AsNoTracking()
+                .FirstOrDefaultAsync(c => c.OrgId == orgId);
+            if (config == null || !config.IsEnabled) return;
+
+            var pointsEarned = Math.Round(bookingTotal * config.PointsPerQar, 2);
+            if (pointsEarned <= 0) return;
+
+            var account = await _context.LoyaltyAccounts
+                .FirstOrDefaultAsync(a => a.OrgId == orgId && a.UserId == userId);
+            if (account == null)
+            {
+                account = new LoyaltyAccount { OrgId = orgId, UserId = userId };
+                _context.LoyaltyAccounts.Add(account);
+            }
+            account.Balance += pointsEarned;
+            account.LifetimeEarned += pointsEarned;
+            account.UpdatedAt = DateTime.UtcNow;
+
+            _context.LoyaltyTransactions.Add(new LoyaltyTransaction
+            {
+                OrgId = orgId,
+                UserId = userId,
+                BookingId = bookingId,
+                Points = pointsEarned,
+                Type = "Earn",
+                Description = $"Earned from booking #{bookingId}"
+            });
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<(string? Error, int StatusCode)> AddTipAsync(int bookingId, int userId, decimal amount)
+        {
+            var booking = await _context.Bookings.FirstOrDefaultAsync(b => b.Id == bookingId && b.UserId == userId);
+            if (booking == null) return ("Booking not found", 404);
+            if (booking.Status != BookingStatus.Completed) return ("Tip can only be added after job is completed", 400);
+            if (booking.TipAmount.HasValue) return ("Tip already added", 400);
+
+            booking.TipAmount = amount;
+            booking.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+            return (null, 200);
         }
     }
 }

@@ -38,14 +38,24 @@ namespace Glanz.API.Controllers
 
         [Authorize(Roles = "Admin")]
         [HttpGet("customers")]
-        public async Task<ActionResult<IEnumerable<CrmCustomerDto>>> GetCrmCustomers([FromQuery] string? segment) =>
-            Ok(await _crmService.GetCrmCustomersAsync(segment));
+        public async Task<ActionResult<IEnumerable<CrmCustomerDto>>> GetCrmCustomers(
+            [FromQuery] string? segment,
+            [FromQuery] decimal? minSpend, [FromQuery] decimal? maxSpend,
+            [FromQuery] int? minBookings, [FromQuery] int? maxBookings,
+            [FromQuery] DateTime? lastBookingBefore, [FromQuery] DateTime? lastBookingAfter,
+            [FromQuery] string? tags) =>
+            Ok(await _crmService.GetCrmCustomersAsync(segment, minSpend, maxSpend, minBookings, maxBookings, lastBookingBefore, lastBookingAfter, tags));
 
         [Authorize(Roles = "Admin")]
         [HttpGet("customers/export")]
-        public async Task<IActionResult> ExportCustomersCsv([FromQuery] string? segment)
+        public async Task<IActionResult> ExportCustomersCsv(
+            [FromQuery] string? segment,
+            [FromQuery] decimal? minSpend, [FromQuery] decimal? maxSpend,
+            [FromQuery] int? minBookings, [FromQuery] int? maxBookings,
+            [FromQuery] DateTime? lastBookingBefore, [FromQuery] DateTime? lastBookingAfter,
+            [FromQuery] string? tags)
         {
-            var customers = await _crmService.GetCrmCustomersAsync(segment);
+            var customers = await _crmService.GetCrmCustomersAsync(segment, minSpend, maxSpend, minBookings, maxBookings, lastBookingBefore, lastBookingAfter, tags);
             var sb = new System.Text.StringBuilder();
             sb.AppendLine("Id,Name,Email,Phone,Segment,TotalBookings,TotalSpent,LastBookedDate,Tags");
             foreach (var c in customers)

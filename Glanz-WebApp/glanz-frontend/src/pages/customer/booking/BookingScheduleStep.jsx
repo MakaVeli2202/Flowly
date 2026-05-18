@@ -120,13 +120,48 @@ function BookingScheduleStep({
             loading={slotsLoading}
             disabled={!formData.scheduledDate}
           />
-          {availableSlots !== null && !slotsLoading && (
-            <p className={`text-xs mt-2 ${availableSlots.length === 0 ? 'text-red-400' : 'text-[var(--muted-color)]'}`}>
-              {availableSlots.length === 0
-                ? 'No times available for this date. Please choose another day.'
-                : `${availableSlots.length} slot${availableSlots.length !== 1 ? 's' : ''} available`}
+          {availableSlots !== null && !slotsLoading && availableSlots.length > 0 && (
+            <p className="text-xs mt-2 text-[var(--muted-color)]">
+              {availableSlots.length} slot{availableSlots.length !== 1 ? 's' : ''} available
             </p>
           )}
+          {availableSlots !== null && !slotsLoading && availableSlots.length === 0 && (() => {
+            const selected = formData.scheduledDate ? new Date(formData.scheduledDate + 'T00:00:00') : null;
+            const suggestions = selected
+              ? Object.entries(availabilityByDate)
+                  .filter(([key, day]) => {
+                    const d = new Date(key + 'T00:00:00');
+                    return d > selected && key !== formData.scheduledDate && day.status !== 'full' && (day.freeSlots ?? 1) > 0;
+                  })
+                  .sort(([a], [b]) => new Date(a) - new Date(b))
+                  .slice(0, 3)
+                  .map(([key]) => new Date(key + 'T00:00:00'))
+              : [];
+            return (
+              <>
+                <p className="text-xs mt-2 text-red-400">No times available on this date.</p>
+                {suggestions.length > 0 && (
+                  <div className="mt-3">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[var(--muted-color)] mb-2">Next available dates</p>
+                    <div className="flex flex-wrap gap-2">
+                      {suggestions.map(dateObj => (
+                        <button
+                          key={toDateKey(dateObj)}
+                          type="button"
+                          onClick={() => {
+                            setCalendarMonth(new Date(dateObj.getFullYear(), dateObj.getMonth(), 1));
+                            onSelectDate(dateObj);
+                          }}
+                          className="px-3 py-1.5 rounded-lg border border-primary/30 bg-primary/8 text-primary text-xs font-semibold hover:bg-primary/15 transition">
+                          {dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            );
+          })()}
           {formData.scheduledDate && formData.timeSlot && (() => {
             const start   = formatSlotStartHour(formData.timeSlot);
             const endTime = calculateEndTimeFromSlot(formData.timeSlot, totalDuration);

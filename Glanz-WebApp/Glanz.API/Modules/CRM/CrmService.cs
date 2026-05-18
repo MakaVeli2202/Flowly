@@ -166,7 +166,12 @@ namespace Glanz.API.Modules.CRM
             };
         }
 
-        public async Task<IEnumerable<CrmCustomerDto?>> GetCrmCustomersAsync(string? segment)
+        public async Task<IEnumerable<CrmCustomerDto?>> GetCrmCustomersAsync(
+            string? segment,
+            decimal? minSpend = null, decimal? maxSpend = null,
+            int? minBookings = null, int? maxBookings = null,
+            DateTime? lastBookingBefore = null, DateTime? lastBookingAfter = null,
+            string? tags = null)
         {
             var customers = await _context.Users
                 .Where(u => u.Role == "Customer" && u.IsActive)
@@ -208,6 +213,19 @@ namespace Glanz.API.Modules.CRM
                         if (segment == "VIP" && segmentName != "VIP") return null;
                         if (segment == "Active" && daysSinceLast > 30) return null;
                         if (segment == "Inactive" && daysSinceLast <= 60) return null;
+                    }
+
+                    if (minSpend.HasValue && totalSpent < minSpend.Value) return null;
+                    if (maxSpend.HasValue && totalSpent > maxSpend.Value) return null;
+                    if (minBookings.HasValue && totalBookings < minBookings.Value) return null;
+                    if (maxBookings.HasValue && totalBookings > maxBookings.Value) return null;
+                    if (lastBookingBefore.HasValue && (lastBooked == null || lastBooked.Value > lastBookingBefore.Value)) return null;
+                    if (lastBookingAfter.HasValue && (lastBooked == null || lastBooked.Value < lastBookingAfter.Value)) return null;
+                    if (!string.IsNullOrEmpty(tags))
+                    {
+                        var filterTags = tags.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                        var custTags = (c.Tags ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                        if (!filterTags.Any(t => custTags.Contains(t, StringComparer.OrdinalIgnoreCase))) return null;
                     }
 
                     return new CrmCustomerDto

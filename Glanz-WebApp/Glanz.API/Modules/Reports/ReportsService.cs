@@ -306,7 +306,8 @@ namespace Glanz.API.Modules.Reports
                     PackageName   = b.BookingItems.FirstOrDefault()?.Package?.Name ?? "Unknown",
                     VehicleType   = b.VehicleType.ToString(),
                     DurationHours = Math.Round((b.WorkDurationSeconds ?? 0) / 3600.0, 2),
-                    Amount        = b.TotalAmount
+                    Amount        = b.TotalAmount,
+                    TipAmount     = b.TipAmount ?? 0m
                 }).OrderByDescending(j => j.CompletedAt).ToList();
 
                 employeePayrolls.Add(new PayrollEmployeeDto
@@ -322,6 +323,7 @@ namespace Glanz.API.Modules.Reports
                     NetPay           = grossPay - deductions,
                     JobsCompleted    = workerBookings.Count,
                     RevenueGenerated = workerBookings.Sum(b => b.TotalAmount),
+                    TotalTips        = workerBookings.Sum(b => b.TipAmount ?? 0m),
                     IsPaid           = worker.LastPaidMonth == month && worker.LastPaidYear == year,
                     PaidAt           = (worker.LastPaidMonth == month && worker.LastPaidYear == year) ? worker.LastPaidAt : null,
                     JobDetails       = jobDetails

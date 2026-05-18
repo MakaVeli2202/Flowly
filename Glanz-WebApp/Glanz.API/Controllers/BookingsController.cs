@@ -156,5 +156,16 @@ namespace Glanz.API.Controllers
             if (result == null) return StatusCode(statusCode, new { message = error });
             return Ok(result);
         }
+
+        [Authorize(Roles = "Customer")]
+        [HttpPost("{id}/tip")]
+        public async Task<IActionResult> AddTip(int id, [FromBody] AddTipDto dto)
+        {
+            var userId = GetUserId();
+            if (!userId.HasValue) return Unauthorized();
+            var (error, statusCode) = await _bookingService.AddTipAsync(id, userId.Value, dto.Amount);
+            if (error != null) return StatusCode(statusCode, new { message = error });
+            return NoContent();
+        }
     }
 }

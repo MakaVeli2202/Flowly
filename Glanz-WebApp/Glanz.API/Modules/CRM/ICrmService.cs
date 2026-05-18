@@ -8,7 +8,12 @@ namespace Glanz.API.Modules.CRM
         Task<CrmDashboardDto> GetDashboardAsync();
         Task<CrmStatsDto> GetStatsAsync();
         Task<BookingSourceStatsDto> GetBookingSourceStatsAsync();
-        Task<IEnumerable<CrmCustomerDto?>> GetCrmCustomersAsync(string? segment);
+        Task<IEnumerable<CrmCustomerDto?>> GetCrmCustomersAsync(
+            string? segment,
+            decimal? minSpend = null, decimal? maxSpend = null,
+            int? minBookings = null, int? maxBookings = null,
+            DateTime? lastBookingBefore = null, DateTime? lastBookingAfter = null,
+            string? tags = null);
         Task<(CustomerProfileDto? Result, string? Error)> GetCustomerProfileAsync(int id);
         Task<string?> UpdateCustomerAsync(int id, UpdateCustomerDto dto);
         Task<(string? Error, int Updated)> BulkUpdateTagsAsync(BulkTagDto dto);

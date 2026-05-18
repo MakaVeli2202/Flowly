@@ -24,5 +24,7 @@
   "recurringBookings": "المتكررة",
   "purchaseOrders": "أوامر الشراء",
   "resources": "الموارد",
-  "pos": "نقطة البيع"
+  "pos": "نقطة البيع",
+  "assetSearch": "بحث الأصول / اللوحة",
+  "corporateAccounts": "الحسابات المؤسسية"
 }

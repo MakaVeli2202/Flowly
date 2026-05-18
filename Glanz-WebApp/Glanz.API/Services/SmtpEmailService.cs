@@ -83,6 +83,27 @@ namespace Glanz.API.Services
                 devLogMessage: $"[PASSWORD RESET] To: {toEmail}  URL: {resetUrl}");
         }
 
+        public async Task SendInvoiceAsync(string toEmail, string toName, string bookingNumber, string? invoicePdfUrl)
+        {
+            var subject = $"Your invoice – Booking #{bookingNumber}";
+            var downloadSection = string.IsNullOrEmpty(invoicePdfUrl)
+                ? "<p style='color:#888;font-size:13px'>Your invoice is being prepared and will be available shortly.</p>"
+                : $"""<a href="{invoicePdfUrl}" style="display:inline-block;padding:12px 28px;background:#c8a96b;color:#fff;text-decoration:none;border-radius:6px;font-weight:bold;margin:16px 0">Download Invoice PDF</a><p style='color:#aaa;font-size:12px;word-break:break-all'>{invoicePdfUrl}</p>""";
+
+            var html = $"""
+                <div style="font-family:sans-serif;max-width:480px;margin:0 auto">
+                  <h2 style="color:#c8a96b">Thank you for your booking!</h2>
+                  <p>Hi {WebUtility.HtmlEncode(toName)},</p>
+                  <p>Your service has been completed. Please find your invoice below for booking <strong>#{bookingNumber}</strong>.</p>
+                  {downloadSection}
+                  <p style="color:#888;font-size:13px">Thank you for choosing us. We look forward to serving you again.</p>
+                </div>
+                """;
+
+            await SendAsync(toEmail, subject, html,
+                devLogMessage: $"[INVOICE EMAIL] To: {toEmail}  Booking: #{bookingNumber}  PDF: {invoicePdfUrl ?? "N/A"}");
+        }
+
         // ── Internal ──────────────────────────────────────────────────────────
 
         private async Task SendAsync(string toEmail, string subject, string htmlBody, string devLogMessage)

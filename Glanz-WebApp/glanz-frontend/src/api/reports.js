@@ -24,5 +24,10 @@ export const reportsAPI = {
     if (endDate) params.append('endDate', endDate);
     const response = await apiClient.get(`/Reports/operational?${params}`);
     return response.data;
-  })
+  }),
+
+  getCohortRetention: async (months = 6) => {
+    const response = await apiClient.get(`/Reports/cohort-retention?months=${months}`);
+    return response.data;
+  },
 };

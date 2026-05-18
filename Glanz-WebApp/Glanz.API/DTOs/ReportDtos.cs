@@ -112,6 +112,7 @@ namespace Glanz.API.DTOs
         public decimal NetPay { get; set; }
         public int JobsCompleted { get; set; }
         public decimal RevenueGenerated { get; set; }
+        public decimal TotalTips { get; set; }
         public bool IsPaid { get; set; }
         public DateTime? PaidAt { get; set; }
         public List<PayrollJobDetail> JobDetails { get; set; } = new();
@@ -127,6 +128,7 @@ namespace Glanz.API.DTOs
         public string VehicleType { get; set; } = string.Empty;
         public double DurationHours { get; set; }
         public decimal Amount { get; set; }
+        public decimal TipAmount { get; set; }
     }
 
     public class MarkPayrollPaidDto

@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import {
   Eye, EyeOff, Images, KeyRound, MapPin, Phone,
-  Save, Upload, User, CheckCircle, AlertCircle, Shield,
+  Save, Upload, User, CheckCircle, AlertCircle, Shield, Gift,
 } from 'lucide-react';
+import { loyaltyAPI } from '../../api/loyalty';
 import { useAuth } from '../../context/AuthContext';
 import AddressAutocompleteInput from '../../components/shared/AddressAutocompleteInput';
 import AvatarPicker from '../../components/shared/AvatarPicker';
@@ -113,6 +114,11 @@ function Profile() {
   const [showCurrentPassword,    setShowCurrentPassword]    = useState(false);
   const [showNewPassword,        setShowNewPassword]        = useState(false);
   const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
+  const [loyalty, setLoyalty] = useState(null);
+
+  useEffect(() => {
+    loyaltyAPI.getBalance().then(d => setLoyalty(d)).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -550,6 +556,46 @@ function Profile() {
             </button>
           </form>
         </div>
+
+        {/* ── Loyalty Points Card ──────────────────────────────────────── */}
+        {loyalty && loyalty.isEnabled && (
+          <div className="glass-card p-6 mb-6 reveal-up">
+            <div className="flex items-center gap-3 mb-5" style={{ borderBottom: '1px solid rgba(200,169,107,0.12)', paddingBottom: '1.25rem' }}>
+              <div className="w-9 h-9 rounded-xl bg-primary/15 border border-primary/25 flex items-center justify-center flex-shrink-0">
+                <Gift size={15} className="text-primary" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-[var(--heading-color)] tracking-tight">Loyalty Points</h2>
+                <p className="text-xs text-[var(--muted-color)] mt-0.5">Earn points on every booking and redeem for discounts.</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="text-center">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)] mb-1">Balance</p>
+                <p className="text-2xl font-black text-primary">{Number(loyalty.balance || 0).toFixed(0)}</p>
+                <p className="text-[10px] text-[var(--muted-color)] mt-0.5">pts</p>
+              </div>
+              <div className="text-center">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)] mb-1">Lifetime Earned</p>
+                <p className="text-xl font-bold text-[var(--heading-color)]">{Number(loyalty.lifetimeEarned || 0).toFixed(0)}</p>
+                <p className="text-[10px] text-[var(--muted-color)] mt-0.5">pts</p>
+              </div>
+              <div className="text-center">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted-color)] mb-1">Redeemed</p>
+                <p className="text-xl font-bold text-[var(--muted-color)]">{Number(loyalty.lifetimeRedeemed || 0).toFixed(0)}</p>
+                <p className="text-[10px] text-[var(--muted-color)] mt-0.5">pts</p>
+              </div>
+            </div>
+            {loyalty.balance >= loyalty.minRedemptionPoints && (
+              <p className="text-xs text-green-400 mt-4 text-center">
+                You have enough points to redeem! Use your points at checkout for a discount.
+              </p>
+            )}
+            <p className="text-[10px] text-[var(--muted-color)] mt-3 text-center">
+              {loyalty.pointsPerQar} pt per QAR spent - {loyalty.redemptionRateQar} QAR per point
+            </p>
+          </div>
+        )}
 
         {/* ══════════════════════════════════════════════════════════════
             PASSWORD CARD

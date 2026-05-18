@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Glanz.API.DTOs;
+using Glanz.API.Services;
 
 namespace Glanz.API.Controllers
 {
@@ -211,6 +212,26 @@ namespace Glanz.API.Controllers
             var (result, error, statusCode) = await _bookingService.AdminEditBookingAsync(id, dto, adminId.Value, lang);
             if (result == null) return StatusCode(statusCode, new { message = error });
             return Ok(result);
+        }
+
+        [Authorize(Roles = "Admin,Customer")]
+        [HttpGet("{id}/invoice/pdf")]
+        public async Task<IActionResult> DownloadInvoice(int id, [FromServices] IInvoiceService invoiceService)
+        {
+            var lang = ResolveRequestedLanguage();
+            var pdfBytes = await invoiceService.GeneratePdfAsync(id, lang);
+            if (pdfBytes.Length == 0) return NotFound(new { message = "Booking not found" });
+            return File(pdfBytes, "application/pdf", $"invoice-{id}.pdf");
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpPost("{id}/invoice/store")]
+        public async Task<IActionResult> StoreInvoice(int id, [FromServices] IInvoiceService invoiceService)
+        {
+            var lang = ResolveRequestedLanguage();
+            var url = await invoiceService.GenerateAndStoreAsync(id, lang);
+            if (url == null) return StatusCode(500, new { message = "PDF generation failed" });
+            return Ok(new { invoicePdfUrl = url });
         }
 
         [Authorize]

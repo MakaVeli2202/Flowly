@@ -63,6 +63,74 @@ namespace Glanz.API.Controllers
             });
         }
 
+        // GET /api/public/orgs/{slug}/branding - CSS vars for white-label tenant injection
+        [HttpGet("orgs/{slug}/branding")]
+        public async Task<IActionResult> GetOrgBranding(string slug)
+        {
+            var org = await _context.Organizations
+                .AsNoTracking()
+                .IgnoreQueryFilters()
+                .Where(o => o.Slug == slug.ToLowerInvariant() && o.IsActive)
+                .Select(o => new { o.Id, o.Name })
+                .FirstOrDefaultAsync();
+
+            if (org == null) return NotFound(new { message = "Organization not found." });
+
+            var b = await _context.OrganizationBrandings
+                .AsNoTracking()
+                .IgnoreQueryFilters()
+                .Where(b => b.OrgId == org.Id)
+                .FirstOrDefaultAsync();
+
+            return Ok(new
+            {
+                orgName = org.Name,
+                logoUrl = b?.LogoUrl,
+                faviconUrl = b?.FaviconUrl,
+                cssVars = new Dictionary<string, string>
+                {
+                    ["--color-primary"]   = b?.PrimaryColor   ?? "#6366f1",
+                    ["--color-secondary"] = b?.SecondaryColor ?? "#8b5cf6",
+                },
+                whiteLabelEnabled = b?.WhiteLabelEnabled ?? false,
+            });
+        }
+
+        // GET /api/public/orgs - marketplace directory of all active orgs
+        [HttpGet("orgs")]
+        public async Task<IActionResult> ListOrgs()
+        {
+            var orgs = await _context.Organizations
+                .AsNoTracking()
+                .IgnoreQueryFilters()
+                .Where(o => o.IsActive)
+                .OrderBy(o => o.Name)
+                .Select(o => new { o.Id, o.Slug, o.Name, o.IndustryType })
+                .ToListAsync();
+
+            var brandingMap = await _context.OrganizationBrandings
+                .AsNoTracking()
+                .IgnoreQueryFilters()
+                .Where(b => orgs.Select(o => o.Id).Contains(b.OrgId))
+                .Select(b => new { b.OrgId, b.LogoUrl, b.PrimaryColor })
+                .ToListAsync();
+
+            var result = orgs.Select(o =>
+            {
+                var br = brandingMap.FirstOrDefault(b => b.OrgId == o.Id);
+                return new
+                {
+                    o.Slug,
+                    o.Name,
+                    o.IndustryType,
+                    LogoUrl = br?.LogoUrl,
+                    PrimaryColor = br?.PrimaryColor ?? "#6366f1",
+                };
+            });
+
+            return Ok(result);
+        }
+
         // GET /api/public/orgs/{slug}/packages - returns active packages for the org
         [HttpGet("orgs/{slug}/packages")]
         public async Task<IActionResult> GetPackagesBySlug(string slug)

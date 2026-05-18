@@ -132,6 +132,17 @@ namespace Glanz.API.Models
         /// </summary>
         public bool AllowPreferredWorker { get; set; } = false;
 
+        public DateTime? DateOfBirth { get; set; }
+
+        // Tracks which calendar year a birthday push was last sent - prevents duplicate sends.
+        public int? BirthdayOfferSentYear { get; set; }
+
+        // Tracks when a booking-anniversary push was last sent (year of booking anniversary).
+        public int? AnniversaryOfferSentYear { get; set; }
+
+        // Tracks when the review request push was last sent for the most recent completed booking.
+        public DateTime? ReviewRequestSentAt { get; set; }
+
         public ICollection<Booking> Bookings { get; set; } = new List<Booking>();
     }
 }

@@ -1,6 +1,8 @@
 import apiClient from './axios';
 import { withRetry } from '../utils/retry';
 
+const _cleanParams = (obj) => Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== '' && v !== null && v !== undefined));
+
 export const crmAPI = {
   getDashboard: async () => withRetry(async () => {
     const response = await apiClient.get('/Crm/dashboard');
@@ -18,6 +20,11 @@ export const crmAPI = {
     return response.data;
   }),
 
+  getSegmentedCustomers: async (filters = {}) => withRetry(async () => {
+    const response = await apiClient.get('/Crm/customers', { params: _cleanParams(filters) });
+    return response.data;
+  }),
+
   exportCustomersCsv: (segment) => {
     const params = segment && segment !== 'All' ? `?segment=${segment}` : '';
     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
@@ -32,6 +39,21 @@ export const crmAPI = {
         a.download = `customers-${new Date().toISOString().slice(0,10)}.csv`;
         a.click();
         URL.revokeObjectURL(url);
+      });
+  },
+
+  exportSegmentedCsv: (filters = {}) => {
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    const qs = new URLSearchParams(_cleanParams(filters)).toString();
+    const url = `${apiClient.defaults.baseURL}/Crm/customers/export${qs ? '?' + qs : ''}`;
+    return fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.blob())
+      .then(blob => {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `segment-${new Date().toISOString().slice(0,10)}.csv`;
+        a.click();
+        URL.revokeObjectURL(a.href);
       });
   },
 

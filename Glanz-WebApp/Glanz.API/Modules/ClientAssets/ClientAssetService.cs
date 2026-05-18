@@ -14,6 +14,7 @@ namespace Glanz.API.Modules.ClientAssets
         Task<(ClientAssetDto? Result, string? Error, int StatusCode)> UpdateAssetAsync(int orgId, int userId, int id, UpdateClientAssetDto dto);
         Task<(string? Error, int StatusCode)> DeleteAssetAsync(int orgId, int userId, int id);
         Task<(ClientAssetDto? Result, string? Error, int StatusCode)> SetDefaultAsync(int orgId, int userId, int id);
+        Task<(object? Result, string? Error, int StatusCode)> GetHistoryAsync(int orgId, int userId, int id);
     }
 
     public class ClientAssetService : IClientAssetService
@@ -176,6 +177,34 @@ namespace Glanz.API.Modules.ClientAssets
                 VehicleType = vehicleType,
                 IsDefault = isDefault
             });
+        }
+
+        public async Task<(object? Result, string? Error, int StatusCode)> GetHistoryAsync(int orgId, int userId, int id)
+        {
+            var asset = await _context.ClientAssets.AsNoTracking()
+                .FirstOrDefaultAsync(a => a.Id == id && a.OrgId == orgId && a.CustomerId == userId);
+            if (asset == null) return (null, "Asset not found", 404);
+
+            var bookings = await _context.Bookings
+                .AsNoTracking()
+                .IgnoreQueryFilters()
+                .Where(b => b.ClientAssetId == id && b.OrgId == orgId)
+                .OrderByDescending(b => b.ScheduledDate)
+                .Select(b => new
+                {
+                    b.Id,
+                    b.BookingNumber,
+                    b.ScheduledDate,
+                    b.TimeSlot,
+                    Status = b.Status.ToString(),
+                    b.TotalAmount,
+                    b.TipAmount,
+                    b.WorkerRating,
+                    b.InvoicePdfUrl
+                })
+                .ToListAsync();
+
+            return (new { asset = ToDto(asset), bookings }, null, 200);
         }
 
         private static ClientAssetDto ToDto(ClientAsset ca) => new()

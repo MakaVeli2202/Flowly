@@ -76,5 +76,6 @@ namespace Glanz.API.Modules.Booking
         Task<(BookingDto? Result, string? Error, int StatusCode)> UploadBookingPhotoAsync(
             int bookingId, int workerId, IFormFile file, string photoType);
         Task<IEnumerable<object>> GetBookingPhotosAsync(int bookingId, int workerId);
+        Task<(string? Error, int StatusCode)> AddTipAsync(int bookingId, int userId, decimal amount);
     }
 }

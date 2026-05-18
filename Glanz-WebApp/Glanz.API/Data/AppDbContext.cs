@@ -1,6 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using Glanz.API.Models;
+using Glanz.API.Modules.AI.Models;
+using Glanz.API.Modules.Reseller;
+using Glanz.API.Modules.Webhooks;
+using Glanz.API.Modules.SSO;
 using Glanz.API.Platform.Tenancy;
 
 namespace Glanz.API.Data
@@ -95,12 +99,48 @@ namespace Glanz.API.Data
         public DbSet<TenantConfigurationSnapshot> TenantConfigurationSnapshots { get; set; }
         public DbSet<TenantFeatureFlag> TenantFeatureFlags { get; set; }
 
+        // Notification configuration per org
+        public DbSet<OrgNotificationConfig> OrgNotificationConfigs { get; set; }
+
+        // Package add-ons
+        public DbSet<ServiceAddOn> ServiceAddOns { get; set; }
+        public DbSet<BookingAddOn> BookingAddOns { get; set; }
+
+        // Loyalty points
+        public DbSet<LoyaltyAccount> LoyaltyAccounts { get; set; }
+        public DbSet<LoyaltyTransaction> LoyaltyTransactions { get; set; }
+        public DbSet<OrgLoyaltyConfig> OrgLoyaltyConfigs { get; set; }
+
+        // Staff certifications
+        public DbSet<StaffCertification> StaffCertifications { get; set; }
+
+        // Worker ratings
+        public DbSet<StaffRating> StaffRatings { get; set; }
+
+        // Corporate / fleet accounts
+        public DbSet<CorporateAccount> CorporateAccounts { get; set; }
+        public DbSet<CorporateAccountMember> CorporateAccountMembers { get; set; }
+
         // Platform: automation
         public DbSet<BookingRule> BookingRules { get; set; }
         public DbSet<AutomationRule> AutomationRules { get; set; }
 
         // Platform: industry templates
         public DbSet<IndustryTemplate> IndustryTemplates { get; set; }
+
+        // AI module
+        public DbSet<AIConversation> AIConversations { get; set; }
+
+        // Enterprise SSO
+        public DbSet<SsoConfiguration> SsoConfigurations { get; set; }
+
+        // Reseller / agency console
+        public DbSet<ResellerProfile> ResellerProfiles { get; set; }
+        public DbSet<ResellerManagedOrg> ResellerManagedOrgs { get; set; }
+
+        // Webhooks
+        public DbSet<WebhookSubscription> WebhookSubscriptions { get; set; }
+        public DbSet<WebhookDelivery> WebhookDeliveries { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -156,6 +196,19 @@ namespace Glanz.API.Data
             modelBuilder.Entity<AutomationRule>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == CurrentOrgId);
             modelBuilder.Entity<OrganizationSubscription>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == CurrentOrgId);
             modelBuilder.Entity<UsageRecord>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<AIConversation>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<SsoConfiguration>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<ResellerProfile>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<ResellerManagedOrg>().HasQueryFilter(e => IsPlatformAdmin || e.ResellerOrgId == CurrentOrgId);
+            modelBuilder.Entity<WebhookSubscription>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<WebhookDelivery>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<ServiceAddOn>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<LoyaltyAccount>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<LoyaltyTransaction>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<StaffCertification>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<StaffRating>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == null || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<CorporateAccount>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == CurrentOrgId);
+            modelBuilder.Entity<CorporateAccountMember>().HasQueryFilter(e => IsPlatformAdmin || e.OrgId == CurrentOrgId);
 
             // Configure decimal precision
             foreach (var entity in modelBuilder.Model.GetEntityTypes())

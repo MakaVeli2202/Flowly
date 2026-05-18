@@ -164,8 +164,29 @@ namespace Glanz.API.Models
         /// <summary>Set when an SMS/WhatsApp reminder has been dispatched for this booking.</summary>
         public DateTime? ReminderSentAt { get; set; }
 
+        /// <summary>Set when the escalation push has been sent (no-confirm close to booking time).</summary>
+        public DateTime? EscalationSentAt { get; set; }
+
         // Customer's preferred detailer (optional, set at booking time when feature enabled)
         public int? PreferredWorkerId { get; set; }
+
+        // Tip left by customer after job completion
+        [Column(TypeName = "decimal(10,2)")]
+        public decimal? TipAmount { get; set; }
+
+        // Worker rating given by customer after completion
+        public int? WorkerRating { get; set; }
+
+        // Link to a customer's named asset (car, room, etc.) for service history
+        public int? ClientAssetId { get; set; }
+
+        // Invoice PDF storage URL (generated after completion)
+        [StringLength(1000)]
+        public string? InvoicePdfUrl { get; set; }
+
+        // Token for walk-in / WhatsApp payment link
+        [StringLength(64)]
+        public string? PaymentLinkToken { get; set; }
 
         // Navigation properties
         [ForeignKey("UserId")]
@@ -179,5 +200,6 @@ namespace Glanz.API.Models
 
         public ICollection<BookingItem> BookingItems { get; set; } = new List<BookingItem>();
         public ICollection<BookingChecklistItem> ChecklistItems { get; set; } = new List<BookingChecklistItem>();
+        public ICollection<BookingAddOn> BookingAddOns { get; set; } = new List<BookingAddOn>();
     }
 }

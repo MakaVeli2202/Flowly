@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import {
   bookingsAPI
 } from '../../api/bookings';
+import { Download, Camera } from 'lucide-react';
 import { packagesAPI } from '../../api/packages';
 import { offersAPI } from '../../api/offers';
 import { crmAPI } from '../../api/crm';
@@ -193,6 +194,21 @@ function MyBookings() {
   const [feedbackData, setFeedbackData] = useState({ type: 'Review', rating: 5, comment: '', isAnonymous: false });
   const [submittingFeedback, setSubmittingFeedback] = useState(false);
 
+  // Rating state
+  const [rateModal, setRateModal] = useState(null);
+  const [rateValue, setRateValue] = useState(5);
+  const [rateComment, setRateComment] = useState('');
+  const [ratingSubmitting, setRatingSubmitting] = useState(false);
+  const [ratedBookingIds, setRatedBookingIds] = useState(new Set());
+
+  // Photos state
+  const [photosModal, setPhotosModal] = useState(null);
+  const [photos, setPhotos] = useState([]);
+  const [photosLoading, setPhotosLoading] = useState(false);
+
+  // Invoice state
+  const [invoiceLoadingId, setInvoiceLoadingId] = useState(null);
+
   const balloonsRef = useRef(null);
 
   // Edit modal state
@@ -371,6 +387,42 @@ function MyBookings() {
     } finally {
       setSubmittingFeedback(false);
     }
+  };
+
+  const submitRating = async () => {
+    if (!rateModal) return;
+    setRatingSubmitting(true);
+    try {
+      await bookingsAPI.rateWorker({ bookingId: rateModal.id, rating: rateValue, comment: rateComment });
+      setRatedBookingIds(prev => new Set([...prev, rateModal.id]));
+      setRateModal(null);
+      setRateComment('');
+      setRateValue(5);
+    } catch { /* ignore - worker may not be assigned */ }
+    setRatingSubmitting(false);
+  };
+
+  const openPhotos = async (booking) => {
+    setPhotosModal(booking);
+    setPhotos([]);
+    setPhotosLoading(true);
+    try {
+      const data = await bookingsAPI.getPhotos(booking.id);
+      setPhotos(Array.isArray(data) ? data : []);
+    } catch { setPhotos([]); }
+    setPhotosLoading(false);
+  };
+
+  const handleDownloadInvoice = async (booking) => {
+    setInvoiceLoadingId(booking.id);
+    try {
+      const res = await bookingsAPI.downloadInvoice(booking.id);
+      const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
+      const a = document.createElement('a');
+      a.href = url; a.download = `invoice-${booking.bookingNumber}.pdf`; a.click();
+      URL.revokeObjectURL(url);
+    } catch { /* ignore */ }
+    setInvoiceLoadingId(null);
   };
 
   const openEditModal = async (booking) => {
@@ -1231,6 +1283,20 @@ function MyBookings() {
                             className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold border border-[var(--border-color)] text-[var(--text-color)] bg-[var(--surface-bg)]">
                             <Star size={13} /> Feedback
                           </button>
+                          {!ratedBookingIds.has(booking.id) && !booking.workerRating && (
+                            <button onClick={() => { setRateModal(booking); setRateValue(5); setRateComment(''); }}
+                              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold border border-amber-500/30 text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 transition">
+                              <Star size={13} /> Rate Worker
+                            </button>
+                          )}
+                          <button onClick={() => openPhotos(booking)}
+                            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold border border-[var(--border-color)] text-[var(--muted-color)] bg-[var(--surface-bg)] hover:bg-white/5 transition">
+                            <Camera size={13} /> Photos
+                          </button>
+                          <button onClick={() => handleDownloadInvoice(booking)} disabled={invoiceLoadingId === booking.id}
+                            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold border border-violet-500/30 text-violet-400 bg-violet-500/10 hover:bg-violet-500/20 disabled:opacity-50 transition">
+                            <Download size={13} /> {invoiceLoadingId === booking.id ? '...' : 'Invoice'}
+                          </button>
                           <button onClick={() => handleBookAgain(booking)}
                             className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold btn-chrome">
                             Book Again <ArrowRight size={13} />
@@ -1306,6 +1372,72 @@ function MyBookings() {
           </div>
         )}
       </div>
+      {/* Rate Worker Modal */}
+      {rateModal && (
+        <div className="fixed inset-0 flex items-center justify-center p-4 z-50" style={{ background: 'rgba(0,0,0,0.7)' }}>
+          <div className="rounded-2xl p-6 w-full max-w-sm" style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)' }}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold" style={{ color: 'var(--heading-color)' }}>Rate Your Worker</h3>
+              <button onClick={() => setRateModal(null)} className="p-1 rounded-lg hover:bg-[var(--surface-bg)]"><X size={20} style={{ color: 'var(--muted-color)' }} /></button>
+            </div>
+            <div className="flex gap-1 justify-center mb-4">
+              {[1,2,3,4,5].map(i => (
+                <button key={i} onClick={() => setRateValue(i)} className="p-2 rounded-lg transition">
+                  <Star size={32} className={i <= rateValue ? 'text-yellow-500 fill-yellow-500' : 'text-gray-400'} />
+                </button>
+              ))}
+            </div>
+            <textarea value={rateComment} onChange={e => setRateComment(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl h-20 mb-4 text-sm"
+              style={{ background: 'var(--surface-bg)', border: '1px solid var(--border-color)', color: 'var(--text-color)' }}
+              placeholder="Comment (optional)" />
+            <button onClick={submitRating} disabled={ratingSubmitting}
+              className="w-full py-3 rounded-xl font-bold text-white bg-amber-500 hover:bg-amber-600 disabled:opacity-50 transition">
+              {ratingSubmitting ? 'Submitting...' : 'Submit Rating'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Before/After Photos Modal */}
+      {photosModal && (
+        <div className="fixed inset-0 flex items-center justify-center p-4 z-50" style={{ background: 'rgba(0,0,0,0.85)' }}>
+          <div className="rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto" style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)' }}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold" style={{ color: 'var(--heading-color)' }}>Service Photos - #{photosModal.bookingNumber}</h3>
+              <button onClick={() => setPhotosModal(null)} className="p-1 rounded-lg hover:bg-[var(--surface-bg)]"><X size={20} style={{ color: 'var(--muted-color)' }} /></button>
+            </div>
+            {photosLoading ? (
+              <div className="text-center py-8 text-[var(--muted-color)]">Loading photos...</div>
+            ) : photos.length === 0 ? (
+              <div className="text-center py-8">
+                <Camera size={36} className="mx-auto mb-3 text-[var(--muted-color)]" />
+                <p className="text-[var(--muted-color)]">No photos uploaded for this booking.</p>
+              </div>
+            ) : (
+              <div>
+                {['Before', 'After'].map(type => {
+                  const typePhotos = photos.filter(p => String(p.photoType).toLowerCase() === type.toLowerCase());
+                  if (typePhotos.length === 0) return null;
+                  return (
+                    <div key={type} className="mb-6">
+                      <p className="text-xs font-bold uppercase tracking-widest text-[var(--muted-color)] mb-3">{type}</p>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        {typePhotos.map(p => (
+                          <a key={p.id} href={p.url} target="_blank" rel="noreferrer">
+                            <img src={p.url} alt={type} className="w-full h-40 object-cover rounded-xl border border-[var(--border-color)] hover:opacity-90 transition" />
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <Balloons ref={balloonsRef} />
     </div>
   );

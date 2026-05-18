@@ -32,6 +32,7 @@ namespace Glanz.API.Services
     public interface IObjectStorageService
     {
         Task<StoredObjectResult> UploadAsync(IFormFile file, string category, string fileName, CancellationToken cancellationToken = default);
+        Task<StoredObjectResult> UploadBytesAsync(byte[] data, string category, string fileName, string contentType, CancellationToken cancellationToken = default);
         Task DeleteAsync(string? publicUrlOrPath, CancellationToken cancellationToken = default);
     }
 
@@ -79,6 +80,31 @@ namespace Glanz.API.Services
             };
 
             await _s3Client.PutObjectAsync(request, cancellationToken);
+            return new StoredObjectResult(storageKey, ToRemotePublicUrl(storageKey));
+        }
+
+        public async Task<StoredObjectResult> UploadBytesAsync(byte[] data, string category, string fileName, string contentType, CancellationToken cancellationToken = default)
+        {
+            var storageKey = BuildStorageKey(category, fileName);
+
+            if (UseLocalProvider())
+            {
+                var relativePath = storageKey.Replace('/', Path.DirectorySeparatorChar);
+                var absolutePath = Path.Combine(_environment.WebRootPath ?? Path.Combine(_environment.ContentRootPath, "wwwroot"), relativePath);
+                Directory.CreateDirectory(Path.GetDirectoryName(absolutePath)!);
+                await File.WriteAllBytesAsync(absolutePath, data, cancellationToken);
+                return new StoredObjectResult(storageKey, ToLocalPublicUrl(storageKey));
+            }
+
+            EnsureS3Configured();
+            using var stream = new MemoryStream(data);
+            await _s3Client.PutObjectAsync(new PutObjectRequest
+            {
+                BucketName = _options.BucketName,
+                Key = storageKey,
+                InputStream = stream,
+                ContentType = contentType
+            }, cancellationToken);
             return new StoredObjectResult(storageKey, ToRemotePublicUrl(storageKey));
         }
 

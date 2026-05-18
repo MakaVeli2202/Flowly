@@ -221,4 +221,21 @@ export const bookingsAPI = {
     const response = await apiClient.post(`/Bookings/${id}/reject-reschedule-request`);
     return response.data;
   }),
+
+  addTip: async (id, amount) => withRetry(async () => {
+    const response = await apiClient.post(`/Bookings/${id}/tip`, { amount });
+    return response.data;
+  }),
+
+  getPhotos: async (id) => withRetry(async () => {
+    const response = await apiClient.get(`/Bookings/${id}/photos`);
+    return response.data;
+  }),
+
+  downloadInvoice: (id) => apiClient.get(`/Bookings/${id}/invoice/pdf`, { responseType: 'blob' }),
+
+  rateWorker: async (dto) => withRetry(async () => {
+    const response = await apiClient.post('/StaffRatings', dto);
+    return response.data;
+  }),
 };

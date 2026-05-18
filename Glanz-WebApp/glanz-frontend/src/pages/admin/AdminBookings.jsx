@@ -780,6 +780,15 @@ function AdminBookings() {
                           <p className="font-bold text-[var(--heading-color)] text-sm">{booking.customerName}</p>
                           <p className="text-[11px] text-[var(--muted-color)] mt-0.5 flex items-center gap-1"><Mail size={10} />{booking.customerEmail}</p>
                           <p className="text-[11px] text-[var(--muted-color)] flex items-center gap-1"><Phone size={10} />{booking.customerPhone}</p>
+                          {booking.flaggedKeywords?.length > 0 && (
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px', marginTop: '4px' }}>
+                              {booking.flaggedKeywords.map(kw => (
+                                <span key={kw} style={{ fontSize: '10px', padding: '1px 5px', borderRadius: '4px', background: 'rgba(251,146,60,0.15)', color: '#fb923c', border: '1px solid rgba(251,146,60,0.3)', fontWeight: 600 }}>
+                                  {kw}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                         </td>
                         {/* Date & time */}
                         <td className="px-5 py-4">

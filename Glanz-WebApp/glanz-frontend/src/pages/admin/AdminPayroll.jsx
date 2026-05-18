@@ -256,7 +256,10 @@ export default function AdminPayroll() {
                               : <span className="text-[var(--muted-color)] font-normal italic text-xs">{ui.notSet}</span>}
                           </td>
                           <td className="px-3 py-3 text-[var(--text-color)]">{p.jobsCompleted}</td>
-                          <td className="px-3 py-3 text-green-400 font-bold">QAR {(p.totalRevenue ?? 0).toLocaleString()}</td>
+                          <td className="px-3 py-3 text-green-400 font-bold">
+                            QAR {(p.revenueGenerated ?? 0).toLocaleString()}
+                            {p.totalTips > 0 && <span style={{ marginLeft: '6px', fontSize: '11px', color: '#fb923c' }}>+{p.totalTips} tips</span>}
+                          </td>
                           <td className="px-3 py-3">
                             {p.isPaid ? (
                               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold"

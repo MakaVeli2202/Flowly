@@ -10,4 +10,14 @@ export const publicAPI = {
     const response = await apiClient.get(`/public/orgs/${slug}/packages`);
     return response.data;
   },
+
+  getBranding: async (slug) => {
+    const response = await apiClient.get(`/public/orgs/${slug}/branding`);
+    return response.data;
+  },
+
+  listOrgs: async () => {
+    const response = await apiClient.get('/public/orgs');
+    return response.data;
+  },
 };

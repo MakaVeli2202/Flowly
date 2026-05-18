@@ -3,10 +3,12 @@ import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { bookingsAPI } from '../../api/bookings';
 import { packagesAPI } from '../../api/packages';
 import { authAPI } from '../../api/auth';
+import { paymentLinkAPI } from '../../api/paymentLink';
 import { subscribeToNotifications } from '../../api/notificationBus';
 import {
   Calendar, Clock, User, Mail, Phone, Package,
   Edit2, X, Check, AlertCircle, Car, CheckCircle, Wrench, ArrowLeft, ChevronDown,
+  Download, Link, Copy,
 } from 'lucide-react';
 import { formatQAR } from '../../utils/currency';
 import { statusColors as statusConfig, paymentStatusColors as paymentStatusConfig } from '../../utils/statusConfig';
@@ -134,6 +136,12 @@ export default function AdminBookingDetail() {
 
   /* Request action loading state */
   const [requestActionLoading, setRequestActionLoading] = useState(null); // 'reject-cancel' | 'reject-reschedule'
+
+  /* Invoice + Payment Link */
+  const [invoiceLoading, setInvoiceLoading] = useState(false);
+  const [paymentLinkToken, setPaymentLinkToken] = useState(null);
+  const [paymentLinkLoading, setPaymentLinkLoading] = useState(false);
+  const [paymentLinkCopied, setPaymentLinkCopied] = useState(false);
 
   /* ── Load booking + workers ────────────────────────────── */
   useEffect(() => {
@@ -379,6 +387,36 @@ export default function AdminBookingDetail() {
     } catch (err) {
       setCancelRefundError(err?.response?.data?.message || t('bookings.adminDetail.cancelRefundFailed'));
     } finally { setCancelRefundLoading(false); }
+  };
+
+  /* ── Invoice ──────────────────────────────────────────── */
+  const handleDownloadInvoice = async () => {
+    try {
+      setInvoiceLoading(true);
+      const res = await bookingsAPI.downloadInvoice(booking.id);
+      const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
+      const a = document.createElement('a');
+      a.href = url; a.download = `invoice-${booking.bookingNumber}.pdf`; a.click();
+      URL.revokeObjectURL(url);
+    } catch { toast('Failed to download invoice', 'error'); }
+    finally { setInvoiceLoading(false); }
+  };
+
+  /* ── Payment Link ──────────────────────────────────────── */
+  const handleGeneratePaymentLink = async () => {
+    try {
+      setPaymentLinkLoading(true);
+      const data = await paymentLinkAPI.generate(booking.id);
+      setPaymentLinkToken(data.token);
+    } catch { toast('Failed to generate payment link', 'error'); }
+    finally { setPaymentLinkLoading(false); }
+  };
+  const paymentLinkUrl = paymentLinkToken ? `${window.location.origin}/pay/${paymentLinkToken}` : null;
+  const copyPaymentLink = () => {
+    if (!paymentLinkUrl) return;
+    navigator.clipboard.writeText(paymentLinkUrl);
+    setPaymentLinkCopied(true);
+    setTimeout(() => setPaymentLinkCopied(false), 2000);
   };
 
   /* ── Render guards ─────────────────────────────────────── */
@@ -972,6 +1010,33 @@ export default function AdminBookingDetail() {
                 </div>
               </div>
             </div>
+
+            {/* ── Invoice & Payment Link ──────────────────── */}
+            <SectionCard title="Invoice & Payment" icon={Download} accent="#8b5cf6">
+              <div className="flex flex-wrap gap-3">
+                <button type="button" onClick={handleDownloadInvoice} disabled={invoiceLoading}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-violet-500/15 border border-violet-500/30 text-violet-400 text-sm font-semibold hover:bg-violet-500/25 disabled:opacity-50 transition">
+                  <Download size={14} />
+                  {invoiceLoading ? 'Generating...' : 'Download Invoice PDF'}
+                </button>
+                {!paymentLinkToken ? (
+                  <button type="button" onClick={handleGeneratePaymentLink} disabled={paymentLinkLoading}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-500/15 border border-blue-500/30 text-blue-400 text-sm font-semibold hover:bg-blue-500/25 disabled:opacity-50 transition">
+                    <Link size={14} />
+                    {paymentLinkLoading ? 'Generating...' : 'Generate Payment Link'}
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <input readOnly value={paymentLinkUrl} className="flex-1 min-w-0 px-3 py-2 rounded-xl border border-[var(--border-color)] bg-[var(--surface-bg)] text-[var(--muted-color)] text-xs font-mono" />
+                    <button type="button" onClick={copyPaymentLink}
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-green-500/30 bg-green-500/15 text-green-400 text-xs font-semibold hover:bg-green-500/25 transition flex-shrink-0">
+                      {paymentLinkCopied ? <Check size={13} /> : <Copy size={13} />}
+                      {paymentLinkCopied ? 'Copied!' : 'Copy'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </SectionCard>
 
             {/* ── Cancel & Refund ─────────────────────────── */}
             {booking.status !== 'Completed' && booking.status !== 'Cancelled' && (
