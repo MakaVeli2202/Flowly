@@ -1,6 +1,6 @@
-# Glanz Developer Manual
+﻿# Flowly Developer Manual
 
-> Target audience: Junior developers joining the Glanz project.
+> Target audience: Junior developers joining the Flowly project.
 > This document covers architecture, feature flows, security model, debugging, and deployment.
 > Read this before touching any code.
 
@@ -57,7 +57,7 @@
 
 ## 1. System Overview
 
-Glanz is a vehicle-detailing marketplace. Customers book detailing services for their vehicles. Workers (detailers) are assigned to jobs. Admins manage workers, pricing, and business settings.
+Flowly is a vehicle-detailing marketplace. Customers book detailing services for their vehicles. Workers (detailers) are assigned to jobs. Admins manage workers, pricing, and business settings.
 
 ### What the system does
 
@@ -79,8 +79,8 @@ The web and mobile apps are separate clients talking to the same REST API. **All
 
 ### Localization architecture (important)
 
-- **Web:** custom translation provider in `glanz-frontend/src/context/LanguageContext.jsx`.
-- **Mobile:** `react-i18next` with locale JSON files in `Glanz-Mobile/src/locales/`.
+- **Web:** custom translation provider in `flowly-frontend/src/context/LanguageContext.jsx`.
+- **Mobile:** `react-i18next` with locale JSON files in `Flowly-Mobile/src/locales/`.
 - **Fallback behavior:** missing translation keys render the key string; this is intentional for fast gap detection during QA.
 - **Current convention:**
   - Web keys grouped by domain files (for example `common`, `bookings`).
@@ -90,7 +90,7 @@ If you add any user-facing text, add keys in all supported locales (`en`, `de`, 
 
 ### Database
 
-- **Development**: SQLite (`glanz.db` in repo root)
+- **Development**: SQLite (`Flowly.db` in repo root)
 - **Production**: PostgreSQL
 - ORM: Entity Framework Core 10 with code-first migrations
 
@@ -804,7 +804,7 @@ The chatbot endpoint (`POST /api/Chatbot/chat`) has two modes:
 **AI mode (Claude API configured):**
 - If `Anthropic:ApiKey` is set in `appsettings.json`, the backend calls the Anthropic Claude API.
 - The system prompt is built dynamically from live DB data (active packages with names, tiers, prices, estimated durations).
-- Claude responds as a Glanz customer service representative.
+- Claude responds as a Flowly customer service representative.
 - Responses are marked `isAI: true` in the response DTO.
 
 **Canned FAQ mode (default / fallback):**
@@ -980,7 +980,7 @@ PDF export is available on web (browser print-to-PDF).
 
 ### 4.16 Careers & Job Applications
 
-Glanz has a public careers page where applicants can browse open positions and submit applications.
+Flowly has a public careers page where applicants can browse open positions and submit applications.
 
 - **Public page**: `/careers` (`Careers.jsx`) — lists active job positions
 - **Admin pages**: `/admin/job-positions` (`AdminJobPositions.jsx`), `/admin/job-applications` (`AdminJobApplications.jsx`)
@@ -1666,9 +1666,9 @@ These MUST be set before going live. Never commit production values to git.
 ```
 JwtSettings__SecretKey          = <256-bit random key, e.g. output of `openssl rand -base64 32`>
 JwtSettings__Issuer             = https://yourdomain.com
-JwtSettings__Audience           = glanz-app
+JwtSettings__Audience           = Flowly-app
 
-ConnectionStrings__DefaultConnection = Host=...;Database=glanz;Username=...;Password=...
+ConnectionStrings__DefaultConnection = Host=...;Database=Flowly;Username=...;Password=...
 
 Stripe__SecretKey               = sk_live_...
 Stripe__WebhookSecret           = whsec_...   (from Stripe Dashboard → Webhooks → signing secret)
@@ -1704,7 +1704,7 @@ EXPO_PUBLIC_STRIPE_KEY=pk_live_...
 Run after any model change:
 
 ```bash
-cd Glanz-WebApp
+cd Flowly-WebApp
 dotnet ef migrations add <MigrationName>
 dotnet ef database update
 ```
@@ -1718,7 +1718,7 @@ dotnet ef database update --connection "Host=prod-host;..."
 ### 10.5 Mobile build for production
 
 ```bash
-cd Glanz-Mobile
+cd Flowly-Mobile
 
 # Install expo-secure-store if not already:
 npx expo install expo-secure-store
@@ -1768,10 +1768,10 @@ These were found by grepping `TODO`, `FIXME`, `HACK`, `XXX` across the codebase 
 
 | File | Line | Issue |
 |------|------|-------|
-| `Glanz.API/Middleware/CorrelationIdMiddleware.cs` | 12 | If Serilog is added, replace ILogger scope with structured logging |
-| `Glanz.API/Program.cs` | 381 | Remove `unsafe-inline` from `style-src` CSP header - allows CSS injection. Requires auditing inline styles. |
-| `Glanz.API/Services/SmtpEmailService.cs` | 21 | Document free SMTP options for production email delivery. No email provider configured yet. |
-| `glanz-frontend/src/components/shared/ChatWidget.jsx` | 6 | Replace placeholder Anthropic API key comment with real key in `appsettings.json` to enable AI mode. |
+| `Flowly.API/Middleware/CorrelationIdMiddleware.cs` | 12 | If Serilog is added, replace ILogger scope with structured logging |
+| `Flowly.API/Program.cs` | 381 | Remove `unsafe-inline` from `style-src` CSP header - allows CSS injection. Requires auditing inline styles. |
+| `Flowly.API/Services/SmtpEmailService.cs` | 21 | Document free SMTP options for production email delivery. No email provider configured yet. |
+| `flowly-frontend/src/components/shared/ChatWidget.jsx` | 6 | Replace placeholder Anthropic API key comment with real key in `appsettings.json` to enable AI mode. |
 
 ### Additional known gaps (not TODO comments but flagged by audit)
 

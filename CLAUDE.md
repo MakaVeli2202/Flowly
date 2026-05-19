@@ -1,4 +1,4 @@
-# Glanz Project Rules
+# Flowly Project Rules
 
 These rules are always active for this project. Never violate them.
 

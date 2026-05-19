@@ -1,3 +1,3 @@
 @echo off
-cd /d "%~dp0Glanz-WebApp"
-dotnet run --project Glanz.API/Glanz.API.csproj
+cd /d "%~dp0Flowly-WebApp"
+dotnet run --project Flowly.API/Flowly.API.csproj

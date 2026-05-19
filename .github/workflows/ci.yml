@@ -15,12 +15,12 @@ jobs:
         with:
           dotnet-version: '10.x'
       - name: Restore dependencies
-        run: dotnet restore Glanz-WebApp/Glanz.sln
+        run: dotnet restore Flowly-WebApp/Flowly.sln
       - name: Build
-        run: dotnet build Glanz-WebApp/Glanz.sln --no-restore -c Debug
+        run: dotnet build Flowly-WebApp/Flowly.sln --no-restore -c Debug
       - name: Test
         run: >
-          dotnet test Glanz-WebApp/Glanz.API.Tests/Glanz.API.Tests.csproj
+          dotnet test Flowly-WebApp/Flowly.API.Tests/Flowly.API.Tests.csproj
           --no-build -c Debug
           --logger "console;verbosity=normal"
           --collect:"XPlat Code Coverage"
@@ -30,19 +30,19 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: Glanz-WebApp/glanz-frontend
+        working-directory: Flowly-WebApp/flowly-frontend
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: npm
-          cache-dependency-path: Glanz-WebApp/glanz-frontend/package-lock.json
+          cache-dependency-path: Flowly-WebApp/flowly-frontend/package-lock.json
       - name: Install dependencies
         run: npm ci
       - name: Build
         run: npm run build
         env:
-          VITE_API_BASE_URL: https://api.glanz.qa/api
+          VITE_API_BASE_URL: https://api.flowly.app/api
       - name: Run tests
         run: npm test -- --run --reporter=verbose

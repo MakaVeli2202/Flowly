@@ -1,11 +1,11 @@
-# Glanz WhatsApp Agent Skill
+﻿# Flowly WhatsApp Agent Skill
 
 ## Current State (as of 2026-05-14)
 
 The WhatsApp integration is a **link-only implementation** — no automation or agent exists yet.
 
-- **Web widget**: `glanz-frontend/src/components/shared/WhatsAppWidget.jsx` — currently returns `null` (disabled)
-- **Mobile screen**: `Glanz-Mobile/src/screens/WhatsAppScreen.js` — fetches the business WhatsApp number from `GET /api/public/whatsapp-business`, then opens `https://wa.me/{number}?text=...` via `Linking.openURL`
+- **Web widget**: `flowly-frontend/src/components/shared/WhatsAppWidget.jsx` — currently returns `null` (disabled)
+- **Mobile screen**: `Flowly-Mobile/src/screens/WhatsAppScreen.js` — fetches the business WhatsApp number from `GET /api/public/whatsapp-business`, then opens `https://wa.me/{number}?text=...` via `Linking.openURL`
 - **Backend**: `BookingDtos.cs` contains `WhatsAppBusinessDto { WhatsAppBusinessNumber }`, and `Booking.cs` has `BookingSource.WhatsApp = 6` enum value — infrastructure is stubbed but no webhook handler exists
 
 ## Architecture for a Full WhatsApp Booking Agent

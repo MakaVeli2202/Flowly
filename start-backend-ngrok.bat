@@ -1,9 +1,9 @@
 @echo off
 setlocal
 
-echo Starting Glanz API locally and exposing it with ngrok...
+echo Starting Flowly API locally and exposing it with ngrok...
 
-start "Glanz Backend API" cmd /k "cd /d %~dp0Glanz-WebApp && dotnet run --project Glanz.API/Glanz.API.csproj --urls http://localhost:5289"
+start "Flowly Backend API" cmd /k "cd /d %~dp0Flowly-WebApp && dotnet run --project Flowly.API/Flowly.API.csproj --urls http://localhost:5289"
 
 timeout /t 4 /nobreak >nul
 
@@ -15,7 +15,7 @@ if errorlevel 1 (
   exit /b 1
 )
 
-start "Glanz ngrok Tunnel" cmd /k "ngrok http http://localhost:5289"
+start "Flowly ngrok Tunnel" cmd /k "ngrok http http://localhost:5289"
 
 echo.
 echo DONE!
