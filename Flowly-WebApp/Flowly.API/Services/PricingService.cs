@@ -1,6 +1,7 @@
 ﻿using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Flowly.API.Data;
+using Flowly.API.DTOs;
 using Flowly.API.Models;
 
 namespace Flowly.API.Services
@@ -37,20 +38,23 @@ namespace Flowly.API.Services
         /// Single source of truth for booking price calculation.
         /// All pricing decisions (multiplier, subscription discount, offer discount) happen here.
         /// Frontend totals are NEVER used.
+        /// Pass resourceKey for generic verticals; when null falls back to vehicleType enum lookup.
         /// </summary>
         Task<PricingResult> CalculateAsync(
             IReadOnlyList<PackagePricingItem> items,
             VehicleType vehicleType,
             decimal subscriptionDiscountPercent,
             Offer? applicableOffer,
-            string? applicableOfferCode);
+            string? applicableOfferCode,
+            string? resourceKey = null);
     }
 
     // ── Implementation ────────────────────────────────────────────────────────────
 
     public sealed class PricingService : IPricingService
     {
-        private const string MultipliersSettingKey = "pricing.vehicleMultipliers";
+        private const string MultipliersSettingKey  = "pricing.vehicleMultipliers";
+        private const string VerticalConfigKey      = "vertical.config";
 
         // Industry defaults — only used when admin has not configured overrides.
         private static readonly IReadOnlyDictionary<VehicleType, decimal> _defaultMultipliers =
@@ -108,16 +112,47 @@ namespace Flowly.API.Services
             }
         }
 
+        /// <summary>Returns key→multiplier map from vertical.config, falling back to VehicleType defaults.</summary>
+        private async Task<IReadOnlyDictionary<string, decimal>> GetResourceMultipliersAsync()
+        {
+            var setting = await _context.SystemSettings
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s => s.Key == VerticalConfigKey);
+
+            if (setting != null && !string.IsNullOrWhiteSpace(setting.Value))
+            {
+                try
+                {
+                    var config = JsonSerializer.Deserialize<VerticalConfigDto>(setting.Value, _jsonOpts);
+                    if (config?.Resources?.Count > 0)
+                        return config.Resources.ToDictionary(r => r.Key, r => r.Multiplier, StringComparer.OrdinalIgnoreCase);
+                }
+                catch { }
+            }
+
+            return _defaultMultipliers.ToDictionary(kv => kv.Key.ToString(), kv => kv.Value, StringComparer.OrdinalIgnoreCase);
+        }
+
         /// <inheritdoc/>
         public async Task<PricingResult> CalculateAsync(
             IReadOnlyList<PackagePricingItem> items,
             VehicleType vehicleType,
             decimal subscriptionDiscountPercent,
             Offer? applicableOffer,
-            string? applicableOfferCode)
+            string? applicableOfferCode,
+            string? resourceKey = null)
         {
-            var multipliers    = await GetVehicleMultipliersAsync();
-            var vehicleMultiplier = multipliers.TryGetValue(vehicleType, out var m) ? m : 1.0m;
+            decimal vehicleMultiplier;
+            if (!string.IsNullOrWhiteSpace(resourceKey))
+            {
+                var resourceMultipliers = await GetResourceMultipliersAsync();
+                vehicleMultiplier = resourceMultipliers.TryGetValue(resourceKey, out var rm) ? rm : 1.0m;
+            }
+            else
+            {
+                var multipliers = await GetVehicleMultipliersAsync();
+                vehicleMultiplier = multipliers.TryGetValue(vehicleType, out var m) ? m : 1.0m;
+            }
 
             // 1. Base subtotal — sum of (price × multiplier × qty)
             decimal baseAmount = 0;

@@ -38,6 +38,8 @@ namespace Flowly.API.DTOs
         [StringLength(10)]
         public string? VehicleYear { get; set; }
         public VehicleType VehicleType { get; set; } = VehicleType.Sedan;
+        [StringLength(100)]
+        public string? ResourceKey { get; set; }
         [StringLength(1000)]
         public string? SpecialInstructions { get; set; }
         [StringLength(60)]
@@ -441,6 +443,9 @@ namespace Flowly.API.DTOs
 
         public VehicleType? VehicleType { get; set; }
 
+        [MaxLength(100)]
+        public string? ResourceKey { get; set; }
+
         [MaxLength(500)]
         public string? CustomerAddress { get; set; }
 
@@ -561,6 +566,9 @@ namespace Flowly.API.DTOs
 
         public VehicleType? VehicleType { get; set; }
 
+        [MaxLength(100)]
+        public string? ResourceKey { get; set; }
+
         [MaxLength(500)]
         public string? CustomerAddress { get; set; }
 
@@ -632,6 +640,9 @@ namespace Flowly.API.DTOs
         public List<BookingPackageDto> Packages { get; set; } = new();
 
         public VehicleType VehicleType { get; set; } = VehicleType.Sedan;
+
+        [MaxLength(100)]
+        public string? ResourceKey { get; set; }
 
         /// <summary>Optional: active subscription ID to apply discount.</summary>
         public int? CustomerSubscriptionId { get; set; }

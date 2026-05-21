@@ -658,11 +658,69 @@ export default function AdminSettings() {
   // Referral required bookings for referrer reward
   const [referralRequiredBookings, setReferralRequiredBookings] = useState(1);
 
-  // Vehicle multipliers state
+  // Vehicle multipliers state (legacy - kept for backward compat display)
   const [vehicleMultipliers, setVehicleMultipliers] = useState({ motorcycle: 0.8, sedan: 1.0, suv: 1.25, pickup: 1.5 });
   const [multipliersSaving, setMultipliersSaving] = useState(false);
   const [multipliersSaved, setMultipliersSaved] = useState(false);
   const [multipliersError, setMultipliersError] = useState('');
+
+  // Vertical config state
+  const defaultVerticalConfig = {
+    resourceEnabled: true,
+    resourceLabelEn: 'Vehicle', resourceLabelAr: 'المركبة', resourceLabelDe: 'Fahrzeug',
+    resources: [
+      { key: 'Motorcycle', labelEn: 'Motorcycle',    labelAr: 'دراجة نارية', labelDe: 'Motorrad',   multiplier: 0.8  },
+      { key: 'Sedan',      labelEn: 'Sedan',          labelAr: 'سيدان',        labelDe: 'Limousine',  multiplier: 1.0  },
+      { key: 'SUV',        labelEn: 'SUV / 4x4',     labelAr: 'SUV / 4x4',   labelDe: 'SUV / 4x4',  multiplier: 1.25 },
+      { key: 'Pickup',     labelEn: 'Pickup Truck',   labelAr: 'بيك أب',      labelDe: 'Pickup',     multiplier: 1.5  },
+    ],
+  };
+  const VERTICAL_PRESETS = {
+    auto_detailing: {
+      resourceEnabled: true, resourceLabelEn: 'Vehicle', resourceLabelAr: 'المركبة', resourceLabelDe: 'Fahrzeug',
+      resources: [
+        { key: 'Motorcycle', labelEn: 'Motorcycle',    labelAr: 'دراجة نارية', labelDe: 'Motorrad',   multiplier: 0.8  },
+        { key: 'Sedan',      labelEn: 'Sedan',          labelAr: 'سيدان',        labelDe: 'Limousine',  multiplier: 1.0  },
+        { key: 'SUV',        labelEn: 'SUV / 4x4',     labelAr: 'SUV / 4x4',   labelDe: 'SUV / 4x4',  multiplier: 1.25 },
+        { key: 'Pickup',     labelEn: 'Pickup Truck',   labelAr: 'بيك أب',      labelDe: 'Pickup',     multiplier: 1.5  },
+      ],
+    },
+    salon: {
+      resourceEnabled: true, resourceLabelEn: 'Hair Length', resourceLabelAr: 'طول الشعر', resourceLabelDe: 'Haarlange',
+      resources: [
+        { key: 'Short',  labelEn: 'Short',   labelAr: 'قصير',  labelDe: 'Kurz',   multiplier: 0.9  },
+        { key: 'Medium', labelEn: 'Medium',  labelAr: 'متوسط', labelDe: 'Mittel', multiplier: 1.0  },
+        { key: 'Long',   labelEn: 'Long',    labelAr: 'طويل',  labelDe: 'Lang',   multiplier: 1.2  },
+        { key: 'Extra',  labelEn: 'Extra Long', labelAr: 'طويل جدا', labelDe: 'Extra lang', multiplier: 1.4 },
+      ],
+    },
+    vet: {
+      resourceEnabled: true, resourceLabelEn: 'Pet Size', resourceLabelAr: 'حجم الحيوان', resourceLabelDe: 'Tiergrosse',
+      resources: [
+        { key: 'Small',  labelEn: 'Small',   labelAr: 'صغير',  labelDe: 'Klein',  multiplier: 0.85 },
+        { key: 'Medium', labelEn: 'Medium',  labelAr: 'متوسط', labelDe: 'Mittel', multiplier: 1.0  },
+        { key: 'Large',  labelEn: 'Large',   labelAr: 'كبير',  labelDe: 'Gross',  multiplier: 1.3  },
+        { key: 'XLarge', labelEn: 'Extra Large', labelAr: 'كبير جدا', labelDe: 'Sehr gross', multiplier: 1.6 },
+      ],
+    },
+    home_services: {
+      resourceEnabled: true, resourceLabelEn: 'Home Size', resourceLabelAr: 'حجم المنزل', resourceLabelDe: 'Hausgrosse',
+      resources: [
+        { key: 'Studio',  labelEn: 'Studio',  labelAr: 'استوديو', labelDe: 'Studio',       multiplier: 0.8  },
+        { key: '1BR',     labelEn: '1 Bedroom', labelAr: 'غرفة نوم', labelDe: '1 Zimmer',  multiplier: 1.0  },
+        { key: '2BR',     labelEn: '2 Bedrooms', labelAr: 'غرفتان', labelDe: '2 Zimmer',   multiplier: 1.3  },
+        { key: 'Villa',   labelEn: 'Villa / 4+', labelAr: 'فيلا',   labelDe: 'Villa / 4+', multiplier: 1.8  },
+      ],
+    },
+    flat_rate: {
+      resourceEnabled: false, resourceLabelEn: 'Service', resourceLabelAr: 'الخدمة', resourceLabelDe: 'Dienst',
+      resources: [{ key: 'Standard', labelEn: 'Standard', labelAr: 'قياسي', labelDe: 'Standard', multiplier: 1.0 }],
+    },
+  };
+  const [verticalConfig, setVerticalConfig] = useState(defaultVerticalConfig);
+  const [verticalSaving, setVerticalSaving] = useState(false);
+  const [verticalSaved, setVerticalSaved] = useState(false);
+  const [verticalError, setVerticalError] = useState('');
 
   // Business hours state
   const defaultBusinessHours = {
@@ -745,6 +803,9 @@ export default function AdminSettings() {
           });
         }
         if (Array.isArray(data?.closedDates)) setClosedDates(data.closedDates);
+        if (data?.vertical && Array.isArray(data.vertical.resources) && data.vertical.resources.length > 0) {
+          setVerticalConfig(data.vertical);
+        }
                 if (data?.businessConfig) {
                   const bc = data.businessConfig;
                   setBiz(b => ({
@@ -888,6 +949,20 @@ export default function AdminSettings() {
       setTimeout(() => setMultipliersSaved(false), 3000);
     } catch (err) { setMultipliersError(err?.response?.data?.message || ui.failedToSaveMultipliers); }
     finally { setMultipliersSaving(false); }
+  };
+
+  const handleSaveVerticalConfig = async () => {
+    const emptyKey = verticalConfig.resources.some(r => !r.key?.trim());
+    if (emptyKey) { setVerticalError('Each resource type must have a non-empty key.'); return; }
+    const badMultiplier = verticalConfig.resources.some(r => !Number.isFinite(r.multiplier) || r.multiplier < 0 || r.multiplier > 10);
+    if (badMultiplier) { setVerticalError('Multipliers must be between 0 and 10.'); return; }
+    try {
+      setVerticalSaving(true); setVerticalError('');
+      await settingsAPI.updateSystemSettings({ VerticalConfig: verticalConfig });
+      setVerticalSaved(true);
+      setTimeout(() => setVerticalSaved(false), 3000);
+    } catch (err) { setVerticalError(err?.response?.data?.message || 'Failed to save vertical config.'); }
+    finally { setVerticalSaving(false); }
   };
 
   const handleSaveBusinessHours = async () => {
@@ -1702,6 +1777,123 @@ export default function AdminSettings() {
                   className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition disabled:opacity-60"
                   style={{ background:'rgba(59,130,246,.15)', border:'1px solid rgba(59,130,246,.35)', color:'#60a5fa' }}>
                   {multipliersSaving ? ui.saving : multipliersSaved ? <><CheckCircle size={14} /> {ui.saved}</> : <><Save size={14} /> {ui.saveMultipliers}</>}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Vertical Configuration card ── */}
+          <div className="glass-card relative overflow-hidden card-stagger">
+            <div className="absolute top-0 left-0 right-0 h-[2px]"
+              style={{ background:'linear-gradient(90deg,transparent,#a855f7 38%,#ec4899 62%,transparent)' }} />
+            <div className="absolute top-0 left-0 w-[3px] h-full"
+              style={{ background:'linear-gradient(180deg,#a855f7 0%,#a855f744 60%,transparent 100%)' }} />
+            <div className="prism-ray" style={{ left:'45%', width:'12%', animation:'prism-ray-sweep 20s ease-in-out 2s infinite' }} />
+
+            <div className="p-7">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center"
+                  style={{ background:'rgba(168,85,247,.12)', border:'1px solid rgba(168,85,247,.24)' }}>
+                  <span style={{ color:'#a855f7', fontSize: 16 }}>⚙</span>
+                </div>
+                <h2 className="premium-heading text-xl font-bold text-[var(--heading-color)]">Vertical Configuration</h2>
+              </div>
+              <p className="text-sm text-[var(--muted-color)] mb-5 ml-11">
+                Configure your business type and resource selection. Use presets or customize fully.
+              </p>
+              <div className="mb-5"><div className="spectrum-line" /></div>
+
+              {verticalError && (
+                <div className="flex items-start gap-3 rounded-xl border border-rose-500/25 bg-rose-500/8 px-4 py-3 mb-5">
+                  <span className="text-rose-400 text-xs mt-0.5">!</span>
+                  <p className="text-rose-300 text-sm font-semibold">{verticalError}</p>
+                </div>
+              )}
+
+              {/* Presets */}
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-color)] mb-3">Preset Business Types</p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-6">
+                {Object.entries(VERTICAL_PRESETS).map(([key, preset]) => {
+                  const labels = { auto_detailing: 'Auto Detailing', salon: 'Salon & Beauty', vet: 'Veterinary', home_services: 'Home Services', flat_rate: 'Flat Rate (No Selection)' };
+                  return (
+                    <button key={key} type="button"
+                      onClick={() => setVerticalConfig({ ...preset })}
+                      className="rounded-xl border px-3 py-2 text-xs font-bold text-left transition hover:border-primary/40"
+                      style={{ borderColor:'var(--border-color)', background:'var(--surface-bg)', color:'var(--muted-color)' }}>
+                      {labels[key] || key}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Resource enabled toggle */}
+              <div className="flex items-center justify-between rounded-xl border px-4 py-3 mb-5"
+                style={{ borderColor:'var(--border-color)', background:'var(--surface-bg)' }}>
+                <div>
+                  <p className="text-sm font-bold text-[var(--heading-color)]">Show resource selection</p>
+                  <p className="text-xs text-[var(--muted-color)] mt-0.5">When off, customers skip the resource step and pricing uses 1.0x for all bookings.</p>
+                </div>
+                <button type="button"
+                  onClick={() => setVerticalConfig(v => ({ ...v, resourceEnabled: !v.resourceEnabled }))}
+                  className={`relative w-11 h-6 rounded-full border-2 transition-colors duration-200 ${verticalConfig.resourceEnabled ? 'border-primary bg-primary/20' : 'border-[var(--border-color)] bg-white/5'}`}>
+                  <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform duration-200 ${verticalConfig.resourceEnabled ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                </button>
+              </div>
+
+              {verticalConfig.resourceEnabled && (
+                <>
+                  {/* Label row */}
+                  <div className="grid grid-cols-3 gap-3 mb-5">
+                    {[['resourceLabelEn', 'Label (EN)'], ['resourceLabelAr', 'Label (AR)'], ['resourceLabelDe', 'Label (DE)']].map(([field, label]) => (
+                      <div key={field}>
+                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-color)] mb-2">{label}</p>
+                        <input type="text" value={verticalConfig[field] || ''}
+                          onChange={e => setVerticalConfig(v => ({ ...v, [field]: e.target.value }))}
+                          className="w-full rounded-xl border border-[var(--border-color)] bg-[var(--surface-bg)] text-[var(--text-color)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Resource rows */}
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-color)] mb-3">Resource Types</p>
+                  <div className="space-y-3 mb-4">
+                    {verticalConfig.resources.map((r, i) => (
+                      <div key={i} className="grid grid-cols-6 gap-2 items-center rounded-xl border px-3 py-2"
+                        style={{ borderColor:'var(--border-color)', background:'var(--surface-bg)' }}>
+                        <input type="text" placeholder="Key" value={r.key}
+                          onChange={e => setVerticalConfig(v => { const rs = [...v.resources]; rs[i] = { ...rs[i], key: e.target.value }; return { ...v, resources: rs }; })}
+                          className="col-span-1 rounded-lg border border-[var(--border-color)] bg-transparent text-[var(--text-color)] px-2 py-1.5 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-primary/50" />
+                        <input type="text" placeholder="EN label" value={r.labelEn}
+                          onChange={e => setVerticalConfig(v => { const rs = [...v.resources]; rs[i] = { ...rs[i], labelEn: e.target.value }; return { ...v, resources: rs }; })}
+                          className="col-span-1 rounded-lg border border-[var(--border-color)] bg-transparent text-[var(--text-color)] px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary/50" />
+                        <input type="text" placeholder="AR label" value={r.labelAr}
+                          onChange={e => setVerticalConfig(v => { const rs = [...v.resources]; rs[i] = { ...rs[i], labelAr: e.target.value }; return { ...v, resources: rs }; })}
+                          className="col-span-1 rounded-lg border border-[var(--border-color)] bg-transparent text-[var(--text-color)] px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary/50" />
+                        <input type="text" placeholder="DE label" value={r.labelDe}
+                          onChange={e => setVerticalConfig(v => { const rs = [...v.resources]; rs[i] = { ...rs[i], labelDe: e.target.value }; return { ...v, resources: rs }; })}
+                          className="col-span-1 rounded-lg border border-[var(--border-color)] bg-transparent text-[var(--text-color)] px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary/50" />
+                        <input type="number" placeholder="1.0" min={0} max={10} step={0.05} value={r.multiplier}
+                          onChange={e => setVerticalConfig(v => { const rs = [...v.resources]; rs[i] = { ...rs[i], multiplier: parseFloat(e.target.value) || 1 }; return { ...v, resources: rs }; })}
+                          className="col-span-1 rounded-lg border border-[var(--border-color)] bg-transparent text-[var(--text-color)] px-2 py-1.5 text-xs font-mono text-center focus:outline-none focus:ring-1 focus:ring-primary/50" />
+                        <button type="button"
+                          onClick={() => setVerticalConfig(v => ({ ...v, resources: v.resources.filter((_, j) => j !== i) }))}
+                          className="col-span-1 text-rose-400 hover:text-rose-300 text-xs font-bold">x</button>
+                      </div>
+                    ))}
+                  </div>
+                  <button type="button"
+                    onClick={() => setVerticalConfig(v => ({ ...v, resources: [...v.resources, { key: '', labelEn: '', labelAr: '', labelDe: '', multiplier: 1.0 }] }))}
+                    className="text-xs font-bold text-primary hover:text-primary/80 mb-5">
+                    + Add resource type
+                  </button>
+                </>
+              )}
+
+              <div className="cta-prism-glow rounded-xl" style={{ boxShadow:'0 0 0 1.5px rgba(168,85,247,.40)' }}>
+                <button type="button" onClick={handleSaveVerticalConfig} disabled={verticalSaving}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition disabled:opacity-60"
+                  style={{ background:'rgba(168,85,247,.15)', border:'1px solid rgba(168,85,247,.35)', color:'#c084fc' }}>
+                  {verticalSaving ? 'Saving...' : verticalSaved ? <><span>&#10003;</span> Saved</> : <><span>&#128190;</span> Save Vertical Config</>}
                 </button>
               </div>
             </div>

@@ -85,7 +85,12 @@ function BookingForm({ isTapMode }) {
   const hasUsedReferral = user?.hasUsedReferralCode || false;
   const referredByName = user?.referredByName || null;
 
-  const _vehicleMultiplier = settings.vehicleMultipliers;
+  // Vertical config from settings (resource types, labels, multipliers)
+  const verticalConfig = settings.vertical ?? null;
+  const verticalResources = verticalConfig?.resources ?? [];
+
+  // Default selected resource key: first resource key or 'Sedan'
+  const defaultResourceKey = verticalResources.length > 0 ? verticalResources[0].key : 'Sedan';
 
   const [formData, setFormData] = useState({
     scheduledDate:       minBookingDate,
@@ -97,18 +102,20 @@ function BookingForm({ isTapMode }) {
     houseNumber:         '',
     addressType:         'Home',
     offerCode:           new URLSearchParams(location.search).get('coupon')?.toUpperCase() || '',
-    vehicleType:         'Sedan',
+    vehicleType:         defaultResourceKey,
     vehicleMake:         '',
     vehicleModel:        '',
     vehicleYear:         '',
     specialInstructions: '',
     leadSource:          'Direct',
     leadSourceDetails:   '',
-    useReferralPoints:   true, // Default: use points
+    useReferralPoints:   true,
   });
 
-  // Current vehicle multiplier from backend settings
-  const currentVehicleMultiplier = settings.vehicleMultipliers[formData.vehicleType] ?? 1.0;
+  // Current multiplier: look up in vertical resources, fall back to legacy vehicleMultipliers map
+  const currentVehicleMultiplier = verticalResources.length > 0
+    ? (verticalResources.find(r => r.key === formData.vehicleType)?.multiplier ?? 1.0)
+    : (settings.vehicleMultipliers?.[formData.vehicleType] ?? 1.0);
 
   // ── Derived totals ────────────────────────────────────────────────────
   const totalDuration = useMemo(() => {
@@ -476,6 +483,7 @@ function BookingForm({ isTapMode }) {
                   selectedPackages={selectedPackages}
                   setSelectedPackages={setSelectedPackages}
                   quote={quote}
+                  verticalConfig={verticalConfig}
                 />
 
                 <BookingScheduleStep

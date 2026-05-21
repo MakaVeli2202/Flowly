@@ -47,7 +47,7 @@ function BookingSidebar({
             <div className="border-t border-[var(--border-color)] pt-4 space-y-2.5">
               {vehicleMultiplier !== 1.0 && (
                 <div className="flex justify-between text-xs text-[var(--muted-color)]">
-                  <span>Vehicle adj. ({formData.vehicleType})</span>
+                  <span>Resource adj. ({formData.vehicleType})</span>
                   <span className={`font-semibold ${vehicleMultiplier > 1 ? 'text-amber-400' : 'text-green-400'}`}>×{vehicleMultiplier}</span>
                 </div>
               )}

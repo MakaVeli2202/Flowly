@@ -82,10 +82,34 @@ namespace Flowly.API.Controllers
         private async Task<string> BuildSystemPromptAsync()
         {
             var sb = new StringBuilder();
-            sb.AppendLine("You are a helpful assistant for Flowly, a professional car detailing marketplace in Qatar.");
+
+            // Pull business config for dynamic identity
+            string businessName = "Flowly";
+            string businessDesc = "a professional service booking platform";
+            string supportEmail = "support@flowly.app";
+            try
+            {
+                var bizSetting = await _context.SystemSettings
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(s => s.Key == "business.config");
+                if (bizSetting != null && !string.IsNullOrWhiteSpace(bizSetting.Value))
+                {
+                    using var doc = JsonDocument.Parse(bizSetting.Value);
+                    var root = doc.RootElement;
+                    if (root.TryGetProperty("name", out var nameEl) && nameEl.ValueKind == JsonValueKind.String)
+                        businessName = nameEl.GetString() ?? businessName;
+                    if (root.TryGetProperty("businessDescription", out var descEl) && descEl.ValueKind == JsonValueKind.String)
+                        businessDesc = descEl.GetString() ?? businessDesc;
+                    if (root.TryGetProperty("email", out var emailEl) && emailEl.ValueKind == JsonValueKind.String)
+                        supportEmail = emailEl.GetString() ?? supportEmail;
+                }
+            }
+            catch { /* non-critical */ }
+
+            sb.AppendLine($"You are a helpful assistant for {businessName}, {businessDesc}.");
             sb.AppendLine("You answer customer questions about services, pricing, bookings, cancellations, and schedules.");
-            sb.AppendLine("Be friendly, concise, and professional. Answer only questions about Flowly services.");
-            sb.AppendLine("If you don't know something, say so and suggest they contact support at support@flowly.app.");
+            sb.AppendLine("Be friendly, concise, and professional. Answer only questions about this business.");
+            sb.AppendLine($"If you don't know something, say so and suggest they contact support at {supportEmail}.");
             sb.AppendLine();
 
             // Fetch live package data
@@ -101,30 +125,62 @@ namespace Flowly.API.Controllers
                 {
                     sb.AppendLine("=== CURRENT PACKAGES ===");
                     foreach (var pkg in packages)
-                    {
-                        sb.AppendLine($"- {pkg.Name} ({pkg.Tier}): {pkg.Price:F2} QAR base, ~{pkg.EstimatedDurationMinutes} min");
-                    }
+                        sb.AppendLine($"- {pkg.Name} ({pkg.Tier}): {pkg.Price:F2} base, ~{pkg.EstimatedDurationMinutes} min");
                     sb.AppendLine();
                 }
             }
             catch { /* non-critical */ }
 
-            // Vehicle multipliers
-            sb.AppendLine("=== VEHICLE PRICE MULTIPLIERS ===");
-            sb.AppendLine("Motorcycle: 0.8x | Sedan: 1.0x | SUV: 1.25x | Pickup: 1.5x");
-            sb.AppendLine();
+            // Fetch resource types / pricing multipliers from vertical config
+            try
+            {
+                var verticalSetting = await _context.SystemSettings
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(s => s.Key == "vertical.config");
+                if (verticalSetting != null && !string.IsNullOrWhiteSpace(verticalSetting.Value))
+                {
+                    using var doc = JsonDocument.Parse(verticalSetting.Value);
+                    var root = doc.RootElement;
+                    if (root.TryGetProperty("resourceLabelEn", out var labelEl))
+                        sb.AppendLine($"=== {labelEl.GetString()?.ToUpperInvariant() ?? "RESOURCE"} PRICE MULTIPLIERS ===");
+                    else
+                        sb.AppendLine("=== RESOURCE PRICE MULTIPLIERS ===");
+
+                    if (root.TryGetProperty("resources", out var resArr) && resArr.ValueKind == JsonValueKind.Array)
+                    {
+                        foreach (var r in resArr.EnumerateArray())
+                        {
+                            var key  = r.TryGetProperty("key",       out var k) ? k.GetString() : "";
+                            var mul  = r.TryGetProperty("multiplier", out var m) ? m.GetDecimal() : 1.0m;
+                            sb.AppendLine($"- {key}: {mul}x");
+                        }
+                    }
+                    sb.AppendLine();
+                }
+                else
+                {
+                    sb.AppendLine("=== VEHICLE PRICE MULTIPLIERS ===");
+                    sb.AppendLine("Motorcycle: 0.8x | Sedan: 1.0x | SUV: 1.25x | Pickup: 1.5x");
+                    sb.AppendLine();
+                }
+            }
+            catch
+            {
+                sb.AppendLine("=== VEHICLE PRICE MULTIPLIERS ===");
+                sb.AppendLine("Motorcycle: 0.8x | Sedan: 1.0x | SUV: 1.25x | Pickup: 1.5x");
+                sb.AppendLine();
+            }
 
             // Operating hours
             sb.AppendLine("=== OPERATING HOURS ===");
             sb.AppendLine("Daily 9:00 AM – 6:00 PM. Appointment slots are in 1-hour windows.");
             sb.AppendLine();
 
-            // Cancellation policy
             sb.AppendLine("=== CANCELLATION POLICY ===");
-            sb.AppendLine("Customers can request cancellation via the My Bookings screen. A cancellation fee may apply depending on how close the appointment is. The admin team reviews all cancellations.");
+            sb.AppendLine("Customers can request cancellation via the My Bookings screen. A cancellation fee may apply. The admin team reviews all cancellations.");
             sb.AppendLine();
 
-            sb.AppendLine("Keep answers short (2–4 sentences). Do not discuss competitors or unrelated topics.");
+            sb.AppendLine("Keep answers short (2-4 sentences). Do not discuss competitors or unrelated topics.");
 
             return sb.ToString();
         }

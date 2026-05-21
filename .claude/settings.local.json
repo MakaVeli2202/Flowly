@@ -195,7 +195,13 @@
       "Bash(taskkill /F /IM \"dotnet.exe\")",
       "Bash(git -C \"E:/VS-Code/Flowly\" status --short)",
       "Bash(git -C \"E:/VS-Code/Flowly\" log --oneline -3)",
-      "Bash(git -C \"E:/VS-Code/Flowly\" add -A)"
+      "Bash(git -C \"E:/VS-Code/Flowly\" add -A)",
+      "Bash(git -C \"E:/VS-Code/Flowly\" diff --cached --name-only)",
+      "Bash(git -C E:/VS-Code/Flowly commit -m ' *)",
+      "Bash(git -C \"E:/VS-Code/Flowly\" push origin main)",
+      "Bash(git -C \"E:/VS-Code/Flowly\" add PITCH.md PRODUCTION_REQUIREMENTS.md)",
+      "Bash(git -C E:/VS-Code/Flowly commit -m 'docs: add PITCH.md and PRODUCTION_REQUIREMENTS.md *)",
+      "Bash(node --input-type=module -e ' *)"
     ],
     "additionalDirectories": [
       "e:\\\\VS-Code\\\\Flowly\\\\.claude"

@@ -14,6 +14,7 @@ namespace Flowly.API.Modules.Settings
     public class SettingsService : ISettingsService
     {
         private const string MultipliersKey              = "pricing.vehicleMultipliers";
+        private const string VerticalConfigKey           = "vertical.config";
         private const string WorkerTravelKey             = "booking.workerTravelBufferMinutes";
         private const string DiscountKey                 = "subscription.discountPercent";
         private const string SmsFollowUpKey              = "sms.followUpEnabled";
@@ -35,6 +36,21 @@ namespace Flowly.API.Modules.Settings
             Sedan      = 1.0,
             SUV        = 1.25,
             Pickup     = 1.5,
+        };
+
+        private static readonly VerticalConfigDto DefaultVerticalConfig = new()
+        {
+            ResourceEnabled = true,
+            ResourceLabelEn = "Vehicle",
+            ResourceLabelAr = "المركبة",
+            ResourceLabelDe = "Fahrzeug",
+            Resources = new List<ResourceTypeDto>
+            {
+                new() { Key = "Motorcycle", LabelEn = "Motorcycle",   LabelAr = "دراجة نارية", LabelDe = "Motorrad",   Multiplier = 0.8m  },
+                new() { Key = "Sedan",      LabelEn = "Sedan",        LabelAr = "سيدان",        LabelDe = "Limousine",  Multiplier = 1.0m  },
+                new() { Key = "SUV",        LabelEn = "SUV / 4×4",   LabelAr = "SUV / 4×4",   LabelDe = "SUV / 4×4",  Multiplier = 1.25m },
+                new() { Key = "Pickup",     LabelEn = "Pickup Truck", LabelAr = "بيك أب",      LabelDe = "Pickup",     Multiplier = 1.5m  },
+            }
         };
 
         private static readonly Dictionary<string, (string Start, string End)> DefaultBusinessHours = new()
@@ -72,7 +88,7 @@ namespace Flowly.API.Modules.Settings
 
         public async Task<object> GetSettingsAsync()
         {
-            var keys = new[] { MultipliersKey, WorkerTravelKey, SmsFollowUpKey, SitePublishedKey, SiteLaunchDateKey, DiscountKey, BusinessHoursKey, BusinessConfigKey, ClosedDatesKey, ReferralRewardKey, ReferralDiscountKey, ReferralRequiredBookingsKey };
+            var keys = new[] { MultipliersKey, WorkerTravelKey, SmsFollowUpKey, SitePublishedKey, SiteLaunchDateKey, DiscountKey, BusinessHoursKey, BusinessConfigKey, ClosedDatesKey, ReferralRewardKey, ReferralDiscountKey, ReferralRequiredBookingsKey, VerticalConfigKey };
             var rows = await _context.SystemSettings
                 .AsNoTracking()
                 .Where(s => keys.Contains(s.Key))
@@ -188,6 +204,18 @@ namespace Flowly.API.Modules.Settings
                 catch { }
             }
 
+            VerticalConfigDto verticalConfig = DefaultVerticalConfig;
+            var verticalRaw = GetVal(VerticalConfigKey);
+            if (!string.IsNullOrWhiteSpace(verticalRaw))
+            {
+                try
+                {
+                    var parsed = JsonSerializer.Deserialize<VerticalConfigDto>(verticalRaw, _jsonOpts);
+                    if (parsed != null && parsed.Resources.Count > 0) verticalConfig = parsed;
+                }
+                catch { }
+            }
+
             return new
             {
                 pricing = new { vehicleMultipliers },
@@ -201,6 +229,7 @@ namespace Flowly.API.Modules.Settings
                 referralDiscountPercent,
                 referralRequiredBookings,
                 closedDates,
+                vertical = verticalConfig,
             };
         }
 
@@ -275,6 +304,15 @@ namespace Flowly.API.Modules.Settings
                     .ToList();
                 updates.Add((ClosedDatesKey, JsonSerializer.Serialize(valid, _jsonOpts)));
                 BookingSlotHelper.SetClosedDatesFromSettings(valid);
+            }
+
+            if (dto.VerticalConfig != null)
+            {
+                if (dto.VerticalConfig.Resources.Any(r => string.IsNullOrWhiteSpace(r.Key)))
+                    return ("Each resource type must have a non-empty key.", null);
+                if (dto.VerticalConfig.Resources.Any(r => r.Multiplier < 0 || r.Multiplier > 10))
+                    return ("Resource multipliers must be between 0 and 10.", null);
+                updates.Add((VerticalConfigKey, JsonSerializer.Serialize(dto.VerticalConfig, _jsonOpts)));
             }
 
             if (updates.Count == 0)

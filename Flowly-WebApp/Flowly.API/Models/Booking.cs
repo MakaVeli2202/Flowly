@@ -118,6 +118,10 @@ namespace Flowly.API.Models
 
         public VehicleType VehicleType { get; set; } = VehicleType.Sedan;
 
+        /// <summary>Generic resource key used for pricing when org is not auto-detailing (e.g. "Small Room", "Large Pet").</summary>
+        [StringLength(100)]
+        public string? ResourceKey { get; set; }
+
         public string? SpecialInstructions { get; set; }
 
         public LeadSource LeadSource { get; set; } = LeadSource.Direct;

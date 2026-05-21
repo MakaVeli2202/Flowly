@@ -968,7 +968,7 @@ namespace Flowly.API.Modules.Booking
                 }
                 if (offerResult != null && resolvedUserId.HasValue) _couponLimiter.RecordSuccess(resolvedUserId.Value);
 
-                var pricing = await _pricingService.CalculateAsync(pricingItems, dto.VehicleType, combinedDiscount, offerResult?.Offer, offerResult?.AppliedCode);
+                var pricing = await _pricingService.CalculateAsync(pricingItems, dto.VehicleType, combinedDiscount, offerResult?.Offer, offerResult?.AppliedCode, dto.ResourceKey);
                 var finalAmount = pricing.FinalAmount;
                 var discountAmount = pricing.TotalDiscountAmount;
 
@@ -1044,6 +1044,7 @@ namespace Flowly.API.Modules.Booking
                     VehicleModel = dto.VehicleModel,
                     VehicleYear = dto.VehicleYear,
                     VehicleType = dto.VehicleType,
+                    ResourceKey = dto.ResourceKey,
                     AssignedWorkerId = autoWorker?.Id,
                     PreferredWorkerId = dto.PreferredWorkerId,
                     SpecialInstructions = dto.SpecialInstructions,
@@ -1176,7 +1177,7 @@ namespace Flowly.API.Modules.Booking
             var pricingItems = dto.Packages.Select(p => new PackagePricingItem(p.PackageId, packages[p.PackageId].Price, p.Quantity)).ToList();
             var (offerResult, offerError) = await ResolveOfferAsync(dto.OfferCode, userId, pricingItems.Sum(i => i.BasePrice * i.Quantity));
             if (offerError != null) return (null, offerError);
-            var pricing = await _pricingService.CalculateAsync(pricingItems, dto.VehicleType, 0, offerResult?.Offer, offerResult?.AppliedCode);
+            var pricing = await _pricingService.CalculateAsync(pricingItems, dto.VehicleType, 0, offerResult?.Offer, offerResult?.AppliedCode, dto.ResourceKey);
             return (new BookingQuoteDto
             {
                 BaseAmount = pricing.SubtotalBeforeDiscounts,

@@ -16,6 +16,7 @@ namespace Flowly.API.DTOs
         public BusinessHoursPerDayDto? BusinessHours      { get; set; }
         public BusinessConfigDto?      BusinessConfig     { get; set; }
         public List<string>?           ClosedDates        { get; set; }
+        public VerticalConfigDto?      VerticalConfig     { get; set; }
     }
 
     public class VehicleMultipliersDto
@@ -28,13 +29,35 @@ namespace Flowly.API.DTOs
 
     public class BusinessConfigDto
     {
-        public string?       Name         { get; set; }
-        public string?       Logo         { get; set; }
-        public string?       Tagline      { get; set; }
-        public string?       Phone        { get; set; }
-        public string?       Email        { get; set; }
-        public string?       Location     { get; set; }
-        public List<string>? ServiceAreas { get; set; }
+        public string?       Name                { get; set; }
+        public string?       Logo                { get; set; }
+        public string?       Tagline             { get; set; }
+        public string?       Phone               { get; set; }
+        public string?       Email               { get; set; }
+        public string?       Location            { get; set; }
+        public List<string>? ServiceAreas        { get; set; }
+        /// <summary>Business vertical preset key, e.g. "auto_detailing", "salon", "vet", "home_services", "medical"</summary>
+        public string?       BusinessType        { get; set; }
+        /// <summary>Used as chatbot context: "Professional car detailing in Qatar" etc.</summary>
+        public string?       BusinessDescription { get; set; }
+    }
+
+    public class ResourceTypeDto
+    {
+        public string  Key        { get; set; } = string.Empty;
+        public string  LabelEn    { get; set; } = string.Empty;
+        public string  LabelAr    { get; set; } = string.Empty;
+        public string  LabelDe    { get; set; } = string.Empty;
+        public decimal Multiplier { get; set; } = 1.0m;
+    }
+
+    public class VerticalConfigDto
+    {
+        public bool               ResourceEnabled  { get; set; } = true;
+        public string             ResourceLabelEn  { get; set; } = "Vehicle";
+        public string             ResourceLabelAr  { get; set; } = "المركبة";
+        public string             ResourceLabelDe  { get; set; } = "Fahrzeug";
+        public List<ResourceTypeDto> Resources     { get; set; } = new();
     }
 
     public class GateVerifyDto
